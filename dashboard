@@ -3,338 +3,229 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TailorTech — My Dashboard</title>
+<title>TailorTech — Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: 'DM Sans', system-ui, sans-serif;
-  background: #0c0c10;
-  color: #f0ede8;
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-}
-button, input, select { font-family: inherit; }
-button { cursor: pointer; }
-
 :root {
-  --bg:      #0c0c10;
-  --bg2:     #16161e;
-  --bg3:     #1e1e28;
-  --bg4:     #252530;
-  --border:  rgba(255,255,255,0.07);
-  --border2: rgba(255,255,255,0.12);
-  --text:    #f0ede8;
-  --text2:   #9d9a95;
-  --text3:   #4a4845;
-  --gold:    #c9a84c;
-  --gold2:   #e8c97a;
-  --green:   #34d399;
-  --red:     #f87171;
-  --amber:   #fbbf24;
-  --grad:    linear-gradient(135deg, #c9a84c 0%, #e8c97a 50%, #c9a84c 100%);
-  --grad-b:  linear-gradient(135deg, #4f8aff 0%, #a78bfa 100%);
-  --r:       14px;
-  --r2:      20px;
+  --cream: #F0EDE6; --cream-dark: #E5E1D8; --cream-mid: #EBE7DF;
+  --ink: #1A1916; --ink-mid: #4A4844; --ink-light: #8A8880; --ink-faint: #C0BDB8;
+  --white: #FAFAF8; --border: rgba(26,25,22,0.10); --border-mid: rgba(26,25,22,0.20);
+  --gold: #B8924A;
 }
+body {
+  font-family: 'Jost', sans-serif; background: var(--cream);
+  color: var(--ink); min-height: 100vh; -webkit-font-smoothing: antialiased;
+}
+button { cursor: pointer; font-family: inherit; }
 
 /* ── Nav ── */
-.topnav {
-  background: var(--bg2);
-  border-bottom: 1px solid var(--border);
-  height: 64px;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 1.5rem;
+.nav {
+  height: 52px; background: var(--white); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 28px; gap: 16px;
   position: sticky; top: 0; z-index: 100;
 }
-.topnav-brand { display: flex; align-items: center; gap: 10px; }
-.topnav-logo {
-  width: 34px; height: 34px;
-  background: var(--bg3);
-  border: 1px solid rgba(201,168,76,0.25);
-  border-radius: 9px;
-  display: flex; align-items: center; justify-content: center;
+.nav-brand {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.20em;
+  text-transform: uppercase; color: var(--ink); margin-right: auto; text-decoration: none;
 }
-.topnav-logo svg { color: var(--gold); }
-.topnav-name {
-  font-family: 'DM Serif Display', serif;
-  font-size: 1.0625rem;
-  background: var(--grad); -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent; background-clip: text;
+.nav-btn {
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 2px;
+  background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
 }
-.topnav-right { display: flex; align-items: center; gap: .75rem; }
+.nav-btn:hover { background: var(--cream-mid); color: var(--ink); }
 .nav-avatar {
-  width: 36px; height: 36px; border-radius: 50%;
-  background: var(--grad);
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--ink); color: var(--white);
+  font-size: 11px; font-weight: 600; letter-spacing: 0;
   display: flex; align-items: center; justify-content: center;
-  font-size: .9375rem; font-weight: 700; color: #1a1200;
-  overflow: hidden; flex-shrink: 0; cursor: pointer;
+  overflow: hidden; flex-shrink: 0;
 }
 .nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.btn-nav {
-  background: var(--bg3); border: 1px solid var(--border2);
-  color: var(--text2); border-radius: 8px;
-  padding: .375rem .875rem; font-size: .8125rem;
-  transition: all .15s;
-}
-.btn-nav:hover { color: var(--text); }
 
-/* ── Loading screen ── */
-#loading-screen {
-  min-height: calc(100vh - 64px);
-  display: flex; align-items: center; justify-content: center;
-  flex-direction: column; gap: 1rem;
+/* ── Loading ── */
+#loading {
+  min-height: calc(100vh - 52px);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 14px;
 }
 .loader {
-  width: 36px; height: 36px;
-  border: 2px solid var(--border2);
-  border-top-color: var(--gold);
-  border-radius: 50%;
-  animation: spin .7s linear infinite;
+  width: 24px; height: 24px;
+  border: 1.5px solid var(--border-mid); border-top-color: var(--ink);
+  border-radius: 50%; animation: spin 0.7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-.loading-text { font-size: .875rem; color: var(--text3); }
+.load-text { font-size: 11px; letter-spacing: 0.10em; color: var(--ink-faint); text-transform: uppercase; }
 
-/* ── Main dashboard ── */
-#dash-main { display: none; }
-.dash { max-width: 1060px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+/* ── Page ── */
+#main { display: none; }
+.page { max-width: 1020px; margin: 0 auto; padding: 48px 28px 80px; }
 
-/* Welcome bar */
-.dash-welcome { margin-bottom: 2.5rem; }
-.dash-welcome h2 {
-  font-family: 'DM Serif Display', serif;
-  font-size: 2rem; color: var(--text);
-  letter-spacing: -.02em; margin-bottom: .25rem;
+/* ── Welcome ── */
+.welcome { margin-bottom: 40px; }
+.welcome-eyebrow {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px;
 }
-.dash-welcome p { color: var(--text3); font-size: .9375rem; }
+.welcome h1 { font-size: 26px; font-weight: 300; letter-spacing: -0.01em; color: var(--ink); }
 
-/* Stats row */
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem; margin-bottom: 2.5rem;
-}
-.stat-card {
-  background: var(--bg2); border: 1px solid var(--border);
-  border-radius: var(--r); padding: 1.25rem 1.25rem 1rem;
-}
-.stat-label {
-  font-size: .6875rem; font-weight: 600; color: var(--text3);
-  text-transform: uppercase; letter-spacing: .08em; margin-bottom: .5rem;
-}
-.stat-val {
-  font-size: 1.75rem; font-weight: 700; color: var(--text);
-  font-variant-numeric: tabular-nums; line-height: 1;
-}
-.stat-sub { font-size: .75rem; color: var(--text3); margin-top: .3rem; }
+/* ── Stats ── */
+.stats { display: flex; gap: 1px; margin-bottom: 48px; background: var(--border); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; }
+.stat { flex: 1; background: var(--white); padding: 20px 22px; }
+.stat-lbl { font-size: 9px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 8px; }
+.stat-val { font-size: 22px; font-weight: 300; color: var(--ink); line-height: 1; }
+.stat-sub { font-size: 11px; color: var(--ink-faint); margin-top: 4px; letter-spacing: 0.02em; }
 
-/* Section label */
-.sec-label {
-  font-size: .6875rem; font-weight: 600; color: var(--text3);
-  text-transform: uppercase; letter-spacing: .08em;
-  margin-bottom: 1rem;
-  display: flex; align-items: center; justify-content: space-between;
+/* ── Section ── */
+.sec-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px;
 }
+.sec-title {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--ink-light);
+}
+.sec-gap { height: 48px; }
 
-/* Feature cards */
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1rem; margin-bottom: 2.5rem;
+/* ── Action link ── */
+.sec-action {
+  font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 500;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  background: none; border: none; color: var(--ink-light); cursor: pointer;
+  transition: color 0.15s; display: inline-flex; align-items: center; gap: 5px;
+  text-decoration: none;
 }
-.feature-card {
-  background: var(--bg2); border: 1px solid var(--border);
-  border-radius: var(--r2); padding: 1.75rem 1.625rem;
-  text-decoration: none; color: inherit;
+.sec-action:hover { color: var(--ink); }
+
+/* ── Cards grid (quick actions) ── */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 48px; }
+.action-card {
+  background: var(--white); padding: 28px 24px 22px;
+  cursor: pointer; transition: background 0.15s;
   display: flex; flex-direction: column;
-  transition: border-color .2s, box-shadow .2s, transform .15s;
-  position: relative; overflow: hidden; cursor: pointer;
 }
-.feature-card::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-  background: var(--grad); opacity: 0; transition: opacity .2s;
-}
-.feature-card:hover {
-  border-color: rgba(201,168,76,.3);
-  box-shadow: 0 8px 32px rgba(0,0,0,.35);
-  transform: translateY(-2px);
-}
-.feature-card:hover::before { opacity: 1; }
-.feature-icon {
-  width: 46px; height: 46px; border-radius: 12px;
-  background: var(--bg3); border: 1px solid var(--border);
+.action-card:hover { background: var(--cream-mid); }
+.action-card-icon {
+  width: 36px; height: 36px; margin-bottom: 16px;
   display: flex; align-items: center; justify-content: center;
-  margin-bottom: 1.125rem; color: var(--gold); flex-shrink: 0;
+  color: var(--ink-mid);
 }
-.feature-title { font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: .375rem; }
-.feature-desc  { font-size: .8125rem; color: var(--text3); line-height: 1.55; flex: 1; }
-.feature-cta {
-  margin-top: 1.25rem; font-size: .8125rem; font-weight: 500;
-  color: var(--gold); display: flex; align-items: center; gap: 4px;
+.action-card-title { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 6px; letter-spacing: 0.01em; }
+.action-card-desc  { font-size: 12px; color: var(--ink-light); line-height: 1.55; flex: 1; }
+.action-card-cta {
+  margin-top: 20px; font-size: 10px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint);
+  display: flex; align-items: center; gap: 6px; transition: color 0.15s;
 }
+.action-card:hover .action-card-cta { color: var(--ink); }
 
-/* Orders table */
-.table-card {
-  background: var(--bg2); border: 1px solid var(--border);
-  border-radius: var(--r2); overflow: hidden; margin-bottom: 2.5rem;
+/* ── Table ── */
+.table-wrap { background: var(--white); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 48px; }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  text-align: left; padding: 12px 18px;
+  font-size: 9px; font-weight: 600; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink-faint);
+  border-bottom: 1px solid var(--border); background: var(--cream-mid);
 }
-.table-card table {
-  width: 100%; border-collapse: collapse;
-}
-.table-card th {
-  text-align: left; padding: .875rem 1.25rem;
-  font-size: .6875rem; font-weight: 600; color: var(--text3);
-  text-transform: uppercase; letter-spacing: .07em;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg3);
-}
-.table-card td {
-  padding: .9375rem 1.25rem;
-  font-size: .875rem; color: var(--text);
+.data-table td {
+  padding: 14px 18px; font-size: 13px; color: var(--ink);
   border-bottom: 1px solid var(--border);
 }
-.table-card tr:last-child td { border-bottom: none; }
-.table-card tr:hover td { background: rgba(255,255,255,.02); }
-.status-badge {
-  display: inline-block; padding: .2rem .625rem;
-  border-radius: 20px; font-size: .75rem; font-weight: 500;
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--cream-mid); }
+.status {
+  display: inline-block; padding: 3px 8px; border-radius: 1px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase;
 }
-.s-new       { background: rgba(79,138,255,.12); color: #4f8aff;  border: 1px solid rgba(79,138,255,.25); }
-.s-progress  { background: rgba(251,191,36,.1);  color: #fbbf24;  border: 1px solid rgba(251,191,36,.25); }
-.s-complete  { background: rgba(52,211,153,.1);  color: #34d399;  border: 1px solid rgba(52,211,153,.25); }
-.s-cancelled { background: rgba(248,113,113,.1); color: #f87171;  border: 1px solid rgba(248,113,113,.25); }
+.s-new     { background: rgba(26,25,22,0.06); color: var(--ink-mid); }
+.s-prog    { background: rgba(184,146,74,0.12); color: #7a5e2a; border: 1px solid rgba(184,146,74,0.3); }
+.s-done    { background: rgba(61,122,90,0.10); color: #2a5c3f; border: 1px solid rgba(61,122,90,0.25); }
+.s-cancel  { background: rgba(160,64,64,0.08); color: #7a2c2c; border: 1px solid rgba(160,64,64,0.2); }
 
-/* Measurements table */
-.meas-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: .75rem;
-}
-.meas-chip {
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: 10px; padding: .75rem;
-}
-.meas-chip-label {
-  font-size: .6875rem; color: var(--text3);
-  text-transform: uppercase; letter-spacing: .05em; margin-bottom: .25rem;
-}
-.meas-chip-val { font-size: 1rem; font-weight: 600; color: var(--text); }
-.meas-chip-unit { font-size: .75rem; color: var(--text3); }
+/* ── Meas chips ── */
+.meas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1px; background: var(--border); }
+.meas-chip { background: var(--white); padding: 16px 18px; }
+.meas-lbl { font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px; }
+.meas-val { font-size: 20px; font-weight: 300; color: var(--ink); }
+.meas-unit { font-size: 11px; color: var(--ink-faint); margin-left: 2px; }
 
-/* Profile section */
-.profile-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1.125rem; padding: 1.5rem;
+/* ── Profile ── */
+.profile-wrap { background: var(--white); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; }
+.profile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 0; }
+.pf {
+  padding: 18px 20px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
 }
-.pfield label {
-  display: block; font-size: .6875rem; font-weight: 600;
-  color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .3rem;
-}
-.pfield .pval { font-size: .9375rem; color: var(--text); }
-.pfield .pval.empty { color: var(--text3); font-style: italic; font-size: .875rem; }
+.pf:last-child { border-right: none; }
+.pf-lbl { font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 5px; }
+.pf-val { font-size: 13px; color: var(--ink); }
+.pf-val.empty { color: var(--ink-faint); font-style: italic; }
 
-/* Edit profile form */
-.edit-form {
-  display: none; padding: 1.5rem;
-  border-top: 1px solid var(--border);
-}
-.edit-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 1rem; margin-bottom: 1.25rem;
-}
-.efield { display: flex; flex-direction: column; }
-.efield label {
-  font-size: .6875rem; font-weight: 600; color: var(--text2);
-  text-transform: uppercase; letter-spacing: .05em; margin-bottom: .35rem;
-}
-.efield input {
-  width: 100%; padding: .625rem .875rem;
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: 9px; color: var(--text);
-  font-size: .875rem; outline: none;
-  transition: border-color .15s, box-shadow .15s;
+/* ── Edit form ── */
+.edit-form { display: none; padding: 24px; border-top: 1px solid var(--border); background: var(--cream-mid); }
+.edit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; margin-bottom: 18px; }
+.ef { display: flex; flex-direction: column; }
+.ef label { font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 6px; }
+.ef input {
+  font-family: 'Jost', sans-serif; font-size: 13px;
+  padding: 9px 12px; background: var(--white);
+  border: 1px solid var(--border-mid); border-radius: 2px;
+  color: var(--ink); outline: none; transition: border-color 0.15s;
   -webkit-appearance: none;
 }
-.efield input:focus {
-  border-color: var(--gold);
-  box-shadow: 0 0 0 3px rgba(201,168,76,.12);
+.ef input:focus { border-color: var(--ink); }
+.ef input::placeholder { color: var(--ink-faint); }
+.edit-btns { display: flex; gap: 10px; }
+.btn-save {
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 11px 24px; background: var(--ink); color: var(--white);
+  border: none; border-radius: 2px; cursor: pointer; transition: background 0.15s;
+  display: inline-flex; align-items: center; gap: 7px;
 }
-.efield input::placeholder { color: var(--text3); }
-
-/* Buttons */
-.btn-gold {
-  background: var(--grad); border: none; border-radius: 9px;
-  color: #1a1200; font-size: .875rem; font-weight: 700;
-  padding: .625rem 1.375rem;
-  display: inline-flex; align-items: center; gap: 6px;
-  transition: opacity .15s; box-shadow: 0 4px 14px rgba(201,168,76,.2);
+.btn-save:hover { background: #2d2c29; }
+.btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-cancel {
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  padding: 11px 20px; background: transparent;
+  border: 1px solid var(--border-mid); border-radius: 2px;
+  color: var(--ink-mid); cursor: pointer; transition: all 0.15s;
 }
-.btn-gold:hover { opacity: .9; }
-.btn-ghost {
-  background: var(--bg3); border: 1px solid var(--border2);
-  color: var(--text2); border-radius: 9px;
-  padding: .625rem 1.125rem; font-size: .875rem;
-  transition: all .15s;
-}
-.btn-ghost:hover { color: var(--text); }
-.btn-row { display: flex; gap: .75rem; flex-wrap: wrap; }
-
-/* Card header */
-.card-header {
-  padding: 1.125rem 1.5rem;
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
-}
-.card-header-title {
-  font-size: .6875rem; font-weight: 600; color: var(--text3);
-  text-transform: uppercase; letter-spacing: .08em;
-  display: flex; align-items: center; gap: 7px;
-}
-.card-header-title svg { color: var(--gold); }
-.btn-sm {
-  background: var(--bg3); border: 1px solid var(--border2);
-  color: var(--text2); border-radius: 7px;
-  padding: .3rem .8rem; font-size: .75rem;
-  display: inline-flex; align-items: center; gap: 4px;
-  transition: all .15s;
-}
-.btn-sm:hover { color: var(--gold); border-color: rgba(201,168,76,.3); }
-
-/* Empty state */
-.empty-state {
-  padding: 3rem 1.5rem; text-align: center; color: var(--text3);
-}
-.empty-state svg { display: block; margin: 0 auto 1rem; opacity: .2; }
-.empty-state p { font-size: .9375rem; margin-bottom: 1.25rem; }
-
-/* Toast */
-#toast {
-  position: fixed; top: 1.25rem; right: 1.25rem; z-index: 9999;
-  padding: .75rem 1.125rem; border-radius: 10px;
-  font-size: .875rem; font-weight: 500;
-  display: flex; align-items: center; gap: 8px;
-  opacity: 0; transform: translateX(1.5rem);
-  transition: opacity .25s, transform .25s; pointer-events: none;
-}
-#toast.t-ok  { background: rgba(52,211,153,.12); border: 1px solid rgba(52,211,153,.25); color: var(--green); }
-#toast.t-err { background: rgba(248,113,113,.1);  border: 1px solid rgba(248,113,113,.25); color: var(--red); }
-#toast.show  { opacity: 1; transform: none; }
-
-/* Spinner */
+.btn-cancel:hover { background: var(--white); }
 .spin-sm {
-  width: 14px; height: 14px;
-  border: 1.5px solid rgba(0,0,0,.2);
-  border-top-color: #1a1200;
-  border-radius: 50%;
-  animation: spin .65s linear infinite;
-  display: none; flex-shrink: 0;
+  width: 12px; height: 12px;
+  border: 1.5px solid rgba(255,255,255,0.3); border-top-color: #fff;
+  border-radius: 50%; animation: spin 0.65s linear infinite; display: none;
 }
+
+/* ── Empty state ── */
+.empty { padding: 40px 24px; text-align: center; }
+.empty-icon { color: var(--ink-faint); margin-bottom: 12px; }
+.empty p { font-size: 12px; color: var(--ink-faint); letter-spacing: 0.04em; margin-bottom: 20px; }
+
+/* ── Toast ── */
+#toast {
+  position: fixed; bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--ink); color: var(--white);
+  font-size: 11px; font-weight: 500; letter-spacing: 0.06em;
+  padding: 12px 22px; border-radius: 2px;
+  opacity: 0; transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none; z-index: 9999;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#toast.err  { background: #7a2c2c; }
 
 @media(max-width:600px){
-  .dash { padding: 1.5rem 1rem 4rem; }
-  .table-card th:nth-child(3), .table-card td:nth-child(3),
-  .table-card th:nth-child(4), .table-card td:nth-child(4) { display: none; }
+  .page { padding: 32px 16px 60px; }
+  .stats { flex-wrap: wrap; }
+  .data-table th:nth-child(3), .data-table td:nth-child(3),
+  .data-table th:nth-child(4), .data-table td:nth-child(4) { display: none; }
 }
 </style>
 </head>
@@ -342,185 +233,155 @@ button { cursor: pointer; }
 
 <div id="toast"></div>
 
-<!-- ── Nav ── -->
-<nav class="topnav">
-  <div class="topnav-brand">
-    <div class="topnav-logo">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-        <path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.57a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.57a2 2 0 00-1.34-2.23z"/>
-      </svg>
-    </div>
-    <span class="topnav-name">TAILORTECH</span>
-  </div>
-  <div class="topnav-right">
-    <div class="nav-avatar" id="nav-avatar"></div>
-    <button class="btn-nav" onclick="doSignOut()">Sign out</button>
-  </div>
+<!-- Nav -->
+<nav class="nav">
+  <a class="nav-brand" href="https://tailortech.toom.design/">TailorTech</a>
+  <div class="nav-avatar" id="nav-av"></div>
+  <button class="nav-btn" onclick="doSignOut()">Sign out</button>
 </nav>
 
-<!-- ── Loading ── -->
-<div id="loading-screen">
+<!-- Loading -->
+<div id="loading">
   <div class="loader"></div>
-  <span class="loading-text">Loading your dashboard…</span>
+  <span class="load-text">Loading dashboard</span>
 </div>
 
-<!-- ── Dashboard ── -->
-<div id="dash-main">
-  <div class="dash">
+<!-- Main -->
+<div id="main">
+  <div class="page">
 
     <!-- Welcome -->
-    <div class="dash-welcome">
-      <h2 id="greeting">Welcome back</h2>
-      <p id="greeting-sub"></p>
+    <div class="welcome">
+      <div class="welcome-eyebrow">Client Portal</div>
+      <h1 id="greeting">Welcome back</h1>
     </div>
 
     <!-- Stats -->
-    <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-label">Orders</div>
-        <div class="stat-val" id="stat-orders">—</div>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-lbl">Orders</div>
+        <div class="stat-val" id="st-orders">—</div>
         <div class="stat-sub">total orders</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Measurements</div>
-        <div class="stat-val" id="stat-meas">—</div>
+      <div class="stat">
+        <div class="stat-lbl">Measurements</div>
+        <div class="stat-val" id="st-meas">—</div>
         <div class="stat-sub">sessions saved</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Member since</div>
-        <div class="stat-val" id="stat-since" style="font-size:1rem;padding-top:.3rem">—</div>
-        <div class="stat-sub">client ID: <span id="stat-id" style="color:var(--gold)">—</span></div>
+      <div class="stat">
+        <div class="stat-lbl">Client ID</div>
+        <div class="stat-val" id="st-id" style="font-size:15px;padding-top:4px">—</div>
+        <div class="stat-sub" id="st-since">member since —</div>
       </div>
     </div>
 
     <!-- Quick actions -->
-    <div class="sec-label">Quick actions</div>
-    <div class="feature-grid" style="margin-bottom:2.5rem">
-
-      <div class="feature-card" onclick="navigate('configure.html')">
-        <div class="feature-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+    <div class="sec-head">
+      <span class="sec-title">Quick Actions</span>
+    </div>
+    <div class="cards">
+      <div class="action-card" onclick="go('configure')">
+        <div class="action-card-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.57a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.57a2 2 0 00-1.34-2.23z"/>
           </svg>
         </div>
-        <div class="feature-title">New Order</div>
-        <div class="feature-desc">Configure a new custom garment — choose style, fabric, and all details.</div>
-        <div class="feature-cta">Start configurator <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+        <div class="action-card-title">New Order</div>
+        <div class="action-card-desc">Configure a custom garment — choose garment type, style, fabric, and details.</div>
+        <div class="action-card-cta">Start configurator <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
       </div>
-
-      <div class="feature-card" onclick="navigate('measurements.html')">
-        <div class="feature-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+      <div class="action-card" onclick="goMeasurements()">
+        <div class="action-card-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M2 12h20M2 7l2 5-2 5M22 7l-2 5 2 5"/>
           </svg>
         </div>
-        <div class="feature-title">My Measurements</div>
-        <div class="feature-desc">View and update your body measurements for a perfect fit every time.</div>
-        <div class="feature-cta">View measurements <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+        <div class="action-card-title">My Measurements</div>
+        <div class="action-card-desc">View and update your body measurements for a perfect fit every time.</div>
+        <div class="action-card-cta">View measurements <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
       </div>
-
-      <div class="feature-card" onclick="scrollTo('#sec-orders')">
-        <div class="feature-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
-          </svg>
-        </div>
-        <div class="feature-title">My Wardrobe</div>
-        <div class="feature-desc">Track all your garment orders — status, progress, and delivery dates.</div>
-        <div class="feature-cta">View orders <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
-      </div>
-
-    </div>
-
-    <!-- Orders section -->
-    <div id="sec-orders">
-      <div class="sec-label">
-        My Wardrobe — Order History
-        <span id="orders-count" style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0;font-size:.8125rem"></span>
-      </div>
-      <div class="table-card" id="orders-card">
-        <div id="orders-loading" class="empty-state">
-          <div class="loader" style="margin:0 auto 1rem"></div>
-          <p>Loading your orders…</p>
-        </div>
-        <table id="orders-table" style="display:none">
-          <thead>
-            <tr>
-              <th>Order #</th>
-              <th>Garment</th>
-              <th>Created</th>
-              <th>Price</th>
-              <th>Status</th>
-              <th>Deadline</th>
-            </tr>
-          </thead>
-          <tbody id="orders-tbody"></tbody>
-        </table>
-        <div id="orders-empty" class="empty-state" style="display:none">
-          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <div class="action-card" onclick="document.getElementById('sec-orders').scrollIntoView({behavior:'smooth'})">
+        <div class="action-card-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/>
           </svg>
-          <p>No orders yet.</p>
-          <button class="btn-gold" onclick="navigate('configure.html')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Start your first order
-          </button>
+        </div>
+        <div class="action-card-title">My Wardrobe</div>
+        <div class="action-card-desc">Track all your garment orders — view status, progress, and delivery dates.</div>
+        <div class="action-card-cta">View orders <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+    </div>
+
+    <!-- Orders -->
+    <div id="sec-orders">
+      <div class="sec-head">
+        <span class="sec-title">Order History</span>
+        <button class="sec-action" onclick="go('configure')">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New order
+        </button>
+      </div>
+      <div class="table-wrap">
+        <div id="orders-loading" style="padding:32px;text-align:center"><div class="loader" style="margin:0 auto"></div></div>
+        <table class="data-table" id="orders-tbl" style="display:none">
+          <thead><tr>
+            <th>Order #</th><th>Garment</th><th>Created</th><th>Price</th><th>Status</th><th>Deadline</th>
+          </tr></thead>
+          <tbody id="orders-body"></tbody>
+        </table>
+        <div id="orders-empty" class="empty" style="display:none">
+          <div class="empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg></div>
+          <p>No orders yet</p>
+          <button class="btn-save" onclick="go('configure')">Start your first order</button>
         </div>
       </div>
     </div>
 
-    <!-- Latest measurements -->
-    <div class="sec-label" style="margin-bottom:1rem">
-      Latest Measurements
-      <button class="btn-sm" onclick="navigate('measurements.html')">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    <!-- Measurements -->
+    <div class="sec-head">
+      <span class="sec-title">Latest Measurements</span>
+      <button class="sec-action" onclick="goMeasurements()">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         Update
       </button>
     </div>
-    <div class="table-card" style="margin-bottom:2.5rem">
-      <div id="meas-loading" class="empty-state" style="padding:2rem">
-        <div class="loader" style="margin:0 auto"></div>
-      </div>
-      <div id="meas-chips" class="meas-grid" style="display:none;padding:1.25rem"></div>
-      <div id="meas-empty" class="empty-state" style="display:none">
-        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M2 12h20M2 7l2 5-2 5M22 7l-2 5 2 5"/>
-        </svg>
-        <p>No measurements saved yet.</p>
-        <button class="btn-gold" onclick="navigate('measurements.html')">Add measurements</button>
+    <div class="table-wrap" style="margin-bottom:48px">
+      <div id="meas-loading" style="padding:28px;text-align:center"><div class="loader" style="margin:0 auto"></div></div>
+      <div id="meas-chips" class="meas-grid" style="display:none"></div>
+      <div id="meas-empty" class="empty" style="display:none">
+        <div class="empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M2 12h20M2 7l2 5-2 5M22 7l-2 5 2 5"/></svg></div>
+        <p>No measurements saved yet</p>
+        <button class="btn-save" onclick="goMeasurements()">Add measurements</button>
       </div>
     </div>
 
-    <!-- Profile section -->
-    <div class="sec-label" style="margin-bottom:1rem">
-      My Profile
-      <button class="btn-sm" id="btn-edit-profile" onclick="toggleEdit()">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    <!-- Profile -->
+    <div class="sec-head">
+      <span class="sec-title">My Profile</span>
+      <button class="sec-action" id="btn-edit" onclick="toggleEdit()">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         Edit
       </button>
     </div>
-    <div class="table-card">
-      <!-- Display -->
+    <div class="profile-wrap">
       <div class="profile-grid" id="profile-display"></div>
-      <!-- Edit form -->
       <div class="edit-form" id="edit-form">
         <div class="edit-grid">
-          <div class="efield"><label>First Name *</label><input type="text" id="ef-fname" placeholder="Jane"></div>
-          <div class="efield"><label>Last Name</label><input type="text" id="ef-lname" placeholder="Doe"></div>
-          <div class="efield"><label>Phone Number</label><input type="tel" id="ef-phone" placeholder="+1 234 567 8900"></div>
-          <div class="efield"><label>Instagram</label><input type="text" id="ef-ig" placeholder="@yourusername"></div>
-          <div class="efield"><label>Street Address</label><input type="text" id="ef-street" placeholder="123 Main St"></div>
-          <div class="efield"><label>City</label><input type="text" id="ef-city" placeholder="London"></div>
-          <div class="efield"><label>Postal Code</label><input type="text" id="ef-postal" placeholder="SW1A 1AA"></div>
-          <div class="efield"><label>Country</label><input type="text" id="ef-country" placeholder="United Kingdom"></div>
+          <div class="ef"><label>First Name *</label><input type="text"  id="ef-fn"      placeholder="Jane"></div>
+          <div class="ef"><label>Last Name</label>  <input type="text"  id="ef-ln"      placeholder="Doe"></div>
+          <div class="ef"><label>Phone</label>      <input type="tel"   id="ef-phone"   placeholder="+1 234 567 8900"></div>
+          <div class="ef"><label>Instagram</label>  <input type="text"  id="ef-ig"      placeholder="@username"></div>
+          <div class="ef"><label>Street</label>     <input type="text"  id="ef-street"  placeholder="123 Main St"></div>
+          <div class="ef"><label>City</label>       <input type="text"  id="ef-city"    placeholder="London"></div>
+          <div class="ef"><label>Postal Code</label><input type="text"  id="ef-postal"  placeholder="SW1A 1AA"></div>
+          <div class="ef"><label>Country</label>    <input type="text"  id="ef-country" placeholder="United Kingdom"></div>
         </div>
-        <div class="btn-row">
-          <button class="btn-gold" id="btn-save-profile" onclick="saveProfile()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            <span id="save-profile-lbl">Save Details</span>
-            <div class="spin-sm" id="save-profile-spin"></div>
+        <div class="edit-btns">
+          <button class="btn-save" id="btn-save-p" onclick="saveProfile()">
+            <span id="save-lbl">Save Details</span>
+            <div class="spin-sm" id="save-spin"></div>
           </button>
-          <button class="btn-ghost" onclick="toggleEdit()">Cancel</button>
+          <button class="btn-cancel" onclick="toggleEdit()">Cancel</button>
         </div>
       </div>
     </div>
@@ -528,317 +389,225 @@ button { cursor: pointer; }
   </div>
 </div>
 
-<!-- ── Firebase module ── -->
+<!-- Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey:            "AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY",
-  authDomain:        "tailortech-accounts.firebaseapp.com",
-  projectId:         "tailortech-accounts",
-  storageBucket:     "tailortech-accounts.firebasestorage.app",
+  apiKey: "AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY",
+  authDomain: "tailortech-accounts.firebaseapp.com",
+  projectId: "tailortech-accounts",
+  storageBucket: "tailortech-accounts.firebasestorage.app",
   messagingSenderId: "137614433833",
-  appId:             "1:137614433833:web:c78ea40b0d04ba89f3c638",
-  measurementId:     "G-QZ7KCWCQXN"
+  appId: "1:137614433833:web:c78ea40b0d04ba89f3c638"
 };
-
-const SHEETS_API = "https://script.google.com/macros/s/AKfycbwGVL3IU4aUYkDJzQhce9s86uaJ_V7xJMZzRmkjpa06rfY50v62y8empi4_ivvQ8eMj/exec";
-const BASE_URL   = "https://toom-design.github.io/tailortech/";
+const SHEETS = "https://script.google.com/macros/s/AKfycbwGVL3IU4aUYkDJzQhce9s86uaJ_V7xJMZzRmkjpa06rfY50v62y8empi4_ivvQ8eMj/exec";
+const BASE   = "https://tailortech.toom.design/";
 
 const _app  = initializeApp(firebaseConfig);
 const _auth = getAuth(_app);
 
-window._dash = {
-  auth: _auth,
-  signOut,
-  SHEETS_API,
-  BASE_URL,
+window._d = {
+  auth: _auth, signOut, BASE,
   currentUser: null,
   async req(action, payload) {
     payload = payload || {};
     const user  = _auth.currentUser;
     const token = user ? await user.getIdToken() : null;
-    const res   = await fetch(SHEETS_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, token, email: user ? user.email : null, ...payload }),
+    const res   = await fetch(SHEETS, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, token, email: user ? user.email : null, ...payload })
     });
     return res.json();
   }
 };
 
 onAuthStateChanged(_auth, function(user) {
-  window._dash.currentUser = user;
   if (user) {
-    initDashboard(user);
+    window._d.currentUser = user;
+    boot(user);
   } else {
-    // Not logged in — redirect to sign in page
-    window.location.href = BASE_URL + 'index.html';
+    window.location.href = BASE + 'index.html';
   }
 });
 </script>
 
-<!-- ── Main script ── -->
 <script>
 'use strict';
 
-var BASE = 'https://toom-design.github.io/tailortech/';
-var _clientData = null;
+var BASE = 'https://tailortech.toom.design/';
 
-// ── Navigation ────────────────────────────────────────────────────
-function navigate(page) {
-  window.location.href = BASE + page;
-}
-function scrollTo(id) {
-  var el = document.querySelector(id);
-  if (el) el.scrollIntoView({ behavior: 'smooth' });
+function go(page) { window.location.href = BASE + page; }
+function goMeasurements() {
+  var user  = window._d && window._d.currentUser;
+  var email = user ? encodeURIComponent(user.email) : '';
+  var url   = BASE + 'measurements.html' + (email ? '?email=' + email : '');
+  window.location.href = url;
 }
 
-// ── Toast ─────────────────────────────────────────────────────────
 function toast(msg, type) {
-  type = type || 'ok';
   var t = document.getElementById('toast');
-  t.className = 't-' + type;
-  t.innerHTML = (type === 'ok'
-    ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>'
-    : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
-  ) + ' ' + msg;
-  t.classList.add('show');
-  setTimeout(function() { t.classList.remove('show'); }, 3500);
+  t.textContent = msg;
+  t.className   = type === 'err' ? 'err show' : 'show';
+  setTimeout(function(){ t.classList.remove('show'); }, 3000);
 }
 
-// ── Sign out ──────────────────────────────────────────────────────
 function doSignOut() {
-  if (!window._dash) return;
-  window._dash.signOut(window._dash.auth).then(function() {
-    window.location.href = BASE + 'index.html';
-  });
+  if (window._d) window._d.signOut(window._d.auth)
+    .then(function(){ window.location.href = BASE + 'index.html'; });
 }
 
-// ── Init dashboard after login ────────────────────────────────────
-function initDashboard(user) {
-  document.getElementById('loading-screen').style.display = 'none';
-  document.getElementById('dash-main').style.display      = 'block';
+function fmtDate(s) {
+  if (!s) return '—';
+  try { var d = new Date(s); return isNaN(d) ? s : d.toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}); }
+  catch(e){ return s; }
+}
+
+function boot(user) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('main').style.display    = 'block';
 
   // Avatar
-  var av = document.getElementById('nav-avatar');
-  if (user.photoURL) {
-    av.innerHTML = '<img src="' + user.photoURL + '" alt="">';
-  } else {
-    av.textContent = (user.displayName || user.email || '?')[0].toUpperCase();
-  }
+  var av = document.getElementById('nav-av');
+  if (user.photoURL) { av.innerHTML = '<img src="' + user.photoURL + '" alt="">'; }
+  else { av.textContent = (user.displayName || user.email || '?')[0].toUpperCase(); }
 
-  // Greeting
   var name = user.displayName ? user.displayName.split(' ')[0] : 'there';
-  document.getElementById('greeting').textContent = 'Welcome back, ' + name;
-  document.getElementById('greeting-sub').textContent = user.email;
+  document.getElementById('greeting').textContent = 'Hello, ' + name;
 
-  // Load all data
-  loadOrders(user.email);
-  loadMeasurements(user.email);
-  loadProfile(user.email);
+  loadOrders();
+  loadMeasurements();
+  loadProfile();
 }
 
-// ── Load orders ───────────────────────────────────────────────────
-function loadOrders(email) {
-  if (!window._dash) return;
-  window._dash.req('getOrders').then(function(res) {
+function loadOrders() {
+  window._d.req('getOrders').then(function(res) {
     document.getElementById('orders-loading').style.display = 'none';
     if (!res.success || !res.orders || res.orders.length === 0) {
       document.getElementById('orders-empty').style.display = 'block';
-      document.getElementById('stat-orders').textContent = '0';
-      document.getElementById('orders-count').textContent = '0 orders';
+      document.getElementById('st-orders').textContent = '0';
       return;
     }
     var orders = res.orders;
-    document.getElementById('stat-orders').textContent = orders.length;
-    document.getElementById('orders-count').textContent = orders.length + ' order' + (orders.length !== 1 ? 's' : '');
-
-    var tbody = document.getElementById('orders-tbody');
+    document.getElementById('st-orders').textContent = orders.length;
+    var tbody = document.getElementById('orders-body');
     tbody.innerHTML = '';
     orders.forEach(function(o) {
-      var status = (o['Status'] || o['status'] || 'New').trim();
-      var cls = { 'New':'s-new','In Progress':'s-progress','Complete':'s-complete','Completed':'s-complete','Cancelled':'s-cancelled','Canceled':'s-cancelled' }[status] || 's-new';
-      var tr = document.createElement('tr');
+      var st  = (o['Status'] || o['status'] || 'New').trim();
+      var cls = {'New':'s-new','In Progress':'s-prog','Complete':'s-done','Completed':'s-done','Cancelled':'s-cancel','Canceled':'s-cancel'}[st] || 's-new';
+      var tr  = document.createElement('tr');
       tr.innerHTML =
         '<td>' + (o['Order Number'] || '—') + '</td>' +
-        '<td>' + (o['garment'] || o['GARMENT'] || '—') + '</td>' +
+        '<td>' + (o['garment'] || o['GARMENT'] || 'Shirt') + '</td>' +
         '<td>' + fmtDate(o['Created At'] || o['Created at'] || '') + '</td>' +
         '<td>' + (o['PRICE'] ? o['PRICE'] + ' €' : '—') + '</td>' +
-        '<td><span class="status-badge ' + cls + '">' + status + '</span></td>' +
-        '<td>' + fmtDate(o['deadline'] || o['Deadline'] || '') + '</td>';
+        '<td><span class="status ' + cls + '">' + st + '</span></td>' +
+        '<td>' + fmtDate(o['deadline'] || '') + '</td>';
       tbody.appendChild(tr);
     });
-    document.getElementById('orders-table').style.display = '';
-  }).catch(function() {
-    document.getElementById('orders-loading').style.display = 'none';
-    document.getElementById('orders-empty').style.display = 'block';
-  });
+    document.getElementById('orders-tbl').style.display = '';
+  }).catch(function(){ document.getElementById('orders-loading').style.display='none'; document.getElementById('orders-empty').style.display='block'; });
 }
 
-// ── Load measurements ─────────────────────────────────────────────
-function loadMeasurements(email) {
-  if (!window._dash) return;
-  window._dash.req('getMeasurements').then(function(res) {
+function loadMeasurements() {
+  window._d.req('getMeasurements').then(function(res) {
     document.getElementById('meas-loading').style.display = 'none';
     if (!res.success || !res.records || res.records.length === 0) {
       document.getElementById('meas-empty').style.display = 'block';
-      document.getElementById('stat-meas').textContent = '0';
+      document.getElementById('st-meas').textContent = '0';
       return;
     }
-    document.getElementById('stat-meas').textContent = res.records.length;
+    document.getElementById('st-meas').textContent = res.records.length;
     var latest = res.records[0];
     var chips  = document.getElementById('meas-chips');
     chips.innerHTML = '';
-
-    // Key measurements to highlight
-    var highlight = [
-      { key:'height',    label:'Height',    unit:'cm' },
-      { key:'weight',    label:'Weight',    unit:'kg' },
-      { key:'bustGirth', label:'Bust girth',unit:'cm' },
-      { key:'waistGirth',label:'Waist girth',unit:'cm'},
-      { key:'hipGirth',  label:'Hip girth', unit:'cm' },
-      { key:'outerArmLength',label:'Arm length',unit:'cm'},
-      { key:'shoulderLength',label:'Shoulder',unit:'cm'},
-      { key:'outsideLegLength',label:'Leg length',unit:'cm'},
+    var hl = [
+      {k:'height',label:'Height',u:'cm'},{k:'weight',label:'Weight',u:'kg'},
+      {k:'bustGirth',label:'Bust',u:'cm'},{k:'waistGirth',label:'Waist',u:'cm'},
+      {k:'hipGirth',label:'Hips',u:'cm'},{k:'shoulderLength',label:'Shoulder',u:'cm'},
+      {k:'outerArmLength',label:'Arm length',u:'cm'},{k:'outsideLegLength',label:'Leg',u:'cm'},
     ];
     var shown = 0;
-    highlight.forEach(function(h) {
-      if (latest[h.key] && latest[h.key] !== '0' && latest[h.key] !== '') {
-        var div = document.createElement('div');
-        div.className = 'meas-chip';
-        div.innerHTML =
-          '<div class="meas-chip-label">' + h.label + '</div>' +
-          '<div class="meas-chip-val">' + parseFloat(latest[h.key]).toFixed(1) +
-          ' <span class="meas-chip-unit">' + h.unit + '</span></div>';
-        chips.appendChild(div);
-        shown++;
+    hl.forEach(function(h) {
+      if (latest[h.k] && latest[h.k] !== '0' && latest[h.k] !== '') {
+        var d = document.createElement('div');
+        d.className = 'meas-chip';
+        d.innerHTML = '<div class="meas-lbl">' + h.label + '</div><div class="meas-val">' + parseFloat(latest[h.k]).toFixed(1) + '<span class="meas-unit">' + h.u + '</span></div>';
+        chips.appendChild(d); shown++;
       }
     });
-    if (shown === 0) {
-      document.getElementById('meas-empty').style.display = 'block';
-    } else {
-      chips.style.display = 'grid';
-    }
-  }).catch(function() {
-    document.getElementById('meas-loading').style.display = 'none';
-    document.getElementById('meas-empty').style.display = 'block';
-  });
+    if (shown === 0) { document.getElementById('meas-empty').style.display = 'block'; }
+    else { chips.style.display = 'grid'; }
+  }).catch(function(){ document.getElementById('meas-loading').style.display='none'; document.getElementById('meas-empty').style.display='block'; });
 }
 
-// ── Load profile ──────────────────────────────────────────────────
-function loadProfile(email) {
-  if (!window._dash) return;
-  window._dash.req('getClient').then(function(res) {
+function loadProfile() {
+  window._d.req('getClient').then(function(res) {
     if (res && res.success && res.client) {
-      _clientData = res.client;
       renderProfile(res.client);
-      prefillEdit(res.client);
-      // Stats
-      document.getElementById('stat-since').textContent = fmtDate(res.client['Created at'] || '');
-      document.getElementById('stat-id').textContent    = res.client['Person ID'] || '—';
-    } else {
-      renderProfile(null);
-    }
-  }).catch(function() { renderProfile(null); });
+      prefill(res.client);
+      document.getElementById('st-id').textContent    = res.client['Person ID'] || '—';
+      document.getElementById('st-since').textContent = 'member since ' + fmtDate(res.client['Created at'] || '');
+    } else { renderProfile(null); }
+  }).catch(function(){ renderProfile(null); });
 }
 
-// ── Render profile display ────────────────────────────────────────
+var PFIELDS = [
+  {l:'First Name',k:'First Name'},{l:'Last Name',k:'Last Name'},
+  {l:'Email',k:'Email'},{l:'Phone',k:'Phone Number'},
+  {l:'Instagram',k:'IG'},{l:'Address',k:'Street Address'},
+  {l:'City',k:'City'},{l:'Postal Code',k:'Postal Code'},{l:'Country',k:'Country'},
+];
 function renderProfile(c) {
-  var fields = [
-    { label:'First Name',    key:'First Name' },
-    { label:'Last Name',     key:'Last Name' },
-    { label:'Email',         key:'Email' },
-    { label:'Phone',         key:'Phone Number' },
-    { label:'Instagram',     key:'IG' },
-    { label:'Address',       key:'Street Address' },
-    { label:'City',          key:'City' },
-    { label:'Postal Code',   key:'Postal Code' },
-    { label:'Country',       key:'Country' },
-  ];
-  var grid = document.getElementById('profile-display');
-  grid.innerHTML = '';
-  fields.forEach(function(f) {
-    var val = c ? (c[f.key] || '') : '';
+  var g = document.getElementById('profile-display');
+  g.innerHTML = '';
+  PFIELDS.forEach(function(f) {
+    var v   = c ? (c[f.k] || '') : '';
     var div = document.createElement('div');
-    div.className = 'pfield';
-    div.innerHTML =
-      '<label>' + f.label + '</label>' +
-      '<div class="pval' + (val ? '' : ' empty') + '">' + (val || 'Not set') + '</div>';
-    grid.appendChild(div);
+    div.className = 'pf';
+    div.innerHTML = '<div class="pf-lbl">' + f.l + '</div><div class="pf-val' + (v?'':' empty') + '">' + (v || 'Not set') + '</div>';
+    g.appendChild(div);
   });
 }
-
-// ── Prefill edit form ─────────────────────────────────────────────
-function prefillEdit(c) {
-  var map = {
-    'ef-fname':'First Name','ef-lname':'Last Name',
-    'ef-phone':'Phone Number','ef-ig':'IG',
-    'ef-street':'Street Address','ef-city':'City',
-    'ef-postal':'Postal Code','ef-country':'Country',
-  };
-  Object.keys(map).forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el && c && c[map[id]]) el.value = c[map[id]];
-  });
+function prefill(c) {
+  var m = {'ef-fn':'First Name','ef-ln':'Last Name','ef-phone':'Phone Number','ef-ig':'IG','ef-street':'Street Address','ef-city':'City','ef-postal':'Postal Code','ef-country':'Country'};
+  Object.keys(m).forEach(function(id){ var el=document.getElementById(id); if(el && c && c[m[id]]) el.value=c[m[id]]; });
 }
 
-// ── Toggle edit form ──────────────────────────────────────────────
 function toggleEdit() {
   var f = document.getElementById('edit-form');
   f.style.display = f.style.display === 'block' ? 'none' : 'block';
+  if (f.style.display === 'block') {
+    f.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
 }
 
-// ── Save profile ──────────────────────────────────────────────────
 function saveProfile() {
-  if (!window._dash) return;
-  var fname = document.getElementById('ef-fname').value.trim();
+  var fname = document.getElementById('ef-fn').value.trim();
   if (!fname) { toast('First name is required.', 'err'); return; }
-
   var data = {
-    'First Name':     fname,
-    'Last Name':      document.getElementById('ef-lname').value.trim(),
-    'Email':          window._dash.currentUser ? window._dash.currentUser.email : '',
-    'Phone Number':   document.getElementById('ef-phone').value.trim(),
-    'IG':             document.getElementById('ef-ig').value.trim(),
+    'First Name': fname,
+    'Last Name':  document.getElementById('ef-ln').value.trim(),
+    'Email':      window._d.currentUser ? window._d.currentUser.email : '',
+    'Phone Number': document.getElementById('ef-phone').value.trim(),
+    'IG':           document.getElementById('ef-ig').value.trim(),
     'Street Address': document.getElementById('ef-street').value.trim(),
-    'City':           document.getElementById('ef-city').value.trim(),
-    'Postal Code':    document.getElementById('ef-postal').value.trim(),
-    'Country':        document.getElementById('ef-country').value.trim(),
+    'City':         document.getElementById('ef-city').value.trim(),
+    'Postal Code':  document.getElementById('ef-postal').value.trim(),
+    'Country':      document.getElementById('ef-country').value.trim(),
+    '_forceUpdate': true,
   };
-
-  var btn  = document.getElementById('btn-save-profile');
-  var lbl  = document.getElementById('save-profile-lbl');
-  var spin = document.getElementById('save-profile-spin');
-  btn.disabled = true; lbl.style.display = 'none'; spin.style.display = 'block';
-
-  window._dash.req('saveClient', { data: data })
+  var btn=document.getElementById('btn-save-p'), lbl=document.getElementById('save-lbl'), sp=document.getElementById('save-spin');
+  btn.disabled=true; lbl.style.display='none'; sp.style.display='block';
+  window._d.req('saveClient', { data: data })
     .then(function(res) {
-      if (res && res.success) {
-        toast('Profile saved!');
-        renderProfile(data);
-        document.getElementById('edit-form').style.display = 'none';
-      } else {
-        toast('Could not save. Try again.', 'err');
-      }
+      if (res && res.success) { toast('Profile saved'); renderProfile(data); document.getElementById('edit-form').style.display='none'; }
+      else { toast('Could not save — try again', 'err'); }
     })
-    .catch(function() { toast('Network error.', 'err'); })
-    .finally(function() {
-      btn.disabled = false; lbl.style.display = ''; spin.style.display = 'none';
-    });
-}
-
-// ── Date formatter ────────────────────────────────────────────────
-function fmtDate(str) {
-  if (!str) return '—';
-  try {
-    var d = new Date(str);
-    if (isNaN(d)) return str;
-    return d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
-  } catch(e) { return str; }
+    .catch(function(){ toast('Network error', 'err'); })
+    .finally(function(){ btn.disabled=false; lbl.style.display=''; sp.style.display='none'; });
 }
 </script>
-
 </body>
 </html>
