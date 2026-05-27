@@ -8,8 +8,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
 
-<!-- Firebase initialised at end of body -->
-
 <style>
 /* ── Reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1225,7 +1223,7 @@ async function loadDashboard(user) {
 
 async function loadMeasurementRecords(email) {
   try {
-    const data = await window.MT.sheetsRequest('getMeasurements', { email });
+    const data = await sheetsReq('getMeasurements', { email });
     const tbody  = document.getElementById('records-tbody');
     const table  = document.getElementById('records-table');
     const empty  = document.getElementById('records-empty');
@@ -1267,7 +1265,7 @@ async function loadMeasurementRecords(email) {
 
 async function loadOrderHistory(email) {
   try {
-    const data = await window.MT.sheetsRequest('getOrders', { email });
+    const data = await sheetsReq('getOrders', { email });
     const list    = document.getElementById('orders-list');
     const empty   = document.getElementById('orders-empty');
     const loading = document.getElementById('orders-loading');
@@ -1396,7 +1394,7 @@ function startForm(filter) {
   if (dt) dt.value = new Date().toLocaleString();
 
   // Auto-fill email
-  const user = window.MT.currentUser;
+  const user = null;
   if (user) {
     const ef = document.getElementById('f-email');
     if (ef) ef.value = user.email;
@@ -1436,7 +1434,7 @@ async function handleFormSubmit(e) {
   const form = document.getElementById('mform');
   if (!form.checkValidity()) { form.reportValidity(); return; }
 
-  const user = window.MT.currentUser;
+  const user = null;
   if (!user) { toast('You must be signed in to save.', 'error'); return; }
 
   // Collect all form values
@@ -1449,7 +1447,7 @@ async function handleFormSubmit(e) {
   document.getElementById('btn-save').disabled          = true;
 
   try {
-    const res = await window.MT.sheetsRequest('saveMeasurement', { data });
+    const res = await sheetsReq('saveMeasurement', { data });
     if (res.success) {
       toast('Measurements saved successfully!');
       showScreen('dashboard');
@@ -1468,7 +1466,7 @@ async function handleFormSubmit(e) {
 
 function resetMeasurementForm() {
   document.getElementById('mform').reset();
-  const user = window.MT.currentUser;
+  const user = null;
   if (user) document.getElementById('f-email').value = user.email;
 }
 
@@ -1560,106 +1558,34 @@ function output(data) {
 </div>
 
 
-<!-- Firebase SDKs — loaded at end of body so DOM functions are available -->
-<script type="module">
-import { initializeApp }                        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-  getAuth, onAuthStateChanged, signOut,
-  createUserWithEmailAndPassword, signInWithEmailAndPassword,
-  GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
-  sendPasswordResetEmail, updateProfile
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-const firebaseConfig = {
-  apiKey:            "AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY",
-  authDomain:        "tailortech-accounts.firebaseapp.com",
-  projectId:         "tailortech-accounts",
-  storageBucket:     "tailortech-accounts.firebasestorage.app",
-  messagingSenderId: "137614433833",
-  appId:             "1:137614433833:web:c78ea40b0d04ba89f3c638",
-  measurementId:     "G-QZ7KCWCQXN"
-};
 
-const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbwGVL3IU4aUYkDJzQhce9s86uaJ_V7xJMZzRmkjpa06rfY50v62y8empi4_ivvQ8eMj/exec";
 
-const _app  = initializeApp(firebaseConfig);
-const _auth = getAuth(_app);
-const _googleProvider = new GoogleAuthProvider();
-
-// Expose to non-module scripts via window.MT
-window.MT = {
-  auth:                          _auth,
-  googleProvider:                _googleProvider,
-  signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  sendPasswordResetEmail,
-  signOut,
-  updateProfile,
-  SHEETS_API_URL,
-  currentUser: null,
-
-  async sheetsRequest(action, payload) {
-    payload = payload || {};
-    const user  = _auth.currentUser;
-    const token = user ? await user.getIdToken() : null;
-    const res   = await fetch(SHEETS_API_URL, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ action, token, email: user ? user.email : null, ...payload }),
-    });
-    return res.json();
-  }
-};
-
-// Auth state — fires after DOM + non-module scripts are all ready
-// Handle redirect result when Google sends user back to the page
-getRedirectResult(_auth).then(function(result) {
-  // result is null if not a redirect login — that's fine, do nothing
-  if (result && result.user) {
-    // onAuthStateChanged will handle showing the dashboard
-  }
-}).catch(function(e) {
-  if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') {
-    var errEl = document.getElementById('auth-error');
-    if (errEl) {
-      errEl.textContent = friendlyFirebaseError(e.code);
-      errEl.style.display = 'block';
+<script>
+// ── Read email from URL param ──────────────────────────────────────
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var email  = params.get('email');
+  if (email) {
+    var el = document.getElementById('f-email');
+    if (el) {
+      el.value    = decodeURIComponent(email);
+      el.readOnly = true;
+      el.style.opacity = '0.65';
+      el.style.cursor  = 'not-allowed';
     }
   }
-});
+})();
 
-onAuthStateChanged(_auth, function(user) {
-  window.MT.currentUser = user;
-  // Clear any stale error messages whenever auth state changes
-  var errEl = document.getElementById('auth-error');
-  var sucEl = document.getElementById('auth-success');
-  if (errEl) errEl.style.display = 'none';
-  if (sucEl) sucEl.style.display = 'none';
-
-  if (user) {
-    showScreen("dashboard");
-    loadDashboard(user);
-  } else {
-    showScreen("login");
-  }
-});
-
-// Friendly error messages available inside module scope too
-function friendlyFirebaseError(code) {
-  var map = {
-    'auth/user-not-found':        'No account found with this email.',
-    'auth/wrong-password':        'Incorrect password. Try again.',
-    'auth/email-already-in-use':  'An account with this email already exists.',
-    'auth/invalid-email':         'Please enter a valid email address.',
-    'auth/weak-password':         'Password must be at least 6 characters.',
-    'auth/too-many-requests':     'Too many attempts. Please wait and try again.',
-    'auth/popup-closed-by-user':  '',
-    'auth/network-request-failed':'Network error. Check your connection.',
-  };
-  return map[code] || 'Something went wrong. Please try again.';
+// ── Standalone sheets request (no Firebase auth needed) ────────────
+var SHEETS_API = 'https://script.google.com/macros/s/AKfycbwGVL3IU4aUYkDJzQhce9s86uaJ_V7xJMZzRmkjpa06rfY50v62y8empi4_ivvQ8eMj/exec';
+function sheetsReq(action, payload) {
+  payload = payload || {};
+  return fetch(SHEETS_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(Object.assign({ action: action }, payload))
+  }).then(function(r) { return r.json(); });
 }
 </script>
 
