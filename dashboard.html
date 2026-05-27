@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TailorTech — My Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: #0c0c10;
+  color: #f0ede8;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select { font-family: inherit; }
+button { cursor: pointer; }
+
+:root {
+  --bg:      #0c0c10;
+  --bg2:     #16161e;
+  --bg3:     #1e1e28;
+  --bg4:     #252530;
+  --border:  rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text:    #f0ede8;
+  --text2:   #9d9a95;
+  --text3:   #4a4845;
+  --gold:    #c9a84c;
+  --gold2:   #e8c97a;
+  --green:   #34d399;
+  --red:     #f87171;
+  --amber:   #fbbf24;
+  --grad:    linear-gradient(135deg, #c9a84c 0%, #e8c97a 50%, #c9a84c 100%);
+  --grad-b:  linear-gradient(135deg, #4f8aff 0%, #a78bfa 100%);
+  --r:       14px;
+  --r2:      20px;
+}
+
+/* ── Nav ── */
+.topnav {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 1.5rem;
+  position: sticky; top: 0; z-index: 100;
+}
+.topnav-brand { display: flex; align-items: center; gap: 10px; }
+.topnav-logo {
+  width: 34px; height: 34px;
+  background: var(--bg3);
+  border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+}
+.topnav-logo svg { color: var(--gold); }
+.topnav-name {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.0625rem;
+  background: var(--grad); -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent; background-clip: text;
+}
+.topnav-right { display: flex; align-items: center; gap: .75rem; }
+.nav-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--grad);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .9375rem; font-weight: 700; color: #1a1200;
+  overflow: hidden; flex-shrink: 0; cursor: pointer;
+}
+.nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.btn-nav {
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--text2); border-radius: 8px;
+  padding: .375rem .875rem; font-size: .8125rem;
+  transition: all .15s;
+}
+.btn-nav:hover { color: var(--text); }
+
+/* ── Loading screen ── */
+#loading-screen {
+  min-height: calc(100vh - 64px);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 1rem;
+}
+.loader {
+  width: 36px; height: 36px;
+  border: 2px solid var(--border2);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: .875rem; color: var(--text3); }
+
+/* ── Main dashboard ── */
+#dash-main { display: none; }
+.dash { max-width: 1060px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+
+/* Welcome bar */
+.dash-welcome { margin-bottom: 2.5rem; }
+.dash-welcome h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 2rem; color: var(--text);
+  letter-spacing: -.02em; margin-bottom: .25rem;
+}
+.dash-welcome p { color: var(--text3); font-size: .9375rem; }
+
+/* Stats row */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem; margin-bottom: 2.5rem;
+}
+.stat-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 1.25rem 1.25rem 1rem;
+}
+.stat-label {
+  font-size: .6875rem; font-weight: 600; color: var(--text3);
+  text-transform: uppercase; letter-spacing: .08em; margin-bottom: .5rem;
+}
+.stat-val {
+  font-size: 1.75rem; font-weight: 700; color: var(--text);
+  font-variant-numeric: tabular-nums; line-height: 1;
+}
+.stat-sub { font-size: .75rem; color: var(--text3); margin-top: .3rem; }
+
+/* Section label */
+.sec-label {
+  font-size: .6875rem; font-weight: 600; color: var(--text3);
+  text-transform: uppercase; letter-spacing: .08em;
+  margin-bottom: 1rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+/* Feature cards */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem; margin-bottom: 2.5rem;
+}
+.feature-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--r2); padding: 1.75rem 1.625rem;
+  text-decoration: none; color: inherit;
+  display: flex; flex-direction: column;
+  transition: border-color .2s, box-shadow .2s, transform .15s;
+  position: relative; overflow: hidden; cursor: pointer;
+}
+.feature-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--grad); opacity: 0; transition: opacity .2s;
+}
+.feature-card:hover {
+  border-color: rgba(201,168,76,.3);
+  box-shadow: 0 8px 32px rgba(0,0,0,.35);
+  transform: translateY(-2px);
+}
+.feature-card:hover::before { opacity: 1; }
+.feature-icon {
+  width: 46px; height: 46px; border-radius: 12px;
+  background: var(--bg3); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 1.125rem; color: var(--gold); flex-shrink: 0;
+}
+.feature-title { font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: .375rem; }
+.feature-desc  { font-size: .8125rem; color: var(--text3); line-height: 1.55; flex: 1; }
+.feature-cta {
+  margin-top: 1.25rem; font-size: .8125rem; font-weight: 500;
+  color: var(--gold); display: flex; align-items: center; gap: 4px;
+}
+
+/* Orders table */
+.table-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--r2); overflow: hidden; margin-bottom: 2.5rem;
+}
+.table-card table {
+  width: 100%; border-collapse: collapse;
+}
+.table-card th {
+  text-align: left; padding: .875rem 1.25rem;
+  font-size: .6875rem; font-weight: 600; color: var(--text3);
+  text-transform: uppercase; letter-spacing: .07em;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+.table-card td {
+  padding: .9375rem 1.25rem;
+  font-size: .875rem; color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+.table-card tr:last-child td { border-bottom: none; }
+.table-card tr:hover td { background: rgba(255,255,255,.02); }
+.status-badge {
+  display: inline-block; padding: .2rem .625rem;
+  border-radius: 20px; font-size: .75rem; font-weight: 500;
+}
+.s-new       { background: rgba(79,138,255,.12); color: #4f8aff;  border: 1px solid rgba(79,138,255,.25); }
+.s-progress  { background: rgba(251,191,36,.1);  color: #fbbf24;  border: 1px solid rgba(251,191,36,.25); }
+.s-complete  { background: rgba(52,211,153,.1);  color: #34d399;  border: 1px solid rgba(52,211,153,.25); }
+.s-cancelled { background: rgba(248,113,113,.1); color: #f87171;  border: 1px solid rgba(248,113,113,.25); }
+
+/* Measurements table */
+.meas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: .75rem;
+}
+.meas-chip {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 10px; padding: .75rem;
+}
+.meas-chip-label {
+  font-size: .6875rem; color: var(--text3);
+  text-transform: uppercase; letter-spacing: .05em; margin-bottom: .25rem;
+}
+.meas-chip-val { font-size: 1rem; font-weight: 600; color: var(--text); }
+.meas-chip-unit { font-size: .75rem; color: var(--text3); }
+
+/* Profile section */
+.profile-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.125rem; padding: 1.5rem;
+}
+.pfield label {
+  display: block; font-size: .6875rem; font-weight: 600;
+  color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .3rem;
+}
+.pfield .pval { font-size: .9375rem; color: var(--text); }
+.pfield .pval.empty { color: var(--text3); font-style: italic; font-size: .875rem; }
+
+/* Edit profile form */
+.edit-form {
+  display: none; padding: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+.edit-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 1rem; margin-bottom: 1.25rem;
+}
+.efield { display: flex; flex-direction: column; }
+.efield label {
+  font-size: .6875rem; font-weight: 600; color: var(--text2);
+  text-transform: uppercase; letter-spacing: .05em; margin-bottom: .35rem;
+}
+.efield input {
+  width: 100%; padding: .625rem .875rem;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 9px; color: var(--text);
+  font-size: .875rem; outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  -webkit-appearance: none;
+}
+.efield input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(201,168,76,.12);
+}
+.efield input::placeholder { color: var(--text3); }
+
+/* Buttons */
+.btn-gold {
+  background: var(--grad); border: none; border-radius: 9px;
+  color: #1a1200; font-size: .875rem; font-weight: 700;
+  padding: .625rem 1.375rem;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: opacity .15s; box-shadow: 0 4px 14px rgba(201,168,76,.2);
+}
+.btn-gold:hover { opacity: .9; }
+.btn-ghost {
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--text2); border-radius: 9px;
+  padding: .625rem 1.125rem; font-size: .875rem;
+  transition: all .15s;
+}
+.btn-ghost:hover { color: var(--text); }
+.btn-row { display: flex; gap: .75rem; flex-wrap: wrap; }
+
+/* Card header */
+.card-header {
+  padding: 1.125rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-header-title {
+  font-size: .6875rem; font-weight: 600; color: var(--text3);
+  text-transform: uppercase; letter-spacing: .08em;
+  display: flex; align-items: center; gap: 7px;
+}
+.card-header-title svg { color: var(--gold); }
+.btn-sm {
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--text2); border-radius: 7px;
+  padding: .3rem .8rem; font-size: .75rem;
+  display: inline-flex; align-items: center; gap: 4px;
+  transition: all .15s;
+}
+.btn-sm:hover { color: var(--gold); border-color: rgba(201,168,76,.3); }
+
+/* Empty state */
+.empty-state {
+  padding: 3rem 1.5rem; text-align: center; color: var(--text3);
+}
+.empty-state svg { display: block; margin: 0 auto 1rem; opacity: .2; }
+.empty-state p { font-size: .9375rem; margin-bottom: 1.25rem; }
+
+/* Toast */
+#toast {
+  position: fixed; top: 1.25rem; right: 1.25rem; z-index: 9999;
+  padding: .75rem 1.125rem; border-radius: 10px;
+  font-size: .875rem; font-weight: 500;
+  display: flex; align-items: center; gap: 8px;
+  opacity: 0; transform: translateX(1.5rem);
+  transition: opacity .25s, transform .25s; pointer-events: none;
+}
+#toast.t-ok  { background: rgba(52,211,153,.12); border: 1px solid rgba(52,211,153,.25); color: var(--green); }
+#toast.t-err { background: rgba(248,113,113,.1);  border: 1px solid rgba(248,113,113,.25); color: var(--red); }
+#toast.show  { opacity: 1; transform: none; }
+
+/* Spinner */
+.spin-sm {
+  width: 14px; height: 14px;
+  border: 1.5px solid rgba(0,0,0,.2);
+  border-top-color: #1a1200;
+  border-radius: 50%;
+  animation: spin .65s linear infinite;
+  display: none; flex-shrink: 0;
+}
+
+@media(max-width:600px){
+  .dash { padding: 1.5rem 1rem 4rem; }
+  .table-card th:nth-child(3), .table-card td:nth-child(3),
+  .table-card th:nth-child(4), .table-card td:nth-child(4) { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- ── Nav ── -->
+<nav class="topnav">
+  <div class="topnav-brand">
+    <div class="topnav-logo">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+        <path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.57a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.57a2 2 0 00-1.34-2.23z"/>
+      </svg>
+    </div>
+    <span class="topnav-name">TAILORTECH</span>
+  </div>
+  <div class="topnav-right">
+    <div class="nav-avatar" id="nav-avatar"></div>
+    <button class="btn-nav" onclick="doSignOut()">Sign out</button>
+  </div>
+</nav>
+
+<!-- ── Loading ── -->
+<div id="loading-screen">
+  <div class="loader"></div>
+  <span class="loading-text">Loading your dashboard…</span>
+</div>
+
+<!-- ── Dashboard ── -->
+<div id="dash-main">
+  <div class="dash">
+
+    <!-- Welcome -->
+    <div class="dash-welcome">
+      <h2 id="greeting">Welcome back</h2>
+      <p id="greeting-sub"></p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Orders</div>
+        <div class="stat-val" id="stat-orders">—</div>
+        <div class="stat-sub">total orders</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Measurements</div>
+        <div class="stat-val" id="stat-meas">—</div>
+        <div class="stat-sub">sessions saved</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Member since</div>
+        <div class="stat-val" id="stat-since" style="font-size:1rem;padding-top:.3rem">—</div>
+        <div class="stat-sub">client ID: <span id="stat-id" style="color:var(--gold)">—</span></div>
+      </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="sec-label">Quick actions</div>
+    <div class="feature-grid" style="margin-bottom:2.5rem">
+
+      <div class="feature-card" onclick="navigate('configure.html')">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.57a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.57a2 2 0 00-1.34-2.23z"/>
+          </svg>
+        </div>
+        <div class="feature-title">New Order</div>
+        <div class="feature-desc">Configure a new custom garment — choose style, fabric, and all details.</div>
+        <div class="feature-cta">Start configurator <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+
+      <div class="feature-card" onclick="navigate('measurements.html')">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <path d="M2 12h20M2 7l2 5-2 5M22 7l-2 5 2 5"/>
+          </svg>
+        </div>
+        <div class="feature-title">My Measurements</div>
+        <div class="feature-desc">View and update your body measurements for a perfect fit every time.</div>
+        <div class="feature-cta">View measurements <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+
+      <div class="feature-card" onclick="scrollTo('#sec-orders')">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
+          </svg>
+        </div>
+        <div class="feature-title">My Wardrobe</div>
+        <div class="feature-desc">Track all your garment orders — status, progress, and delivery dates.</div>
+        <div class="feature-cta">View orders <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </div>
+
+    </div>
+
+    <!-- Orders section -->
+    <div id="sec-orders">
+      <div class="sec-label">
+        My Wardrobe — Order History
+        <span id="orders-count" style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0;font-size:.8125rem"></span>
+      </div>
+      <div class="table-card" id="orders-card">
+        <div id="orders-loading" class="empty-state">
+          <div class="loader" style="margin:0 auto 1rem"></div>
+          <p>Loading your orders…</p>
+        </div>
+        <table id="orders-table" style="display:none">
+          <thead>
+            <tr>
+              <th>Order #</th>
+              <th>Garment</th>
+              <th>Created</th>
+              <th>Price</th>
+              <th>Status</th>
+              <th>Deadline</th>
+            </tr>
+          </thead>
+          <tbody id="orders-tbody"></tbody>
+        </table>
+        <div id="orders-empty" class="empty-state" style="display:none">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/>
+          </svg>
+          <p>No orders yet.</p>
+          <button class="btn-gold" onclick="navigate('configure.html')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Start your first order
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Latest measurements -->
+    <div class="sec-label" style="margin-bottom:1rem">
+      Latest Measurements
+      <button class="btn-sm" onclick="navigate('measurements.html')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Update
+      </button>
+    </div>
+    <div class="table-card" style="margin-bottom:2.5rem">
+      <div id="meas-loading" class="empty-state" style="padding:2rem">
+        <div class="loader" style="margin:0 auto"></div>
+      </div>
+      <div id="meas-chips" class="meas-grid" style="display:none;padding:1.25rem"></div>
+      <div id="meas-empty" class="empty-state" style="display:none">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M2 12h20M2 7l2 5-2 5M22 7l-2 5 2 5"/>
+        </svg>
+        <p>No measurements saved yet.</p>
+        <button class="btn-gold" onclick="navigate('measurements.html')">Add measurements</button>
+      </div>
+    </div>
+
+    <!-- Profile section -->
+    <div class="sec-label" style="margin-bottom:1rem">
+      My Profile
+      <button class="btn-sm" id="btn-edit-profile" onclick="toggleEdit()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Edit
+      </button>
+    </div>
+    <div class="table-card">
+      <!-- Display -->
+      <div class="profile-grid" id="profile-display"></div>
+      <!-- Edit form -->
+      <div class="edit-form" id="edit-form">
+        <div class="edit-grid">
+          <div class="efield"><label>First Name *</label><input type="text" id="ef-fname" placeholder="Jane"></div>
+          <div class="efield"><label>Last Name</label><input type="text" id="ef-lname" placeholder="Doe"></div>
+          <div class="efield"><label>Phone Number</label><input type="tel" id="ef-phone" placeholder="+1 234 567 8900"></div>
+          <div class="efield"><label>Instagram</label><input type="text" id="ef-ig" placeholder="@yourusername"></div>
+          <div class="efield"><label>Street Address</label><input type="text" id="ef-street" placeholder="123 Main St"></div>
+          <div class="efield"><label>City</label><input type="text" id="ef-city" placeholder="London"></div>
+          <div class="efield"><label>Postal Code</label><input type="text" id="ef-postal" placeholder="SW1A 1AA"></div>
+          <div class="efield"><label>Country</label><input type="text" id="ef-country" placeholder="United Kingdom"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn-gold" id="btn-save-profile" onclick="saveProfile()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span id="save-profile-lbl">Save Details</span>
+            <div class="spin-sm" id="save-profile-spin"></div>
+          </button>
+          <button class="btn-ghost" onclick="toggleEdit()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Firebase module ── -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY",
+  authDomain:        "tailortech-accounts.firebaseapp.com",
+  projectId:         "tailortech-accounts",
+  storageBucket:     "tailortech-accounts.firebasestorage.app",
+  messagingSenderId: "137614433833",
+  appId:             "1:137614433833:web:c78ea40b0d04ba89f3c638",
+  measurementId:     "G-QZ7KCWCQXN"
+};
+
+const SHEETS_API = "https://script.google.com/macros/s/AKfycbwGVL3IU4aUYkDJzQhce9s86uaJ_V7xJMZzRmkjpa06rfY50v62y8empi4_ivvQ8eMj/exec";
+const BASE_URL   = "https://toom-design.github.io/tailortech/";
+
+const _app  = initializeApp(firebaseConfig);
+const _auth = getAuth(_app);
+
+window._dash = {
+  auth: _auth,
+  signOut,
+  SHEETS_API,
+  BASE_URL,
+  currentUser: null,
+  async req(action, payload) {
+    payload = payload || {};
+    const user  = _auth.currentUser;
+    const token = user ? await user.getIdToken() : null;
+    const res   = await fetch(SHEETS_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, token, email: user ? user.email : null, ...payload }),
+    });
+    return res.json();
+  }
+};
+
+onAuthStateChanged(_auth, function(user) {
+  window._dash.currentUser = user;
+  if (user) {
+    initDashboard(user);
+  } else {
+    // Not logged in — redirect to sign in page
+    window.location.href = BASE_URL + 'index.html';
+  }
+});
+</script>
+
+<!-- ── Main script ── -->
+<script>
+'use strict';
+
+var BASE = 'https://toom-design.github.io/tailortech/';
+var _clientData = null;
+
+// ── Navigation ────────────────────────────────────────────────────
+function navigate(page) {
+  window.location.href = BASE + page;
+}
+function scrollTo(id) {
+  var el = document.querySelector(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ── Toast ─────────────────────────────────────────────────────────
+function toast(msg, type) {
+  type = type || 'ok';
+  var t = document.getElementById('toast');
+  t.className = 't-' + type;
+  t.innerHTML = (type === 'ok'
+    ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>'
+    : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+  ) + ' ' + msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3500);
+}
+
+// ── Sign out ──────────────────────────────────────────────────────
+function doSignOut() {
+  if (!window._dash) return;
+  window._dash.signOut(window._dash.auth).then(function() {
+    window.location.href = BASE + 'index.html';
+  });
+}
+
+// ── Init dashboard after login ────────────────────────────────────
+function initDashboard(user) {
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('dash-main').style.display      = 'block';
+
+  // Avatar
+  var av = document.getElementById('nav-avatar');
+  if (user.photoURL) {
+    av.innerHTML = '<img src="' + user.photoURL + '" alt="">';
+  } else {
+    av.textContent = (user.displayName || user.email || '?')[0].toUpperCase();
+  }
+
+  // Greeting
+  var name = user.displayName ? user.displayName.split(' ')[0] : 'there';
+  document.getElementById('greeting').textContent = 'Welcome back, ' + name;
+  document.getElementById('greeting-sub').textContent = user.email;
+
+  // Load all data
+  loadOrders(user.email);
+  loadMeasurements(user.email);
+  loadProfile(user.email);
+}
+
+// ── Load orders ───────────────────────────────────────────────────
+function loadOrders(email) {
+  if (!window._dash) return;
+  window._dash.req('getOrders').then(function(res) {
+    document.getElementById('orders-loading').style.display = 'none';
+    if (!res.success || !res.orders || res.orders.length === 0) {
+      document.getElementById('orders-empty').style.display = 'block';
+      document.getElementById('stat-orders').textContent = '0';
+      document.getElementById('orders-count').textContent = '0 orders';
+      return;
+    }
+    var orders = res.orders;
+    document.getElementById('stat-orders').textContent = orders.length;
+    document.getElementById('orders-count').textContent = orders.length + ' order' + (orders.length !== 1 ? 's' : '');
+
+    var tbody = document.getElementById('orders-tbody');
+    tbody.innerHTML = '';
+    orders.forEach(function(o) {
+      var status = (o['Status'] || o['status'] || 'New').trim();
+      var cls = { 'New':'s-new','In Progress':'s-progress','Complete':'s-complete','Completed':'s-complete','Cancelled':'s-cancelled','Canceled':'s-cancelled' }[status] || 's-new';
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + (o['Order Number'] || '—') + '</td>' +
+        '<td>' + (o['garment'] || o['GARMENT'] || '—') + '</td>' +
+        '<td>' + fmtDate(o['Created At'] || o['Created at'] || '') + '</td>' +
+        '<td>' + (o['PRICE'] ? o['PRICE'] + ' €' : '—') + '</td>' +
+        '<td><span class="status-badge ' + cls + '">' + status + '</span></td>' +
+        '<td>' + fmtDate(o['deadline'] || o['Deadline'] || '') + '</td>';
+      tbody.appendChild(tr);
+    });
+    document.getElementById('orders-table').style.display = '';
+  }).catch(function() {
+    document.getElementById('orders-loading').style.display = 'none';
+    document.getElementById('orders-empty').style.display = 'block';
+  });
+}
+
+// ── Load measurements ─────────────────────────────────────────────
+function loadMeasurements(email) {
+  if (!window._dash) return;
+  window._dash.req('getMeasurements').then(function(res) {
+    document.getElementById('meas-loading').style.display = 'none';
+    if (!res.success || !res.records || res.records.length === 0) {
+      document.getElementById('meas-empty').style.display = 'block';
+      document.getElementById('stat-meas').textContent = '0';
+      return;
+    }
+    document.getElementById('stat-meas').textContent = res.records.length;
+    var latest = res.records[0];
+    var chips  = document.getElementById('meas-chips');
+    chips.innerHTML = '';
+
+    // Key measurements to highlight
+    var highlight = [
+      { key:'height',    label:'Height',    unit:'cm' },
+      { key:'weight',    label:'Weight',    unit:'kg' },
+      { key:'bustGirth', label:'Bust girth',unit:'cm' },
+      { key:'waistGirth',label:'Waist girth',unit:'cm'},
+      { key:'hipGirth',  label:'Hip girth', unit:'cm' },
+      { key:'outerArmLength',label:'Arm length',unit:'cm'},
+      { key:'shoulderLength',label:'Shoulder',unit:'cm'},
+      { key:'outsideLegLength',label:'Leg length',unit:'cm'},
+    ];
+    var shown = 0;
+    highlight.forEach(function(h) {
+      if (latest[h.key] && latest[h.key] !== '0' && latest[h.key] !== '') {
+        var div = document.createElement('div');
+        div.className = 'meas-chip';
+        div.innerHTML =
+          '<div class="meas-chip-label">' + h.label + '</div>' +
+          '<div class="meas-chip-val">' + parseFloat(latest[h.key]).toFixed(1) +
+          ' <span class="meas-chip-unit">' + h.unit + '</span></div>';
+        chips.appendChild(div);
+        shown++;
+      }
+    });
+    if (shown === 0) {
+      document.getElementById('meas-empty').style.display = 'block';
+    } else {
+      chips.style.display = 'grid';
+    }
+  }).catch(function() {
+    document.getElementById('meas-loading').style.display = 'none';
+    document.getElementById('meas-empty').style.display = 'block';
+  });
+}
+
+// ── Load profile ──────────────────────────────────────────────────
+function loadProfile(email) {
+  if (!window._dash) return;
+  window._dash.req('getClient').then(function(res) {
+    if (res && res.success && res.client) {
+      _clientData = res.client;
+      renderProfile(res.client);
+      prefillEdit(res.client);
+      // Stats
+      document.getElementById('stat-since').textContent = fmtDate(res.client['Created at'] || '');
+      document.getElementById('stat-id').textContent    = res.client['Person ID'] || '—';
+    } else {
+      renderProfile(null);
+    }
+  }).catch(function() { renderProfile(null); });
+}
+
+// ── Render profile display ────────────────────────────────────────
+function renderProfile(c) {
+  var fields = [
+    { label:'First Name',    key:'First Name' },
+    { label:'Last Name',     key:'Last Name' },
+    { label:'Email',         key:'Email' },
+    { label:'Phone',         key:'Phone Number' },
+    { label:'Instagram',     key:'IG' },
+    { label:'Address',       key:'Street Address' },
+    { label:'City',          key:'City' },
+    { label:'Postal Code',   key:'Postal Code' },
+    { label:'Country',       key:'Country' },
+  ];
+  var grid = document.getElementById('profile-display');
+  grid.innerHTML = '';
+  fields.forEach(function(f) {
+    var val = c ? (c[f.key] || '') : '';
+    var div = document.createElement('div');
+    div.className = 'pfield';
+    div.innerHTML =
+      '<label>' + f.label + '</label>' +
+      '<div class="pval' + (val ? '' : ' empty') + '">' + (val || 'Not set') + '</div>';
+    grid.appendChild(div);
+  });
+}
+
+// ── Prefill edit form ─────────────────────────────────────────────
+function prefillEdit(c) {
+  var map = {
+    'ef-fname':'First Name','ef-lname':'Last Name',
+    'ef-phone':'Phone Number','ef-ig':'IG',
+    'ef-street':'Street Address','ef-city':'City',
+    'ef-postal':'Postal Code','ef-country':'Country',
+  };
+  Object.keys(map).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && c && c[map[id]]) el.value = c[map[id]];
+  });
+}
+
+// ── Toggle edit form ──────────────────────────────────────────────
+function toggleEdit() {
+  var f = document.getElementById('edit-form');
+  f.style.display = f.style.display === 'block' ? 'none' : 'block';
+}
+
+// ── Save profile ──────────────────────────────────────────────────
+function saveProfile() {
+  if (!window._dash) return;
+  var fname = document.getElementById('ef-fname').value.trim();
+  if (!fname) { toast('First name is required.', 'err'); return; }
+
+  var data = {
+    'First Name':     fname,
+    'Last Name':      document.getElementById('ef-lname').value.trim(),
+    'Email':          window._dash.currentUser ? window._dash.currentUser.email : '',
+    'Phone Number':   document.getElementById('ef-phone').value.trim(),
+    'IG':             document.getElementById('ef-ig').value.trim(),
+    'Street Address': document.getElementById('ef-street').value.trim(),
+    'City':           document.getElementById('ef-city').value.trim(),
+    'Postal Code':    document.getElementById('ef-postal').value.trim(),
+    'Country':        document.getElementById('ef-country').value.trim(),
+  };
+
+  var btn  = document.getElementById('btn-save-profile');
+  var lbl  = document.getElementById('save-profile-lbl');
+  var spin = document.getElementById('save-profile-spin');
+  btn.disabled = true; lbl.style.display = 'none'; spin.style.display = 'block';
+
+  window._dash.req('saveClient', { data: data })
+    .then(function(res) {
+      if (res && res.success) {
+        toast('Profile saved!');
+        renderProfile(data);
+        document.getElementById('edit-form').style.display = 'none';
+      } else {
+        toast('Could not save. Try again.', 'err');
+      }
+    })
+    .catch(function() { toast('Network error.', 'err'); })
+    .finally(function() {
+      btn.disabled = false; lbl.style.display = ''; spin.style.display = 'none';
+    });
+}
+
+// ── Date formatter ────────────────────────────────────────────────
+function fmtDate(str) {
+  if (!str) return '—';
+  try {
+    var d = new Date(str);
+    if (isNaN(d)) return str;
+    return d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+  } catch(e) { return str; }
+}
+</script>
+
+</body>
+</html>

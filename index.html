@@ -678,7 +678,7 @@ const firebaseConfig = {
 const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbwGVL3IU4aUYkDJzQhce9s86uaJ_V7xJMZzRmkjpa06rfY50v62y8empi4_ivvQ8eMj/exec";
 
 // 🔧 Set this to your MeasureTracker measurements page URL once deployed
-const MEASUREMENTS_URL = "YOUR_MEASUREMENTS_PAGE_URL";
+const MEASUREMENTS_URL = "https://toom-design.github.io/tailortech/measurements.html";
 
 const _app      = initializeApp(firebaseConfig);
 const _auth     = getAuth(_app);
@@ -717,7 +717,8 @@ onAuthStateChanged(_auth, function(user) {
   window._fb.currentUser = user;
   clearBanners();
   if (user) {
-    showDashboard(user);
+    // Redirect to dashboard page
+    window.location.href = 'https://toom-design.github.io/tailortech/dashboard.html';
   } else {
     showAuth();
   }

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TailorTech — New Order</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: #0c0c10; color: #f0ede8;
+  min-height: 100vh; -webkit-font-smoothing: antialiased;
+}
+button { cursor: pointer; font-family: inherit; }
+:root {
+  --bg: #0c0c10; --bg2: #16161e; --bg3: #1e1e28;
+  --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+  --text: #f0ede8; --text2: #9d9a95; --text3: #4a4845;
+  --gold: #c9a84c; --gold2: #e8c97a;
+  --grad: linear-gradient(135deg, #c9a84c 0%, #e8c97a 50%, #c9a84c 100%);
+}
+
+/* Nav */
+.topnav {
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+  height: 64px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 1.5rem; position: sticky; top: 0; z-index: 100;
+}
+.topnav-brand { display: flex; align-items: center; gap: 10px; }
+.topnav-logo {
+  width: 34px; height: 34px; background: var(--bg3);
+  border: 1px solid rgba(201,168,76,0.25); border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+}
+.topnav-logo svg { color: var(--gold); }
+.topnav-name {
+  font-family: 'DM Serif Display', serif; font-size: 1.0625rem;
+  background: var(--grad); -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent; background-clip: text;
+}
+.btn-nav {
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--text2); border-radius: 8px;
+  padding: .375rem .875rem; font-size: .8125rem; transition: all .15s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-nav:hover { color: var(--text); }
+
+/* Page */
+.page { max-width: 800px; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+.page-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 2rem; color: var(--text); letter-spacing: -.02em;
+  margin-bottom: .375rem;
+}
+.page-sub { color: var(--text3); font-size: .9375rem; margin-bottom: 3rem; }
+
+/* Garment grid */
+.garment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 1rem;
+}
+.garment-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 18px; padding: 2rem 1.5rem 1.625rem;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: .5rem; cursor: pointer;
+  transition: border-color .2s, box-shadow .2s, transform .15s;
+  position: relative; overflow: hidden;
+}
+.garment-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--grad); opacity: 0; transition: opacity .2s;
+}
+.garment-card:hover {
+  border-color: rgba(201,168,76,.35);
+  box-shadow: 0 8px 32px rgba(0,0,0,.4);
+  transform: translateY(-3px);
+}
+.garment-card:hover::before { opacity: 1; }
+.garment-icon {
+  width: 64px; height: 64px; border-radius: 16px;
+  background: var(--bg3); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: .75rem; color: var(--gold);
+}
+.garment-name { font-size: 1.125rem; font-weight: 600; color: var(--text); }
+.garment-desc { font-size: .8125rem; color: var(--text3); line-height: 1.5; }
+.garment-arrow {
+  margin-top: .875rem; font-size: .8125rem; font-weight: 500;
+  color: var(--gold); display: flex; align-items: center; gap: 4px;
+}
+.coming-soon {
+  position: absolute; top: 12px; right: 12px;
+  font-size: .625rem; font-weight: 600; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--text3);
+  background: var(--bg3); border: 1px solid var(--border);
+  padding: .2rem .5rem; border-radius: 20px;
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-brand">
+    <div class="topnav-logo">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+        <path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.57a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.57a2 2 0 00-1.34-2.23z"/>
+      </svg>
+    </div>
+    <span class="topnav-name">TAILORTECH</span>
+  </div>
+  <button class="btn-nav" onclick="window.location.href='https://toom-design.github.io/tailortech/dashboard.html'">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Dashboard
+  </button>
+</nav>
+
+<div class="page">
+  <h1 class="page-title">New Order</h1>
+  <p class="page-sub">Choose a garment type to begin configuring your custom piece</p>
+
+  <div class="garment-grid">
+
+    <!-- Shirt -->
+    <div class="garment-card" onclick="window.location.href='https://toom-design.github.io/tailortech/shirt.html'">
+      <div class="garment-icon">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.57a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.57a2 2 0 00-1.34-2.23z"/>
+        </svg>
+      </div>
+      <div class="garment-name">Shirt</div>
+      <div class="garment-desc">Dress shirts, casual shirts, oxfords — fully customised collar, cuffs, and fit.</div>
+      <div class="garment-arrow">Configure <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+    </div>
+
+    <!-- Suit -->
+    <div class="garment-card" onclick="showComingSoon('Suit')">
+      <div class="coming-soon">Coming soon</div>
+      <div class="garment-icon">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 7v13h18V7M3 7l4-5h4l1 5M21 7l-4-5h-4l-1 5M12 7v13M9 12h2M13 12h2"/>
+        </svg>
+      </div>
+      <div class="garment-name">Suit</div>
+      <div class="garment-desc">Bespoke suits, blazers, and jackets tailored to your exact measurements.</div>
+      <div class="garment-arrow" style="color:var(--text3)">Coming soon</div>
+    </div>
+
+    <!-- Jacket -->
+    <div class="garment-card" onclick="showComingSoon('Jacket')">
+      <div class="coming-soon">Coming soon</div>
+      <div class="garment-icon">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 2L8 6H4v16h16V6h-4L12 2z"/><path d="M9 6v16M15 6v16"/>
+        </svg>
+      </div>
+      <div class="garment-name">Jacket</div>
+      <div class="garment-desc">Casual jackets, bombers, and outerwear made to your specifications.</div>
+      <div class="garment-arrow" style="color:var(--text3)">Coming soon</div>
+    </div>
+
+    <!-- Hoodie -->
+    <div class="garment-card" onclick="showComingSoon('Hoodie')">
+      <div class="coming-soon">Coming soon</div>
+      <div class="garment-icon">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 2C9 2 6 5 6 5L2 7l2 4 3-1v12h14V10l3 1 2-4-4-2s-3-3-6-3z"/>
+        </svg>
+      </div>
+      <div class="garment-name">Hoodie</div>
+      <div class="garment-desc">Custom hoodies and sweatshirts with your choice of fabric and fit.</div>
+      <div class="garment-arrow" style="color:var(--text3)">Coming soon</div>
+    </div>
+
+    <!-- Trousers -->
+    <div class="garment-card" onclick="showComingSoon('Trousers')">
+      <div class="coming-soon">Coming soon</div>
+      <div class="garment-icon">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M4 3h16v5l-4 13H4V3zM20 3v5l4 13h-8l-4-13V8"/>
+        </svg>
+      </div>
+      <div class="garment-name">Trousers</div>
+      <div class="garment-desc">Tailored trousers, chinos, and dress pants with perfect rise and break.</div>
+      <div class="garment-arrow" style="color:var(--text3)">Coming soon</div>
+    </div>
+
+    <!-- Sweatpants -->
+    <div class="garment-card" onclick="showComingSoon('Sweatpants')">
+      <div class="coming-soon">Coming soon</div>
+      <div class="garment-icon">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M5 3h14l-2 18H7L5 3z"/><path d="M5 3c0 2 3 3 7 3s7-1 7-3"/>
+        </svg>
+      </div>
+      <div class="garment-name">Sweatpants</div>
+      <div class="garment-desc">Comfortable sweatpants with custom waistband, leg, and fabric options.</div>
+      <div class="garment-arrow" style="color:var(--text3)">Coming soon</div>
+    </div>
+
+    <!-- Denim -->
+    <div class="garment-card" onclick="showComingSoon('Denim Trousers')">
+      <div class="coming-soon">Coming soon</div>
+      <div class="garment-icon">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M4 3h16v5l-4 13H4V3zM20 3v5l4 13h-8l-4-13V8"/><path d="M4 8h16"/>
+        </svg>
+      </div>
+      <div class="garment-name">Denim Trousers</div>
+      <div class="garment-desc">Custom denim in any wash, cut, and fit — built for your body.</div>
+      <div class="garment-arrow" style="color:var(--text3)">Coming soon</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function showComingSoon(name) {
+  alert(name + ' configurator coming soon!');
+}
+</script>
+
+</body>
+</html>
