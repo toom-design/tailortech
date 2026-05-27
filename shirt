@@ -259,7 +259,20 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--i
 </style>
 </head>
 <body>
-<div class="app">
+
+<nav style="height:52px;background:#FAFAF8;border-bottom:1px solid rgba(26,25,22,0.10);display:flex;align-items:center;padding:0 24px;gap:14px;position:sticky;top:0;z-index:200;font-family:'Jost',sans-serif;">
+  <a href="https://tailortech.toom.design/" style="font-size:12px;font-weight:600;letter-spacing:0.20em;text-transform:uppercase;color:#1A1916;text-decoration:none;margin-right:auto;">TailorTech</a>
+  <span style="font-size:11px;letter-spacing:0.08em;color:#8A8880;text-transform:uppercase;font-weight:500;">Shirt Configurator</span>
+  <button onclick="window.location.href='https://tailortech.toom.design/configure'" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;padding:7px 16px;border:1px solid rgba(26,25,22,0.20);border-radius:2px;background:transparent;color:#4A4844;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s;" onmouseover="this.style.background='#EBE7DF'" onmouseout="this.style.background='transparent'">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Back
+  </button>
+  <button onclick="window.location.href='https://tailortech.toom.design/dashboard'" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;padding:7px 16px;border:1px solid rgba(26,25,22,0.20);border-radius:2px;background:#1A1916;color:#FAFAF8;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s;" onmouseover="this.style.background='#2d2c29'" onmouseout="this.style.background='#1A1916'">
+    Dashboard
+  </button>
+</nav>
+
+<div class="app" style="min-height:calc(100vh - 52px)">
 
   <!-- ══ LEFT PANEL ══ -->
   <div class="avatar-panel">
@@ -316,7 +329,7 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--i
   <!-- ══ RIGHT PANEL ══ -->
   <div class="config-panel">
 
-    <button class="close-btn" title="Close">
+    <button class="close-btn" onclick="window.location.href='https://tailortech.toom.design/configure'" title="Back to garment selection" title="Close">
       <svg viewBox="0 0 18 18"><line x1="3" y1="3" x2="15" y2="15"/><line x1="15" y1="3" x2="3" y2="15"/></svg>
     </button>
 
@@ -946,7 +959,7 @@ preloadAll();
 
 // ── Google Sheets Integration ──
 // Paste your Apps Script Web App URL here after setup:
-const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyufZIMwIlAVZSt49SvlKPGPdhKVPubP8uibv4V_FBlyKayhWzX2UEQuuKiRr7t48_W/exec';
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwGVL3IU4aUYkDJzQhce9s86uaJ_V7xJMZzRmkjpa06rfY50v62y8empi4_ivvQ8eMj/exec';
 
 function collectConfig() {
   // helpers
@@ -1035,6 +1048,7 @@ async function submitOrder() {
       btn.disabled = false;
       if (response && response.status === 'ok') {
         showFeedback('✓ Configuration saved to Google Sheets', '#4a8a5a');
+        setTimeout(function() { window.location.href = 'https://tailortech.toom.design/dashboard'; }, 2000);
       } else {
         showFeedback('✗ Error: ' + (response?.message || 'unknown'), '#a05050');
       }
