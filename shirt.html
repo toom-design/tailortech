@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shirt Configurator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #F0EDE6;
+  --cream-dark: #E5E1D8;
+  --cream-mid: #EBE7DF;
+  --ink: #1A1916;
+  --ink-mid: #4A4844;
+  --ink-light: #8A8880;
+  --ink-faint: #C0BDB8;
+  --white: #FAFAF8;
+  --border: rgba(26,25,22,0.12);
+  --border-mid: rgba(26,25,22,0.22);
+}
+body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; display: flex; }
+.app { display: flex; width: 100%; min-height: 100vh; }
+
+/* ── LEFT PANEL ── */
+.avatar-panel {
+  flex: 3;
+  background: #ffffff;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  position: sticky; top: 0; height: 100vh;
+}
+
+/* view toggle at top */
+.view-toggle { display: flex; padding: 16px 20px 0; justify-content: center; gap: 0; flex-shrink: 0; }
+.view-btn {
+  font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600;
+  letter-spacing: 0.13em; padding: 8px 28px;
+  border: 1px solid var(--border-mid); background: transparent;
+  color: var(--ink-light); cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+}
+.view-btn:first-child { border-radius: 2px 0 0 2px; border-right: none; }
+.view-btn:last-child  { border-radius: 0 2px 2px 0; }
+.view-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+
+/* stage — fills remaining space */
+.avatar-stage {
+  flex: 1; position: relative;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; background: #ffffff;
+}
+
+/* zoom */
+.zoom-controls { position: absolute; top: 14px; right: 14px; display: flex; flex-direction: column; gap: 4px; z-index: 10; }
+.zoom-btn {
+  width: 28px; height: 28px; border: 1px solid var(--border-mid);
+  background: var(--white); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 15px; color: var(--ink-mid); font-weight: 300; line-height: 1;
+}
+.zoom-btn:hover { background: var(--cream-mid); }
+
+/* layer stack — viewport into which we pan/zoom */
+.stage-viewport {
+  position: relative;
+  width: 100%; height: 100%;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.layer-stack {
+  position: relative;
+  width: 420px; height: 620px;
+  flex-shrink: 0;
+  transform-origin: center center;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.layer-stack .layer { position: absolute; inset: 0; }
+.layer-stack .layer img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+/* loading */
+.loading-overlay {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px; z-index: 20;
+  background: #ffffff; transition: opacity 0.5s;
+}
+.loading-overlay.done { opacity: 0; pointer-events: none; }
+.spinner { width: 22px; height: 22px; border: 2px solid var(--ink-faint); border-top-color: var(--ink); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-overlay span { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-light); font-weight: 500; }
+
+/* front / back toggle bar */
+.view-bar {
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 12px 20px 16px; gap: 0;
+  border-top: 1px solid var(--border);
+  background: #ffffff;
+}
+.view-bar-btn {
+  font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600;
+  letter-spacing: 0.13em; padding: 7px 28px;
+  border: 1px solid var(--border-mid); background: transparent;
+  color: var(--ink-light); cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+}
+.view-bar-btn:first-child { border-radius: 2px 0 0 2px; border-right: none; }
+.view-bar-btn:last-child  { border-radius: 0 2px 2px 0; }
+.view-bar-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+
+/* ── RIGHT PANEL ── */
+.config-panel { flex: 2; background: var(--white); overflow-y: auto; max-height: 100vh; position: relative; }
+
+.close-btn {
+  position: fixed; top: 18px; right: 20px; width: 28px; height: 28px;
+  border: none; background: none; cursor: pointer; color: var(--ink-mid);
+  display: flex; align-items: center; justify-content: center; z-index: 30;
+}
+.close-btn svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 1.5; fill: none; }
+
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  padding: 0 28px; position: sticky; top: 0; background: var(--white); z-index: 20;
+}
+.tab {
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 18px 0; margin-right: 24px;
+  border: none; background: none; color: var(--ink-faint); cursor: pointer;
+  border-bottom: 1.5px solid transparent; margin-bottom: -1px;
+  transition: color 0.2s, border-color 0.2s; white-space: nowrap;
+}
+.tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+
+.config-body { padding: 28px 28px 48px; display: flex; flex-direction: column; }
+.section { padding: 22px 0; border-bottom: 1px solid var(--border); }
+.section:last-child { border-bottom: none; }
+.section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink); margin-bottom: 14px; }
+
+/* pills */
+.pill-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill {
+  font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 400;
+  letter-spacing: 0.03em; padding: 7px 16px;
+  border: 1px solid var(--border-mid); border-radius: 100px;
+  background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s;
+}
+.pill:hover { border-color: var(--ink); color: var(--ink); }
+.pill.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
+
+/* card grids */
+.card-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.card-grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+
+.option-card {
+  border: 1px solid var(--border); border-radius: 6px;
+  background: #ffffff; padding: 10px 6px 8px;
+  cursor: pointer; display: flex; flex-direction: column;
+  align-items: center; gap: 6px; transition: all 0.15s;
+}
+.option-card:hover { border-color: var(--ink-mid); }
+.option-card.selected { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.option-card .thumb { width: 58px; height: 48px; object-fit: contain; display: block; opacity: 0.75; transition: opacity 0.15s; }
+.card-grid-5 .option-card .thumb { width: 44px; height: 44px; }
+.option-card.selected .thumb { opacity: 1; }
+.option-card .cname { font-size: 10px; letter-spacing: 0.04em; color: var(--ink-light); text-align: center; font-weight: 400; }
+.option-card.selected .cname { color: var(--ink); font-weight: 500; }
+
+/* ── MATERIALS ── */
+.sub-label { font-size: 11px; color: var(--ink-light); letter-spacing: 0.04em; margin-bottom: 12px; }
+
+.fabric-search-row { margin-bottom: 12px; }
+.fabric-search {
+  width: 100%; padding: 8px 12px; font-family: 'Jost', sans-serif; font-size: 12px;
+  border: 1px solid var(--border-mid); border-radius: 4px; background: var(--white);
+  color: var(--ink); outline: none; transition: border-color 0.15s;
+}
+.fabric-search:focus { border-color: var(--ink); }
+
+.fabric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+
+.fabric-card {
+  border: 1px solid var(--border); border-radius: 6px; background: #fff;
+  padding: 10px 8px 8px; cursor: pointer; display: flex; flex-direction: column;
+  align-items: center; gap: 5px; transition: all 0.15s;
+}
+.fabric-card:hover { border-color: var(--ink-mid); }
+.fabric-card.selected { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.swatch { width: 48px; height: 40px; border-radius: 3px; flex-shrink: 0; }
+.fname { font-size: 10px; font-weight: 500; color: var(--ink); text-align: center; letter-spacing: 0.02em; line-height: 1.3; }
+.fcode { font-size: 9px; color: var(--ink-faint); letter-spacing: 0.06em; }
+
+/* Button material row */
+.btn-material-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.btn-material {
+  font-family: 'Jost', sans-serif; display: flex; align-items: center; gap: 8px;
+  padding: 10px 18px; border: 1px solid var(--border-mid); border-radius: 6px;
+  background: #fff; cursor: pointer; transition: all 0.15s;
+}
+.btn-material:hover { border-color: var(--ink); }
+.btn-material.selected { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.bm-name { font-size: 13px; font-weight: 500; color: var(--ink); letter-spacing: 0.02em; text-transform: uppercase; }
+.bm-price { font-size: 11px; color: var(--ink-light); letter-spacing: 0.04em; }
+.btn-material.selected .bm-price { color: var(--ink-mid); }
+
+/* Button size row */
+.btn-size-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+.btn-size {
+  font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 500;
+  letter-spacing: 0.04em; padding: 7px 14px;
+  border: 1px solid var(--border-mid); border-radius: 5px;
+  background: #fff; color: var(--ink-mid); cursor: pointer; transition: all 0.15s;
+  min-width: 48px; text-align: center;
+}
+.btn-size:hover { border-color: var(--ink); color: var(--ink); }
+.btn-size.selected { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); color: var(--ink); }
+
+/* Button stitch grid — 3 cols, larger cards */
+.btn-stitch-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.btn-stitch-card {
+  border: 1px solid var(--border); border-radius: 6px; background: var(--cream);
+  padding: 20px 12px 12px; cursor: pointer; display: flex; flex-direction: column;
+  align-items: center; gap: 10px; transition: all 0.15s;
+}
+.btn-stitch-card:hover { border-color: var(--ink-mid); }
+.btn-stitch-card.selected { border-color: var(--ink); background: var(--cream-dark); box-shadow: inset 0 0 0 1px var(--ink); }
+.stitch-icon { width: 64px; height: 64px; background: #fff; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+.btn-stitch-card .cname { font-size: 12px; }
+
+/* Measurements */
+.measure-grid { display: flex; flex-direction: column; gap: 0; }
+.measure-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.measure-row:last-child { border-bottom: none; }
+.measure-row label { font-size: 13px; color: var(--ink-mid); font-weight: 400; letter-spacing: 0.02em; }
+.measure-input-wrap { display: flex; align-items: center; gap: 6px; }
+.measure-input {
+  font-family: 'Jost', sans-serif; font-size: 13px; width: 72px; padding: 6px 10px;
+  border: 1px solid var(--border-mid); border-radius: 4px; text-align: right;
+  background: #fff; color: var(--ink); outline: none; transition: border-color 0.15s;
+}
+.measure-input:focus { border-color: var(--ink); }
+.measure-unit { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.06em; width: 20px; }
+
+/* Submit button */
+.submit-btn {
+  font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  width: 100%; padding: 14px 24px;
+  background: var(--ink); color: var(--white);
+  border: none; border-radius: 3px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: opacity 0.2s;
+}
+.submit-btn:hover { opacity: 0.85; }
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ══ LEFT PANEL ══ -->
+  <div class="avatar-panel">
+
+    <!-- TECHNICAL / 3D toggle -->
+    <div class="view-toggle">
+      <button class="view-btn active" id="btn-technical" onclick="setTechView('technical')">Technical</button>
+      <button class="view-btn" id="btn-3d" onclick="setTechView('3d')">3D</button>
+    </div>
+
+    <!-- STAGE -->
+    <div class="avatar-stage">
+      <div class="zoom-controls">
+        <button class="zoom-btn" onclick="manualZoom(0.15)" title="Zoom in">+</button>
+        <button class="zoom-btn" onclick="manualZoom(-0.15)" title="Zoom out">−</button>
+        <button class="zoom-btn" onclick="resetZoom()" title="Reset">↻</button>
+      </div>
+
+      <div class="stage-viewport" id="stage-viewport">
+        <div class="layer-stack" id="layer-stack">
+          <div class="loading-overlay" id="loading-overlay">
+            <div class="spinner"></div>
+            <span>Loading</span>
+          </div>
+          <div class="layer"><img id="img-fit"     src="" alt="fit"></div>
+          <div class="layer"><img id="img-placket" src="" alt="placket"></div>
+          <div class="layer"><img id="img-collar"  src="" alt="collar"></div>
+          <div class="layer"><img id="img-cuffs"   src="" alt="cuffs"></div>
+        </div>
+      </div>
+
+      <div id="threed-placeholder" style="display:none;position:absolute;inset:0;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#fff;">
+        <svg width="44" height="44" viewBox="0 0 44 44" fill="none" stroke="#C0BDB8" stroke-width="1.2">
+          <path d="M22 4 L40 14 L40 30 L22 40 L4 30 L4 14 Z"/>
+          <line x1="22" y1="4" x2="22" y2="40"/>
+          <line x1="4" y1="14" x2="40" y2="14"/>
+          <line x1="4" y1="30" x2="40" y2="30"/>
+        </svg>
+        <div style="text-align:center;">
+          <div style="font-family:'Jost',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#1A1916;margin-bottom:6px;">3D Preview</div>
+          <div style="font-family:'Jost',sans-serif;font-size:12px;color:#8A8880;letter-spacing:0.04em;">This section is being prepared</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FRONT / BACK toggle -->
+    <div class="view-bar">
+      <button class="view-bar-btn active" id="btn-front" onclick="setFrontBack('front')">Front</button>
+      <button class="view-bar-btn" id="btn-back" onclick="setFrontBack('back')">Back</button>
+    </div>
+
+  </div>
+
+  <!-- ══ RIGHT PANEL ══ -->
+  <div class="config-panel">
+
+    <button class="close-btn" title="Close">
+      <svg viewBox="0 0 18 18"><line x1="3" y1="3" x2="15" y2="15"/><line x1="15" y1="3" x2="3" y2="15"/></svg>
+    </button>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab(this,'panel-design')">Design</button>
+      <button class="tab" onclick="switchTab(this,'panel-materials')">Materials &amp; Construction</button>
+      <button class="tab" onclick="switchTab(this,'panel-measurements')">Measurements</button>
+    </div>
+
+    <!-- DESIGN PANEL -->
+    <div class="config-body" id="panel-design">
+
+      <!-- FIT -->
+      <div class="section">
+        <div class="section-label">Fit</div>
+        <div class="pill-group">
+          <button class="pill"          onclick="selectFit(this,'slim')">Slim</button>
+          <button class="pill selected" onclick="selectFit(this,'regular')">Regular</button>
+          <button class="pill"          onclick="selectFit(this,'comfort')">Relaxed</button>
+        </div>
+      </div>
+
+      <!-- CLOSURE — PLACKET -->
+      <div class="section">
+        <div class="section-label">Closure — Placket</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPlacket(this,'classic')">Classic</button>
+          <button class="pill"          onclick="selectPlacket(this,'seamless')">Seamless</button>
+          <button class="pill"          onclick="selectPlacket(this,'hidden')">Hidden</button>
+          <button class="pill"          onclick="selectPlacket(this,'tuxedo')">Tuxedo</button>
+        </div>
+      </div>
+
+      <!-- NECK — COLLAR -->
+      <div class="section">
+        <div class="section-label">Neck — Collar</div>
+        <div class="card-grid-4" id="collar-grid">
+          <div class="option-card selected" onclick="selectCollar(this,'classic')">
+            <img class="thumb" src="https://raw.githubusercontent.com/toom-design/shirt_M/main/shirt_M_icon_collar_classic_f.webp" alt="Classic">
+            <span class="cname">Classic</span>
+          </div>
+          <div class="option-card" onclick="selectCollar(this,'button-down')">
+            <img class="thumb" src="https://raw.githubusercontent.com/toom-design/shirt_M/main/shirt_M_icon_collar_button-down_f.webp" alt="Button Down">
+            <span class="cname">Button Down</span>
+          </div>
+          <div class="option-card" onclick="selectCollar(this,'cutaway')">
+            <img class="thumb" src="https://raw.githubusercontent.com/toom-design/shirt_M/main/shirt_M_icon_collar_cutaway_f.webp" alt="Cutaway">
+            <span class="cname">Cutaway</span>
+          </div>
+          <div class="option-card" onclick="selectCollar(this,'band')">
+            <img class="thumb" src="https://raw.githubusercontent.com/toom-design/shirt_M/main/shirt_M_icon_collar_band_f.webp" alt="Band">
+            <span class="cname">Band</span>
+          </div>
+          <div class="option-card" onclick="selectCollar(this,'club')">
+            <img class="thumb" src="https://raw.githubusercontent.com/toom-design/shirt_M/main/shirt_M_icon_collar_club_f.webp" alt="Club">
+            <span class="cname">Club</span>
+          </div>
+          <div class="option-card" onclick="selectCollar(this,'club-pin')">
+            <img class="thumb" src="https://raw.githubusercontent.com/toom-design/shirt_M/main/shirt_M_icon_collar_club-pin_f.webp" alt="Club Pin">
+            <span class="cname">Club Pin</span>
+          </div>
+          <div class="option-card" onclick="selectCollar(this,'tab')">
+            <img class="thumb" src="https://raw.githubusercontent.com/toom-design/shirt_M/main/shirt_M_icon_collar_tab_f.webp" alt="Tab">
+            <span class="cname">Tab</span>
+          </div>
+          <div class="option-card" onclick="selectCollar(this,'wing')">
+            <img class="thumb" src="https://raw.githubusercontent.com/toom-design/shirt_M/main/shirt_M_icon_collar_wing_f.webp" alt="Wing">
+            <span class="cname">Wing</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- COLLAR STAYS -->
+      <div class="section">
+        <div class="section-label">Collar Stays</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPillInGroup(this)">Removable</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">Fixed</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">None</button>
+        </div>
+      </div>
+
+      <!-- COLLAR INTERLINING -->
+      <div class="section">
+        <div class="section-label">Collar Interlining</div>
+        <div class="pill-group">
+          <button class="pill"          onclick="selectPillInGroup(this)">Light</button>
+          <button class="pill selected" onclick="selectPillInGroup(this)">Medium</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">Heavy</button>
+        </div>
+      </div>
+
+      <!-- FRONT POCKET -->
+      <div class="section">
+        <div class="section-label">Front Pocket</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPocket(this,'none')">None</button>
+          <button class="pill"          onclick="selectPocket(this,'left')">Left Pocket</button>
+          <button class="pill"          onclick="selectPocket(this,'right')">Right Pocket</button>
+          <button class="pill"          onclick="selectPocket(this,'both')">Both Pockets</button>
+        </div>
+      </div>
+
+      <!-- HEM / FINISH -->
+      <div class="section">
+        <div class="section-label">Hem / Finish</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPillInGroup(this)">1mm</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">3mm</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">6mm</button>
+        </div>
+      </div>
+
+      <!-- BACK -->
+      <div class="section">
+        <div class="section-label">Back</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectBack(this,'plain')">Plain</button>
+          <button class="pill"          onclick="selectBack(this,'box-pleat')">Box Pleat</button>
+          <button class="pill"          onclick="selectBack(this,'darts')">Darts</button>
+        </div>
+      </div>
+
+      <!-- SLEEVE CUFF -->
+      <div class="section">
+        <div class="section-label">Sleeve Cuff</div>
+        <div class="card-grid-5" id="cuffs-grid">
+          <div class="option-card selected" onclick="selectCuffs(this,'classic')">
+            <img class="thumb" src="https://raw.githubusercontent.com/toom-design/shirt_M/main/shirt_M_icon_cuffs_classic.webp" alt="Classic">
+            <span class="cname">Classic</span>
+          </div>
+          <div class="option-card" onclick="selectCuffs(this,'angled')">
+            <img class="thumb" src="https://raw.githubusercontent.com/toom-design/shirt_M/main/shirt_M_icon_cuffs_angled.webp" alt="Angled">
+            <span class="cname">Angled</span>
+          </div>
+          <div class="option-card" onclick="selectCuffs(this,'rounded')">
+            <img class="thumb" src="https://raw.githubusercontent.com/toom-design/shirt_M/main/shirt_M_icon_cuffs_rounded.webp" alt="Rounded">
+            <span class="cname">Rounded</span>
+          </div>
+          <div class="option-card" onclick="selectCuffs(this,'french')">
+            <img class="thumb" src="https://raw.githubusercontent.com/toom-design/shirt_M/main/shirt_M_icon_cuffs_french.webp" alt="French">
+            <span class="cname">French</span>
+          </div>
+          <div class="option-card" onclick="selectCuffs(this,'french-double')">
+            <img class="thumb" src="https://raw.githubusercontent.com/toom-design/shirt_M/main/shirt_M_icon_cuffs_french-double.webp" alt="French Double">
+            <span class="cname">French Double</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTINUE -->
+      <div class="section" style="border-bottom:none;">
+        <button onclick="goToMaterials()" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;width:100%;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
+          Continue to Materials &amp; Construction
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
+        </button>
+      </div>
+
+    </div><!-- /panel-design -->
+
+    <!-- MATERIALS & CONSTRUCTION PANEL -->
+    <div class="config-body" id="panel-materials" style="display:none;">
+
+      <!-- MAIN FABRIC -->
+      <div class="section">
+        <div class="section-label">Main Fabric</div>
+        <div class="fabric-search-row">
+          <input class="fabric-search" type="text" placeholder="Search fabrics…" oninput="filterFabrics(this.value,'main')">
+        </div>
+        <div class="fabric-grid" id="fabric-main-grid">
+          <div class="fabric-card selected" onclick="selectFabric(this,'main','Oxford White')">
+            <div class="swatch" style="background:#f8f8f6;border:1px solid #e0ddd8;"></div>
+            <span class="fname">Oxford White</span>
+            <span class="fcode">OX-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Oxford Blue')">
+            <div class="swatch" style="background:#c8d8e8;"></div>
+            <span class="fname">Oxford Blue</span>
+            <span class="fcode">OX-002</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Poplin White')">
+            <div class="swatch" style="background:#fafaf8;border:1px solid #e8e5e0;"></div>
+            <span class="fname">Poplin White</span>
+            <span class="fcode">PO-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Poplin Sky')">
+            <div class="swatch" style="background:#b8d4e8;"></div>
+            <span class="fname">Poplin Sky</span>
+            <span class="fcode">PO-002</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Twill Navy')">
+            <div class="swatch" style="background:#2c3e5a;"></div>
+            <span class="fname">Twill Navy</span>
+            <span class="fcode">TW-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Twill Ecru')">
+            <div class="swatch" style="background:#ede8de;"></div>
+            <span class="fname">Twill Ecru</span>
+            <span class="fcode">TW-002</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Linen Natural')">
+            <div class="swatch" style="background:#d8cfc0;"></div>
+            <span class="fname">Linen Natural</span>
+            <span class="fcode">LI-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Linen Slate')">
+            <div class="swatch" style="background:#9aa8b0;"></div>
+            <span class="fname">Linen Slate</span>
+            <span class="fcode">LI-002</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Chambray Blue')">
+            <div class="swatch" style="background:#8aaec8;"></div>
+            <span class="fname">Chambray Blue</span>
+            <span class="fcode">CH-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Herringbone Grey')">
+            <div class="swatch" style="background:#b0aaa4;background-image:repeating-linear-gradient(45deg,rgba(0,0,0,0.07) 0px,rgba(0,0,0,0.07) 1px,transparent 1px,transparent 4px);"></div>
+            <span class="fname">Herringbone Grey</span>
+            <span class="fcode">HB-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Pinstripe White')">
+            <div class="swatch" style="background:#f0ede8;background-image:repeating-linear-gradient(90deg,rgba(0,0,0,0.12) 0px,rgba(0,0,0,0.12) 1px,transparent 1px,transparent 8px);"></div>
+            <span class="fname">Pinstripe White</span>
+            <span class="fcode">PS-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Stripe Blue')">
+            <div class="swatch" style="background:#f0f4f8;background-image:repeating-linear-gradient(90deg,#7aaac8 0px,#7aaac8 3px,transparent 3px,transparent 12px);"></div>
+            <span class="fname">Stripe Blue</span>
+            <span class="fcode">ST-001</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMPLEMENTARY FABRIC -->
+      <div class="section">
+        <div class="section-label">Complementary Fabric</div>
+        <div class="sub-label">Used for collar, cuffs &amp; placket lining</div>
+        <div class="comp-toggle pill-group" style="margin-bottom:14px;">
+          <button class="pill selected" onclick="toggleComp(this,'same')">Same as Main</button>
+          <button class="pill" onclick="toggleComp(this,'custom')">Custom</button>
+        </div>
+        <div class="fabric-grid" id="fabric-comp-grid" style="opacity:0.35;pointer-events:none;">
+          <div class="fabric-card selected" onclick="selectFabric(this,'comp','Oxford White')">
+            <div class="swatch" style="background:#f8f8f6;border:1px solid #e0ddd8;"></div>
+            <span class="fname">Oxford White</span>
+            <span class="fcode">OX-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'comp','Oxford Blue')">
+            <div class="swatch" style="background:#c8d8e8;"></div>
+            <span class="fname">Oxford Blue</span>
+            <span class="fcode">OX-002</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'comp','Poplin White')">
+            <div class="swatch" style="background:#fafaf8;border:1px solid #e8e5e0;"></div>
+            <span class="fname">Poplin White</span>
+            <span class="fcode">PO-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'comp','Poplin Sky')">
+            <div class="swatch" style="background:#b8d4e8;"></div>
+            <span class="fname">Poplin Sky</span>
+            <span class="fcode">PO-002</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'comp','Twill Ecru')">
+            <div class="swatch" style="background:#ede8de;"></div>
+            <span class="fname">Twill Ecru</span>
+            <span class="fcode">TW-002</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'comp','Linen Natural')">
+            <div class="swatch" style="background:#d8cfc0;"></div>
+            <span class="fname">Linen Natural</span>
+            <span class="fcode">LI-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'comp','Stripe Blue')">
+            <div class="swatch" style="background:#f0f4f8;background-image:repeating-linear-gradient(90deg,#7aaac8 0px,#7aaac8 3px,transparent 3px,transparent 12px);"></div>
+            <span class="fname">Stripe Blue</span>
+            <span class="fcode">ST-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'comp','Pinstripe White')">
+            <div class="swatch" style="background:#f0ede8;background-image:repeating-linear-gradient(90deg,rgba(0,0,0,0.12) 0px,rgba(0,0,0,0.12) 1px,transparent 1px,transparent 8px);"></div>
+            <span class="fname">Pinstripe White</span>
+            <span class="fcode">PS-001</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUTTONS -->
+      <div class="section">
+        <div class="section-label">Buttons</div>
+
+        <!-- Button material -->
+        <div class="btn-material-row">
+          <button class="btn-material selected" onclick="selectBtnMaterial(this)">
+            <span class="bm-name">Standard</span>
+            <span class="bm-price">Included</span>
+          </button>
+          <button class="btn-material" onclick="selectBtnMaterial(this)">
+            <span class="bm-name">Trocas</span>
+            <span class="bm-price">+€6.00</span>
+          </button>
+          <button class="btn-material" onclick="selectBtnMaterial(this)">
+            <span class="bm-name">Australia</span>
+            <span class="bm-price">+€9.00</span>
+          </button>
+        </div>
+
+        <!-- Button size -->
+        <div class="btn-size-row">
+          <button class="btn-size selected" onclick="selectBtnSize(this)">N.11</button>
+          <button class="btn-size" onclick="selectBtnSize(this)">N.12</button>
+          <button class="btn-size" onclick="selectBtnSize(this)">N.13</button>
+          <button class="btn-size" onclick="selectBtnSize(this)">N.14</button>
+          <button class="btn-size" onclick="selectBtnSize(this)">N.15</button>
+        </div>
+
+        <!-- Button stitching -->
+        <div class="sub-label" style="margin-top:20px;margin-bottom:10px;">Button Stitching</div>
+        <div class="btn-stitch-grid">
+          <div class="btn-stitch-card selected" onclick="selectBtnStitch(this,'normal')">
+            <div class="stitch-icon">
+              <img class="thumb" style="width:52px;height:52px;" src="https://raw.githubusercontent.com/toom-design/shirt_M/main/shirt_M_icon_button_normal.webp" alt="Normal">
+            </div>
+            <span class="cname">Normal</span>
+          </div>
+          <div class="btn-stitch-card" onclick="selectBtnStitch(this,'lilly')">
+            <div class="stitch-icon">
+              <img class="thumb" style="width:52px;height:52px;" src="https://raw.githubusercontent.com/toom-design/shirt_M/main/shirt_M_icon_button_lilly.webp" alt="Lilly">
+            </div>
+            <span class="cname">Lilly</span>
+          </div>
+          <div class="btn-stitch-card" onclick="selectBtnStitch(this,'cross')">
+            <div class="stitch-icon">
+              <img class="thumb" style="width:52px;height:52px;" src="https://raw.githubusercontent.com/toom-design/shirt_M/main/shirt_M_icon_button_cross.webp" alt="Cross">
+            </div>
+            <span class="cname">Cross</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /panel-materials -->
+
+    <!-- MEASUREMENTS PANEL -->
+    <div class="config-body" id="panel-measurements" style="display:none;">
+      <div class="section">
+        <div class="section-label">Body Measurements</div>
+        <div class="measure-grid">
+          <div class="measure-row"><label>Chest</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="80" max="140"><span class="measure-unit">cm</span></div></div>
+          <div class="measure-row"><label>Waist</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="60" max="130"><span class="measure-unit">cm</span></div></div>
+          <div class="measure-row"><label>Hips</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="80" max="140"><span class="measure-unit">cm</span></div></div>
+          <div class="measure-row"><label>Neck</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="30" max="55"><span class="measure-unit">cm</span></div></div>
+          <div class="measure-row"><label>Shoulder</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="35" max="60"><span class="measure-unit">cm</span></div></div>
+          <div class="measure-row"><label>Sleeve Length</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="55" max="75"><span class="measure-unit">cm</span></div></div>
+          <div class="measure-row"><label>Back Length</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="65" max="90"><span class="measure-unit">cm</span></div></div>
+          <div class="measure-row"><label>Wrist</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="14" max="26"><span class="measure-unit">cm</span></div></div>
+        </div>
+      </div>
+
+      <!-- SUBMIT -->
+      <div class="section" style="border-bottom:none;">
+        <button class="submit-btn" id="submit-btn" onclick="submitOrder()">
+          <span id="submit-label">Save Configuration</span>
+          <svg id="submit-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
+        </button>
+        <div id="submit-feedback" style="display:none;margin-top:12px;padding:12px 14px;border-radius:4px;font-size:12px;letter-spacing:0.04em;text-align:center;"></div>
+      </div>
+
+    </div><!-- /panel-measurements -->
+
+  </div><!-- /config-panel -->
+</div><!-- /app -->
+
+<script>
+const BASE = 'https://raw.githubusercontent.com/toom-design/shirt_M/main/';
+
+const state = {
+  fit: 'regular',
+  placket: 'classic',
+  collar: 'classic',
+  cuffs: 'classic',
+  side: 'front',
+  backUrl: BASE + 'shirt_M_live_back_base.webp',
+  zoom: 1.5,
+  panX: 0,
+  panY: 0
+};
+
+// ── URL builders ──
+const urls = {
+  fit: f => BASE + `shirt_M_live_fit_${f}_f-b.webp`,
+
+  placket: p => p === 'seamless'
+    ? BASE + 'shirt_M_live_palcket_seamless_f.webp'
+    : BASE + `shirt_M_live_placket_${p}_f.webp`,
+
+  collar: c => BASE + `shirt_M_live_collar_${c}_f.webp`,
+
+  cuffs: (c, side) => {
+    // All 5 cuffs confirmed to have both _f and _b
+    return BASE + `shirt_M_live_cuffs_${c}_${side === 'back' ? 'b' : 'f'}.webp`;
+  },
+
+  back: v => {
+    if (v === 'plain') return BASE + 'shirt_M_live_back_base.webp';
+    if (v === 'box-pleat') return BASE + 'shirt_M_live_back_box-pleat_b.webp';
+    if (v === 'darts') return BASE + 'shirt_M_live_back_darts.webp';
+    return null;
+  }
+};
+
+// ── Apply transform to layer-stack ──
+function applyTransform() {
+  const el = document.getElementById('layer-stack');
+  el.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.zoom})`;
+}
+
+// Zoom to a region and center it in the visible viewport.
+// cx, cy: 0–1 fractions of the layer-stack dimensions (420 × 620).
+function zoomToRegion(scale, cx, cy) {
+  state.zoom = scale;
+  const stackW = 420, stackH = 620;
+  // Point on the stack we want centered (relative to stack center, pre-scale)
+  const pointX = (cx - 0.5) * stackW;
+  const pointY = (cy - 0.5) * stackH;
+  // After scaling around center, that point moves to pointX*scale, pointY*scale.
+  // We need to translate it back to 0,0 (viewport center).
+  state.panX = -pointX * scale;
+  state.panY = -pointY * scale;
+  applyTransform();
+}
+
+function resetZoom() {
+  state.zoom = 1.5; state.panX = 0; state.panY = 0;
+  applyTransform();
+}
+
+function manualZoom(delta) {
+  state.zoom = Math.min(3, Math.max(0.5, state.zoom + delta));
+  applyTransform();
+}
+
+// ── Image setters ──
+function setImg(id, url) { document.getElementById(id).src = url; }
+
+function updateCuffsLayer() {
+  setImg('img-cuffs', urls.cuffs(state.cuffs, state.side));
+}
+
+function initPreview() {
+  setImg('img-fit',     urls.fit(state.fit));
+  setImg('img-placket', urls.placket(state.placket));
+  setImg('img-collar',  urls.collar(state.collar));
+  updateCuffsLayer();
+}
+
+function preloadAll() {
+  const all = [
+    urls.fit('slim'), urls.fit('regular'), urls.fit('comfort'),
+    urls.placket('classic'), urls.placket('seamless'), urls.placket('hidden'), urls.placket('tuxedo'),
+    urls.collar('classic'), urls.collar('button-down'), urls.collar('cutaway'), urls.collar('band'),
+    urls.collar('club'), urls.collar('club-pin'), urls.collar('tab'), urls.collar('wing'),
+    urls.cuffs('classic','front'), urls.cuffs('angled','front'), urls.cuffs('rounded','front'),
+    urls.cuffs('french','front'), urls.cuffs('french-double','front'),
+    urls.cuffs('classic','back'), urls.cuffs('angled','back'), urls.cuffs('rounded','back'),
+    urls.cuffs('french','back'), urls.cuffs('french-double','back'),
+    BASE + 'shirt_M_live_back_base.webp',
+    BASE + 'shirt_M_live_back_box-pleat_b.webp',
+    BASE + 'shirt_M_live_back_darts.webp',
+  ];
+  let done = 0;
+  const finish = () => { if (++done >= all.length) document.getElementById('loading-overlay').classList.add('done'); };
+  all.forEach(u => { const i = new Image(); i.onload = i.onerror = finish; i.src = u; });
+  setTimeout(() => document.getElementById('loading-overlay').classList.add('done'), 5000);
+}
+
+// ── Selection handlers ──
+function selectFit(el, v) {
+  el.closest('.pill-group').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  state.fit = v;
+  setImg('img-fit', urls.fit(v));
+  resetZoom();
+}
+
+function selectPlacket(el, v) {
+  el.closest('.pill-group').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  state.placket = v;
+  setImg('img-placket', urls.placket(v));
+  setFrontBack('front');
+  // 10% up from previous 0.38 → 0.28 (10% of 620 = 62px / 620 = 0.10)
+  zoomToRegion(2.4, 0.5, 0.5);
+}
+
+function selectCollar(el, v) {
+  document.querySelectorAll('#collar-grid .option-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  state.collar = v;
+  setImg('img-collar', urls.collar(v));
+  setFrontBack('front');
+  // 40% up from previous 0.10 → -0.14 (clamped: 40% of 620 = 248px / 620 = 0.40)
+  zoomToRegion(2.8, 0.5, 0.3);
+}
+
+function selectPocket(el, v) {
+  el.closest('.pill-group').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  setFrontBack('front');
+  if (v !== 'none') {
+    // 10% up from previous 0.30 → 0.20; cx=0.36 = 36% from left (151px of 420px)
+    zoomToRegion(2.6, 0.5, 0.4);
+  } else {
+    resetZoom();
+  }
+}
+
+function selectBack(el, v) {
+  el.closest('.pill-group').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  const backUrl = urls.back(v);
+  if (backUrl) state.backUrl = backUrl;
+  // switch to back view — setFrontBack will apply state.backUrl
+  setFrontBack('back');
+  resetZoom();
+}
+
+function selectCuffs(el, v) {
+  document.querySelectorAll('#cuffs-grid .option-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  state.cuffs = v;
+  setFrontBack('back');
+  updateCuffsLayer();
+  zoomToRegion(2.4, 0.20, 0.80);
+}
+
+function selectPillInGroup(el) {
+  el.closest('.pill-group').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// ── Front / Back toggle ──
+function setFrontBack(side) {
+  state.side = side;
+  document.getElementById('btn-front').classList.toggle('active', side === 'front');
+  document.getElementById('btn-back').classList.toggle('active', side === 'back');
+
+  if (side === 'front') {
+    setImg('img-fit', urls.fit(state.fit));
+    setImg('img-placket', urls.placket(state.placket));
+    setImg('img-collar', urls.collar(state.collar));
+    document.getElementById('img-placket').style.opacity = '1';
+    document.getElementById('img-collar').style.opacity = '1';
+  } else {
+    setImg('img-fit', urls.fit(state.fit));
+    // always apply the stored back overlay (defaults to back_base / plain)
+    setImg('img-placket', state.backUrl);
+    document.getElementById('img-placket').style.opacity = '1';
+    document.getElementById('img-collar').style.opacity = '0';
+  }
+  updateCuffsLayer();
+}
+
+// ── Technical / 3D toggle ──
+function setTechView(v) {
+  document.getElementById('btn-technical').classList.toggle('active', v === 'technical');
+  document.getElementById('btn-3d').classList.toggle('active', v === '3d');
+  document.getElementById('stage-viewport').style.display = v === 'technical' ? 'flex' : 'none';
+  const ph = document.getElementById('threed-placeholder');
+  ph.style.display = v === '3d' ? 'flex' : 'none';
+}
+
+function goToMaterials() {
+  const tab = document.querySelector('.tab:nth-child(2)');
+  switchTab(tab, 'panel-materials');
+  document.querySelector('.config-panel').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function switchTab(el, panelId) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  ['panel-design','panel-materials','panel-measurements'].forEach(id => {
+    document.getElementById(id).style.display = id === panelId ? '' : 'none';
+  });
+}
+
+function selectFabric(el, group, name) {
+  const grid = el.closest('.fabric-grid');
+  grid.querySelectorAll('.fabric-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function toggleComp(el, mode) {
+  el.closest('.comp-toggle').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  const grid = document.getElementById('fabric-comp-grid');
+  if (mode === 'custom') {
+    grid.style.opacity = '1'; grid.style.pointerEvents = '';
+  } else {
+    grid.style.opacity = '0.35'; grid.style.pointerEvents = 'none';
+  }
+}
+
+function selectBtnMaterial(el) {
+  el.closest('.btn-material-row').querySelectorAll('.btn-material').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function selectBtnSize(el) {
+  el.closest('.btn-size-row').querySelectorAll('.btn-size').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function selectBtnStitch(el, v) {
+  el.closest('.btn-stitch-grid').querySelectorAll('.btn-stitch-card').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function filterFabrics(q, group) {
+  const grid = document.getElementById(`fabric-${group}-grid`);
+  grid.querySelectorAll('.fabric-card').forEach(card => {
+    const name = card.querySelector('.fname').textContent.toLowerCase();
+    card.style.display = name.includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+
+initPreview();
+applyTransform();
+preloadAll();
+
+// ── Google Sheets Integration ──
+// Paste your Apps Script Web App URL here after setup:
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyufZIMwIlAVZSt49SvlKPGPdhKVPubP8uibv4V_FBlyKayhWzX2UEQuuKiRr7t48_W/exec';
+
+function collectConfig() {
+  // helpers
+  const selText = (selector) => document.querySelector(selector)?.textContent.trim() || '';
+  const inputVal = (label) => {
+    const rows = document.querySelectorAll('.measure-row');
+    for (const row of rows) {
+      if (row.querySelector('label')?.textContent.trim() === label)
+        return row.querySelector('.measure-input')?.value || '';
+    }
+    return '';
+  };
+  const sectionPill = (labelText) => {
+    const sections = document.querySelectorAll('.section');
+    for (const s of sections) {
+      if (s.querySelector('.section-label')?.textContent.trim() === labelText)
+        return s.querySelector('.pill.selected')?.textContent.trim() || '';
+    }
+    return '';
+  };
+
+  return {
+    // ── Meta ──
+    'Order Number':        '',                          // generated server-side
+    'Status':              'New',
+    'Created At':          new Date().toISOString(),
+    'Terms Accepted':      '',
+    'Marketing Consent':   '',
+
+    // ── Torso ──
+    'GENDER':              'M',                         // shirt_M = Men's
+    'FIT':                 sectionPill('Fit'),
+    'STYLE/SILHOUETTE':    '',
+    'CLOSURE':             sectionPill('Closure — Placket'),
+    'NECK':                selText('#collar-grid .option-card.selected .cname'),
+    'FRONT POCKETS':       sectionPill('Front Pocket'),
+    'EXTRA POCKETS':       '',
+    'HEM/FINISH':          sectionPill('Hem / Finish'),
+    'BACK':                sectionPill('Back'),
+
+    // ── Sleeves ──
+    'SLEEVE HEAD':         '',
+    'SLEEVE STYLE':        '',
+    'CONSTRUCTION':        sectionPill('Collar Interlining'),
+    'SLEEVE BUTTONS':      sectionPill('Collar Stays'),
+    'SLEEVE CUFF':         selText('#cuffs-grid .option-card.selected .cname'),
+
+    // ── Waistband ──
+    'WAISTBAND STYLE':     '',
+    'WAIST ADJUSTMENT':    '',
+    'RISE':                '',
+
+    // ── Materials & Construction ──
+    'MAIN FABRIC':         selText('#fabric-main-grid .fabric-card.selected .fname'),
+    'CODE':                selText('#fabric-main-grid .fabric-card.selected .fcode'),
+    'color':               '',
+    'composition':         '',
+    'CONTRAST FABRIC':     document.getElementById('fabric-comp-grid').style.pointerEvents === 'none'
+                             ? 'Same as Main'
+                             : selText('#fabric-comp-grid .fabric-card.selected .fname'),
+    'CONTRAST PLACEMENT':  '',
+    'STRUCTURE':           selText('.btn-material.selected .bm-name') + ' ' + selText('.btn-size.selected'),
+    'LINING FABRIC':       '',
+    'LINING TYPE':         selText('.btn-stitch-card.selected .cname'),
+  };
+}
+
+async function submitOrder() {
+  const btn = document.getElementById('submit-btn');
+  const label = document.getElementById('submit-label');
+  btn.disabled = true;
+  label.textContent = 'Saving…';
+
+  try {
+    const data = collectConfig();
+    const payload = encodeURIComponent(JSON.stringify(data));
+    const url = SHEET_URL + '?payload=' + payload;
+
+    // Use a script tag GET — bypasses CORS and works in Safari from file://
+    const script = document.createElement('script');
+    script.src = url + '&callback=__sheetCallback';
+    window.__sheetCallback = function(response) {
+      document.body.removeChild(script);
+      delete window.__sheetCallback;
+      label.textContent = 'Save Configuration';
+      btn.disabled = false;
+      if (response && response.status === 'ok') {
+        showFeedback('✓ Configuration saved to Google Sheets', '#4a8a5a');
+      } else {
+        showFeedback('✗ Error: ' + (response?.message || 'unknown'), '#a05050');
+      }
+    };
+    // Fallback timeout in case callback never fires
+    setTimeout(() => {
+      if (window.__sheetCallback) {
+        delete window.__sheetCallback;
+        label.textContent = 'Save Configuration';
+        btn.disabled = false;
+        showFeedback('✓ Request sent — check your sheet', '#4a8a5a');
+      }
+    }, 4000);
+
+    document.body.appendChild(script);
+
+  } catch (err) {
+    label.textContent = 'Save Configuration';
+    btn.disabled = false;
+    showFeedback('✗ Could not save: ' + err.message, '#a05050');
+  }
+}
+
+function showFeedback(msg, color) {
+  const el = document.getElementById('submit-feedback');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.background = color + '18';
+  el.style.color = color;
+  el.style.border = `1px solid ${color}40`;
+  setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+</script>
+</body>
+</html>
