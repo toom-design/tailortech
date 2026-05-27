@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TailorTech — Client Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; }
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: #0c0c10;
+  color: #f0ede8;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select, textarea { font-family: inherit; }
+button { cursor: pointer; }
+
+/* ── Variables ── */
+:root {
+  --bg:      #0c0c10;
+  --bg2:     #16161e;
+  --bg3:     #1e1e28;
+  --bg4:     #252530;
+  --border:  rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.11);
+  --text:    #f0ede8;
+  --text2:   #9d9a95;
+  --text3:   #4a4845;
+  --gold:    #c9a84c;
+  --gold2:   #e8c97a;
+  --accent:  #4f8aff;
+  --grad:    linear-gradient(135deg, #c9a84c 0%, #e8c97a 50%, #c9a84c 100%);
+  --grad-b:  linear-gradient(135deg, #4f8aff 0%, #a78bfa 100%);
+  --green:   #34d399;
+  --red:     #f87171;
+  --amber:   #fbbf24;
+  --r:       14px;
+  --r2:      20px;
+}
+
+/* ══════════════════════════════════════════════
+   SCREENS
+══════════════════════════════════════════════ */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: block; }
+
+/* ══════════════════════════════════════════════
+   AUTH SCREEN
+══════════════════════════════════════════════ */
+#s-auth {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+}
+#s-auth.active { display: flex; }
+
+/* Ambient glows */
+#s-auth::before {
+  content:''; position:fixed; width:600px; height:600px;
+  background: radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 65%);
+  top:-200px; right:-150px; pointer-events:none;
+}
+#s-auth::after {
+  content:''; position:fixed; width:450px; height:450px;
+  background: radial-gradient(circle, rgba(79,138,255,0.06) 0%, transparent 65%);
+  bottom:-150px; left:-100px; pointer-events:none;
+}
+
+.auth-card {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--r2);
+  padding: 2.75rem 2.25rem;
+  width: 100%; max-width: 420px;
+  position: relative; z-index: 1;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.55);
+}
+
+/* Logo */
+.auth-logo { text-align: center; margin-bottom: 2rem; }
+.auth-logo-mark {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 60px; height: 60px;
+  background: var(--bg3);
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 16px;
+  margin-bottom: 1rem;
+  box-shadow: 0 0 32px rgba(201,168,76,0.15);
+}
+.auth-logo-mark svg { color: var(--gold); }
+.auth-logo h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.75rem; letter-spacing: -0.02em;
+  background: var(--grad); -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent; background-clip: text;
+  margin-bottom: .3rem;
+}
+.auth-logo p { font-size: .8125rem; color: var(--text3); }
+
+/* Tabs */
+.auth-tabs {
+  display: flex; background: var(--bg3);
+  border-radius: 11px; padding: 3px; margin-bottom: 1.5rem; gap: 3px;
+}
+.auth-tab {
+  flex: 1; padding: .5rem;
+  text-align: center; font-size: .875rem; font-weight: 500;
+  border-radius: 9px; border: none; background: none;
+  color: var(--text3); transition: all .2s;
+}
+.auth-tab.active {
+  background: var(--bg2); color: var(--text);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* Banners */
+.banner {
+  border-radius: 10px; padding: .625rem .9375rem;
+  font-size: .8125rem; margin-bottom: 1rem;
+  display: none; line-height: 1.5;
+}
+.b-error   { background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.2); color: var(--red); }
+.b-success { background: rgba(52,211,153,.1);  border: 1px solid rgba(52,211,153,.2);  color: var(--green); }
+.b-info    { background: rgba(201,168,76,.08); border: 1px solid rgba(201,168,76,.2);  color: var(--gold2); }
+
+/* Google btn */
+.btn-google {
+  width: 100%; padding: .75rem; border-radius: 11px;
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--text); font-size: .9375rem; font-weight: 500;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: background .15s, border-color .15s;
+  margin-bottom: .875rem;
+}
+.btn-google:hover { background: var(--bg4); }
+
+.auth-divider {
+  display: flex; align-items: center; gap: .75rem;
+  margin-bottom: 1rem; color: var(--text3); font-size: .8125rem;
+}
+.auth-divider::before,.auth-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* Fields */
+.auth-field { margin-bottom: .9375rem; }
+.auth-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-bottom: .9375rem; }
+.auth-field label {
+  display: block; font-size: .8rem; font-weight: 500;
+  color: var(--text2); margin-bottom: .375rem; letter-spacing: .01em;
+}
+.auth-field input {
+  width: 100%; padding: .7rem .9375rem;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text);
+  font-size: .9375rem; outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  -webkit-appearance: none;
+}
+.auth-field input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(201,168,76,.14);
+}
+.auth-field input::placeholder { color: var(--text3); }
+
+.auth-forgot { text-align: right; margin-top: -.375rem; margin-bottom: .875rem; }
+.auth-forgot button {
+  background: none; border: none; color: var(--gold);
+  font-size: .8125rem; padding: 0;
+}
+.auth-forgot button:hover { text-decoration: underline; }
+
+/* Submit btn */
+.btn-submit {
+  width: 100%; padding: .8rem;
+  background: var(--grad); border: none; border-radius: 11px;
+  color: #1a1200; font-size: .9375rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 4px 20px rgba(201,168,76,.25);
+  transition: opacity .15s, transform .1s;
+}
+.btn-submit:hover  { opacity: .9; }
+.btn-submit:active { transform: scale(.98); }
+.btn-submit:disabled { opacity: .5; cursor: not-allowed; }
+
+.spinner {
+  width: 17px; height: 17px;
+  border: 2px solid rgba(0,0,0,.25);
+  border-top-color: #1a1200;
+  border-radius: 50%;
+  animation: spin .65s linear infinite;
+  display: none; flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ══════════════════════════════════════════════
+   DASHBOARD SCREEN
+══════════════════════════════════════════════ */
+#s-dash { background: var(--bg); }
+
+/* Top nav */
+.topnav {
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+  height: 64px; position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center;
+  padding: 0 1.5rem;
+  justify-content: space-between;
+}
+.topnav-brand {
+  display: flex; align-items: center; gap: 10px;
+}
+.topnav-logo {
+  width: 34px; height: 34px;
+  background: var(--bg3);
+  border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+}
+.topnav-logo svg { color: var(--gold); }
+.topnav-name {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.0625rem;
+  background: var(--grad); -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent; background-clip: text;
+  letter-spacing: -0.01em;
+}
+.topnav-right { display: flex; align-items: center; gap: .625rem; }
+.topnav-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--grad);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .875rem; font-weight: 700; color: #1a1200;
+  overflow: hidden; flex-shrink: 0;
+}
+.topnav-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.btn-signout {
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--text2); border-radius: 8px;
+  padding: .375rem .875rem; font-size: .8125rem;
+  transition: all .15s;
+}
+.btn-signout:hover { color: var(--text); }
+
+/* Dashboard body */
+.dash { max-width: 1000px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+/* Welcome */
+.dash-welcome { margin-bottom: 2.5rem; }
+.dash-welcome h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 2rem; letter-spacing: -0.02em;
+  color: var(--text); margin-bottom: .25rem;
+}
+.dash-welcome p { color: var(--text3); font-size: .9375rem; }
+
+/* Three feature cards */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+.feature-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 1.75rem;
+  cursor: pointer;
+  transition: border-color .2s, box-shadow .2s, transform .15s;
+  display: flex; flex-direction: column;
+  text-decoration: none; color: inherit;
+  position: relative; overflow: hidden;
+}
+.feature-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--grad);
+  opacity: 0; transition: opacity .2s;
+}
+.feature-card:hover {
+  border-color: rgba(201,168,76,0.25);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  transform: translateY(-2px);
+}
+.feature-card:hover::before { opacity: 1; }
+.feature-icon {
+  width: 48px; height: 48px; border-radius: 13px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 1.125rem; color: var(--gold);
+}
+.feature-title {
+  font-size: 1.0625rem; font-weight: 600; color: var(--text);
+  margin-bottom: .375rem;
+}
+.feature-desc { font-size: .875rem; color: var(--text3); line-height: 1.5; }
+.feature-arrow {
+  margin-top: 1.25rem;
+  display: flex; align-items: center; gap: 4px;
+  font-size: .8125rem; font-weight: 500; color: var(--gold);
+}
+
+/* Profile section */
+.profile-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--r2); overflow: hidden;
+}
+.profile-card-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.profile-card-title {
+  font-size: .8125rem; font-weight: 600;
+  color: var(--text3); text-transform: uppercase; letter-spacing: .07em;
+  display: flex; align-items: center; gap: 7px;
+}
+.profile-card-title svg { color: var(--gold); }
+.btn-edit-profile {
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--text2); border-radius: 8px;
+  padding: .375rem .875rem; font-size: .8125rem;
+  transition: all .15s; display: inline-flex; align-items: center; gap: 5px;
+}
+.btn-edit-profile:hover { color: var(--gold); border-color: rgba(201,168,76,.3); }
+.profile-body { padding: 1.5rem; }
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.25rem;
+}
+.profile-field label {
+  display: block; font-size: .75rem; font-weight: 500;
+  color: var(--text3); margin-bottom: .3rem;
+  text-transform: uppercase; letter-spacing: .05em;
+}
+.profile-field .val {
+  font-size: .9375rem; color: var(--text);
+}
+.profile-field .val.empty { color: var(--text3); font-style: italic; }
+
+/* Profile edit form */
+.profile-edit { display: none; padding: 1.5rem; border-top: 1px solid var(--border); }
+.profile-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem; margin-bottom: 1.25rem;
+}
+.pfield { display: flex; flex-direction: column; }
+.pfield label {
+  font-size: .75rem; font-weight: 500; color: var(--text2);
+  margin-bottom: .35rem; letter-spacing: .03em; text-transform: uppercase;
+}
+.pfield input {
+  width: 100%; padding: .6rem .875rem;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 9px; color: var(--text);
+  font-size: .875rem; outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  -webkit-appearance: none;
+}
+.pfield input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(201,168,76,.12);
+}
+.pfield input::placeholder { color: var(--text3); }
+.profile-edit-actions { display: flex; gap: .75rem; flex-wrap: wrap; }
+.btn-save-profile {
+  background: var(--grad); border: none; border-radius: 9px;
+  color: #1a1200; font-size: .875rem; font-weight: 700;
+  padding: .625rem 1.375rem;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: opacity .15s; box-shadow: 0 4px 14px rgba(201,168,76,.2);
+}
+.btn-save-profile:hover { opacity: .9; }
+.btn-cancel-profile {
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--text2); border-radius: 9px;
+  padding: .625rem 1.125rem; font-size: .875rem;
+  transition: all .15s;
+}
+.btn-cancel-profile:hover { color: var(--text); }
+
+/* Empty state */
+.empty-state {
+  text-align: center; padding: 3rem 1.5rem; color: var(--text3);
+}
+.empty-state svg { display: block; margin: 0 auto 1rem; opacity: .2; }
+.empty-state p { font-size: .9375rem; }
+
+/* Toast */
+#toast {
+  position: fixed; top: 1.25rem; right: 1.25rem; z-index: 9999;
+  padding: .75rem 1.125rem; border-radius: 10px;
+  font-size: .875rem; font-weight: 500;
+  display: flex; align-items: center; gap: 8px;
+  opacity: 0; transform: translateX(1.5rem);
+  transition: opacity .25s, transform .25s; pointer-events: none;
+  max-width: 320px;
+}
+#toast.t-success { background: rgba(52,211,153,.12); border: 1px solid rgba(52,211,153,.25); color: var(--green); }
+#toast.t-error   { background: rgba(248,113,113,.1);  border: 1px solid rgba(248,113,113,.25); color: var(--red); }
+#toast.show      { opacity: 1; transform: none; }
+
+@media(max-width:600px){
+  .auth-card { padding: 2rem 1.25rem; }
+  .dash { padding: 1.5rem 1rem 3rem; }
+  .auth-field-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- ════════════════════════════════════
+     AUTH SCREEN
+════════════════════════════════════ -->
+<div id="s-auth" class="screen active">
+  <div class="auth-card">
+
+    <div class="auth-logo">
+      <div class="auth-logo-mark">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+          <path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.57a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.57a2 2 0 00-1.34-2.23z"/>
+        </svg>
+      </div>
+      <h1>TAILORTECH</h1>
+      <p>Your personal online tailor</p>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchTab('signin',this)">Sign In</button>
+      <button class="auth-tab"        onclick="switchTab('register',this)">Create Account</button>
+    </div>
+
+    <div class="banner b-error"   id="b-error"></div>
+    <div class="banner b-success" id="b-success"></div>
+    <div class="banner b-info"    id="b-info"></div>
+
+    <!-- Google -->
+    <button class="btn-google" onclick="signInGoogle()">
+      <svg width="18" height="18" viewBox="0 0 48 48">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      Continue with Google
+    </button>
+
+    <div class="auth-divider">or</div>
+
+    <!-- Sign in form -->
+    <div id="form-signin">
+      <div class="auth-field">
+        <label>Email address</label>
+        <input type="email" id="si-email" placeholder="you@example.com" autocomplete="email"
+          onkeydown="if(event.key==='Enter')doSignIn()">
+      </div>
+      <div class="auth-field">
+        <label>Password</label>
+        <input type="password" id="si-pass" placeholder="••••••••" autocomplete="current-password"
+          onkeydown="if(event.key==='Enter')doSignIn()">
+      </div>
+      <div class="auth-forgot"><button onclick="doForgot()">Forgot password?</button></div>
+      <button class="btn-submit" id="btn-signin" onclick="doSignIn()">
+        <span id="signin-lbl">Sign In</span>
+        <div class="spinner" id="signin-spin"></div>
+      </button>
+    </div>
+
+    <!-- Register form -->
+    <div id="form-register" style="display:none">
+      <div class="auth-field-row">
+        <div class="auth-field">
+          <label>First name *</label>
+          <input type="text" id="rg-fname" placeholder="Jane" autocomplete="given-name">
+        </div>
+        <div class="auth-field">
+          <label>Last name</label>
+          <input type="text" id="rg-lname" placeholder="Doe" autocomplete="family-name">
+        </div>
+      </div>
+      <div class="auth-field">
+        <label>Email address *</label>
+        <input type="email" id="rg-email" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <div class="auth-field">
+        <label>Password *</label>
+        <input type="password" id="rg-pass" placeholder="Min. 6 characters" autocomplete="new-password"
+          onkeydown="if(event.key==='Enter')doRegister()">
+      </div>
+      <button class="btn-submit" id="btn-register" onclick="doRegister()">
+        <span id="register-lbl">Create Account</span>
+        <div class="spinner" id="register-spin"></div>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     DASHBOARD SCREEN
+════════════════════════════════════ -->
+<div id="s-dash" class="screen">
+
+  <nav class="topnav">
+    <div class="topnav-brand">
+      <div class="topnav-logo">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+          <path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.57a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.57a2 2 0 00-1.34-2.23z"/>
+        </svg>
+      </div>
+      <span class="topnav-name">TAILORTECH</span>
+    </div>
+    <div class="topnav-right">
+      <div class="topnav-avatar" id="nav-avatar"></div>
+      <button class="btn-signout" onclick="doSignOut()">Sign out</button>
+    </div>
+  </nav>
+
+  <div class="dash">
+
+    <!-- Welcome -->
+    <div class="dash-welcome">
+      <h2 id="dash-greeting">Welcome back</h2>
+      <p id="dash-sub">Good to see you again</p>
+    </div>
+
+    <!-- Three feature cards -->
+    <div class="feature-grid">
+
+      <!-- My Wardrobe -->
+      <div class="feature-card" onclick="showToast('My Wardrobe coming soon!','success')">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.57a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.57a2 2 0 00-1.34-2.23z"/>
+          </svg>
+        </div>
+        <div class="feature-title">My Wardrobe</div>
+        <div class="feature-desc">View your garment orders, track status and browse your custom pieces.</div>
+        <div class="feature-arrow">
+          View wardrobe
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
+      </div>
+
+      <!-- My Measurements -->
+      <div class="feature-card" id="card-measurements">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <path d="M2 12h20M2 7l2 5-2 5M22 7l-2 5 2 5"/>
+          </svg>
+        </div>
+        <div class="feature-title">My Measurements</div>
+        <div class="feature-desc">View and update your body measurements for the perfect fit every time.</div>
+        <div class="feature-arrow">
+          View measurements
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
+      </div>
+
+      <!-- My Profile -->
+      <div class="feature-card" onclick="toggleProfileEdit()">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/>
+          </svg>
+        </div>
+        <div class="feature-title">My Profile</div>
+        <div class="feature-desc">Keep your contact details up to date for orders and communication.</div>
+        <div class="feature-arrow">
+          Edit profile
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Profile card -->
+    <div class="profile-card" id="profile-card">
+      <div class="profile-card-header">
+        <div class="profile-card-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/></svg>
+          Your Details
+        </div>
+        <button class="btn-edit-profile" onclick="toggleProfileEdit()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit
+        </button>
+      </div>
+      <div class="profile-body">
+        <div class="profile-grid" id="profile-display"></div>
+      </div>
+
+      <!-- Edit form (hidden by default) -->
+      <div class="profile-edit" id="profile-edit-form">
+        <div class="profile-edit-grid">
+          <div class="pfield">
+            <label>First Name *</label>
+            <input type="text" id="pf-fname" placeholder="Jane">
+          </div>
+          <div class="pfield">
+            <label>Last Name</label>
+            <input type="text" id="pf-lname" placeholder="Doe">
+          </div>
+          <div class="pfield">
+            <label>Phone Number</label>
+            <input type="tel" id="pf-phone" placeholder="+1 234 567 8900">
+          </div>
+          <div class="pfield">
+            <label>Instagram</label>
+            <input type="text" id="pf-ig" placeholder="@yourusername">
+          </div>
+          <div class="pfield">
+            <label>Street Address</label>
+            <input type="text" id="pf-street" placeholder="123 Main St">
+          </div>
+          <div class="pfield">
+            <label>City</label>
+            <input type="text" id="pf-city" placeholder="London">
+          </div>
+          <div class="pfield">
+            <label>Postal Code</label>
+            <input type="text" id="pf-postal" placeholder="SW1A 1AA">
+          </div>
+          <div class="pfield">
+            <label>Country</label>
+            <input type="text" id="pf-country" placeholder="United Kingdom">
+          </div>
+        </div>
+        <div class="profile-edit-actions">
+          <button class="btn-save-profile" id="btn-save-profile" onclick="saveProfile()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span id="save-profile-lbl">Save Details</span>
+            <div class="spinner" id="save-profile-spin" style="border-top-color:#1a1200"></div>
+          </button>
+          <button class="btn-cancel-profile" onclick="toggleProfileEdit()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     FIREBASE MODULE SCRIPT
+════════════════════════════════════ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getAuth, onAuthStateChanged, signOut,
+  createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  GoogleAuthProvider, signInWithPopup,
+  sendPasswordResetEmail, updateProfile
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY",
+  authDomain:        "tailortech-accounts.firebaseapp.com",
+  projectId:         "tailortech-accounts",
+  storageBucket:     "tailortech-accounts.firebasestorage.app",
+  messagingSenderId: "137614433833",
+  appId:             "1:137614433833:web:c78ea40b0d04ba89f3c638",
+  measurementId:     "G-QZ7KCWCQXN"
+};
+
+const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbwGVL3IU4aUYkDJzQhce9s86uaJ_V7xJMZzRmkjpa06rfY50v62y8empi4_ivvQ8eMj/exec";
+
+// 🔧 Set this to your MeasureTracker measurements page URL once deployed
+const MEASUREMENTS_URL = "YOUR_MEASUREMENTS_PAGE_URL";
+
+const _app      = initializeApp(firebaseConfig);
+const _auth     = getAuth(_app);
+const _provider = new GoogleAuthProvider();
+_provider.setCustomParameters({ prompt: 'select_account' });
+
+// Expose everything to the non-module script below
+window._fb = {
+  auth: _auth,
+  provider: _provider,
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  signOut,
+  updateProfile,
+  SHEETS_API_URL,
+  MEASUREMENTS_URL,
+  currentUser: null,
+
+  async sheetReq(action, payload) {
+    payload = payload || {};
+    const user  = _auth.currentUser;
+    const token = user ? await user.getIdToken() : null;
+    const res   = await fetch(SHEETS_API_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ action, token, email: user ? user.email : null, ...payload }),
+    });
+    return res.json();
+  }
+};
+
+// Auth state
+onAuthStateChanged(_auth, function(user) {
+  window._fb.currentUser = user;
+  clearBanners();
+  if (user) {
+    showDashboard(user);
+  } else {
+    showAuth();
+  }
+});
+</script>
+
+<!-- ════════════════════════════════════
+     MAIN SCRIPT
+════════════════════════════════════ -->
+<script>
+'use strict';
+
+// ── Screen helpers ────────────────────────────────────────────────
+function showAuth() {
+  document.getElementById('s-auth').classList.add('active');
+  document.getElementById('s-dash').classList.remove('active');
+  document.getElementById('s-dash').style.display = 'none';
+  document.getElementById('s-auth').style.display = 'flex';
+}
+function showDashboard(user) {
+  document.getElementById('s-auth').classList.remove('active');
+  document.getElementById('s-auth').style.display = 'none';
+  document.getElementById('s-dash').classList.add('active');
+  document.getElementById('s-dash').style.display = 'block';
+  populateDashboard(user);
+}
+
+// ── Banners ───────────────────────────────────────────────────────
+function clearBanners() {
+  ['b-error','b-success','b-info'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+}
+function showError(msg)   { clearBanners(); var e=document.getElementById('b-error');   e.textContent=msg; e.style.display='block'; }
+function showSuccess(msg) { clearBanners(); var e=document.getElementById('b-success'); e.textContent=msg; e.style.display='block'; }
+function showInfo(msg)    { clearBanners(); var e=document.getElementById('b-info');    e.textContent=msg; e.style.display='block'; }
+
+// ── Tab switch ────────────────────────────────────────────────────
+function switchTab(tab, el) {
+  clearBanners();
+  document.querySelectorAll('.auth-tab').forEach(function(t){ t.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById('form-signin').style.display   = tab==='signin'   ? '' : 'none';
+  document.getElementById('form-register').style.display = tab==='register' ? '' : 'none';
+}
+
+// ── Loading ───────────────────────────────────────────────────────
+function setLoading(id, on) {
+  var btn = document.getElementById('btn-'+id);
+  var lbl = document.getElementById(id+'-lbl');
+  var sp  = document.getElementById(id+'-spin');
+  if (!btn) return;
+  btn.disabled = on;
+  if (lbl) lbl.style.display = on ? 'none' : '';
+  if (sp)  sp.style.display  = on ? 'block' : 'none';
+}
+
+// ── Error map ─────────────────────────────────────────────────────
+function friendlyErr(code) {
+  var m = {
+    'auth/user-not-found':        'No account found with this email.',
+    'auth/wrong-password':        'Incorrect password. Try again.',
+    'auth/invalid-credential':    'Incorrect email or password.',
+    'auth/email-already-in-use':  'An account with this email already exists.',
+    'auth/invalid-email':         'Please enter a valid email address.',
+    'auth/weak-password':         'Password must be at least 6 characters.',
+    'auth/too-many-requests':     'Too many attempts. Please wait and try again.',
+    'auth/network-request-failed':'Network error. Check your connection.',
+    'auth/unauthorized-domain':   'This domain is not authorised in Firebase. Add it in Firebase Console.',
+    'auth/popup-blocked':         'Popup was blocked. Please allow popups for this site.',
+  };
+  return m[code] || 'Something went wrong. Please try again.';
+}
+
+// ── Toast ─────────────────────────────────────────────────────────
+function showToast(msg, type) {
+  type = type || 'success';
+  var t = document.getElementById('toast');
+  t.className = 't-' + type;
+  t.innerHTML = (type==='success'
+    ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>'
+    : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+  ) + ' ' + msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 3500);
+}
+
+// ── Google sign-in (synchronous onclick — required for Safari) ────
+function signInGoogle() {
+  clearBanners();
+  if (!window._fb) { showError('Still loading — try again in a moment.'); return; }
+  window._fb.signInWithPopup(window._fb.auth, window._fb.provider)
+    .catch(function(e) {
+      console.error('Google auth:', e.code, e.message);
+      if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') {
+        showError(friendlyErr(e.code));
+      }
+    });
+}
+
+// ── Email sign-in ─────────────────────────────────────────────────
+function doSignIn() {
+  clearBanners();
+  var email = document.getElementById('si-email').value.trim();
+  var pass  = document.getElementById('si-pass').value;
+  if (!email || !pass) { showError('Please enter your email and password.'); return; }
+  setLoading('signin', true);
+  window._fb.signInWithEmailAndPassword(window._fb.auth, email, pass)
+    .catch(function(e){ showError(friendlyErr(e.code)); })
+    .finally(function(){ setLoading('signin', false); });
+}
+
+// ── Register ──────────────────────────────────────────────────────
+function doRegister() {
+  clearBanners();
+  var fname = document.getElementById('rg-fname').value.trim();
+  var lname = document.getElementById('rg-lname').value.trim();
+  var email = document.getElementById('rg-email').value.trim();
+  var pass  = document.getElementById('rg-pass').value;
+  if (!fname || !email || !pass) { showError('Please fill in all required fields.'); return; }
+  if (pass.length < 6)           { showError('Password must be at least 6 characters.'); return; }
+  setLoading('register', true);
+  window._fb.createUserWithEmailAndPassword(window._fb.auth, email, pass)
+    .then(function(cred) {
+      return window._fb.updateProfile(cred.user, {
+        displayName: fname + (lname ? ' ' + lname : '')
+      });
+    })
+    .then(function() {
+      // Save new client to CLIENTS sheet immediately on registration
+      var user = window._fb.auth.currentUser;
+      saveClientToSheet(user, fname, lname);
+    })
+    .catch(function(e){ showError(friendlyErr(e.code)); })
+    .finally(function(){ setLoading('register', false); });
+}
+
+// ── Forgot password ───────────────────────────────────────────────
+function doForgot() {
+  clearBanners();
+  var email = document.getElementById('si-email').value.trim();
+  if (!email) { showError('Enter your email address above first.'); return; }
+  window._fb.sendPasswordResetEmail(window._fb.auth, email)
+    .then(function(){ showSuccess('Password reset email sent — check your inbox.'); })
+    .catch(function(e){ showError(friendlyErr(e.code)); });
+}
+
+// ── Sign out ──────────────────────────────────────────────────────
+function doSignOut() {
+  window._fb.signOut(window._fb.auth);
+}
+
+// ── Populate dashboard after login ───────────────────────────────
+function populateDashboard(user) {
+  // Nav avatar
+  var av = document.getElementById('nav-avatar');
+  if (user.photoURL) {
+    av.innerHTML = '<img src="' + user.photoURL + '" alt="">';
+  } else {
+    av.textContent = (user.displayName || user.email || '?')[0].toUpperCase();
+  }
+
+  // Greeting
+  var name = user.displayName ? user.displayName.split(' ')[0] : 'there';
+  document.getElementById('dash-greeting').textContent = 'Welcome back, ' + name;
+  document.getElementById('dash-sub').textContent      = user.email;
+
+  // Measurements card link
+  var mUrl = (window._fb && window._fb.MEASUREMENTS_URL) || '#';
+  var mc   = document.getElementById('card-measurements');
+  mc.onclick = function() {
+    if (mUrl !== '#' && mUrl !== 'YOUR_MEASUREMENTS_PAGE_URL') {
+      window.open(mUrl, '_blank');
+    } else {
+      showToast('Measurements page URL not set yet.', 'error');
+    }
+  };
+
+  // Save client to sheet (on every login — script only writes new fields, won't overwrite)
+  saveClientToSheet(user, null, null);
+
+  // Load existing profile from sheet
+  loadProfile(user.email);
+}
+
+// ── Save client to CLIENTS sheet ─────────────────────────────────
+function saveClientToSheet(user, fname, lname) {
+  if (!window._fb) return;
+  var displayName = user.displayName || '';
+  var parts       = displayName.split(' ');
+  var data = {
+    'First Name':  fname || parts[0] || '',
+    'Last Name':   lname || parts.slice(1).join(' ') || '',
+    'Email':       user.email || '',
+    'Phone Number':'',
+    'IG':          '',
+    'Street Address':'',
+    'City':        '',
+    'Postal Code': '',
+    'Country':     '',
+  };
+  window._fb.sheetReq('saveClient', { data: data }).catch(function(e){
+    console.warn('Could not save client to sheet:', e);
+  });
+}
+
+// ── Load profile from sheet ───────────────────────────────────────
+function loadProfile(email) {
+  if (!window._fb) return;
+  window._fb.sheetReq('getClient').then(function(res) {
+    if (res && res.success && res.client) {
+      renderProfileDisplay(res.client);
+      prefillEditForm(res.client);
+    } else {
+      renderProfileDisplay(null);
+    }
+  }).catch(function() { renderProfileDisplay(null); });
+}
+
+// ── Render profile display ────────────────────────────────────────
+function renderProfileDisplay(client) {
+  var fields = [
+    { label:'First Name',    key:'First Name' },
+    { label:'Last Name',     key:'Last Name' },
+    { label:'Email',         key:'Email' },
+    { label:'Phone',         key:'Phone Number' },
+    { label:'Instagram',     key:'IG' },
+    { label:'Address',       key:'Street Address' },
+    { label:'City',          key:'City' },
+    { label:'Postal Code',   key:'Postal Code' },
+    { label:'Country',       key:'Country' },
+    { label:'Member Since',  key:'Created at' },
+  ];
+  var grid = document.getElementById('profile-display');
+  grid.innerHTML = '';
+  fields.forEach(function(f) {
+    var val = client ? (client[f.key] || '') : '';
+    var div = document.createElement('div');
+    div.className = 'profile-field';
+    div.innerHTML =
+      '<label>' + f.label + '</label>' +
+      '<div class="val' + (val ? '' : ' empty') + '">' +
+      (val || 'Not set') + '</div>';
+    grid.appendChild(div);
+  });
+}
+
+// ── Prefill edit form ─────────────────────────────────────────────
+function prefillEditForm(client) {
+  var map = {
+    'pf-fname':   'First Name',
+    'pf-lname':   'Last Name',
+    'pf-phone':   'Phone Number',
+    'pf-ig':      'IG',
+    'pf-street':  'Street Address',
+    'pf-city':    'City',
+    'pf-postal':  'Postal Code',
+    'pf-country': 'Country',
+  };
+  Object.keys(map).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && client && client[map[id]]) el.value = client[map[id]];
+  });
+}
+
+// ── Toggle profile edit form ──────────────────────────────────────
+function toggleProfileEdit() {
+  var form = document.getElementById('profile-edit-form');
+  var isOpen = form.style.display === 'block';
+  form.style.display = isOpen ? 'none' : 'block';
+}
+
+// ── Save profile ──────────────────────────────────────────────────
+function saveProfile() {
+  if (!window._fb) return;
+  var fname = document.getElementById('pf-fname').value.trim();
+  if (!fname) { showToast('First name is required.', 'error'); return; }
+
+  var data = {
+    'First Name':     fname,
+    'Last Name':      document.getElementById('pf-lname').value.trim(),
+    'Email':          window._fb.currentUser ? window._fb.currentUser.email : '',
+    'Phone Number':   document.getElementById('pf-phone').value.trim(),
+    'IG':             document.getElementById('pf-ig').value.trim(),
+    'Street Address': document.getElementById('pf-street').value.trim(),
+    'City':           document.getElementById('pf-city').value.trim(),
+    'Postal Code':    document.getElementById('pf-postal').value.trim(),
+    'Country':        document.getElementById('pf-country').value.trim(),
+  };
+
+  // Loading state
+  var btn = document.getElementById('btn-save-profile');
+  var lbl = document.getElementById('save-profile-lbl');
+  var sp  = document.getElementById('save-profile-spin');
+  btn.disabled = true;
+  lbl.style.display = 'none';
+  sp.style.display  = 'block';
+
+  window._fb.sheetReq('saveClient', { data: data })
+    .then(function(res) {
+      if (res && res.success) {
+        showToast('Profile saved successfully!', 'success');
+        renderProfileDisplay(data);
+        document.getElementById('profile-edit-form').style.display = 'none';
+        // Also update Firebase display name
+        if (window._fb.currentUser && window._fb.updateProfile) {
+          window._fb.updateProfile(window._fb.currentUser, {
+            displayName: fname + (data['Last Name'] ? ' ' + data['Last Name'] : '')
+          });
+        }
+      } else {
+        showToast('Could not save. Check your connection.', 'error');
+      }
+    })
+    .catch(function() { showToast('Network error. Please try again.', 'error'); })
+    .finally(function() {
+      btn.disabled = false;
+      lbl.style.display = '';
+      sp.style.display  = 'none';
+    });
+}
+</script>
+
+</body>
+</html>
