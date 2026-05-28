@@ -416,6 +416,87 @@ button { cursor: pointer; }
   .dash { padding: 1.5rem 1rem 3rem; }
   .auth-field-row { grid-template-columns: 1fr; }
 }
+
+/* ── Welcome popup ── */
+.welcome-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(26,25,22,0.55);
+  backdrop-filter: blur(4px);
+  align-items: center; justify-content: center;
+  padding: 1.5rem;
+}
+.welcome-overlay.open { display: flex; }
+.welcome-popup {
+  background: var(--white);
+  border: 1px solid var(--border-mid);
+  border-radius: 3px;
+  width: 100%; max-width: 420px;
+  padding: 32px 28px 28px;
+  box-shadow: 0 24px 60px rgba(26,25,22,0.18);
+  position: relative;
+}
+.wp-eyebrow {
+  font-size: 9px; font-weight: 600; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px;
+}
+.wp-title {
+  font-size: 20px; font-weight: 300; letter-spacing: -0.01em;
+  color: var(--ink); margin-bottom: 4px;
+}
+.wp-sub {
+  font-size: 12px; color: var(--ink-faint); margin-bottom: 24px;
+  line-height: 1.5; letter-spacing: 0.02em;
+}
+.wp-field { margin-bottom: 14px; }
+.wp-field label {
+  display: block; font-size: 9px; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink-light); margin-bottom: 5px;
+}
+.wp-field input {
+  width: 100%; padding: 9px 12px;
+  font-family: 'Jost', sans-serif; font-size: 13px;
+  background: var(--cream); border: 1px solid var(--border-mid);
+  border-radius: 2px; color: var(--ink); outline: none;
+  transition: border-color 0.15s; -webkit-appearance: none;
+}
+.wp-field input:focus { border-color: var(--ink); background: var(--white); }
+.wp-field input::placeholder { color: var(--ink-faint); }
+.wp-field input[readonly] {
+  opacity: 0.55; cursor: not-allowed; background: var(--cream-dark);
+}
+.wp-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.wp-btns {
+  display: flex; gap: 10px; margin-top: 22px;
+  border-top: 1px solid var(--border); padding-top: 20px;
+}
+.wp-btn-save {
+  flex: 1; padding: 11px;
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  background: var(--ink); color: var(--white);
+  border: none; border-radius: 2px; cursor: pointer; transition: background 0.15s;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.wp-btn-save:hover { background: #2d2c29; }
+.wp-btn-save:disabled { opacity: 0.45; cursor: not-allowed; }
+.wp-btn-later {
+  padding: 11px 16px;
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  background: transparent; color: var(--ink-mid);
+  border: 1px solid var(--border-mid); border-radius: 2px;
+  cursor: pointer; transition: all 0.15s;
+}
+.wp-btn-later:hover { background: var(--cream-mid); color: var(--ink); }
+.wp-spinner {
+  width: 13px; height: 13px;
+  border: 1.5px solid rgba(255,255,255,0.3); border-top-color: #fff;
+  border-radius: 50%; animation: wp-spin 0.65s linear infinite; display: none;
+}
+@keyframes wp-spin { to { transform: rotate(360deg); } }
+
 </style>
 </head>
 <body>
@@ -726,7 +807,7 @@ onAuthStateChanged(_auth, function(user) {
   window._fb.currentUser = user;
   clearBanners();
   if (user) {
-    // Show avatar in nav immediately while redirecting
+    // Show avatar in nav
     var navAv = document.getElementById('auth-nav-avatar');
     var avEl  = document.getElementById('auth-av');
     if (navAv) navAv.style.display = 'flex';
@@ -737,8 +818,8 @@ onAuthStateChanged(_auth, function(user) {
         avEl.textContent = (user.displayName || user.email || '?')[0].toUpperCase();
       }
     }
-    // Redirect to dashboard
-    window.location.href = 'https://tailortech.toom.design/dashboard';
+    // Check if new client — show welcome popup, else go straight to dashboard
+    checkIfNewClient(user);
   } else {
     showAuth();
   }
@@ -918,10 +999,7 @@ function populateDashboard(user) {
     }
   };
 
-  // Save client to sheet (on every login — script only writes new fields, won't overwrite)
-  saveClientToSheet(user, null, null);
-
-  // Load existing profile from sheet
+  // Profile loaded on dashboard page
   loadProfile(user.email);
 }
 
@@ -1066,11 +1144,144 @@ function saveProfile() {
       sp.style.display  = 'none';
     });
 }
+
+// ── Welcome popup ─────────────────────────────────────────────────
+var _wpUser = null;
+
+function checkIfNewClient(user) {
+  _wpUser = user;
+  // Check if client already exists in sheet
+  window._fb.sheetReq('getClient', { uid: user.uid })
+    .then(function(res) {
+      if (res && res.success && res.client && res.client['Email']) {
+        // Existing client — go straight to dashboard
+        window.location.href = 'https://tailortech.toom.design/dashboard';
+      } else {
+        // New client — show welcome popup
+        showWelcomePopup(user);
+      }
+    })
+    .catch(function() {
+      // On error, still go to dashboard
+      window.location.href = 'https://tailortech.toom.design/dashboard';
+    });
+}
+
+function showWelcomePopup(user) {
+  // Pre-fill email (locked)
+  var emailEl = document.getElementById('wp-email');
+  if (emailEl) emailEl.value = user.email || '';
+
+  // Pre-fill name from Google profile if available
+  if (user.displayName) {
+    var parts  = user.displayName.split(' ');
+    var fnEl   = document.getElementById('wp-fname');
+    var lnEl   = document.getElementById('wp-lname');
+    if (fnEl && !fnEl.value) fnEl.value = parts[0] || '';
+    if (lnEl && !lnEl.value) lnEl.value = parts.slice(1).join(' ') || '';
+  }
+
+  document.getElementById('welcome-overlay').classList.add('open');
+}
+
+function wpSave() {
+  if (!_wpUser || !window._fb) return;
+  var fname = document.getElementById('wp-fname').value.trim();
+  var lname = document.getElementById('wp-lname').value.trim();
+  var phone = document.getElementById('wp-phone').value.trim();
+  var ig    = document.getElementById('wp-ig').value.trim();
+
+  var btn = document.getElementById('wp-save-btn');
+  var lbl = document.getElementById('wp-save-lbl');
+  var sp  = document.getElementById('wp-spinner');
+  btn.disabled = true; lbl.style.display = 'none'; sp.style.display = 'block';
+
+  window._fb.sheetReq('saveClient', {
+    uid:   _wpUser.uid,
+    email: _wpUser.email,
+    data: {
+      'UID':          _wpUser.uid,
+      'First Name':   fname,
+      'Last Name':    lname,
+      'Email':        _wpUser.email,
+      'Phone Number': phone,
+      'IG':           ig,
+    }
+  })
+  .then(function() {
+    window.location.href = 'https://tailortech.toom.design/dashboard';
+  })
+  .catch(function() {
+    // Still redirect even on error
+    window.location.href = 'https://tailortech.toom.design/dashboard';
+  });
+}
+
+function wpLater() {
+  if (!_wpUser || !window._fb) {
+    window.location.href = 'https://tailortech.toom.design/dashboard';
+    return;
+  }
+  // Save only UID + email — minimum needed to track the client
+  window._fb.sheetReq('saveClient', {
+    uid:   _wpUser.uid,
+    email: _wpUser.email,
+    data: {
+      'UID':   _wpUser.uid,
+      'Email': _wpUser.email,
+    }
+  })
+  .finally(function() {
+    window.location.href = 'https://tailortech.toom.design/dashboard';
+  });
+}
+
 </script>
 
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.1</div>
+
+<!-- ── Welcome popup ── -->
+<div class="welcome-overlay" id="welcome-overlay">
+  <div class="welcome-popup">
+    <div class="wp-eyebrow">New Account</div>
+    <div class="wp-title">Welcome to TailorTech</div>
+    <div class="wp-sub">Complete your profile so we can personalise your experience. You can always update this later.</div>
+
+    <div class="wp-field">
+      <label>Email Address</label>
+      <input type="email" id="wp-email" readonly placeholder="your@email.com">
+    </div>
+    <div class="wp-field-row">
+      <div class="wp-field" style="margin-bottom:0">
+        <label>First Name *</label>
+        <input type="text" id="wp-fname" placeholder="Jane" autocomplete="given-name">
+      </div>
+      <div class="wp-field" style="margin-bottom:0">
+        <label>Last Name</label>
+        <input type="text" id="wp-lname" placeholder="Doe" autocomplete="family-name">
+      </div>
+    </div>
+    <div class="wp-field" style="margin-top:14px">
+      <label>Phone Number</label>
+      <input type="tel" id="wp-phone" placeholder="+1 234 567 8900" autocomplete="tel">
+    </div>
+    <div class="wp-field">
+      <label>Instagram</label>
+      <input type="text" id="wp-ig" placeholder="@yourusername">
+    </div>
+
+    <div class="wp-btns">
+      <button class="wp-btn-save" id="wp-save-btn" onclick="wpSave()">
+        <span id="wp-save-lbl">Save Profile</span>
+        <div class="wp-spinner" id="wp-spinner"></div>
+      </button>
+      <button class="wp-btn-later" onclick="wpLater()">Update Later</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
