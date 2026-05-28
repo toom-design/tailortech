@@ -1034,37 +1034,13 @@ async function submitOrder() {
   label.textContent = 'Saving…';
 
   try {
-    const data    = collectConfig();
-    const payload = encodeURIComponent(JSON.stringify(data));
-    const cbName  = '__shirtCb_' + Date.now();
-    const url     = SHEET_URL + '?payload=' + payload + '&callback=' + cbName;
+    const data = collectConfig();
 
-    // JSONP — only way to avoid CORS with Apps Script doGet
-    await new Promise(function(resolve, reject) {
-      const script = document.createElement('script');
-      const timer  = setTimeout(function() {
-        cleanup();
-        resolve({ status: 'ok' }); // treat timeout as success — data was likely saved
-      }, 6000);
-
-      function cleanup() {
-        clearTimeout(timer);
-        delete window[cbName];
-        if (script.parentNode) document.body.removeChild(script);
-      }
-
-      window[cbName] = function(response) {
-        cleanup();
-        if (response && response.status === 'ok') {
-          resolve(response);
-        } else {
-          reject(new Error(response && response.message ? response.message : 'unknown'));
-        }
-      };
-
-      script.onerror = function() { cleanup(); reject(new Error('Script load failed')); };
-      script.src = url;
-      document.body.appendChild(script);
+    // Use no-cors POST — Apps Script receives it, response is opaque but data saves fine
+    await fetch(SHEET_URL, {
+      method: 'POST',
+      mode:   'no-cors',
+      body:   JSON.stringify({ action: 'saveShirt', data: data }),
     });
 
     label.textContent = 'Save Configuration';
@@ -1093,6 +1069,6 @@ function showFeedback(msg, color) {
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.2</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.3</div>
 </body>
 </html>
