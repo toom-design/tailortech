@@ -509,17 +509,32 @@ window._d = {
     payload = payload || {};
     const user  = _auth.currentUser;
     const token = user ? await user.getIdToken() : null;
-    const res   = await fetch(SHEETS, {
+
+    const requestBody = {
+      action,
+      token,
+      email: user ? user.email : null,
+      uid: user ? user.uid : null,
+      ...payload
+    };
+
+    const res = await fetch(SHEETS, {
       method: 'POST',
-      body: JSON.stringify({
-        action,
-        token,
-        email: user ? user.email : null,
-        uid: user ? user.uid : null,
-        ...payload
-      })
+      redirect: 'follow',
+      headers: {
+        // text/plain avoids the browser CORS preflight that often breaks Apps Script calls.
+        'Content-Type': 'text/plain;charset=utf-8'
+      },
+      body: JSON.stringify(requestBody)
     });
-    return res.json();
+
+    const txt = await res.text();
+    try {
+      return JSON.parse(txt);
+    } catch (err) {
+      console.error('Apps Script returned non-JSON:', txt);
+      return { success: false, message: 'Apps Script returned non-JSON response' };
+    }
   }
 };
 
@@ -789,43 +804,80 @@ function toggleEdit() {
   }
 }
 
-function saveProfile() {
+async function saveProfile() {
+  var user = window._d && window._d.currentUser ? window._d.currentUser : null;
+  if (!user) { toast('You are not signed in.', 'err'); return; }
+
   var fname = document.getElementById('ef-fn').value.trim();
   if (!fname) { toast('First name is required.', 'err'); return; }
+
   var data = {
+    'UID': user.uid || '',
+    'Email': user.email || document.getElementById('ef-email').value.trim(),
     'First Name': fname,
-    'Last Name':  document.getElementById('ef-ln').value.trim(),
-    'UID':        window._d.currentUser ? window._d.currentUser.uid : '',
-    'Email':      window._d.currentUser ? window._d.currentUser.email : '',
+    'Last Name': document.getElementById('ef-ln').value.trim(),
     'Phone Number': document.getElementById('ef-phone').value.trim(),
-    'IG':           document.getElementById('ef-ig').value.trim(),
+    'IG': document.getElementById('ef-ig').value.trim(),
     'Street Address': document.getElementById('ef-street').value.trim(),
-    'City':         document.getElementById('ef-city').value.trim(),
-    'Postal Code':  document.getElementById('ef-postal').value.trim(),
-    'Country':      document.getElementById('ef-country').value.trim(),
-    '_forceUpdate': true,
+    'City': document.getElementById('ef-city').value.trim(),
+    'Postal Code': document.getElementById('ef-postal').value.trim(),
+    'Country': document.getElementById('ef-country').value.trim()
   };
-  var btn=document.getElementById('btn-save-p'), lbl=document.getElementById('save-lbl'), sp=document.getElementById('save-spin');
-  btn.disabled=true; lbl.style.display='none'; sp.style.display='block';
-  window._d.req('saveClient', { uid: data['UID'], email: data['Email'], data: data })
-    .then(function(res) {
-      if (res && res.success) {
-        if (res.personId) data['Person ID'] = res.personId;
-        toast('Profile saved');
-        renderProfile(data);
-        prefill(data);
-        document.getElementById('st-id').textContent = data['Person ID'] || '—';
-        document.getElementById('edit-form').style.display='none';
-      }
-      else { toast((res && res.message) ? res.message : 'Could not save — try again', 'err'); }
-    })
-    .catch(function(){ toast('Network error', 'err'); })
-    .finally(function(){ btn.disabled=false; lbl.style.display=''; sp.style.display='none'; });
+
+  var btn = document.getElementById('btn-save-p');
+  var lbl = document.getElementById('save-lbl');
+  var sp  = document.getElementById('save-spin');
+
+  btn.disabled = true;
+  lbl.style.display = 'none';
+  sp.style.display = 'block';
+
+  try {
+    const res = await window._d.req('saveClient', {
+      uid: data['UID'],
+      email: data['Email'],
+      data: data
+    });
+
+    if (!res || !res.success) {
+      toast((res && res.message) ? res.message : 'Could not save profile.', 'err');
+      return;
+    }
+
+    // Re-read after save, so the dashboard displays the exact row now stored in Google Sheets.
+    const readBack = await window._d.req('getClient', {
+      uid: data['UID'],
+      email: data['Email']
+    });
+
+    const savedProfile = readBack && readBack.success && readBack.client
+      ? readBack.client
+      : Object.assign({}, data, {
+          'Person ID': res.personId || '',
+          'Created at': '',
+          'Updated at': ''
+        });
+
+    renderProfile(savedProfile);
+    prefill(savedProfile);
+    document.getElementById('st-id').textContent = savedProfile['Person ID'] || res.personId || '—';
+    document.getElementById('st-since').textContent = 'member since ' + fmtDate(savedProfile['Created at'] || '');
+    document.getElementById('edit-form').style.display = 'none';
+
+    toast(res.action === 'created' ? 'Profile created in Google Sheet' : 'Profile updated in Google Sheet');
+  } catch (err) {
+    console.error(err);
+    toast('Network error while saving profile.', 'err');
+  } finally {
+    btn.disabled = false;
+    lbl.style.display = '';
+    sp.style.display = 'none';
+  }
 }
 </script>
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.4</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.4.1 profile sync</div>
 </body>
 </html>
