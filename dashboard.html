@@ -227,6 +227,30 @@ button { cursor: pointer; font-family: inherit; }
   .data-table th:nth-child(3), .data-table td:nth-child(3),
   .data-table th:nth-child(4), .data-table td:nth-child(4) { display: none; }
 }
+
+/* ── Account popover ── */
+.account-popover {
+  position: fixed; top: 60px; right: 28px;
+  width: min(340px, calc(100vw - 32px));
+  background: var(--white); border: 1px solid var(--border-mid);
+  border-radius: 2px; box-shadow: 0 18px 48px rgba(26,25,22,0.16);
+  padding: 18px; z-index: 999; display: none;
+}
+.account-popover.open { display: block; }
+.account-popover::before {
+  content: ''; position: absolute; top: -7px; right: 10px;
+  width: 12px; height: 12px; background: var(--white);
+  border-left: 1px solid var(--border-mid); border-top: 1px solid var(--border-mid);
+  transform: rotate(45deg);
+}
+.account-title { font-size: 10px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 14px; }
+.account-row { margin-bottom: 12px; }
+.account-lbl { font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 4px; }
+.account-val { font-size: 12px; color: var(--ink); word-break: break-all; background: var(--cream-mid); border: 1px solid var(--border); padding: 8px 10px; border-radius: 2px; }
+.account-actions { display: flex; gap: 8px; margin-top: 14px; }
+.account-copy { font-size: 10px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; padding: 7px 12px; border: 1px solid var(--border-mid); background: transparent; color: var(--ink-mid); border-radius: 2px; cursor: pointer; }
+.account-copy:hover { background: var(--cream-mid); color: var(--ink); }
+
 </style>
 </head>
 <body>
@@ -236,9 +260,27 @@ button { cursor: pointer; font-family: inherit; }
 <!-- Nav -->
 <nav class="nav">
   <a class="nav-brand" href="https://tailortech.toom.design/">TailorTech</a>
-  <div class="nav-avatar" id="nav-av"></div>
+  <div class="nav-avatar" id="nav-av" onclick="togglePopover(event)" title="Account details" style="cursor:pointer"></div>
   <button class="nav-btn" onclick="doSignOut()">Sign out</button>
 </nav>
+
+
+<!-- Account popover -->
+<div class="account-popover" id="account-popover">
+  <div class="account-title">Signed-in Account</div>
+  <div class="account-row">
+    <div class="account-lbl">Email</div>
+    <div class="account-val" id="account-email">—</div>
+  </div>
+  <div class="account-row">
+    <div class="account-lbl">Firebase UID</div>
+    <div class="account-val" id="account-uid">—</div>
+  </div>
+  <div class="account-actions">
+    <button class="account-copy" onclick="copyVal('email')">Copy email</button>
+    <button class="account-copy" onclick="copyVal('uid')">Copy UID</button>
+  </div>
+</div>
 
 <!-- Loading -->
 <div id="loading">
@@ -367,6 +409,8 @@ button { cursor: pointer; font-family: inherit; }
       <div class="profile-grid" id="profile-display"></div>
       <div class="edit-form" id="edit-form">
         <div class="edit-grid">
+          <div class="ef"><label>Email</label><input type="email" id="ef-email" readonly></div>
+          <div class="ef"><label>Firebase UID</label><input type="text" id="ef-uid" readonly></div>
           <div class="ef"><label>First Name *</label><input type="text"  id="ef-fn"      placeholder="Jane"></div>
           <div class="ef"><label>Last Name</label>  <input type="text"  id="ef-ln"      placeholder="Doe"></div>
           <div class="ef"><label>Phone</label>      <input type="tel"   id="ef-phone"   placeholder="+1 234 567 8900"></div>
@@ -416,8 +460,10 @@ window._d = {
     payload = payload || {};
     const user  = _auth.currentUser;
     const token = user ? await user.getIdToken() : null;
-    const res   = await fetch(SHEETS, {
+    const res = await fetch(SHEETS, {
       method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
         action,
         token,
@@ -426,7 +472,9 @@ window._d = {
         ...payload
       })
     });
-    return res.json();
+    const txt = await res.text();
+    try { return JSON.parse(txt); }
+    catch(e) { console.error('Non-JSON from Apps Script:', txt); return { success: false, message: 'Non-JSON response' }; }
   }
 };
 
@@ -445,11 +493,11 @@ onAuthStateChanged(_auth, function(user) {
 
 var BASE = 'https://tailortech.toom.design/';
 
-function go(page) { window.location.href = BASE + '/' + page; }
+function go(page) { window.location.href = BASE + page; }
 function goMeasurements() {
   var user  = window._d && window._d.currentUser;
   var email = user ? encodeURIComponent(user.email) : '';
-  var url   = BASE + '/measurements' + (email ? '?email=' + email : '');
+  var url   = BASE + 'measurements.html' + (email ? '?email=' + email : '');
   window.location.href = url;
 }
 
@@ -474,6 +522,7 @@ function fmtDate(s) {
 function boot(user) {
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display    = 'block';
+  setAccountPopover(user);
 
   // Avatar
   var av = document.getElementById('nav-av');
@@ -579,6 +628,7 @@ function loadProfile(user) {
 }
 
 var PFIELDS = [
+  {l:'UID',k:'UID'},
   {l:'First Name',k:'First Name'},{l:'Last Name',k:'Last Name'},
   {l:'Email',k:'Email'},{l:'Phone',k:'Phone Number'},
   {l:'Instagram',k:'IG'},{l:'Address',k:'Street Address'},
@@ -635,10 +685,43 @@ function saveProfile() {
     .catch(function(){ toast('Network error', 'err'); })
     .finally(function(){ btn.disabled=false; lbl.style.display=''; sp.style.display='none'; });
 }
+
+// ── Account popover ───────────────────────────────────────────────
+function togglePopover(e) {
+  if (e) e.stopPropagation();
+  var p = document.getElementById('account-popover');
+  p.classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  var p  = document.getElementById('account-popover');
+  var av = document.getElementById('nav-av');
+  if (p && av && !p.contains(e.target) && !av.contains(e.target))
+    p.classList.remove('open');
+});
+function setAccountPopover(user) {
+  var em = document.getElementById('account-email');
+  var uid = document.getElementById('account-uid');
+  if (em)  em.textContent  = user && user.email ? user.email : '—';
+  if (uid) uid.textContent = user && user.uid   ? user.uid   : '—';
+}
+function copyVal(type) {
+  var user = window._d && window._d.currentUser;
+  var val  = type === 'uid' ? (user && user.uid) : (user && user.email);
+  if (!val) { toast('Nothing to copy', 'err'); return; }
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(val).then(function(){ toast(type.toUpperCase() + ' copied'); });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = val; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    toast(type.toUpperCase() + ' copied');
+  }
+}
+
 </script>
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.4.3</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.5</div>
 </body>
 </html>
