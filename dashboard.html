@@ -509,16 +509,16 @@ window._d = {
     payload = payload || {};
     const user  = _auth.currentUser;
     const token = user ? await user.getIdToken() : null;
-    const res   = await fetch(SHEETS, {
-      method: 'POST',
-      body: JSON.stringify({
-        action,
-        token,
-        email: user ? user.email : null,
-        uid: user ? user.uid : null,
-        ...payload
-      })
-    });
+const res = await fetch(SHEETS, {
+  method: 'POST',
+  body: JSON.stringify({
+    action,
+    token,
+    uid: user ? user.uid : '',
+    email: user ? user.email : '',
+    ...payload
+  })
+});
     return res.json();
   }
 };
@@ -726,30 +726,63 @@ function buildProfileData(client) {
 }
 
 function loadProfile() {
-  window._d.req('getClient').then(function(res) {
-    var profile = buildProfileData(res && res.success && res.client ? res.client : null);
-    renderProfile(profile);
-    prefill(profile);
-    document.getElementById('st-id').textContent    = profile['Person ID'] || '—';
-    document.getElementById('st-since').textContent = 'member since ' + fmtDate(profile['Created at'] || '');
+  const user = window._d.currentUser;
+  if (!user) return;
 
-    // If Firebase has name/email/UID but the sheet is missing the client, create a minimal row.
-    if ((!res || !res.client) && (profile['Email'] || profile['UID'])) {
-      window._d.req('saveClient', {
-        uid: profile['UID'],
-        email: profile['Email'],
-        data: {
-          'UID': profile['UID'],
-          'Email': profile['Email'],
-          'First Name': profile['First Name'],
-          'Last Name': profile['Last Name']
-        }
-      }).catch(function(e){ console.warn('Could not auto-create client:', e); });
+  window._d.req('getClient', {
+    uid: user.uid,
+    email: user.email
+  }).then(function(res) {
+
+    if (res && res.success && res.client) {
+      renderProfile(res.client);
+      prefill(res.client);
+
+      document.getElementById('st-id').textContent =
+        res.client['Person ID'] || '—';
+
+      document.getElementById('st-since').textContent =
+        'member since ' + fmtDate(res.client['Created at'] || '');
+
+      return;
     }
-  }).catch(function(){
-    var profile = buildProfileData(null);
-    renderProfile(profile);
-    prefill(profile);
+
+    // NEW USER — create row in Google Sheet
+    const parts = (user.displayName || '').trim().split(' ');
+
+    const data = {
+      'UID': user.uid || '',
+      'Email': user.email || '',
+      'First Name': parts[0] || '',
+      'Last Name': parts.slice(1).join(' ') || '',
+      'Phone Number': '',
+      'IG': '',
+      'Street Address': '',
+      'City': '',
+      'Postal Code': '',
+      'Country': ''
+    };
+
+    return window._d.req('saveClient', {
+      uid: user.uid,
+      email: user.email,
+      data: data
+    }).then(function(saveRes) {
+      renderProfile(data);
+      prefill(data);
+
+      if (saveRes && saveRes.personId) {
+        document.getElementById('st-id').textContent = saveRes.personId;
+      }
+
+      document.getElementById('st-since').textContent = 'member since today';
+      toast('New client profile created');
+    });
+
+  }).catch(function(err) {
+    console.error('Profile sync failed:', err);
+    renderProfile(null);
+    toast('Could not sync profile with Google Sheet', 'err');
   });
 }
 
