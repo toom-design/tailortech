@@ -793,8 +793,10 @@ window._fb = {
     payload = payload || {};
     const user  = _auth.currentUser;
     const token = user ? await user.getIdToken() : null;
-    const res   = await fetch(SHEETS_API_URL, {
-      method: 'POST',
+    const res = await fetch(SHEETS_API_URL, {
+      method:   'POST',
+      redirect: 'follow',
+      headers:  { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
         action,
         token,
@@ -803,7 +805,9 @@ window._fb = {
         ...payload
       }),
     });
-    return res.json();
+    const txt = await res.text();
+    try { return JSON.parse(txt); }
+    catch(e) { console.error('Non-JSON:', txt); return { success: false, message: 'Non-JSON response' }; }
   }
 };
 
@@ -1037,7 +1041,8 @@ function saveClientToSheet(user, fname, lname) {
 // ── Load profile from sheet ───────────────────────────────────────
 function loadProfile(email) {
   if (!window._fb) return;
-  window._fb.sheetReq('getClient').then(function(res) {
+  var _cuid = window._fb.auth.currentUser ? window._fb.auth.currentUser.uid : null;
+  window._fb.sheetReq('getClient', { uid: _cuid }).then(function(res) {
     if (res && res.success && res.client) {
       renderProfileDisplay(res.client);
       prefillEditForm(res.client);
@@ -1126,7 +1131,9 @@ function saveProfile() {
   lbl.style.display = 'none';
   sp.style.display  = 'block';
 
-  window._fb.sheetReq('saveClient', { data: data })
+  var _suid = window._fb.auth.currentUser ? window._fb.auth.currentUser.uid : null;
+  if (_suid) data['UID'] = _suid;
+  window._fb.sheetReq('saveClient', { uid: _suid, data: data })
     .then(function(res) {
       if (res && res.success) {
         showToast('Profile saved successfully!', 'success');
@@ -1256,10 +1263,6 @@ function wpLater() {
 </script>
 
 
-
-<!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.2</div>
-
 <!-- ── Welcome popup ── -->
 <div class="welcome-overlay" id="welcome-overlay">
   <div class="welcome-popup">
@@ -1302,3 +1305,7 @@ function wpLater() {
 
 </body>
 </html>
+
+<!-- Version badge -->
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.4</div>
+
