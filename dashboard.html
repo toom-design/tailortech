@@ -280,7 +280,7 @@ button { cursor: pointer; font-family: inherit; }
       <span class="sec-title">Quick Actions</span>
     </div>
     <div class="cards">
-      <div class="action-card" onclick="go('configure')">
+      <div class="action-card" onclick="go('configure.html')">
         <div class="action-card-icon">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.57a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.57a2 2 0 00-1.34-2.23z"/>
@@ -316,7 +316,7 @@ button { cursor: pointer; font-family: inherit; }
     <div id="sec-orders">
       <div class="sec-head">
         <span class="sec-title">Order History</span>
-        <button class="sec-action" onclick="go('configure')">
+        <button class="sec-action" onclick="go('configure.html')">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           New order
         </button>
@@ -332,7 +332,7 @@ button { cursor: pointer; font-family: inherit; }
         <div id="orders-empty" class="empty" style="display:none">
           <div class="empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg></div>
           <p>No orders yet</p>
-          <button class="btn-save" onclick="go('configure')">Start your first order</button>
+          <button class="btn-save" onclick="go('configure.html')">Start your first order</button>
         </div>
       </div>
     </div>
@@ -428,7 +428,7 @@ onAuthStateChanged(_auth, function(user) {
     window._d.currentUser = user;
     boot(user);
   } else {
-    window.location.href = BASE + 'index.html';
+    window.location.href = BASE + 'auth.html';
   }
 });
 </script>
@@ -438,11 +438,11 @@ onAuthStateChanged(_auth, function(user) {
 
 var BASE = 'https://tailortech.toom.design/';
 
-function go(page) { window.location.href = BASE + page; }
+function go(page) { window.location.href = BASE + '/' + page; }
 function goMeasurements() {
   var user  = window._d && window._d.currentUser;
   var email = user ? encodeURIComponent(user.email) : '';
-  var url   = BASE + 'measurements.html' + (email ? '?email=' + email : '');
+  var url   = BASE + '/measurements' + (email ? '?email=' + email : '');
   window.location.href = url;
 }
 
@@ -455,7 +455,7 @@ function toast(msg, type) {
 
 function doSignOut() {
   if (window._d) window._d.signOut(window._d.auth)
-    .then(function(){ window.location.href = BASE + 'index.html'; });
+    .then(function(){ window.location.href = BASE + 'auth.html'; });
 }
 
 function fmtDate(s) {
@@ -609,5 +609,9 @@ function saveProfile() {
     .finally(function(){ btn.disabled=false; lbl.style.display=''; sp.style.display='none'; });
 }
 </script>
+
+
+<!-- Version badge -->
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.0</div>
 </body>
 </html>
