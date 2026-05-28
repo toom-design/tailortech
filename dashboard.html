@@ -599,32 +599,56 @@ function loadMeasurements() {
 }
 
 function loadProfile(user) {
-  var uid = window._d.currentUser ? window._d.currentUser.uid : null;
+  var uid   = window._d.currentUser ? window._d.currentUser.uid   : null;
+  var email = window._d.currentUser ? window._d.currentUser.email : null;
+
+  // Step 1 — show Firebase data immediately (no waiting for sheet)
+  if (user) {
+    var parts = (user.displayName || '').split(' ');
+    var fbProfile = {
+      'UID':        uid         || '',
+      'First Name': parts[0]   || '',
+      'Last Name':  parts.slice(1).join(' ') || '',
+      'Email':      email      || '',
+      'Phone Number':'', 'IG':'', 'Street Address':'',
+      'City':'', 'Postal Code':'', 'Country':'',
+      'Person ID':'', 'Created at':'',
+    };
+    renderProfile(fbProfile);
+    prefill(fbProfile);
+  }
+
+  // Step 2 — fetch from sheet and update (also save if missing)
   window._d.req('getClient', { uid: uid }).then(function(res) {
     if (res && res.success && res.client && res.client['Email']) {
-      // Client exists — just display
+      // Merge sheet data over Firebase fallback
       renderProfile(res.client);
       prefill(res.client);
       document.getElementById('st-id').textContent    = res.client['Person ID'] || '—';
       document.getElementById('st-since').textContent = 'member since ' + fmtDate(res.client['Created at'] || '');
     } else {
-      // Client not in sheet yet — save minimum data once
-      renderProfile(null);
-      if (user && uid) {
-        var parts = (user.displayName || '').split(' ');
+      // Not in sheet — save now so future logins find them
+      if (uid && email) {
+        var parts = (user && user.displayName ? user.displayName : '').split(' ');
         window._d.req('saveClient', {
           uid:   uid,
-          email: user.email,
+          email: email,
           data: {
             'UID':        uid,
+            'Email':      email,
             'First Name': parts[0] || '',
             'Last Name':  parts.slice(1).join(' ') || '',
-            'Email':      user.email,
+          }
+        }).then(function(saveRes) {
+          if (saveRes && saveRes.personId) {
+            document.getElementById('st-id').textContent = saveRes.personId;
           }
         }).catch(function(){});
       }
     }
-  }).catch(function(){ renderProfile(null); });
+  }).catch(function(){
+    // Sheet unavailable — Firebase data already shown, nothing to do
+  });
 }
 
 var PFIELDS = [
@@ -635,10 +659,25 @@ var PFIELDS = [
   {l:'City',k:'City'},{l:'Postal Code',k:'Postal Code'},{l:'Country',k:'Country'},
 ];
 function renderProfile(c) {
+  var user  = window._d && window._d.currentUser;
+  var parts = user && user.displayName ? user.displayName.split(' ') : [];
+  // Always fall back to Firebase data for key fields
+  var merged = {
+    'UID':        (c && c['UID'])        || (user && user.uid)   || '',
+    'First Name': (c && c['First Name']) || parts[0]             || '',
+    'Last Name':  (c && c['Last Name'])  || parts.slice(1).join(' ') || '',
+    'Email':      (c && c['Email'])      || (user && user.email) || '',
+    'Phone Number':   c && c['Phone Number']   || '',
+    'IG':             c && c['IG']             || '',
+    'Street Address': c && c['Street Address'] || '',
+    'City':           c && c['City']           || '',
+    'Postal Code':    c && c['Postal Code']    || '',
+    'Country':        c && c['Country']        || '',
+  };
   var g = document.getElementById('profile-display');
   g.innerHTML = '';
   PFIELDS.forEach(function(f) {
-    var v   = c ? (c[f.k] || '') : '';
+    var v   = merged[f.k] || '';
     var div = document.createElement('div');
     div.className = 'pf';
     div.innerHTML = '<div class="pf-lbl">' + f.l + '</div><div class="pf-val' + (v?'':' empty') + '">' + (v || 'Not set') + '</div>';
@@ -646,8 +685,31 @@ function renderProfile(c) {
   });
 }
 function prefill(c) {
-  var m = {'ef-fn':'First Name','ef-ln':'Last Name','ef-phone':'Phone Number','ef-ig':'IG','ef-street':'Street Address','ef-city':'City','ef-postal':'Postal Code','ef-country':'Country'};
-  Object.keys(m).forEach(function(id){ var el=document.getElementById(id); if(el && c && c[m[id]]) el.value=c[m[id]]; });
+  var user  = window._d && window._d.currentUser;
+  var parts = user && user.displayName ? user.displayName.split(' ') : [];
+  var merged = {
+    'UID':          (c && c['UID'])          || (user && user.uid)   || '',
+    'Email':        (c && c['Email'])        || (user && user.email) || '',
+    'First Name':   (c && c['First Name'])   || parts[0]             || '',
+    'Last Name':    (c && c['Last Name'])    || parts.slice(1).join(' ') || '',
+    'Phone Number': (c && c['Phone Number']) || '',
+    'IG':           (c && c['IG'])           || '',
+    'Street Address':(c && c['Street Address']) || '',
+    'City':         (c && c['City'])         || '',
+    'Postal Code':  (c && c['Postal Code'])  || '',
+    'Country':      (c && c['Country'])      || '',
+  };
+  var m = {
+    'ef-uid':'UID','ef-email':'Email',
+    'ef-fn':'First Name','ef-ln':'Last Name',
+    'ef-phone':'Phone Number','ef-ig':'IG',
+    'ef-street':'Street Address','ef-city':'City',
+    'ef-postal':'Postal Code','ef-country':'Country'
+  };
+  Object.keys(m).forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.value = merged[m[id]] || '';
+  });
 }
 
 function toggleEdit() {
@@ -722,6 +784,6 @@ function copyVal(type) {
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.5</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.5.1</div>
 </body>
 </html>
