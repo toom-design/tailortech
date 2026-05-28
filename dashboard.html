@@ -43,83 +43,9 @@ button { cursor: pointer; font-family: inherit; }
   background: var(--ink); color: var(--white);
   font-size: 11px; font-weight: 600; letter-spacing: 0;
   display: flex; align-items: center; justify-content: center;
-  overflow: hidden; flex-shrink: 0; cursor: pointer;
+  overflow: hidden; flex-shrink: 0;
 }
 .nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-/* ── Account popover ── */
-.account-popover {
-  position: fixed;
-  top: 60px;
-  right: 28px;
-  width: min(360px, calc(100vw - 32px));
-  background: var(--white);
-  border: 1px solid var(--border-mid);
-  border-radius: 2px;
-  box-shadow: 0 18px 48px rgba(26,25,22,0.16);
-  padding: 18px;
-  z-index: 999;
-  display: none;
-}
-.account-popover.open { display: block; }
-.account-popover::before {
-  content: '';
-  position: absolute;
-  top: -7px;
-  right: 64px;
-  width: 12px;
-  height: 12px;
-  background: var(--white);
-  border-left: 1px solid var(--border-mid);
-  border-top: 1px solid var(--border-mid);
-  transform: rotate(45deg);
-}
-.account-title {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-  margin-bottom: 14px;
-}
-.account-row { margin-bottom: 14px; }
-.account-row:last-child { margin-bottom: 0; }
-.account-lbl {
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-light);
-  margin-bottom: 5px;
-}
-.account-val {
-  font-size: 12px;
-  color: var(--ink);
-  line-height: 1.45;
-  word-break: break-all;
-  background: var(--cream-mid);
-  border: 1px solid var(--border);
-  padding: 9px 10px;
-  border-radius: 2px;
-}
-.account-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 16px;
-}
-.account-copy {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.10em;
-  text-transform: uppercase;
-  padding: 8px 12px;
-  border: 1px solid var(--border-mid);
-  background: transparent;
-  color: var(--ink-mid);
-  border-radius: 2px;
-}
-.account-copy:hover { background: var(--cream-mid); color: var(--ink); }
-
 
 /* ── Loading ── */
 #loading {
@@ -253,7 +179,6 @@ button { cursor: pointer; font-family: inherit; }
 }
 .ef input:focus { border-color: var(--ink); }
 .ef input::placeholder { color: var(--ink-faint); }
-.ef input[readonly] { background: var(--cream-dark); color: var(--ink-light); cursor: not-allowed; }
 .edit-btns { display: flex; gap: 10px; }
 .btn-save {
   font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 600;
@@ -311,26 +236,9 @@ button { cursor: pointer; font-family: inherit; }
 <!-- Nav -->
 <nav class="nav">
   <a class="nav-brand" href="https://tailortech.toom.design/">TailorTech</a>
-  <div class="nav-avatar" id="nav-av" onclick="toggleAccountPopover(event)" title="Show account details"></div>
+  <div class="nav-avatar" id="nav-av"></div>
   <button class="nav-btn" onclick="doSignOut()">Sign out</button>
 </nav>
-
-<!-- Account popover -->
-<div class="account-popover" id="account-popover" aria-hidden="true">
-  <div class="account-title">Signed-in user</div>
-  <div class="account-row">
-    <div class="account-lbl">Email</div>
-    <div class="account-val" id="account-email">—</div>
-  </div>
-  <div class="account-row">
-    <div class="account-lbl">Firebase UID</div>
-    <div class="account-val" id="account-uid">—</div>
-  </div>
-  <div class="account-actions">
-    <button class="account-copy" onclick="copyAccountValue('email')">Copy email</button>
-    <button class="account-copy" onclick="copyAccountValue('uid')">Copy UID</button>
-  </div>
-</div>
 
 <!-- Loading -->
 <div id="loading">
@@ -459,8 +367,6 @@ button { cursor: pointer; font-family: inherit; }
       <div class="profile-grid" id="profile-display"></div>
       <div class="edit-form" id="edit-form">
         <div class="edit-grid">
-          <div class="ef"><label>Email</label><input type="email" id="ef-email" readonly placeholder="you@example.com"></div>
-          <div class="ef"><label>Firebase UID</label><input type="text" id="ef-uid" readonly placeholder="Firebase UID"></div>
           <div class="ef"><label>First Name *</label><input type="text"  id="ef-fn"      placeholder="Jane"></div>
           <div class="ef"><label>Last Name</label>  <input type="text"  id="ef-ln"      placeholder="Doe"></div>
           <div class="ef"><label>Phone</label>      <input type="tel"   id="ef-phone"   placeholder="+1 234 567 8900"></div>
@@ -496,7 +402,7 @@ const firebaseConfig = {
   messagingSenderId: "137614433833",
   appId: "1:137614433833:web:c78ea40b0d04ba89f3c638"
 };
-const SHEETS = "https://script.google.com/macros/s/AKfycbx7Du03JsZtwkQ_TQZKG5F9lYdZwlqaY8oat1HyChsc-b6Lipw0KQLKQyMJTAB0mrT_/exec";
+const SHEETS = "https://script.google.com/macros/s/AKfycbwGVL3IU4aUYkDJzQhce9s86uaJ_V7xJMZzRmkjpa06rfY50v62y8empi4_ivvQ8eMj/exec";
 const BASE   = "https://tailortech.toom.design/";
 
 const _app  = initializeApp(firebaseConfig);
@@ -504,37 +410,23 @@ const _auth = getAuth(_app);
 
 window._d = {
   auth: _auth, signOut, BASE,
+  get currentUid() { return _auth.currentUser ? _auth.currentUser.uid : null; },
   currentUser: null,
   async req(action, payload) {
     payload = payload || {};
     const user  = _auth.currentUser;
     const token = user ? await user.getIdToken() : null;
-
-    const requestBody = {
-      action,
-      token,
-      email: user ? user.email : null,
-      uid: user ? user.uid : null,
-      ...payload
-    };
-
-    const res = await fetch(SHEETS, {
+    const res   = await fetch(SHEETS, {
       method: 'POST',
-      redirect: 'follow',
-      headers: {
-        // text/plain avoids the browser CORS preflight that often breaks Apps Script calls.
-        'Content-Type': 'text/plain;charset=utf-8'
-      },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify({
+        action,
+        token,
+        email: user ? user.email : null,
+        uid:   user ? user.uid   : null,
+        ...payload
+      })
     });
-
-    const txt = await res.text();
-    try {
-      return JSON.parse(txt);
-    } catch (err) {
-      console.error('Apps Script returned non-JSON:', txt);
-      return { success: false, message: 'Apps Script returned non-JSON response' };
-    }
+    return res.json();
   }
 };
 
@@ -568,57 +460,6 @@ function toast(msg, type) {
   setTimeout(function(){ t.classList.remove('show'); }, 3000);
 }
 
-
-function setAccountPopover(user) {
-  document.getElementById('account-email').textContent = user && user.email ? user.email : 'No email available';
-  document.getElementById('account-uid').textContent   = user && user.uid ? user.uid : 'No UID available';
-}
-
-function toggleAccountPopover(event) {
-  if (event) event.stopPropagation();
-  var pop = document.getElementById('account-popover');
-  var isOpen = pop.classList.toggle('open');
-  pop.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
-}
-
-document.addEventListener('click', function(event) {
-  var pop = document.getElementById('account-popover');
-  var av  = document.getElementById('nav-av');
-  if (!pop || !av) return;
-  if (!pop.contains(event.target) && !av.contains(event.target)) {
-    pop.classList.remove('open');
-    pop.setAttribute('aria-hidden', 'true');
-  }
-});
-
-function copyAccountValue(type) {
-  var user = window._d && window._d.currentUser;
-  var value = type === 'uid' ? (user && user.uid) : (user && user.email);
-  if (!value) { toast('Nothing to copy', 'err'); return; }
-
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(value)
-      .then(function(){ toast(type === 'uid' ? 'UID copied' : 'Email copied'); })
-      .catch(function(){ fallbackCopy(value, type); });
-  } else {
-    fallbackCopy(value, type);
-  }
-}
-
-function fallbackCopy(value, type) {
-  var input = document.createElement('textarea');
-  input.value = value;
-  document.body.appendChild(input);
-  input.select();
-  try {
-    document.execCommand('copy');
-    toast(type === 'uid' ? 'UID copied' : 'Email copied');
-  } catch(e) {
-    toast('Copy failed', 'err');
-  }
-  document.body.removeChild(input);
-}
-
 function doSignOut() {
   if (window._d) window._d.signOut(window._d.auth)
     .then(function(){ window.location.href = BASE + 'auth.html'; });
@@ -633,7 +474,6 @@ function fmtDate(s) {
 function boot(user) {
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display    = 'block';
-  setAccountPopover(user);
 
   // Avatar
   var av = document.getElementById('nav-av');
@@ -645,7 +485,7 @@ function boot(user) {
 
   loadOrders();
   loadMeasurements();
-  loadProfile();
+  loadProfile(user); // pass user so profile can save if missing
 }
 
 function loadOrders() {
@@ -709,78 +549,46 @@ function loadMeasurements() {
   }).catch(function(){ document.getElementById('meas-loading').style.display='none'; document.getElementById('meas-empty').style.display='block'; });
 }
 
-function getFirebaseNameParts(user) {
-  var displayName = user && user.displayName ? user.displayName.trim() : '';
-  if (!displayName) return { first: '', last: '' };
-  var parts = displayName.split(/\s+/);
-  return {
-    first: parts[0] || '',
-    last: parts.length > 1 ? parts.slice(1).join(' ') : ''
-  };
-}
-
-function buildProfileData(client) {
-  var user = window._d && window._d.currentUser ? window._d.currentUser : null;
-  var fbName = getFirebaseNameParts(user);
-  client = client || {};
-
-  return {
-    'UID': user && user.uid ? user.uid : (client['UID'] || ''),
-    'Person ID': client['Person ID'] || '',
-    'First Name': client['First Name'] || fbName.first || '',
-    'Last Name': client['Last Name'] || fbName.last || '',
-    'Email': client['Email'] || (user && user.email ? user.email : ''),
-    'Phone Number': client['Phone Number'] || '',
-    'IG': client['IG'] || '',
-    'Street Address': client['Street Address'] || '',
-    'City': client['City'] || '',
-    'Postal Code': client['Postal Code'] || '',
-    'Country': client['Country'] || '',
-    'Created at': client['Created at'] || ''
-  };
-}
-
-function loadProfile() {
-  window._d.req('getClient').then(function(res) {
-    var profile = buildProfileData(res && res.success && res.client ? res.client : null);
-    renderProfile(profile);
-    prefill(profile);
-    document.getElementById('st-id').textContent    = profile['Person ID'] || '—';
-    document.getElementById('st-since').textContent = 'member since ' + fmtDate(profile['Created at'] || '');
-
-    // If Firebase has name/email/UID but the sheet is missing the client, create a minimal row.
-    if ((!res || !res.client) && (profile['Email'] || profile['UID'])) {
-      window._d.req('saveClient', {
-        uid: profile['UID'],
-        email: profile['Email'],
-        data: {
-          'UID': profile['UID'],
-          'Email': profile['Email'],
-          'First Name': profile['First Name'],
-          'Last Name': profile['Last Name']
-        }
-      }).catch(function(e){ console.warn('Could not auto-create client:', e); });
+function loadProfile(user) {
+  var uid = window._d.currentUser ? window._d.currentUser.uid : null;
+  window._d.req('getClient', { uid: uid }).then(function(res) {
+    if (res && res.success && res.client && res.client['Email']) {
+      // Client exists — just display
+      renderProfile(res.client);
+      prefill(res.client);
+      document.getElementById('st-id').textContent    = res.client['Person ID'] || '—';
+      document.getElementById('st-since').textContent = 'member since ' + fmtDate(res.client['Created at'] || '');
+    } else {
+      // Client not in sheet yet — save minimum data once
+      renderProfile(null);
+      if (user && uid) {
+        var parts = (user.displayName || '').split(' ');
+        window._d.req('saveClient', {
+          uid:   uid,
+          email: user.email,
+          data: {
+            'UID':        uid,
+            'First Name': parts[0] || '',
+            'Last Name':  parts.slice(1).join(' ') || '',
+            'Email':      user.email,
+          }
+        }).catch(function(){});
+      }
     }
-  }).catch(function(){
-    var profile = buildProfileData(null);
-    renderProfile(profile);
-    prefill(profile);
-  });
+  }).catch(function(){ renderProfile(null); });
 }
 
 var PFIELDS = [
-  {l:'Firebase UID',k:'UID'},
   {l:'First Name',k:'First Name'},{l:'Last Name',k:'Last Name'},
   {l:'Email',k:'Email'},{l:'Phone',k:'Phone Number'},
   {l:'Instagram',k:'IG'},{l:'Address',k:'Street Address'},
   {l:'City',k:'City'},{l:'Postal Code',k:'Postal Code'},{l:'Country',k:'Country'},
 ];
 function renderProfile(c) {
-  var profile = buildProfileData(c);
   var g = document.getElementById('profile-display');
   g.innerHTML = '';
   PFIELDS.forEach(function(f) {
-    var v   = profile ? (profile[f.k] || '') : '';
+    var v   = c ? (c[f.k] || '') : '';
     var div = document.createElement('div');
     div.className = 'pf';
     div.innerHTML = '<div class="pf-lbl">' + f.l + '</div><div class="pf-val' + (v?'':' empty') + '">' + (v || 'Not set') + '</div>';
@@ -788,12 +596,8 @@ function renderProfile(c) {
   });
 }
 function prefill(c) {
-  var profile = buildProfileData(c);
-  var m = {'ef-email':'Email','ef-uid':'UID','ef-fn':'First Name','ef-ln':'Last Name','ef-phone':'Phone Number','ef-ig':'IG','ef-street':'Street Address','ef-city':'City','ef-postal':'Postal Code','ef-country':'Country'};
-  Object.keys(m).forEach(function(id){
-    var el=document.getElementById(id);
-    if(el) el.value = profile[m[id]] || '';
-  });
+  var m = {'ef-fn':'First Name','ef-ln':'Last Name','ef-phone':'Phone Number','ef-ig':'IG','ef-street':'Street Address','ef-city':'City','ef-postal':'Postal Code','ef-country':'Country'};
+  Object.keys(m).forEach(function(id){ var el=document.getElementById(id); if(el && c && c[m[id]]) el.value=c[m[id]]; });
 }
 
 function toggleEdit() {
@@ -804,80 +608,37 @@ function toggleEdit() {
   }
 }
 
-async function saveProfile() {
-  var user = window._d && window._d.currentUser ? window._d.currentUser : null;
-  if (!user) { toast('You are not signed in.', 'err'); return; }
-
+function saveProfile() {
   var fname = document.getElementById('ef-fn').value.trim();
   if (!fname) { toast('First name is required.', 'err'); return; }
-
   var data = {
-    'UID': user.uid || '',
-    'Email': user.email || document.getElementById('ef-email').value.trim(),
     'First Name': fname,
-    'Last Name': document.getElementById('ef-ln').value.trim(),
+    'Last Name':  document.getElementById('ef-ln').value.trim(),
+    'Email':      window._d.currentUser ? window._d.currentUser.email : '',
     'Phone Number': document.getElementById('ef-phone').value.trim(),
-    'IG': document.getElementById('ef-ig').value.trim(),
+    'IG':           document.getElementById('ef-ig').value.trim(),
     'Street Address': document.getElementById('ef-street').value.trim(),
-    'City': document.getElementById('ef-city').value.trim(),
-    'Postal Code': document.getElementById('ef-postal').value.trim(),
-    'Country': document.getElementById('ef-country').value.trim()
+    'City':         document.getElementById('ef-city').value.trim(),
+    'Postal Code':  document.getElementById('ef-postal').value.trim(),
+    'Country':      document.getElementById('ef-country').value.trim(),
+    '_forceUpdate': true,
   };
-
-  var btn = document.getElementById('btn-save-p');
-  var lbl = document.getElementById('save-lbl');
-  var sp  = document.getElementById('save-spin');
-
-  btn.disabled = true;
-  lbl.style.display = 'none';
-  sp.style.display = 'block';
-
-  try {
-    const res = await window._d.req('saveClient', {
-      uid: data['UID'],
-      email: data['Email'],
-      data: data
-    });
-
-    if (!res || !res.success) {
-      toast((res && res.message) ? res.message : 'Could not save profile.', 'err');
-      return;
-    }
-
-    // Re-read after save, so the dashboard displays the exact row now stored in Google Sheets.
-    const readBack = await window._d.req('getClient', {
-      uid: data['UID'],
-      email: data['Email']
-    });
-
-    const savedProfile = readBack && readBack.success && readBack.client
-      ? readBack.client
-      : Object.assign({}, data, {
-          'Person ID': res.personId || '',
-          'Created at': '',
-          'Updated at': ''
-        });
-
-    renderProfile(savedProfile);
-    prefill(savedProfile);
-    document.getElementById('st-id').textContent = savedProfile['Person ID'] || res.personId || '—';
-    document.getElementById('st-since').textContent = 'member since ' + fmtDate(savedProfile['Created at'] || '');
-    document.getElementById('edit-form').style.display = 'none';
-
-    toast(res.action === 'created' ? 'Profile created in Google Sheet' : 'Profile updated in Google Sheet');
-  } catch (err) {
-    console.error(err);
-    toast('Network error while saving profile.', 'err');
-  } finally {
-    btn.disabled = false;
-    lbl.style.display = '';
-    sp.style.display = 'none';
-  }
+  var btn=document.getElementById('btn-save-p'), lbl=document.getElementById('save-lbl'), sp=document.getElementById('save-spin');
+  btn.disabled=true; lbl.style.display='none'; sp.style.display='block';
+  var _uid = window._d.currentUser ? window._d.currentUser.uid : null;
+  if (_uid) data['UID'] = _uid;
+  window._d.req('saveClient', { uid: _uid, data: data })
+    .then(function(res) {
+      if (res && res.success) { toast('Profile saved'); renderProfile(data); document.getElementById('edit-form').style.display='none'; }
+      else { toast('Could not save — try again', 'err'); }
+    })
+    .catch(function(){ toast('Network error', 'err'); })
+    .finally(function(){ btn.disabled=false; lbl.style.display=''; sp.style.display='none'; });
 }
 </script>
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.4.2 profile sync</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.4.3</div>
 </body>
 </html>
