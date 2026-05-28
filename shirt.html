@@ -1036,11 +1036,13 @@ async function submitOrder() {
   try {
     const data = collectConfig();
 
-    // Use no-cors POST — Apps Script receives it, response is opaque but data saves fine
+    // Send as form data — the only body type no-cors allows Apps Script to read
+    const form = new FormData();
+    form.append('payload', JSON.stringify(data));
     await fetch(SHEET_URL, {
       method: 'POST',
       mode:   'no-cors',
-      body:   JSON.stringify({ action: 'saveShirt', data: data }),
+      body:   form,
     });
 
     label.textContent = 'Save Configuration';
@@ -1069,6 +1071,6 @@ function showFeedback(msg, color) {
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.3</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.4</div>
 </body>
 </html>
