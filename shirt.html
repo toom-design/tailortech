@@ -1028,42 +1028,29 @@ function collectConfig() {
 }
 
 async function submitOrder() {
-  const btn = document.getElementById('submit-btn');
+  const btn   = document.getElementById('submit-btn');
   const label = document.getElementById('submit-label');
   btn.disabled = true;
   label.textContent = 'Saving…';
 
   try {
-    const data = collectConfig();
+    const data    = collectConfig();
     const payload = encodeURIComponent(JSON.stringify(data));
-    const url = SHEET_URL + '?payload=' + payload;
+    const url     = SHEET_URL + '?payload=' + payload;
 
-    // Use a script tag GET — bypasses CORS and works in Safari from file://
-    const script = document.createElement('script');
-    script.src = url + '&callback=__sheetCallback';
-    window.__sheetCallback = function(response) {
-      document.body.removeChild(script);
-      delete window.__sheetCallback;
-      label.textContent = 'Save Configuration';
-      btn.disabled = false;
-      if (response && response.status === 'ok') {
-        showFeedback('✓ Configuration saved to Google Sheets', '#4a8a5a');
-        setTimeout(function() { window.location.href = 'https://tailortech.toom.design/dashboard.html'; }, 2000);
-      } else {
-        showFeedback('✗ Error: ' + (response?.message || 'unknown'), '#a05050');
-      }
-    };
-    // Fallback timeout in case callback never fires
-    setTimeout(() => {
-      if (window.__sheetCallback) {
-        delete window.__sheetCallback;
-        label.textContent = 'Save Configuration';
-        btn.disabled = false;
-        showFeedback('✓ Request sent — check your sheet', '#4a8a5a');
-      }
-    }, 4000);
+    // Simple fetch GET — no JSONP needed
+    const res      = await fetch(url);
+    const response = await res.json();
 
-    document.body.appendChild(script);
+    label.textContent = 'Save Configuration';
+    btn.disabled = false;
+
+    if (response && response.status === 'ok') {
+      showFeedback('✓ Configuration saved to Google Sheets', '#4a8a5a');
+      setTimeout(function() { window.location.href = 'https://tailortech.toom.design/dashboard.html'; }, 2000);
+    } else {
+      showFeedback('✗ Error: ' + (response && response.message ? response.message : 'unknown'), '#a05050');
+    }
 
   } catch (err) {
     label.textContent = 'Save Configuration';
@@ -1084,7 +1071,8 @@ function showFeedback(msg, color) {
 </script>
 
 
+
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.0.1</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.1</div>
 </body>
 </html>
