@@ -460,8 +460,8 @@ function focusField(label) {
 function sheetsReq(action, payload) {
   payload = payload || {};
   return fetch(SHEETS_API, {
-    method: 'POST', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(Object.assign({action: action}, payload))
+    method: 'POST',
+    body: JSON.stringify(Object.assign({ action: action }, payload))
   }).then(function(r) { return r.json(); });
 }
 
@@ -526,9 +526,5 @@ document.addEventListener('click', function(e) {
   }
 })();
 </script>
-
-
-<!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.0</div>
 </body>
 </html>
