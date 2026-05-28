@@ -1562,11 +1562,14 @@ function output(data) {
 
 
 <script>
-// ── Read email from URL param ──────────────────────────────────────
+// ── Read email from URL param + auto-start form if email present ───
 (function() {
   var params = new URLSearchParams(window.location.search);
   var email  = params.get('email');
+  var filter = params.get('garment') || 'all';
+
   if (email) {
+    // Pre-fill and lock email field
     var el = document.getElementById('f-email');
     if (el) {
       el.value    = decodeURIComponent(email);
@@ -1574,6 +1577,10 @@ function output(data) {
       el.style.opacity = '0.65';
       el.style.cursor  = 'not-allowed';
     }
+    // Skip garment selection — go straight to form
+    window.addEventListener('DOMContentLoaded', function() {
+      startForm(filter);
+    });
   }
 })();
 
