@@ -253,6 +253,7 @@ button { cursor: pointer; font-family: inherit; }
 }
 .ef input:focus { border-color: var(--ink); }
 .ef input::placeholder { color: var(--ink-faint); }
+.ef input[readonly] { background: var(--cream-dark); color: var(--ink-light); cursor: not-allowed; }
 .edit-btns { display: flex; gap: 10px; }
 .btn-save {
   font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 600;
@@ -458,6 +459,8 @@ button { cursor: pointer; font-family: inherit; }
       <div class="profile-grid" id="profile-display"></div>
       <div class="edit-form" id="edit-form">
         <div class="edit-grid">
+          <div class="ef"><label>Email</label><input type="email" id="ef-email" readonly placeholder="you@example.com"></div>
+          <div class="ef"><label>Firebase UID</label><input type="text" id="ef-uid" readonly placeholder="Firebase UID"></div>
           <div class="ef"><label>First Name *</label><input type="text"  id="ef-fn"      placeholder="Jane"></div>
           <div class="ef"><label>Last Name</label>  <input type="text"  id="ef-ln"      placeholder="Doe"></div>
           <div class="ef"><label>Phone</label>      <input type="tel"   id="ef-phone"   placeholder="+1 234 567 8900"></div>
@@ -691,28 +694,78 @@ function loadMeasurements() {
   }).catch(function(){ document.getElementById('meas-loading').style.display='none'; document.getElementById('meas-empty').style.display='block'; });
 }
 
+function getFirebaseNameParts(user) {
+  var displayName = user && user.displayName ? user.displayName.trim() : '';
+  if (!displayName) return { first: '', last: '' };
+  var parts = displayName.split(/\s+/);
+  return {
+    first: parts[0] || '',
+    last: parts.length > 1 ? parts.slice(1).join(' ') : ''
+  };
+}
+
+function buildProfileData(client) {
+  var user = window._d && window._d.currentUser ? window._d.currentUser : null;
+  var fbName = getFirebaseNameParts(user);
+  client = client || {};
+
+  return {
+    'UID': user && user.uid ? user.uid : (client['UID'] || ''),
+    'Person ID': client['Person ID'] || '',
+    'First Name': client['First Name'] || fbName.first || '',
+    'Last Name': client['Last Name'] || fbName.last || '',
+    'Email': client['Email'] || (user && user.email ? user.email : ''),
+    'Phone Number': client['Phone Number'] || '',
+    'IG': client['IG'] || '',
+    'Street Address': client['Street Address'] || '',
+    'City': client['City'] || '',
+    'Postal Code': client['Postal Code'] || '',
+    'Country': client['Country'] || '',
+    'Created at': client['Created at'] || ''
+  };
+}
+
 function loadProfile() {
   window._d.req('getClient').then(function(res) {
-    if (res && res.success && res.client) {
-      renderProfile(res.client);
-      prefill(res.client);
-      document.getElementById('st-id').textContent    = res.client['Person ID'] || '—';
-      document.getElementById('st-since').textContent = 'member since ' + fmtDate(res.client['Created at'] || '');
-    } else { renderProfile(null); }
-  }).catch(function(){ renderProfile(null); });
+    var profile = buildProfileData(res && res.success && res.client ? res.client : null);
+    renderProfile(profile);
+    prefill(profile);
+    document.getElementById('st-id').textContent    = profile['Person ID'] || '—';
+    document.getElementById('st-since').textContent = 'member since ' + fmtDate(profile['Created at'] || '');
+
+    // If Firebase has name/email/UID but the sheet is missing the client, create a minimal row.
+    if ((!res || !res.client) && (profile['Email'] || profile['UID'])) {
+      window._d.req('saveClient', {
+        uid: profile['UID'],
+        email: profile['Email'],
+        data: {
+          'UID': profile['UID'],
+          'Email': profile['Email'],
+          'First Name': profile['First Name'],
+          'Last Name': profile['Last Name']
+        }
+      }).catch(function(e){ console.warn('Could not auto-create client:', e); });
+    }
+  }).catch(function(){
+    var profile = buildProfileData(null);
+    renderProfile(profile);
+    prefill(profile);
+  });
 }
 
 var PFIELDS = [
+  {l:'Firebase UID',k:'UID'},
   {l:'First Name',k:'First Name'},{l:'Last Name',k:'Last Name'},
   {l:'Email',k:'Email'},{l:'Phone',k:'Phone Number'},
   {l:'Instagram',k:'IG'},{l:'Address',k:'Street Address'},
   {l:'City',k:'City'},{l:'Postal Code',k:'Postal Code'},{l:'Country',k:'Country'},
 ];
 function renderProfile(c) {
+  var profile = buildProfileData(c);
   var g = document.getElementById('profile-display');
   g.innerHTML = '';
   PFIELDS.forEach(function(f) {
-    var v   = c ? (c[f.k] || '') : '';
+    var v   = profile ? (profile[f.k] || '') : '';
     var div = document.createElement('div');
     div.className = 'pf';
     div.innerHTML = '<div class="pf-lbl">' + f.l + '</div><div class="pf-val' + (v?'':' empty') + '">' + (v || 'Not set') + '</div>';
@@ -720,8 +773,12 @@ function renderProfile(c) {
   });
 }
 function prefill(c) {
-  var m = {'ef-fn':'First Name','ef-ln':'Last Name','ef-phone':'Phone Number','ef-ig':'IG','ef-street':'Street Address','ef-city':'City','ef-postal':'Postal Code','ef-country':'Country'};
-  Object.keys(m).forEach(function(id){ var el=document.getElementById(id); if(el && c && c[m[id]]) el.value=c[m[id]]; });
+  var profile = buildProfileData(c);
+  var m = {'ef-email':'Email','ef-uid':'UID','ef-fn':'First Name','ef-ln':'Last Name','ef-phone':'Phone Number','ef-ig':'IG','ef-street':'Street Address','ef-city':'City','ef-postal':'Postal Code','ef-country':'Country'};
+  Object.keys(m).forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.value = profile[m[id]] || '';
+  });
 }
 
 function toggleEdit() {
@@ -738,6 +795,7 @@ function saveProfile() {
   var data = {
     'First Name': fname,
     'Last Name':  document.getElementById('ef-ln').value.trim(),
+    'UID':        window._d.currentUser ? window._d.currentUser.uid : '',
     'Email':      window._d.currentUser ? window._d.currentUser.email : '',
     'Phone Number': document.getElementById('ef-phone').value.trim(),
     'IG':           document.getElementById('ef-ig').value.trim(),
@@ -749,7 +807,7 @@ function saveProfile() {
   };
   var btn=document.getElementById('btn-save-p'), lbl=document.getElementById('save-lbl'), sp=document.getElementById('save-spin');
   btn.disabled=true; lbl.style.display='none'; sp.style.display='block';
-  window._d.req('saveClient', { data: data })
+  window._d.req('saveClient', { uid: data['UID'], email: data['Email'], data: data })
     .then(function(res) {
       if (res && res.success) { toast('Profile saved'); renderProfile(data); document.getElementById('edit-form').style.display='none'; }
       else { toast('Could not save — try again', 'err'); }
