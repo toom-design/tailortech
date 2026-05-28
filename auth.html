@@ -931,17 +931,22 @@ function saveClientToSheet(user, fname, lname) {
   var displayName = user.displayName || '';
   var parts       = displayName.split(' ');
   var data = {
-    'First Name':  fname || parts[0] || '',
-    'Last Name':   lname || parts.slice(1).join(' ') || '',
-    'Email':       user.email || '',
-    'Phone Number':'',
-    'IG':          '',
-    'Street Address':'',
-    'City':        '',
-    'Postal Code': '',
-    'Country':     '',
+    'UID':          user.uid   || '',
+    'First Name':   fname || parts[0] || '',
+    'Last Name':    lname || parts.slice(1).join(' ') || '',
+    'Email':        user.email || '',
+    'Phone Number': '',
+    'IG':           '',
+    'Street Address': '',
+    'City':         '',
+    'Postal Code':  '',
+    'Country':      '',
   };
-  window._fb.sheetReq('saveClient', { data: data }).catch(function(e){
+  window._fb.sheetReq('saveClient', {
+    uid:   user.uid,
+    email: user.email,
+    data:  data
+  }).catch(function(e){
     console.warn('Could not save client to sheet:', e);
   });
 }
