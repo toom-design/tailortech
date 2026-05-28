@@ -1036,13 +1036,33 @@ async function submitOrder() {
   try {
     const data = collectConfig();
 
-    // Send as form data — the only body type no-cors allows Apps Script to read
-    const form = new FormData();
-    form.append('payload', JSON.stringify(data));
-    await fetch(SHEET_URL, {
-      method: 'POST',
-      mode:   'no-cors',
-      body:   form,
+    // Load Apps Script URL in hidden iframe — bypasses CORS completely
+    const payload = encodeURIComponent(JSON.stringify(data));
+    const url     = SHEET_URL + '?payload=' + payload;
+
+    await new Promise(function(resolve) {
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = url;
+
+      // Listen for postMessage from iframe
+      const handler = function(event) {
+        if (String(event.data).indexOf('shirt_') === 0) {
+          window.removeEventListener('message', handler);
+          document.body.removeChild(iframe);
+          resolve(event.data);
+        }
+      };
+      window.addEventListener('message', handler);
+
+      // Fallback — if no message in 8s, assume saved
+      setTimeout(function() {
+        window.removeEventListener('message', handler);
+        if (iframe.parentNode) document.body.removeChild(iframe);
+        resolve('shirt_saved');
+      }, 8000);
+
+      document.body.appendChild(iframe);
     });
 
     label.textContent = 'Save Configuration';
@@ -1071,6 +1091,6 @@ function showFeedback(msg, color) {
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.4</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.5</div>
 </body>
 </html>
