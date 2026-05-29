@@ -51,6 +51,18 @@
 
 <script>
 (function(){
+  // ── Restore user from sessionStorage on pages without Firebase ───
+  try {
+    var stored = sessionStorage.getItem('tt_user');
+    if (stored) {
+      var u = JSON.parse(stored);
+      // Defer until DOM ready
+      setTimeout(function() {
+        if (window.ttNbSetUser) ttNbSetUser(u, u.personId || null);
+      }, 50);
+    }
+  } catch(e) {}
+
   // Toggle popover
   window.ttNbToggle = function(e) {
     if (e) e.stopPropagation();
@@ -73,6 +85,7 @@
 
   // Sign out — works with both _d (dashboard Firebase) and _fb (auth Firebase)
   window.ttNbSignOut = function() {
+    try { sessionStorage.removeItem('tt_user'); } catch(e) {}
     var auth = (window._d && window._d.auth) || (window._fb && window._fb.auth);
     var so   = (window._d && window._d.signOut) || (window._fb && window._fb.signOut);
     if (auth && so) {
@@ -91,6 +104,16 @@
     var emailEl = document.getElementById('tt-nb-email');
 
     if (user && user.email) {
+      // Persist across pages
+      try {
+        sessionStorage.setItem('tt_user', JSON.stringify({
+          email:       user.email,
+          displayName: user.displayName || '',
+          photoURL:    user.photoURL    || '',
+          uid:         user.uid         || '',
+          personId:    personId         || '',
+        }));
+      } catch(e) {}
       if (av) {
         av.style.display = 'flex';
         if (user.photoURL) av.innerHTML = '<img src="' + user.photoURL + '" alt="">';
