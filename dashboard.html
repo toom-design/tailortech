@@ -462,8 +462,6 @@ window._d = {
     const token = user ? await user.getIdToken() : null;
     const res = await fetch(SHEETS, {
       method: 'POST',
-      redirect: 'follow',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
         action,
         token,
@@ -811,6 +809,6 @@ function copyVal(type) {
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.5.4</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.5.5</div>
 </body>
 </html>
