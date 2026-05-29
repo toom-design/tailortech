@@ -208,9 +208,9 @@ button { cursor: pointer; font-family: inherit; }
   width: min(320px, calc(100vw - 32px));
   background: var(--white); border: 1px solid var(--border-mid);
   border-radius: 2px; box-shadow: 0 18px 52px rgba(26,25,22,0.16);
-  padding: 20px; z-index: 999; display: none;
+  padding: 20px; z-index: 9999; display: none;
 }
-.account-popover.open { display: block; }
+.account-popover.open { display: block; } /* fallback */
 .account-popover::before {
   content: ''; position: absolute; top: -7px; right: 12px;
   width: 12px; height: 12px; background: var(--white);
@@ -275,7 +275,7 @@ button { cursor: pointer; font-family: inherit; }
   border-radius: 2px; box-shadow: 0 18px 48px rgba(26,25,22,0.16);
   padding: 18px; z-index: 999; display: none;
 }
-.account-popover.open { display: block; }
+.account-popover.open { display: block; } /* fallback */
 .account-popover::before {
   content: ''; position: absolute; top: -7px; right: 10px;
   width: 12px; height: 12px; background: var(--white);
@@ -868,19 +868,20 @@ function saveProfile() {
 
 // ── Account popover ───────────────────────────────────────────────
 function togglePopover(e) {
-  if (e) { e.stopPropagation(); e.preventDefault(); }
+  if (e) e.stopPropagation();
   var p = document.getElementById('account-popover');
-  if (!p) return;
-  var isOpen = p.classList.contains('open');
-  // Close all first, then open if was closed
-  p.classList.remove('open');
-  if (!isOpen) p.classList.add('open');
+  if (!p) { console.error('popover not found'); return; }
+  if (p.style.display === 'block') {
+    p.style.display = 'none';
+  } else {
+    p.style.display = 'block';
+  }
 }
 document.addEventListener('click', function(e) {
   var p  = document.getElementById('account-popover');
   var av = document.getElementById('nav-av');
   if (p && av && !p.contains(e.target) && !av.contains(e.target))
-    p.classList.remove('open');
+    p.style.display = 'none';
 });
 function setAccountPopover(user) {
   if (!user) return;
@@ -929,6 +930,6 @@ function copyVal(type) {
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.7.1</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.7.2</div>
 </body>
 </html>
