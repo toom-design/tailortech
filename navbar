@@ -1,0 +1,140 @@
+<!-- TailorTech Shared Navbar v1.0 -->
+<!-- Edit this file to update the nav on ALL pages at once -->
+<style>
+.tt-nav{height:52px;background:#FAFAF8;border-bottom:1px solid rgba(26,25,22,0.10);display:flex;align-items:center;padding:0 24px;gap:14px;font-family:'Jost',sans-serif;position:sticky;top:0;z-index:200;box-sizing:border-box;}
+.tt-brand{font-size:12px;font-weight:600;letter-spacing:0.20em;text-transform:uppercase;color:#1A1916;text-decoration:none;margin-right:auto;}
+.tt-nav-label{font-size:11px;letter-spacing:0.08em;color:#8A8880;text-transform:uppercase;font-weight:500;}
+.tt-nav-btn{font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;padding:7px 16px;border:1px solid rgba(26,25,22,0.20);border-radius:2px;background:transparent;color:#4A4844;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s;text-decoration:none;white-space:nowrap;}
+.tt-nav-btn:hover{background:#EBE7DF;color:#1A1916;}
+.tt-nav-btn.dark{background:#1A1916;color:#FAFAF8;border-color:#1A1916;}
+.tt-nav-btn.dark:hover{background:#2d2c29;}
+.tt-avatar{width:30px;height:30px;border-radius:50%;background:#1A1916;color:#FAFAF8;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;cursor:pointer;border:none;padding:0;}
+.tt-avatar img{width:100%;height:100%;object-fit:cover;}
+/* Popover */
+.tt-popover{position:fixed;top:60px;right:24px;width:min(300px,calc(100vw - 32px));background:#FAFAF8;border:1px solid rgba(26,25,22,0.20);border-radius:2px;box-shadow:0 18px 48px rgba(26,25,22,0.16);padding:16px;z-index:9999;display:none;}
+.tt-popover.open{display:block;}
+.tt-popover::before{content:'';position:absolute;top:-7px;right:10px;width:12px;height:12px;background:#FAFAF8;border-left:1px solid rgba(26,25,22,0.20);border-top:1px solid rgba(26,25,22,0.20);transform:rotate(45deg);}
+.tt-pop-title{font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#C0BDB8;margin-bottom:14px;}
+.tt-pop-row{margin-bottom:12px;}
+.tt-pop-lbl{font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#8A8880;margin-bottom:4px;}
+.tt-pop-val{font-size:12px;color:#1A1916;word-break:break-all;background:#EBE7DF;border:1px solid rgba(26,25,22,0.10);padding:7px 10px;border-radius:2px;}
+.tt-pop-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.tt-pop-btn{font-family:'Jost',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:7px 12px;border:1px solid rgba(26,25,22,0.20);background:transparent;color:#4A4844;border-radius:2px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;}
+.tt-pop-btn:hover{background:#EBE7DF;}
+.tt-pop-btn.dark{background:#1A1916;color:#FAFAF8;border-color:#1A1916;}
+.tt-pop-btn.dark:hover{background:#2d2c29;}
+</style>
+
+<nav class="tt-nav" id="tt-nav">
+  <a class="tt-brand" href="https://tailortech.toom.design/">TailorTech</a>
+  <span class="tt-nav-label" id="tt-nav-label"></span>
+  <!-- Back button injected by page if needed -->
+  <div id="tt-nav-extra"></div>
+  <!-- Signed-out: Log In button -->
+  <a class="tt-nav-btn" id="tt-btn-login" href="https://tailortech.toom.design/auth.html" style="display:none">Log In</a>
+  <!-- Signed-in: avatar + sign out -->
+  <button class="tt-avatar" id="tt-av" onclick="ttTogglePopover(event)" title="Account" style="display:none"></button>
+  <button class="tt-nav-btn" id="tt-btn-signout" onclick="ttSignOut()" style="display:none">Sign Out</button>
+</nav>
+
+<!-- Account popover (signed-in only) -->
+<div class="tt-popover" id="tt-popover">
+  <div class="tt-pop-title">My Account</div>
+  <div class="tt-pop-row"><div class="tt-pop-lbl">Person ID</div><div class="tt-pop-val" id="tt-pop-pid">—</div></div>
+  <div class="tt-pop-row"><div class="tt-pop-lbl">Email</div><div class="tt-pop-val" id="tt-pop-email">—</div></div>
+  <div class="tt-pop-actions">
+    <button class="tt-pop-btn" onclick="ttCopy('pid')">Copy ID</button>
+    <button class="tt-pop-btn" onclick="ttCopy('email')">Copy Email</button>
+    <a class="tt-pop-btn dark" href="https://tailortech.toom.design/dashboard.html">My Dashboard</a>
+  </div>
+</div>
+
+<script>
+(function() {
+  // ── Popover ───────────────────────────────────────────────────────
+  window.ttTogglePopover = function(e) {
+    if (e) e.stopPropagation();
+    var p = document.getElementById('tt-popover');
+    if (p) p.classList.toggle('open');
+  };
+  document.addEventListener('click', function(e) {
+    var p = document.getElementById('tt-popover');
+    var a = document.getElementById('tt-av');
+    if (p && a && !p.contains(e.target) && !a.contains(e.target))
+      p.classList.remove('open');
+  });
+  window.ttCopy = function(type) {
+    var el = document.getElementById(type === 'pid' ? 'tt-pop-pid' : 'tt-pop-email');
+    var v  = el ? el.textContent.trim() : '';
+    if (!v || v === '—') return;
+    if (navigator.clipboard) navigator.clipboard.writeText(v);
+  };
+
+  // ── Called by each page after Firebase auth state is known ───────
+  window.ttNavSetUser = function(user, personId) {
+    var loginBtn   = document.getElementById('tt-btn-login');
+    var signoutBtn = document.getElementById('tt-btn-signout');
+    var av         = document.getElementById('tt-av');
+    var pidEl      = document.getElementById('tt-pop-pid');
+    var emailEl    = document.getElementById('tt-pop-email');
+
+    if (user) {
+      // Signed in
+      if (loginBtn)   loginBtn.style.display   = 'none';
+      if (signoutBtn) signoutBtn.style.display  = '';
+      if (av) {
+        av.style.display = 'flex';
+        if (user.photoURL) av.innerHTML = '<img src="' + user.photoURL + '" alt="">';
+        else av.textContent = (user.displayName || user.email || '?')[0].toUpperCase();
+      }
+      if (pidEl)   pidEl.textContent   = personId || '—';
+      if (emailEl) emailEl.textContent = user.email || '—';
+    } else {
+      // Signed out
+      if (loginBtn)   loginBtn.style.display   = '';
+      if (signoutBtn) signoutBtn.style.display  = 'none';
+      if (av)         av.style.display          = 'none';
+    }
+  };
+
+  // ── Sign out ──────────────────────────────────────────────────────
+  window.ttSignOut = function() {
+    // Try Firebase if available on page
+    if (window._d && window._d.auth) {
+      window._d.signOut(window._d.auth).then(function() {
+        window.location.href = 'https://tailortech.toom.design/auth.html';
+      });
+    } else if (window._fb && window._fb.auth) {
+      window._fb.signOut(window._fb.auth).then(function() {
+        window.location.href = 'https://tailortech.toom.design/auth.html';
+      });
+    } else {
+      window.location.href = 'https://tailortech.toom.design/auth.html';
+    }
+  };
+
+  // ── Set page label ────────────────────────────────────────────────
+  window.ttNavSetLabel = function(label) {
+    var el = document.getElementById('tt-nav-label');
+    if (el) el.textContent = label;
+  };
+
+  // ── Set back button ───────────────────────────────────────────────
+  window.ttNavSetBack = function(url, label) {
+    var el = document.getElementById('tt-nav-extra');
+    if (el) el.innerHTML = '<a class="tt-nav-btn" href="' + url + '">'
+      + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>'
+      + (label || 'Back') + '</a>';
+  };
+
+  // ── Default: show Log In if no auth state detected within 2s ─────
+  setTimeout(function() {
+    var av = document.getElementById('tt-av');
+    if (av && av.style.display === 'none') {
+      // No user detected — show Log In
+      var loginBtn = document.getElementById('tt-btn-login');
+      if (loginBtn) loginBtn.style.display = '';
+    }
+  }, 2000);
+})();
+</script>
