@@ -262,7 +262,10 @@ fetch('/navbar.html')
   .then(function(r){ return r.text(); })
   .then(function(html){
     document.getElementById('tt-nav-container').innerHTML = html;
-    if (window.ttNbSetUser) ttNbSetUser(null, null);
+    // Shirt has no Firebase — show Log In by default
+    setTimeout(function() {
+      if (window.ttNbSetUser) ttNbSetUser(null, null);
+    }, 100);
   }).catch(function(){});
 </script>
 
@@ -1085,6 +1088,6 @@ function showFeedback(msg, color) {
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.6.7</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.6.8</div>
 </body>
 </html>
