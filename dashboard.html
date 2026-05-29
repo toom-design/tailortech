@@ -493,9 +493,13 @@ var BASE = 'https://tailortech.toom.design/';
 
 function go(page) { window.location.href = BASE + page; }
 function goMeasurements() {
-  var user  = window._d && window._d.currentUser;
-  var email = user ? encodeURIComponent(user.email) : '';
-  var url   = BASE + 'measurements.html' + (email ? '?email=' + email : '');
+  var user = window._d && window._d.currentUser;
+  if (!user) { window.location.href = BASE + 'measurements.html'; return; }
+  var email = encodeURIComponent(user.email);
+  // Get Person ID from stat display
+  var pid = document.getElementById('st-id') ? document.getElementById('st-id').textContent.trim() : '';
+  var url = BASE + 'measurements.html?email=' + email;
+  if (pid && pid !== '—') url += '&personId=' + encodeURIComponent(pid);
   window.location.href = url;
 }
 
@@ -786,8 +790,9 @@ function saveProfile() {
 
   // Pass uid AND email at top level — Apps Script uses both to find the row
   saveClientJSONP(Object.assign({}, data, {
-    uid:   user.uid,
-    email: user.email,
+    uid:    user.uid,
+    email:  user.email,
+    action: 'saveClient',
   }), function(res) {
     btn.disabled = false; lbl.style.display = ''; sp.style.display = 'none';
     if (res && res.success) {
@@ -842,6 +847,6 @@ function copyVal(type) {
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.6</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.6.1</div>
 </body>
 </html>
