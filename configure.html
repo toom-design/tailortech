@@ -64,17 +64,56 @@ h1 { font-size: 26px; font-weight: 300; letter-spacing: -0.01em; color: var(--in
   transition: color 0.15s;
 }
 .gcard:not(.disabled):hover .gcard-cta { color: var(--ink); }
+/* ── Shared TT nav ── */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </style>
 </head>
 <body>
 
-<nav class="nav">
-  <a class="nav-brand" href="https://tailortech.toom.design/auth.html">TailorTech</a>
-  <button class="nav-btn" onclick="window.location.href='https://tailortech.toom.design/dashboard.html'">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-    Dashboard
-  </button>
-</nav>
+<!-- Shared navbar -->
+<div id="tt-nav-container"></div>
+<script>
+fetch('/navbar.html')
+  .then(function(r){ return r.text(); })
+  .then(function(html){
+    document.getElementById('tt-nav-container').innerHTML = html;
+    if (window._ttNavAuthReady) window._ttNavAuthReady();
+    setTimeout(function() {
+      if (window.ttNbSetUser) ttNbSetUser(null, null);
+    }, 100);
+  }).catch(function(){});
+</script>
+
+
+
+  <div class="tt-pop-row"><div class="tt-pop-lbl">Person ID</div><div class="tt-pop-val" id="tt-pop-pid">—</div></div>
+  <div class="tt-pop-row"><div class="tt-pop-lbl">Email</div><div class="tt-pop-val" id="tt-pop-email">—</div></div>
+  <div class="tt-pop-actions">
+    <button class="tt-pop-btn" onclick="ttCopy('pid')">Copy ID</button>
+    <button class="tt-pop-btn" onclick="ttCopy('email')">Copy Email</button>
+    <a class="tt-pop-btn primary" href="https://tailortech.toom.design/dashboard.html">My Dashboard</a>
+  </div>
+</div>
 
 <div class="page">
   <div class="eyebrow">New Order</div>
@@ -136,9 +175,38 @@ h1 { font-size: 26px; font-weight: 300; letter-spacing: -0.01em; color: var(--in
   </div>
 </div>
 
+<script>
 
-
-<!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.0</div>
+// ── Shared nav ───────────────────────────────────────────────────
+function ttInitNav(user, personId) {
+  var av = document.getElementById('tt-av');
+  if (av && user) {
+    if (user.photoURL) av.innerHTML = '<img src="' + user.photoURL + '" alt="">';
+    else av.textContent = (user.displayName || user.email || '?')[0].toUpperCase();
+  }
+  var pidEl   = document.getElementById('tt-pop-pid');
+  var emailEl = document.getElementById('tt-pop-email');
+  if (pidEl)   pidEl.textContent   = personId || '—';
+  if (emailEl) emailEl.textContent = (user && user.email) ? user.email : '—';
+}
+function ttTogglePopover(e) {
+  if (e) e.stopPropagation();
+  var p = document.getElementById('tt-popover');
+  if (p) p.classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  var p = document.getElementById('tt-popover');
+  var a = document.getElementById('tt-av');
+  if (p && a && !p.contains(e.target) && !a.contains(e.target))
+    p.classList.remove('open');
+});
+function ttCopy(type) {
+  var el = document.getElementById(type === 'pid' ? 'tt-pop-pid' : 'tt-pop-email');
+  var v  = el ? el.textContent.trim() : '';
+  if (!v || v === '—') return;
+  if (navigator.clipboard) navigator.clipboard.writeText(v);
+}
+// Configure has no Firebase — no ttInitNav call needed
+</script>
 </body>
 </html>
