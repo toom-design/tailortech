@@ -795,8 +795,6 @@ window._fb = {
     const token = user ? await user.getIdToken() : null;
     const res = await fetch(SHEETS_API_URL, {
       method:   'POST',
-      redirect: 'follow',
-      headers:  { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
         action,
         token,
@@ -1263,6 +1261,10 @@ function wpLater() {
 </script>
 
 
+
+<!-- Version badge -->
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.5</div>
+
 <!-- ── Welcome popup ── -->
 <div class="welcome-overlay" id="welcome-overlay">
   <div class="welcome-popup">
@@ -1302,10 +1304,6 @@ function wpLater() {
     </div>
   </div>
 </div>
-
-<!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.4</div>
-
 
 </body>
 </html>
