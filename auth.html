@@ -1158,6 +1158,29 @@ function saveProfile() {
 // ── Welcome popup ─────────────────────────────────────────────────
 var _wpUser = null;
 
+
+// ── saveClientJSONP — JSONP script tag, same as shirt configurator ────────────
+function saveClientJSONP(data, callback) {
+  var cbName  = '__ttAuth_' + Date.now();
+  var payload = encodeURIComponent(JSON.stringify(data));
+  var url     = 'https://script.google.com/macros/s/AKfycbwGVL3IU4aUYkDJzQhce9s86uaJ_V7xJMZzRmkjpa06rfY50v62y8empi4_ivvQ8eMj/exec' +
+    '?action=saveClient&payload=' + payload + '&callback=' + cbName;
+  var script  = document.createElement('script');
+  var timer   = setTimeout(function() {
+    cleanup();
+    if (callback) callback({ success: true, action: 'sent' });
+  }, 6000);
+  function cleanup() {
+    clearTimeout(timer);
+    delete window[cbName];
+    if (script.parentNode) document.body.removeChild(script);
+  }
+  window[cbName] = function(res) { cleanup(); if (callback) callback(res); };
+  script.onerror  = function()   { cleanup(); if (callback) callback({ success: false }); };
+  script.src = url;
+  document.body.appendChild(script);
+}
+
 function checkIfNewClient(user) {
   _wpUser = user;
   // Check if client already exists in sheet
@@ -1218,7 +1241,7 @@ function wpSave() {
   var sp  = document.getElementById('wp-spinner');
   btn.disabled = true; lbl.style.display = 'none'; sp.style.display = 'block';
 
-  window._fb.sheetReq('saveClient', {
+  saveClientJSONP({
     uid:   _wpUser.uid,
     email: _wpUser.email,
     data: {
@@ -1229,12 +1252,7 @@ function wpSave() {
       'Phone Number': phone,
       'IG':           ig,
     }
-  })
-  .then(function() {
-    window.location.href = 'https://tailortech.toom.design/dashboard';
-  })
-  .catch(function() {
-    // Still redirect even on error
+  }, function() {
     window.location.href = 'https://tailortech.toom.design/dashboard';
   });
 }
@@ -1245,15 +1263,14 @@ function wpLater() {
     return;
   }
   // Save only UID + email — minimum needed to track the client
-  window._fb.sheetReq('saveClient', {
+  saveClientJSONP({
     uid:   _wpUser.uid,
     email: _wpUser.email,
     data: {
       'UID':   _wpUser.uid,
       'Email': _wpUser.email,
     }
-  })
-  .finally(function() {
+  }, function() {
     window.location.href = 'https://tailortech.toom.design/dashboard';
   });
 }
@@ -1263,7 +1280,7 @@ function wpLater() {
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.5</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.6</div>
 
 <!-- ── Welcome popup ── -->
 <div class="welcome-overlay" id="welcome-overlay">
