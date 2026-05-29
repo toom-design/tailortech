@@ -307,6 +307,17 @@ button{cursor:pointer;font-family:inherit}
         </div>
 
       </form>
+
+        <!-- ── Measurement History ── -->
+        <div id="meas-history" style="display:none;margin-top:48px;padding-bottom:40px">
+          <div style="font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-light);padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:20px;display:flex;align-items:center;gap:7px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Measurement History
+          </div>
+          <div id="meas-history-loading" style="padding:16px 0;color:var(--ink-faint);font-size:12px;letter-spacing:0.04em;">Loading history…</div>
+          <div id="meas-history-content"></div>
+        </div>
+
     </div>
   </div>
 </div>
@@ -552,13 +563,18 @@ document.addEventListener('click', function(e) {
 function loadMeasurementHistory(email) {
   if (!email) return;
   sheetsReq('getMeasurements', { email: email }).then(function(res) {
-    if (!res || !res.success || !res.records || res.records.length === 0) return;
+    var section = document.getElementById('meas-history');
+    var loading = document.getElementById('meas-history-loading');
+    if (section) section.style.display = 'block';
+    if (!res || !res.success || !res.records || res.records.length === 0) {
+      if (loading) loading.textContent = 'No measurement history yet.';
+      return;
+    }
+    if (loading) loading.style.display = 'none';
     var container = document.getElementById('meas-history-content');
     var section   = document.getElementById('meas-history');
     if (!container || !section) return;
-    section.style.display = 'block';
-    var loading = document.getElementById('meas-history-loading');
-    if (loading) loading.style.display = 'none';
+    // section and loading already handled above
 
     // Key measurements — try both sheet header and camelCase keys
     var keys = [
