@@ -319,8 +319,8 @@ function setAccountPopover(user) {
     if (stored) {
       var u = JSON.parse(stored);
       if (u && u.email) {
+        window._currentPersonId = u.personId || null;  // set BEFORE setAccountPopover
         setAccountPopover(u);
-        window._currentPersonId = u.personId || null;
         var ddPid = document.getElementById('dd-pid');
         if (ddPid) ddPid.textContent = u.personId || '—';
       }
