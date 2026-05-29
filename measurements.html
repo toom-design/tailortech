@@ -309,6 +309,7 @@ button{cursor:pointer;font-family:inherit}
       </form>
         <!-- Measurement History -->
         <div id="meas-history" style="display:none;margin-top:40px">
+          <div id="meas-history-loading" style="padding:20px;text-align:center;color:var(--ink-faint);font-size:12px;letter-spacing:0.06em;">Loading history…</div>
           <div class="sec-title" style="border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:16px">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             Measurement History
@@ -452,9 +453,32 @@ function focusField(label) {
 // ── Sheets request ────────────────────────────────────────────────
 function sheetsReq(action, payload) {
   payload = payload || {};
+  // Use JSONP for read actions — works on Safari without CORS issues
+  var readActions = ['getMeasurements'];
+  if (readActions.indexOf(action) >= 0) {
+    return new Promise(function(resolve, reject) {
+      var cbName  = '__ttMeas_' + Date.now();
+      var data    = Object.assign({ action: action }, payload);
+      var encoded = encodeURIComponent(JSON.stringify(data));
+      var url     = SHEETS_API + '?action=' + action + '&payload=' + encoded + '&callback=' + cbName;
+      var script  = document.createElement('script');
+      var timer   = setTimeout(function() {
+        cleanup(); resolve({ success: false, records: [], message: 'timeout' });
+      }, 10000);
+      function cleanup() {
+        clearTimeout(timer); delete window[cbName];
+        if (script.parentNode) document.body.removeChild(script);
+      }
+      window[cbName] = function(res) { cleanup(); resolve(res); };
+      script.onerror  = function()   { cleanup(); reject(new Error('Script load failed')); };
+      script.src = url;
+      document.body.appendChild(script);
+    });
+  }
+  // Write actions — bare POST, no headers
   return fetch(SHEETS_API, {
     method: 'POST',
-    body: JSON.stringify(Object.assign({ action: action }, payload))
+    body:   JSON.stringify(Object.assign({ action: action }, payload))
   }).then(function(r) { return r.json(); });
 }
 
@@ -528,18 +552,23 @@ function loadMeasurementHistory(email) {
     var section   = document.getElementById('meas-history');
     if (!container || !section) return;
     section.style.display = 'block';
+    var loading = document.getElementById('meas-history-loading');
+    if (loading) loading.style.display = 'none';
 
-    // Key measurements to show in summary
+    // Key measurements — try both sheet header and camelCase keys
     var keys = [
-      {k:'Height [CM]',l:'Height'},{k:'Weight [KG]',l:'Weight'},
-      {k:'Bust girth [CM]',l:'Bust'},{k:'Waist girth [CM]',l:'Waist'},
-      {k:'Hip girth [CM]',l:'Hips'},{k:'Shoulder length [CM]',l:'Shoulder'},
+      {k:'Height [CM]',   alt:'height',        l:'Height'},
+      {k:'Weight [KG]',   alt:'weight',         l:'Weight'},
+      {k:'Bust girth [CM]',alt:'bustGirth',     l:'Bust'},
+      {k:'Waist girth [CM]',alt:'waistGirth',   l:'Waist'},
+      {k:'Hip girth [CM]', alt:'hipGirth',      l:'Hips'},
+      {k:'Shoulder length [CM]',alt:'shoulderLength',l:'Shoulder'},
     ];
 
     container.innerHTML = res.records.map(function(rec, i) {
       var date = rec['Created At'] || rec['dateTime'] || '';
       var chips = keys.map(function(k) {
-        var v = rec[k.k] || rec[k.k.toLowerCase()] || '';
+        var v = rec[k.k] || (k.alt && rec[k.alt]) || rec[k.k.toLowerCase()] || '';
         if (!v || v === '0') return '';
         return '<span style="display:inline-block;margin:3px 4px 3px 0;padding:4px 10px;background:var(--cream-mid);border:1px solid var(--border);border-radius:2px;font-size:11px;color:var(--ink-mid)"><strong style="color:var(--ink)">' + parseFloat(v).toFixed(1) + '</strong> ' + k.l + '</span>';
       }).filter(Boolean).join('');
