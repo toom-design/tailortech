@@ -124,7 +124,8 @@ h1 { font-size: 26px; font-weight: 300; letter-spacing: -0.01em; color: var(--in
 <nav class="nav" style="position:relative;">
   <a class="nav-brand" href="https://tailortech.toom.design/">TailorTech</a>
   <button class="nav-avatar" id="nav-av" type="button" onclick="toggleDropdown(event)"></button>
-  <button class="nav-btn" onclick="doSignOut()">Sign out</button>
+  <a class="nav-btn" id="nav-login" href="https://tailortech.toom.design/auth.html" style="display:none">Log In</a>
+  <button class="nav-btn" id="nav-signout" onclick="doSignOut()">Sign out</button>
 
   <!-- Dropdown -->
   <div id="nav-dd" style="display:none;position:absolute;top:52px;right:0;width:300px;background:#FAFAF8;border:1px solid rgba(26,25,22,0.20);border-radius:2px;box-shadow:0 12px 40px rgba(26,25,22,0.16);padding:20px;z-index:9999;font-family:'Jost',sans-serif;">
@@ -225,25 +226,8 @@ h1 { font-size: 26px; font-weight: 300; letter-spacing: -0.01em; color: var(--in
 <script>
 
 // ── Shared nav ───────────────────────────────────────────────────
-function ttInitNav(user, personId) {
-  var av = document.getElementById('tt-av');
-  if (av && user) {
-    if (user.photoURL) av.innerHTML = '<img src="' + user.photoURL + '" alt="">';
-    else av.textContent = (user.displayName || user.email || '?')[0].toUpperCase();
-  }
-  var pidEl   = document.getElementById('tt-pop-pid');
-  var emailEl = document.getElementById('tt-pop-email');
-  if (pidEl)   pidEl.textContent   = personId || '—';
-  if (emailEl) emailEl.textContent = (user && user.email) ? user.email : '—';
-}
-function ttTogglePopover(e) {
-  if (e) e.stopPropagation();
-  function ttCopy(type) {
-  var el = document.getElementById(type === 'pid' ? 'tt-pop-pid' : 'tt-pop-email');
-  var v  = el ? el.textContent.trim() : '';
-  if (!v || v === '—') return;
-  if (navigator.clipboard) navigator.clipboard.writeText(v);
-}
+
+
 // Configure has no Firebase — no ttInitNav call needed
 
 // ── Hardcoded nav ─────────────────────────────────────────────────
@@ -262,33 +246,62 @@ document.addEventListener('click', function(e) {
 });
 
 function ddCopy(type){copyVal(type);}
+function toast(msg, type) {
+  // Simple toast for pages without dashboard toast system
+  var t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);'
+    + 'background:' + (type==='err'?'#7a2c2c':'#1A1916') + ';color:#FAFAF8;'
+    + 'font-family:Jost,sans-serif;font-size:11px;font-weight:500;letter-spacing:0.08em;'
+    + 'padding:10px 20px;border-radius:2px;z-index:99999;pointer-events:none;'
+    + 'text-transform:uppercase;';
+  document.body.appendChild(t);
+  setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); }, 2200);
+}
 
 function copyVal(type) {
-  var val = type==='pid'
-    ? (window._currentPersonId||'')
-    : (window._d&&window._d.currentUser&&window._d.currentUser.email||'');
-  if (!val||val==='—'){toast('Nothing to copy','err');return;}
-  if(navigator.clipboard) navigator.clipboard.writeText(val).then(function(){toast(type.toUpperCase()+' copied');});
+  var val;
+  if (type === 'pid') {
+    val = window._currentPersonId || '';
+  } else {
+    // Try Firebase first, fall back to sessionStorage
+    val = (window._d && window._d.currentUser && window._d.currentUser.email) || '';
+    if (!val) {
+      try {
+        var u = JSON.parse(sessionStorage.getItem('tt_user') || '{}');
+        val = u.email || '';
+      } catch(e) {}
+    }
+  }
+  if (!val || val === '—') { toast('Nothing to copy', 'err'); return; }
+  if (navigator.clipboard) navigator.clipboard.writeText(val).then(function(){ toast(type.toUpperCase() + ' copied'); });
 }
 
 function doSignOut() {
-  if (window._d) window._d.signOut(window._d.auth)
-    .then(function(){ window.location.href = BASE + 'auth.html'; });
+  try { sessionStorage.removeItem('tt_user'); } catch(e) {}
+  // Try Firebase if available, otherwise redirect directly
+  var auth = (window._d && window._d.auth) || (window._fb && window._fb.auth);
+  var so   = (window._d && window._d.signOut) || (window._fb && window._fb.signOut);
+  if (auth && so) {
+    so(auth).then(function(){ window.location.href = 'https://tailortech.toom.design/auth.html'; });
+  } else {
+    window.location.href = 'https://tailortech.toom.design/auth.html';
+  }
 }
 
 function setAccountPopover(user) {
   if (!user) return;
-  var fullname = user.displayName || user.email || '—';
+  var fullname = user.displayName || user.name || user.email || '—';
   // Nav avatar circle
   var av = document.getElementById('nav-av');
   if (av) {
-    if (user.photoURL) av.innerHTML = '<img src="'+user.photoURL+'" style="width:100%;height:100%;object-fit:cover;" alt="">';
+    if (user.photoURL && user.photoURL !== '') av.innerHTML = '<img src="'+user.photoURL+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">';
     else av.textContent = fullname[0].toUpperCase();
   }
   // Dropdown large avatar
   var ddAv = document.getElementById('dd-av');
   if (ddAv) {
-    if (user.photoURL) ddAv.innerHTML = '<img src="'+user.photoURL+'" style="width:100%;height:100%;object-fit:cover;" alt="">';
+    if (user.photoURL && user.photoURL !== '') ddAv.innerHTML = '<img src="'+user.photoURL+'" style="width:100%;height:100%;object-fit:cover;" alt="">';
     else ddAv.textContent = fullname[0].toUpperCase();
   }
   // Set name + email immediately from Firebase (Person ID comes later from sheet)
