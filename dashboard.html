@@ -205,26 +205,38 @@ button { cursor: pointer; font-family: inherit; }
 /* ── Account popover ── */
 .account-popover {
   position: fixed; top: 60px; right: 28px;
-  width: min(340px, calc(100vw - 32px));
+  width: min(320px, calc(100vw - 32px));
   background: var(--white); border: 1px solid var(--border-mid);
-  border-radius: 2px; box-shadow: 0 18px 48px rgba(26,25,22,0.16);
-  padding: 18px; z-index: 999; display: none;
+  border-radius: 2px; box-shadow: 0 18px 52px rgba(26,25,22,0.16);
+  padding: 20px; z-index: 999; display: none;
 }
 .account-popover.open { display: block; }
 .account-popover::before {
-  content: ''; position: absolute; top: -7px; right: 10px;
+  content: ''; position: absolute; top: -7px; right: 12px;
   width: 12px; height: 12px; background: var(--white);
   border-left: 1px solid var(--border-mid); border-top: 1px solid var(--border-mid);
   transform: rotate(45deg);
 }
+.account-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.account-av-lg {
+  width: 40px; height: 40px; border-radius: 50%; background: var(--ink);
+  color: var(--white); font-size: 14px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; flex-shrink: 0;
+}
+.account-av-lg img { width: 100%; height: 100%; object-fit: cover; }
+.account-fullname { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+.account-subemail { font-size: 11px; color: var(--ink-light); }
+.account-divider { height: 1px; background: var(--border); margin: 0 0 14px; }
 .account-title { font-size: 10px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 14px; }
-.account-row { margin-bottom: 12px; }
+.account-row { margin-bottom: 10px; }
 .account-lbl { font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 4px; }
-.account-val { font-size: 12px; color: var(--ink); word-break: break-all; background: var(--cream-mid); border: 1px solid var(--border); padding: 8px 10px; border-radius: 2px; }
-.account-actions { display: flex; gap: 8px; margin-top: 14px; }
-.account-copy { font-size: 10px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; padding: 7px 12px; border: 1px solid var(--border-mid); background: transparent; color: var(--ink-mid); border-radius: 2px; cursor: pointer; }
+.account-val { font-size: 12px; color: var(--ink); background: var(--cream-mid); border: 1px solid var(--border); padding: 7px 10px; border-radius: 2px; word-break: break-all; }
+.account-actions { display: flex; gap: 8px; margin-top: 14px; border-top: 1px solid var(--border); padding-top: 14px; flex-wrap: wrap; }
+.account-copy { font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; padding: 7px 12px; border: 1px solid var(--border-mid); background: transparent; color: var(--ink-mid); border-radius: 2px; cursor: pointer; transition: all 0.15s; }
 .account-copy:hover { background: var(--cream-mid); color: var(--ink); }
-
+.account-copy.danger { color: #8a3030; border-color: rgba(138,48,48,0.25); }
+.account-copy.danger:hover { background: rgba(138,48,48,0.06); }
 
 /* ── Nav ── */
 .nav {
@@ -291,18 +303,26 @@ button { cursor: pointer; font-family: inherit; }
 
 <!-- Account popover -->
 <div class="account-popover" id="account-popover">
-  <div class="account-title">Signed-in Account</div>
+  <div class="account-header">
+    <div class="account-av-lg" id="pop-av-lg"></div>
+    <div>
+      <div class="account-fullname" id="pop-fullname">—</div>
+      <div class="account-subemail" id="pop-subemail">—</div>
+    </div>
+  </div>
+  <div class="account-divider"></div>
+  <div class="account-row">
+    <div class="account-lbl">Person ID</div>
+    <div class="account-val" id="account-pid">—</div>
+  </div>
   <div class="account-row">
     <div class="account-lbl">Email</div>
     <div class="account-val" id="account-email">—</div>
   </div>
-  <div class="account-row">
-    <div class="account-lbl">Firebase UID</div>
-    <div class="account-val" id="account-uid">—</div>
-  </div>
   <div class="account-actions">
-    <button class="account-copy" onclick="copyVal('email')">Copy email</button>
-    <button class="account-copy" onclick="copyVal('uid')">Copy UID</button>
+    <button class="account-copy" onclick="copyVal('pid')">Copy ID</button>
+    <button class="account-copy" onclick="copyVal('email')">Copy Email</button>
+    <button class="account-copy danger" onclick="doSignOut()">Sign Out</button>
   </div>
 </div>
 
@@ -758,18 +778,26 @@ function toggleEdit() {
 
 <!-- Account popover -->
 <div class="account-popover" id="account-popover">
-  <div class="account-title">Signed-in Account</div>
+  <div class="account-header">
+    <div class="account-av-lg" id="pop-av-lg"></div>
+    <div>
+      <div class="account-fullname" id="pop-fullname">—</div>
+      <div class="account-subemail" id="pop-subemail">—</div>
+    </div>
+  </div>
+  <div class="account-divider"></div>
+  <div class="account-row">
+    <div class="account-lbl">Person ID</div>
+    <div class="account-val" id="account-pid">—</div>
+  </div>
   <div class="account-row">
     <div class="account-lbl">Email</div>
     <div class="account-val" id="account-email">—</div>
   </div>
-  <div class="account-row">
-    <div class="account-lbl">Firebase UID</div>
-    <div class="account-val" id="account-uid">—</div>
-  </div>
   <div class="account-actions">
-    <button class="account-copy" onclick="copyVal('email')">Copy email</button>
-    <button class="account-copy" onclick="copyVal('uid')">Copy UID</button>
+    <button class="account-copy" onclick="copyVal('pid')">Copy ID</button>
+    <button class="account-copy" onclick="copyVal('email')">Copy Email</button>
+    <button class="account-copy danger" onclick="doSignOut()">Sign Out</button>
   </div>
 </div>
 
@@ -1315,15 +1343,38 @@ document.addEventListener('click', function(e) {
     p.classList.remove('open');
 });
 function setAccountPopover(user) {
-  var em = document.getElementById('account-email');
-  var uid = document.getElementById('account-uid');
-  if (em)  em.textContent  = user && user.email ? user.email : '—';
-  if (uid) uid.textContent = user && user.uid   ? user.uid   : '—';
+  if (!user) return;
+  var parts   = (user.displayName || '').split(' ');
+  var fname   = parts[0] || '';
+  var lname   = parts.slice(1).join(' ') || '';
+  var fullname= user.displayName || user.email || '—';
+
+  // Header avatar
+  var avLg = document.getElementById('pop-av-lg');
+  if (avLg) {
+    if (user.photoURL) avLg.innerHTML = '<img src="' + user.photoURL + '" alt="">';
+    else avLg.textContent = fullname[0].toUpperCase();
+  }
+  var fn = document.getElementById('pop-fullname');
+  var se = document.getElementById('pop-subemail');
+  if (fn) fn.textContent = fullname;
+  if (se) se.textContent = user.email || '—';
+
+  // Fields
+  var em  = document.getElementById('account-email');
+  var pid = document.getElementById('account-pid');
+  if (em)  em.textContent  = user.email || '—';
+  if (pid) pid.textContent = window._currentPersonId || '—';
 }
 function copyVal(type) {
-  var user = window._d && window._d.currentUser;
-  var val  = type === 'uid' ? (user && user.uid) : (user && user.email);
-  if (!val) { toast('Nothing to copy', 'err'); return; }
+  var val;
+  if (type === 'pid') {
+    val = window._currentPersonId || (document.getElementById('account-pid') && document.getElementById('account-pid').textContent);
+  } else {
+    var user = window._d && window._d.currentUser;
+    val = user && user.email;
+  }
+  if (!val || val === '—') { toast('Nothing to copy', 'err'); return; }
   if (navigator.clipboard) {
     navigator.clipboard.writeText(val).then(function(){ toast(type.toUpperCase() + ' copied'); });
   } else {
@@ -1356,18 +1407,26 @@ function copyVal(type) {
 
 <!-- Account popover -->
 <div class="account-popover" id="account-popover">
-  <div class="account-title">Signed-in Account</div>
+  <div class="account-header">
+    <div class="account-av-lg" id="pop-av-lg"></div>
+    <div>
+      <div class="account-fullname" id="pop-fullname">—</div>
+      <div class="account-subemail" id="pop-subemail">—</div>
+    </div>
+  </div>
+  <div class="account-divider"></div>
+  <div class="account-row">
+    <div class="account-lbl">Person ID</div>
+    <div class="account-val" id="account-pid">—</div>
+  </div>
   <div class="account-row">
     <div class="account-lbl">Email</div>
     <div class="account-val" id="account-email">—</div>
   </div>
-  <div class="account-row">
-    <div class="account-lbl">Firebase UID</div>
-    <div class="account-val" id="account-uid">—</div>
-  </div>
   <div class="account-actions">
-    <button class="account-copy" onclick="copyVal('email')">Copy email</button>
-    <button class="account-copy" onclick="copyVal('uid')">Copy UID</button>
+    <button class="account-copy" onclick="copyVal('pid')">Copy ID</button>
+    <button class="account-copy" onclick="copyVal('email')">Copy Email</button>
+    <button class="account-copy danger" onclick="doSignOut()">Sign Out</button>
   </div>
 </div>
 
@@ -2370,15 +2429,38 @@ document.addEventListener('click', function(e) {
     p.classList.remove('open');
 });
 function setAccountPopover(user) {
-  var em = document.getElementById('account-email');
-  var uid = document.getElementById('account-uid');
-  if (em)  em.textContent  = user && user.email ? user.email : '—';
-  if (uid) uid.textContent = user && user.uid   ? user.uid   : '—';
+  if (!user) return;
+  var parts   = (user.displayName || '').split(' ');
+  var fname   = parts[0] || '';
+  var lname   = parts.slice(1).join(' ') || '';
+  var fullname= user.displayName || user.email || '—';
+
+  // Header avatar
+  var avLg = document.getElementById('pop-av-lg');
+  if (avLg) {
+    if (user.photoURL) avLg.innerHTML = '<img src="' + user.photoURL + '" alt="">';
+    else avLg.textContent = fullname[0].toUpperCase();
+  }
+  var fn = document.getElementById('pop-fullname');
+  var se = document.getElementById('pop-subemail');
+  if (fn) fn.textContent = fullname;
+  if (se) se.textContent = user.email || '—';
+
+  // Fields
+  var em  = document.getElementById('account-email');
+  var pid = document.getElementById('account-pid');
+  if (em)  em.textContent  = user.email || '—';
+  if (pid) pid.textContent = window._currentPersonId || '—';
 }
 function copyVal(type) {
-  var user = window._d && window._d.currentUser;
-  var val  = type === 'uid' ? (user && user.uid) : (user && user.email);
-  if (!val) { toast('Nothing to copy', 'err'); return; }
+  var val;
+  if (type === 'pid') {
+    val = window._currentPersonId || (document.getElementById('account-pid') && document.getElementById('account-pid').textContent);
+  } else {
+    var user = window._d && window._d.currentUser;
+    val = user && user.email;
+  }
+  if (!val || val === '—') { toast('Nothing to copy', 'err'); return; }
   if (navigator.clipboard) {
     navigator.clipboard.writeText(val).then(function(){ toast(type.toUpperCase() + ' copied'); });
   } else {
@@ -2392,10 +2474,28 @@ function copyVal(type) {
 
 
 function setAccountPopover(user) {
-  var em = document.getElementById('account-email');
-  var uid = document.getElementById('account-uid');
-  if (em)  em.textContent  = user && user.email ? user.email : '—';
-  if (uid) uid.textContent = user && user.uid   ? user.uid   : '—';
+  if (!user) return;
+  var parts   = (user.displayName || '').split(' ');
+  var fname   = parts[0] || '';
+  var lname   = parts.slice(1).join(' ') || '';
+  var fullname= user.displayName || user.email || '—';
+
+  // Header avatar
+  var avLg = document.getElementById('pop-av-lg');
+  if (avLg) {
+    if (user.photoURL) avLg.innerHTML = '<img src="' + user.photoURL + '" alt="">';
+    else avLg.textContent = fullname[0].toUpperCase();
+  }
+  var fn = document.getElementById('pop-fullname');
+  var se = document.getElementById('pop-subemail');
+  if (fn) fn.textContent = fullname;
+  if (se) se.textContent = user.email || '—';
+
+  // Fields
+  var em  = document.getElementById('account-email');
+  var pid = document.getElementById('account-pid');
+  if (em)  em.textContent  = user.email || '—';
+  if (pid) pid.textContent = window._currentPersonId || '—';
 }
 
 function togglePopover(e) {
@@ -2405,9 +2505,14 @@ function togglePopover(e) {
 }
 
 function copyVal(type) {
-  var user = window._d && window._d.currentUser;
-  var val  = type === 'uid' ? (user && user.uid) : (user && user.email);
-  if (!val) { toast('Nothing to copy', 'err'); return; }
+  var val;
+  if (type === 'pid') {
+    val = window._currentPersonId || (document.getElementById('account-pid') && document.getElementById('account-pid').textContent);
+  } else {
+    var user = window._d && window._d.currentUser;
+    val = user && user.email;
+  }
+  if (!val || val === '—') { toast('Nothing to copy', 'err'); return; }
   if (navigator.clipboard) {
     navigator.clipboard.writeText(val).then(function(){ toast(type.toUpperCase() + ' copied'); });
   } else {
@@ -2427,6 +2532,6 @@ function doSignOut() {
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.6.9</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.7.0</div>
 </body>
 </html>
