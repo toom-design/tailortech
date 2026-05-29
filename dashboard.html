@@ -721,12 +721,17 @@ function toggleEdit() {
 }
 
 function saveProfile() {
+  var user  = window._d && window._d.currentUser;
+  if (!user) { toast('Not signed in', 'err'); return; }
+
   var fname = document.getElementById('ef-fn').value.trim();
   if (!fname) { toast('First name is required.', 'err'); return; }
+
   var data = {
-    'First Name': fname,
-    'Last Name':  document.getElementById('ef-ln').value.trim(),
-    'Email':      window._d.currentUser ? window._d.currentUser.email : '',
+    'UID':          user.uid,
+    'Email':        user.email,
+    'First Name':   fname,
+    'Last Name':    document.getElementById('ef-ln').value.trim(),
     'Phone Number': document.getElementById('ef-phone').value.trim(),
     'IG':           document.getElementById('ef-ig').value.trim(),
     'Street Address': document.getElementById('ef-street').value.trim(),
@@ -735,17 +740,39 @@ function saveProfile() {
     'Country':      document.getElementById('ef-country').value.trim(),
     '_forceUpdate': true,
   };
-  var btn=document.getElementById('btn-save-p'), lbl=document.getElementById('save-lbl'), sp=document.getElementById('save-spin');
-  btn.disabled=true; lbl.style.display='none'; sp.style.display='block';
-  var _uid = window._d.currentUser ? window._d.currentUser.uid : null;
-  if (_uid) data['UID'] = _uid;
-  window._d.req('saveClient', { uid: _uid, data: data })
-    .then(function(res) {
-      if (res && res.success) { toast('Profile saved'); renderProfile(data); document.getElementById('edit-form').style.display='none'; }
-      else { toast('Could not save — try again', 'err'); }
-    })
-    .catch(function(){ toast('Network error', 'err'); })
-    .finally(function(){ btn.disabled=false; lbl.style.display=''; sp.style.display='none'; });
+
+  var btn = document.getElementById('btn-save-p');
+  var lbl = document.getElementById('save-lbl');
+  var sp  = document.getElementById('save-spin');
+  btn.disabled = true; lbl.style.display = 'none'; sp.style.display = 'block';
+
+  // Pass uid AND email at top level — Apps Script uses both to find the row
+  window._d.req('saveClient', {
+    uid:   user.uid,
+    email: user.email,
+    data:  data
+  })
+  .then(function(res) {
+    if (res && res.success) {
+      toast(res.action === 'created' ? 'Profile created!' : 'Profile saved!');
+      // Update Person ID stat if newly created
+      if (res.personId) document.getElementById('st-id').textContent = res.personId;
+      // Re-render profile with saved data
+      renderProfile(data);
+      prefill(data);
+      document.getElementById('edit-form').style.display = 'none';
+    } else {
+      toast((res && res.message) || 'Could not save — try again', 'err');
+      console.error('saveClient failed:', res);
+    }
+  })
+  .catch(function(err) {
+    toast('Network error — check connection', 'err');
+    console.error('saveProfile error:', err);
+  })
+  .finally(function() {
+    btn.disabled = false; lbl.style.display = ''; sp.style.display = 'none';
+  });
 }
 
 // ── Account popover ───────────────────────────────────────────────
@@ -784,6 +811,6 @@ function copyVal(type) {
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.5.1</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.5.2</div>
 </body>
 </html>
