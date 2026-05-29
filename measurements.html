@@ -562,44 +562,85 @@ document.addEventListener('click', function(e) {
 // ── Load measurement history ──────────────────────────────────────
 function loadMeasurementHistory(email) {
   if (!email) return;
+  var section = document.getElementById('meas-history');
+  var loading = document.getElementById('meas-history-loading');
+  if (section) section.style.display = 'block';
+
   sheetsReq('getMeasurements', { email: email }).then(function(res) {
-    var section = document.getElementById('meas-history');
-    var loading = document.getElementById('meas-history-loading');
-    if (section) section.style.display = 'block';
     if (!res || !res.success || !res.records || res.records.length === 0) {
       if (loading) loading.textContent = 'No measurement history yet.';
       return;
     }
     if (loading) loading.style.display = 'none';
-    var container = document.getElementById('meas-history-content');
-    var section   = document.getElementById('meas-history');
-    if (!container || !section) return;
-    // section and loading already handled above
 
-    // Key measurements — try both sheet header and camelCase keys
-    var keys = [
-      {k:'Height [CM]',   alt:'height',        l:'Height'},
-      {k:'Weight [KG]',   alt:'weight',         l:'Weight'},
-      {k:'Bust girth [CM]',alt:'bustGirth',     l:'Bust'},
-      {k:'Waist girth [CM]',alt:'waistGirth',   l:'Waist'},
-      {k:'Hip girth [CM]', alt:'hipGirth',      l:'Hips'},
-      {k:'Shoulder length [CM]',alt:'shoulderLength',l:'Shoulder'},
+    var latest    = res.records[0]; // most recent first
+    var container = document.getElementById('meas-history-content');
+
+    // ── Pre-fill form fields from latest record ───────────────────
+    prefillMeasurements(latest);
+
+    // ── Display history cards ─────────────────────────────────────
+    var summaryKeys = [
+      {k:'Height [CM]',   alt:'height',         l:'Height'},
+      {k:'Weight [KG]',   alt:'weight',          l:'Weight'},
+      {k:'Bust girth [CM]',  alt:'bustGirth',    l:'Bust'},
+      {k:'Waist girth [CM]', alt:'waistGirth',   l:'Waist'},
+      {k:'Hip girth [CM]',   alt:'hipGirth',     l:'Hips'},
+      {k:'Shoulder length [CM]', alt:'shoulderLength', l:'Shoulder'},
     ];
 
-    container.innerHTML = res.records.map(function(rec, i) {
-      var date = rec['Created At'] || rec['dateTime'] || '';
-      var chips = keys.map(function(k) {
-        var v = rec[k.k] || (k.alt && rec[k.alt]) || rec[k.k.toLowerCase()] || '';
-        if (!v || v === '0') return '';
-        return '<span style="display:inline-block;margin:3px 4px 3px 0;padding:4px 10px;background:var(--cream-mid);border:1px solid var(--border);border-radius:2px;font-size:11px;color:var(--ink-mid)"><strong style="color:var(--ink)">' + parseFloat(v).toFixed(1) + '</strong> ' + k.l + '</span>';
-      }).filter(Boolean).join('');
-      return '<div style="padding:16px 20px;background:var(--white);border:1px solid var(--border);border-radius:2px;margin-bottom:8px">'
-        + '<div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px">'
-        + (i === 0 ? '⬤ Latest — ' : 'Record ' + (res.records.length - i) + ' — ') + date + '</div>'
-        + (chips || '<span style="font-size:12px;color:var(--ink-faint);font-style:italic">No key measurements recorded</span>')
-        + '</div>';
-    }).join('');
-  }).catch(function(){});
+    if (container) {
+      container.innerHTML = res.records.map(function(rec, i) {
+        var date  = rec['Created At'] || rec['Updated At'] || rec['dateTime'] || '';
+        var chips = summaryKeys.map(function(k) {
+          var v = rec[k.k] || (k.alt && rec[k.alt]) || '';
+          if (!v || v === '0' || v === '0.0') return '';
+          return '<span style="display:inline-block;margin:3px 4px 3px 0;padding:4px 10px;'
+            + 'background:var(--cream-mid);border:1px solid var(--border);border-radius:2px;'
+            + 'font-size:11px;color:var(--ink-mid)">'
+            + '<strong style="color:var(--ink)">' + parseFloat(v).toFixed(1) + '</strong> ' + k.l
+            + '</span>';
+        }).filter(Boolean).join('');
+        return '<div style="padding:16px 20px;background:var(--white);border:1px solid var(--border);'
+          + 'border-radius:2px;margin-bottom:8px">'
+          + '<div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;'
+          + 'color:var(--ink-faint);margin-bottom:8px">'
+          + (i === 0 ? '⬤ Latest — ' : 'Record ' + (res.records.length - i) + ' — ')
+          + date + '</div>'
+          + (chips || '<span style="font-size:12px;color:var(--ink-faint);font-style:italic">No key measurements recorded</span>')
+          + '</div>';
+      }).join('');
+    }
+  }).catch(function(err) {
+    if (loading) loading.textContent = 'Could not load history.';
+    console.error('loadMeasurementHistory error:', err);
+  });
+}
+
+// ── Pre-fill all form fields from a measurement record ────────────────────────
+function prefillMeasurements(rec) {
+  if (!rec) return;
+
+  // Height and weight have fixed IDs
+  var heightEl = document.getElementById('f-height');
+  var weightEl = document.getElementById('f-weight');
+  var hVal = rec['Height [CM]'] || rec['height'] || '';
+  var wVal = rec['Weight [KG]'] || rec['weight'] || '';
+  if (heightEl && hVal && hVal !== '0') heightEl.value = parseFloat(hVal);
+  if (weightEl && wVal && wVal !== '0') weightEl.value = parseFloat(wVal);
+
+  // All other fields: field ID = 'f-' + camelCaseKey
+  // rec contains both sheet headers AND camelCase aliases from getMeasurements
+  Object.keys(rec).forEach(function(key) {
+    var val = rec[key];
+    if (!val || val === '0' || val === '0.0' || val === '') return;
+    // Try camelCase field ID directly
+    var el = document.getElementById('f-' + key);
+    if (el && el.type === 'number') {
+      var num = parseFloat(val);
+      if (!isNaN(num) && num > 0) el.value = num;
+    }
+  });
 }
 
 </script>
