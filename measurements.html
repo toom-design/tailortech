@@ -243,28 +243,13 @@ button{cursor:pointer;font-family:inherit}
           Personal Information
         </div>
         <div class="grid-2">
-          <div class="field span-2">
+          <div class="field">
             <label class="field-lbl">Email Address</label>
             <input type="email" id="f-email" name="email" placeholder="your@email.com">
           </div>
           <div class="field">
-            <label class="field-lbl">First Name *</label>
-            <input type="text" id="f-firstName" name="firstName" placeholder="First name" required>
-          </div>
-          <div class="field">
-            <label class="field-lbl">Last Name *</label>
-            <input type="text" id="f-lastName" name="lastName" placeholder="Last name" required>
-          </div>
-          <div class="field">
-            <label class="field-lbl">Gender *</label>
-            <select id="f-gender" name="gender" required>
-              <option value="">Select gender</option>
-              <option>Male</option><option>Female</option><option>Other</option>
-            </select>
-          </div>
-          <div class="field">
-            <label class="field-lbl">Phone</label>
-            <input type="tel" id="f-phone" name="phone" placeholder="+1 234 567 8900">
+            <label class="field-lbl">Person ID</label>
+            <input type="text" id="f-personId" name="personId" placeholder="TT-0001" readonly style="opacity:0.65;cursor:not-allowed;">
           </div>
         </div>
 
@@ -322,6 +307,14 @@ button{cursor:pointer;font-family:inherit}
         </div>
 
       </form>
+        <!-- Measurement History -->
+        <div id="meas-history" style="display:none;margin-top:40px">
+          <div class="sec-title" style="border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:16px">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Measurement History
+          </div>
+          <div id="meas-history-content"></div>
+        </div>
     </div>
   </div>
 </div>
@@ -525,6 +518,40 @@ document.addEventListener('click', function(e) {
     showGarmentSelect();
   }
 })();
+
+// ── Load measurement history ──────────────────────────────────────
+function loadMeasurementHistory(email) {
+  if (!email) return;
+  sheetsReq('getMeasurements', { email: email }).then(function(res) {
+    if (!res || !res.success || !res.records || res.records.length === 0) return;
+    var container = document.getElementById('meas-history-content');
+    var section   = document.getElementById('meas-history');
+    if (!container || !section) return;
+    section.style.display = 'block';
+
+    // Key measurements to show in summary
+    var keys = [
+      {k:'Height [CM]',l:'Height'},{k:'Weight [KG]',l:'Weight'},
+      {k:'Bust girth [CM]',l:'Bust'},{k:'Waist girth [CM]',l:'Waist'},
+      {k:'Hip girth [CM]',l:'Hips'},{k:'Shoulder length [CM]',l:'Shoulder'},
+    ];
+
+    container.innerHTML = res.records.map(function(rec, i) {
+      var date = rec['Created At'] || rec['dateTime'] || '';
+      var chips = keys.map(function(k) {
+        var v = rec[k.k] || rec[k.k.toLowerCase()] || '';
+        if (!v || v === '0') return '';
+        return '<span style="display:inline-block;margin:3px 4px 3px 0;padding:4px 10px;background:var(--cream-mid);border:1px solid var(--border);border-radius:2px;font-size:11px;color:var(--ink-mid)"><strong style="color:var(--ink)">' + parseFloat(v).toFixed(1) + '</strong> ' + k.l + '</span>';
+      }).filter(Boolean).join('');
+      return '<div style="padding:16px 20px;background:var(--white);border:1px solid var(--border);border-radius:2px;margin-bottom:8px">'
+        + '<div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px">'
+        + (i === 0 ? '⬤ Latest — ' : 'Record ' + (res.records.length - i) + ' — ') + date + '</div>'
+        + (chips || '<span style="font-size:12px;color:var(--ink-faint);font-style:italic">No key measurements recorded</span>')
+        + '</div>';
+    }).join('');
+  }).catch(function(){});
+}
+
 </script>
 </body>
 </html>
