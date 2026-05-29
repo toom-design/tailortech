@@ -900,10 +900,10 @@ function toggleDropdown(e) {
 }
 function togglePopover(e) { toggleDropdown(e); }
 document.addEventListener('click', function(e) {
-  var p  = document.getElementById('account-popover');
+  var d  = document.getElementById('nav-dd');
   var av = document.getElementById('nav-av');
-  if (p && av && !p.contains(e.target) && !av.contains(e.target))
-    p.style.display = 'none';
+  if (d && d.style.display === 'block' && !d.contains(e.target) && av && !av.contains(e.target))
+    d.style.display = 'none';
 });
 function setAccountPopover(user) {
   if (!user) return;
@@ -939,6 +939,6 @@ function ddCopy(type){copyVal(type);}
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.7.3</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.7.4</div>
 </body>
 </html>
