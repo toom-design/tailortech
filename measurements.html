@@ -307,15 +307,6 @@ button{cursor:pointer;font-family:inherit}
         </div>
 
       </form>
-        <!-- Measurement History -->
-        <div id="meas-history" style="display:none;margin-top:40px">
-          <div id="meas-history-loading" style="padding:20px;text-align:center;color:var(--ink-faint);font-size:12px;letter-spacing:0.06em;">Loading history…</div>
-          <div class="sec-title" style="border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:16px">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            Measurement History
-          </div>
-          <div id="meas-history-content"></div>
-        </div>
     </div>
   </div>
 </div>
@@ -528,15 +519,29 @@ document.addEventListener('click', function(e) {
   var filter = params.get('garment') || 'all';
 
   if (email) {
-    // Pre-fill email and go straight to form
-    var el = document.getElementById('f-email');
-    if (el) {
-      el.value    = decodeURIComponent(email);
-      el.readOnly = true;
-      el.style.opacity = '0.6';
-      el.style.cursor  = 'not-allowed';
+    var decodedEmail    = decodeURIComponent(email);
+    var decodedPersonId = params.get('personId') ? decodeURIComponent(params.get('personId')) : '';
+
+    // Pre-fill email
+    var emailEl = document.getElementById('f-email');
+    if (emailEl) {
+      emailEl.value    = decodedEmail;
+      emailEl.readOnly = true;
+      emailEl.style.opacity = '0.6';
+      emailEl.style.cursor  = 'not-allowed';
     }
+    // Pre-fill Person ID
+    var pidEl = document.getElementById('f-personId');
+    if (pidEl && decodedPersonId) {
+      pidEl.value    = decodedPersonId;
+      pidEl.readOnly = true;
+      pidEl.style.opacity = '0.6';
+      pidEl.style.cursor  = 'not-allowed';
+    }
+
     startForm(filter);
+    // Load measurement history from sheet
+    loadMeasurementHistory(decodedEmail);
   } else {
     // No email — show garment selection
     showGarmentSelect();
@@ -582,5 +587,8 @@ function loadMeasurementHistory(email) {
 }
 
 </script>
+
+<!-- Version badge -->
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.6.2</div>
 </body>
 </html>
