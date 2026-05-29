@@ -1137,7 +1137,7 @@ function showFeedback(msg, color) {
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.7.4</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.7.5</div>
 <script>
 // ── Nav functions ──────────────────────────────────────────────
 function toggleDropdown(e) {
@@ -1221,6 +1221,26 @@ document.addEventListener('click', function(e) {
   if (d && d.style.display === 'block' && !d.contains(e.target) && av && !av.contains(e.target))
     d.style.display = 'none';
 });
+
+
+// ── Fetch Person ID from Google Sheet via JSONP ──────────────────
+function getClientJSONP(email, uid, callback) {
+  var cbName  = '__ttGetClient_' + Date.now();
+  var payload = encodeURIComponent(JSON.stringify({ email: email, uid: uid || '' }));
+  var url     = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec?action=getClient&payload=' + payload + '&callback=' + cbName;
+  var script  = document.createElement('script');
+  var timer   = setTimeout(function() {
+    cleanup(); callback(null);
+  }, 8000);
+  function cleanup() {
+    clearTimeout(timer); delete window[cbName];
+    if (script.parentNode) document.body.removeChild(script);
+  }
+  window[cbName] = function(res) { cleanup(); callback(res); };
+  script.onerror  = function()   { cleanup(); callback(null); };
+  script.src = url;
+  document.body.appendChild(script);
+}
 
 // Configure has no Firebase — no ttInitNav call needed
 
@@ -1306,6 +1326,26 @@ function setAccountPopover(user) {
   el = document.getElementById('dd-pid');       if(el) el.textContent = window._currentPersonId||'—';
 }
 
+
+// ── Fetch Person ID from Google Sheet via JSONP ──────────────────
+function getClientJSONP(email, uid, callback) {
+  var cbName  = '__ttGetClient_' + Date.now();
+  var payload = encodeURIComponent(JSON.stringify({ email: email, uid: uid || '' }));
+  var url     = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec?action=getClient&payload=' + payload + '&callback=' + cbName;
+  var script  = document.createElement('script');
+  var timer   = setTimeout(function() {
+    cleanup(); callback(null);
+  }, 8000);
+  function cleanup() {
+    clearTimeout(timer); delete window[cbName];
+    if (script.parentNode) document.body.removeChild(script);
+  }
+  window[cbName] = function(res) { cleanup(); callback(res); };
+  script.onerror  = function()   { cleanup(); callback(null); };
+  script.src = url;
+  document.body.appendChild(script);
+}
+
 // Configure has no Firebase — restore from sessionStorage
 (function() {
   try {
@@ -1313,10 +1353,27 @@ function setAccountPopover(user) {
     if (stored) {
       var u = JSON.parse(stored);
       if (u && u.email) {
-        window._currentPersonId = u.personId || null;  // set BEFORE setAccountPopover
+        window._currentPersonId = u.personId || null;
         setAccountPopover(u);
         var ddPid = document.getElementById('dd-pid');
         if (ddPid) ddPid.textContent = u.personId || '—';
+
+        // If Person ID missing from sessionStorage, fetch from sheet
+        if (!u.personId) {{
+          getClientJSONP(u.email, u.uid || '', function(res) {{
+            if (res && res.success && res.client && res.client['Person ID']) {{
+              var pid = res.client['Person ID'];
+              window._currentPersonId = pid;
+              var el = document.getElementById('dd-pid');
+              if (el) el.textContent = pid;
+              // Update sessionStorage too
+              try {{
+                u.personId = pid;
+                sessionStorage.setItem('tt_user', JSON.stringify(u));
+              }} catch(e) {{}}
+            }}
+          }});
+        }}
       }
     } else {
       // Not signed in — show Log In instead of avatar
@@ -1330,6 +1387,6 @@ function setAccountPopover(user) {
   } catch(e) {}
 })();
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.7.4</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.7.5</div>
 </body>
 </html>
