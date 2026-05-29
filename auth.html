@@ -765,7 +765,7 @@ const firebaseConfig = {
   measurementId:     "G-QZ7KCWCQXN"
 };
 
-const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbwGVL3IU4aUYkDJzQhce9s86uaJ_V7xJMZzRmkjpa06rfY50v62y8empi4_ivvQ8eMj/exec";
+const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec";
 
 // 🔧 Set this to your MeasureTracker measurements page URL once deployed
 const MEASUREMENTS_URL = "YOUR_MEASUREMENTS_PAGE_URL";
@@ -1163,7 +1163,7 @@ var _wpUser = null;
 function saveClientJSONP(data, callback) {
   var cbName  = '__ttAuth_' + Date.now();
   var payload = encodeURIComponent(JSON.stringify(data));
-  var url     = 'https://script.google.com/macros/s/AKfycbwGVL3IU4aUYkDJzQhce9s86uaJ_V7xJMZzRmkjpa06rfY50v62y8empi4_ivvQ8eMj/exec' +
+  var url     = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec' +
     '?action=saveClient&payload=' + payload + '&callback=' + cbName;
   var script  = document.createElement('script');
   var timer   = setTimeout(function() {
