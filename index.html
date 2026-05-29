@@ -1,4 +1,229 @@
 <!DOCTYPE html>
-<html><head>
-<meta http-equiv="refresh" content="0;url=/auth">
-</head></html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TailorTech</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --cream:#F0EDE6;--cream-mid:#EBE7DF;--ink:#1A1916;--ink-mid:#4A4844;
+  --ink-light:#8A8880;--ink-faint:#C0BDB8;--white:#FAFAF8;
+  --border:rgba(26,25,22,0.10);--border-mid:rgba(26,25,22,0.20);
+}
+body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+button{cursor:pointer;font-family:inherit;}
+
+/* Navbar container */
+#tt-nav-container{width:100%;}
+
+.page{max-width:960px;margin:0 auto;padding:52px 28px 80px;}
+.eyebrow{font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px;}
+h1{font-size:26px;font-weight:300;letter-spacing:-0.01em;color:var(--ink);margin-bottom:40px;}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:2px;}
+.gcard{background:var(--white);padding:32px 24px 26px;cursor:pointer;transition:background 0.15s;display:flex;flex-direction:column;position:relative;}
+.gcard:hover{background:var(--cream-mid);}
+.gcard.disabled{opacity:0.55;cursor:default;}
+.gcard.disabled:hover{background:var(--white);}
+.gcard-soon{position:absolute;top:14px;right:14px;font-size:9px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--border);padding:3px 7px;border-radius:1px;}
+.gcard-icon{width:32px;height:32px;margin-bottom:18px;color:var(--ink-mid);}
+.gcard-name{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:6px;}
+.gcard-desc{font-size:12px;color:var(--ink-light);line-height:1.55;flex:1;}
+.gcard-cta{margin-top:20px;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint);display:flex;align-items:center;gap:6px;transition:color 0.15s;}
+.gcard:not(.disabled):hover .gcard-cta{color:var(--ink);}
+
+/* Version badge */
+.version{position:fixed;bottom:14px;right:18px;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.25);pointer-events:none;user-select:none;}
+
+/* ── Nav ── */
+.nav {
+  height: 52px; background: var(--white); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 28px; gap: 16px;
+  position: sticky; top: 0; z-index: 100;
+}
+.nav-brand {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.20em;
+  text-transform: uppercase; color: var(--ink); margin-right: auto; text-decoration: none;
+}
+.nav-btn {
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 2px;
+  background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
+}
+.nav-btn:hover { background: var(--cream-mid); color: var(--ink); }
+.nav-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--ink); color: var(--white);
+  font-size: 11px; font-weight: 600; letter-spacing: 0;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; flex-shrink: 0;
+  border: none; padding: 0; cursor: pointer;
+  -webkit-appearance: none;
+}
+.nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="nav" style="position:relative;">
+  <a class="nav-brand" href="https://tailortech.toom.design/">TailorTech</a>
+  <button class="nav-avatar" id="nav-av" type="button" onclick="toggleDropdown(event)"></button>
+  <button class="nav-btn" onclick="doSignOut()">Sign out</button>
+
+  <!-- Dropdown -->
+  <div id="nav-dd" style="display:none;position:absolute;top:52px;right:0;width:300px;background:#FAFAF8;border:1px solid rgba(26,25,22,0.20);border-radius:2px;box-shadow:0 12px 40px rgba(26,25,22,0.16);padding:20px;z-index:9999;font-family:'Jost',sans-serif;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div id="dd-av" style="width:40px;height:40px;border-radius:50%;background:#1A1916;color:#FAFAF8;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"></div>
+      <div>
+        <div id="dd-name" style="font-size:13px;font-weight:600;color:#1A1916;margin-bottom:2px;">—</div>
+        <div id="dd-email-sub" style="font-size:11px;color:#8A8880;"></div>
+      </div>
+    </div>
+    <div style="height:1px;background:rgba(26,25,22,0.10);margin-bottom:14px;"></div>
+    <div style="margin-bottom:10px;">
+      <div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#8A8880;margin-bottom:4px;">Person ID</div>
+      <div id="dd-pid" style="font-size:12px;color:#1A1916;background:#EBE7DF;padding:7px 10px;border-radius:2px;border:1px solid rgba(26,25,22,0.10);">—</div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#8A8880;margin-bottom:4px;">Email</div>
+      <div id="dd-email" style="font-size:12px;color:#1A1916;background:#EBE7DF;padding:7px 10px;border-radius:2px;border:1px solid rgba(26,25,22,0.10);word-break:break-all;">—</div>
+    </div>
+    <div style="display:flex;gap:8px;border-top:1px solid rgba(26,25,22,0.10);padding-top:14px;flex-wrap:wrap;">
+      <button onclick="ddCopy('pid')"   style="font-family:'Jost',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:7px 12px;border:1px solid rgba(26,25,22,0.20);background:transparent;color:#4A4844;border-radius:2px;cursor:pointer;">Copy ID</button>
+      <button onclick="ddCopy('email')" style="font-family:'Jost',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:7px 12px;border:1px solid rgba(26,25,22,0.20);background:transparent;color:#4A4844;border-radius:2px;cursor:pointer;">Copy Email</button>
+      <button onclick="doSignOut()"     style="font-family:'Jost',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:7px 12px;border:1px solid rgba(138,48,48,0.30);background:transparent;color:#8a3030;border-radius:2px;cursor:pointer;">Sign Out</button>
+    </div>
+  </div>
+</nav>
+
+
+<!-- Shared navbar -->
+<div id="tt-nav-container"></div>
+
+<div class="page">
+  <div class="eyebrow">New Order</div>
+  <h1>Select Garment Type</h1>
+
+  <div class="grid">
+    <div class="gcard" onclick="window.location.href='https://tailortech.toom.design/shirt.html'">
+      <div class="gcard-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.57a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.57a2 2 0 00-1.34-2.23z"/></svg></div>
+      <div class="gcard-name">Shirt</div>
+      <div class="gcard-desc">Dress shirts, casual shirts, oxfords. Configure collar, cuffs, fabric, and more.</div>
+      <div class="gcard-cta">Configure <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+    </div>
+    <div class="gcard disabled"><span class="gcard-soon">Coming soon</span>
+      <div class="gcard-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7v13h18V7M3 7l4-5h4l1 5M21 7l-4-5h-4l-1 5M12 7v13M9 12h2M13 12h2"/></svg></div>
+      <div class="gcard-name">Suit</div><div class="gcard-desc">Bespoke suits and blazers tailored to your exact measurements.</div>
+      <div class="gcard-cta">Coming soon</div>
+    </div>
+    <div class="gcard disabled"><span class="gcard-soon">Coming soon</span>
+      <div class="gcard-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L8 6H4v16h16V6h-4L12 2z"/><path d="M9 6v16M15 6v16"/></svg></div>
+      <div class="gcard-name">Jacket</div><div class="gcard-desc">Casual jackets and outerwear made to your specifications.</div>
+      <div class="gcard-cta">Coming soon</div>
+    </div>
+    <div class="gcard disabled"><span class="gcard-soon">Coming soon</span>
+      <div class="gcard-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2C9 2 6 5 6 5L2 7l2 4 3-1v12h14V10l3 1 2-4-4-2s-3-3-6-3z"/></svg></div>
+      <div class="gcard-name">Hoodie</div><div class="gcard-desc">Custom hoodies with your choice of fabric, fit, and finish.</div>
+      <div class="gcard-cta">Coming soon</div>
+    </div>
+    <div class="gcard disabled"><span class="gcard-soon">Coming soon</span>
+      <div class="gcard-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 3h16v5l-4 13H4V3zM20 3v5l4 13h-8l-4-13V8"/></svg></div>
+      <div class="gcard-name">Trousers</div><div class="gcard-desc">Tailored trousers and chinos with perfect rise and break.</div>
+      <div class="gcard-cta">Coming soon</div>
+    </div>
+    <div class="gcard disabled"><span class="gcard-soon">Coming soon</span>
+      <div class="gcard-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 3h14l-2 18H7L5 3z"/><path d="M5 3c0 2 3 3 7 3s7-1 7-3"/></svg></div>
+      <div class="gcard-name">Sweatpants</div><div class="gcard-desc">Comfortable custom sweatpants with waistband and fabric options.</div>
+      <div class="gcard-cta">Coming soon</div>
+    </div>
+  </div>
+</div>
+
+<div class="version">v2.6</div>
+
+<script>
+
+function toggleDropdown(e) {
+  if (e) e.stopPropagation();
+  var d = document.getElementById('nav-dd');
+  if (!d) return;
+  d.style.display = (d.style.display === 'block') ? 'none' : 'block';
+}
+
+function ddCopy(type){copyVal(type);}
+
+function copyVal(type) {
+  var val = type==='pid'
+    ? (window._currentPersonId||'')
+    : (window._d&&window._d.currentUser&&window._d.currentUser.email||'');
+  if (!val||val==='—'){toast('Nothing to copy','err');return;}
+  if(navigator.clipboard) navigator.clipboard.writeText(val).then(function(){toast(type.toUpperCase()+' copied');});
+}
+
+function doSignOut() {
+  if (window._d) window._d.signOut(window._d.auth)
+    .then(function(){ window.location.href = BASE + 'auth.html'; });
+}
+
+function setAccountPopover(user) {
+  if (!user) return;
+  var fullname = user.displayName || user.email || '—';
+  // Nav avatar circle
+  var av = document.getElementById('nav-av');
+  if (av) {
+    if (user.photoURL) av.innerHTML = '<img src="'+user.photoURL+'" style="width:100%;height:100%;object-fit:cover;" alt="">';
+    else av.textContent = fullname[0].toUpperCase();
+  }
+  // Dropdown large avatar
+  var ddAv = document.getElementById('dd-av');
+  if (ddAv) {
+    if (user.photoURL) ddAv.innerHTML = '<img src="'+user.photoURL+'" style="width:100%;height:100%;object-fit:cover;" alt="">';
+    else ddAv.textContent = fullname[0].toUpperCase();
+  }
+  // Set name + email immediately from Firebase (Person ID comes later from sheet)
+  var el;
+  el = document.getElementById('dd-name');      if(el) el.textContent = fullname;
+  el = document.getElementById('dd-email-sub'); if(el) el.textContent = user.email||'';
+  el = document.getElementById('dd-email');     if(el) el.textContent = user.email||'—';
+  el = document.getElementById('dd-pid');       if(el) el.textContent = window._currentPersonId||'—';
+}
+
+document.addEventListener('click', function(e) {
+  var d  = document.getElementById('nav-dd');
+  var av = document.getElementById('nav-av');
+  if (d && d.style.display === 'block' && !d.contains(e.target) && av && !av.contains(e.target))
+    d.style.display = 'none';
+});
+
+// Restore nav from sessionStorage
+(function() {
+  try {
+    var stored = sessionStorage.getItem('tt_user');
+    if (stored) {
+      var u = JSON.parse(stored);
+      if (u && u.email) {
+        setAccountPopover(u);
+        window._currentPersonId = u.personId || null;
+      } else { showLogIn(); }
+    } else { showLogIn(); }
+  } catch(e) { showLogIn(); }
+  function showLogIn() {
+    var av = document.getElementById('nav-av');
+    var so = document.getElementById('nav-signout');
+    var li = document.getElementById('nav-login');
+    if(av) av.style.display = 'none';
+    if(so) so.style.display = 'none';
+    if(li) li.style.display = '';
+  }
+})();
+
+</script>
+</body>
+</html>
