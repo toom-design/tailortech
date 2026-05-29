@@ -251,23 +251,72 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 }
 .submit-btn:hover { opacity: 0.85; }
 .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Nav ── */
+.nav {
+  height: 52px; background: var(--white); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 28px; gap: 16px;
+  position: sticky; top: 0; z-index: 100;
+}
+.nav-brand {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.20em;
+  text-transform: uppercase; color: var(--ink); margin-right: auto; text-decoration: none;
+}
+.nav-btn {
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 2px;
+  background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
+}
+.nav-btn:hover { background: var(--cream-mid); color: var(--ink); }
+.nav-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--ink); color: var(--white);
+  font-size: 11px; font-weight: 600; letter-spacing: 0;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; flex-shrink: 0;
+  border: none; padding: 0; cursor: pointer;
+  -webkit-appearance: none;
+}
+.nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
 </style>
 </head>
 <body>
 
-<!-- Shared navbar -->
-<div id="tt-nav-container"></div>
-<script>
-fetch('/navbar.html')
-  .then(function(r){ return r.text(); })
-  .then(function(html){
-    document.getElementById('tt-nav-container').innerHTML = html;
-    // Shirt has no Firebase — show Log In by default
-    setTimeout(function() {
-      if (window.ttNbSetUser) ttNbSetUser(null, null);
-    }, 100);
-  }).catch(function(){});
-</script>
+<!-- Nav -->
+<nav class="nav" style="position:relative;">
+  <a class="nav-brand" href="https://tailortech.toom.design/">TailorTech</a>
+  <button class="nav-avatar" id="nav-av" type="button" onclick="toggleDropdown(event)"></button>
+  <a class="nav-btn" id="nav-login" href="https://tailortech.toom.design/auth.html" style="display:none">Log In</a>
+  <button class="nav-btn" id="nav-signout" onclick="doSignOut()">Sign out</button>
+
+  <!-- Dropdown -->
+  <div id="nav-dd" style="display:none;position:absolute;top:52px;right:0;width:300px;background:#FAFAF8;border:1px solid rgba(26,25,22,0.20);border-radius:2px;box-shadow:0 12px 40px rgba(26,25,22,0.16);padding:20px;z-index:9999;font-family:'Jost',sans-serif;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div id="dd-av" style="width:40px;height:40px;border-radius:50%;background:#1A1916;color:#FAFAF8;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"></div>
+      <div>
+        <div id="dd-name" style="font-size:13px;font-weight:600;color:#1A1916;margin-bottom:2px;">—</div>
+        <div id="dd-email-sub" style="font-size:11px;color:#8A8880;"></div>
+      </div>
+    </div>
+    <div style="height:1px;background:rgba(26,25,22,0.10);margin-bottom:14px;"></div>
+    <div style="margin-bottom:10px;">
+      <div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#8A8880;margin-bottom:4px;">Person ID</div>
+      <div id="dd-pid" style="font-size:12px;color:#1A1916;background:#EBE7DF;padding:7px 10px;border-radius:2px;border:1px solid rgba(26,25,22,0.10);">—</div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#8A8880;margin-bottom:4px;">Email</div>
+      <div id="dd-email" style="font-size:12px;color:#1A1916;background:#EBE7DF;padding:7px 10px;border-radius:2px;border:1px solid rgba(26,25,22,0.10);word-break:break-all;">—</div>
+    </div>
+    <div style="display:flex;gap:8px;border-top:1px solid rgba(26,25,22,0.10);padding-top:14px;flex-wrap:wrap;">
+      <a href="https://tailortech.toom.design/dashboard.html" style="font-family:'Jost',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:7px 12px;border:1px solid rgba(26,25,22,0.20);background:#1A1916;color:#FAFAF8;border-radius:2px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;">My Dashboard</a>
+      <button onclick="ddCopy('pid')"   style="font-family:'Jost',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:7px 12px;border:1px solid rgba(26,25,22,0.20);background:transparent;color:#4A4844;border-radius:2px;cursor:pointer;">Copy ID</button>
+      <button onclick="ddCopy('email')" style="font-family:'Jost',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:7px 12px;border:1px solid rgba(26,25,22,0.20);background:transparent;color:#4A4844;border-radius:2px;cursor:pointer;">Copy Email</button>
+      <button onclick="doSignOut()"     style="font-family:'Jost',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:7px 12px;border:1px solid rgba(138,48,48,0.30);background:transparent;color:#8a3030;border-radius:2px;cursor:pointer;">Sign Out</button>
+    </div>
+  </div>
+</nav>
 
 
 
@@ -1088,6 +1137,199 @@ function showFeedback(msg, color) {
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.6.8</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.7.4</div>
+<script>
+// ── Nav functions ──────────────────────────────────────────────
+function toggleDropdown(e) {
+  if (e) e.stopPropagation();
+  var d = document.getElementById('nav-dd');
+  if (!d) return;
+  d.style.display = (d.style.display === 'block') ? 'none' : 'block';
+}
+
+function ddCopy(type){copyVal(type);}
+
+function copyVal(type) {
+  var val;
+  if (type === 'pid') {
+    val = window._currentPersonId || '';
+  } else {
+    // Try Firebase first, fall back to sessionStorage
+    val = (window._d && window._d.currentUser && window._d.currentUser.email) || '';
+    if (!val) {
+      try {
+        var u = JSON.parse(sessionStorage.getItem('tt_user') || '{}');
+        val = u.email || '';
+      } catch(e) {}
+    }
+  }
+  if (!val || val === '—') { toast('Nothing to copy', 'err'); return; }
+  if (navigator.clipboard) navigator.clipboard.writeText(val).then(function(){ toast(type.toUpperCase() + ' copied'); });
+}
+
+function doSignOut() {
+  try { sessionStorage.removeItem('tt_user'); } catch(e) {}
+  // Try Firebase if available, otherwise redirect directly
+  var auth = (window._d && window._d.auth) || (window._fb && window._fb.auth);
+  var so   = (window._d && window._d.signOut) || (window._fb && window._fb.signOut);
+  if (auth && so) {
+    so(auth).then(function(){ window.location.href = 'https://tailortech.toom.design/auth.html'; });
+  } else {
+    window.location.href = 'https://tailortech.toom.design/auth.html';
+  }
+}
+
+function setAccountPopover(user) {
+  if (!user) return;
+  var fullname = user.displayName || user.name || user.email || '—';
+  // Nav avatar circle
+  var av = document.getElementById('nav-av');
+  if (av) {
+    if (user.photoURL && user.photoURL !== '') av.innerHTML = '<img src="'+user.photoURL+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">';
+    else av.textContent = fullname[0].toUpperCase();
+  }
+  // Dropdown large avatar
+  var ddAv = document.getElementById('dd-av');
+  if (ddAv) {
+    if (user.photoURL && user.photoURL !== '') ddAv.innerHTML = '<img src="'+user.photoURL+'" style="width:100%;height:100%;object-fit:cover;" alt="">';
+    else ddAv.textContent = fullname[0].toUpperCase();
+  }
+  // Set name + email immediately from Firebase (Person ID comes later from sheet)
+  var el;
+  el = document.getElementById('dd-name');      if(el) el.textContent = fullname;
+  el = document.getElementById('dd-email-sub'); if(el) el.textContent = user.email||'';
+  el = document.getElementById('dd-email');     if(el) el.textContent = user.email||'—';
+  el = document.getElementById('dd-pid');       if(el) el.textContent = window._currentPersonId||'—';
+}
+
+function toast(msg, type) {
+  // Simple toast for pages without dashboard toast system
+  var t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);'
+    + 'background:' + (type==='err'?'#7a2c2c':'#1A1916') + ';color:#FAFAF8;'
+    + 'font-family:Jost,sans-serif;font-size:11px;font-weight:500;letter-spacing:0.08em;'
+    + 'padding:10px 20px;border-radius:2px;z-index:99999;pointer-events:none;'
+    + 'text-transform:uppercase;';
+  document.body.appendChild(t);
+  setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); }, 2200);
+}
+
+document.addEventListener('click', function(e) {
+  var d  = document.getElementById('nav-dd');
+  var av = document.getElementById('nav-av');
+  if (d && d.style.display === 'block' && !d.contains(e.target) && av && !av.contains(e.target))
+    d.style.display = 'none';
+});
+
+// Configure has no Firebase — no ttInitNav call needed
+
+// ── Hardcoded nav ─────────────────────────────────────────────────
+function toggleDropdown(e) {
+  if (e) e.stopPropagation();
+  var d = document.getElementById('nav-dd');
+  if (!d) return;
+  d.style.display = (d.style.display === 'block') ? 'none' : 'block';
+}
+
+document.addEventListener('click', function(e) {
+  var d  = document.getElementById('nav-dd');
+  var av = document.getElementById('nav-av');
+  if (d && d.style.display === 'block' && !d.contains(e.target) && av && !av.contains(e.target))
+    d.style.display = 'none';
+});
+
+function ddCopy(type){copyVal(type);}
+function toast(msg, type) {
+  // Simple toast for pages without dashboard toast system
+  var t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);'
+    + 'background:' + (type==='err'?'#7a2c2c':'#1A1916') + ';color:#FAFAF8;'
+    + 'font-family:Jost,sans-serif;font-size:11px;font-weight:500;letter-spacing:0.08em;'
+    + 'padding:10px 20px;border-radius:2px;z-index:99999;pointer-events:none;'
+    + 'text-transform:uppercase;';
+  document.body.appendChild(t);
+  setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); }, 2200);
+}
+
+function copyVal(type) {
+  var val;
+  if (type === 'pid') {
+    val = window._currentPersonId || '';
+  } else {
+    // Try Firebase first, fall back to sessionStorage
+    val = (window._d && window._d.currentUser && window._d.currentUser.email) || '';
+    if (!val) {
+      try {
+        var u = JSON.parse(sessionStorage.getItem('tt_user') || '{}');
+        val = u.email || '';
+      } catch(e) {}
+    }
+  }
+  if (!val || val === '—') { toast('Nothing to copy', 'err'); return; }
+  if (navigator.clipboard) navigator.clipboard.writeText(val).then(function(){ toast(type.toUpperCase() + ' copied'); });
+}
+
+function doSignOut() {
+  try { sessionStorage.removeItem('tt_user'); } catch(e) {}
+  // Try Firebase if available, otherwise redirect directly
+  var auth = (window._d && window._d.auth) || (window._fb && window._fb.auth);
+  var so   = (window._d && window._d.signOut) || (window._fb && window._fb.signOut);
+  if (auth && so) {
+    so(auth).then(function(){ window.location.href = 'https://tailortech.toom.design/auth.html'; });
+  } else {
+    window.location.href = 'https://tailortech.toom.design/auth.html';
+  }
+}
+
+function setAccountPopover(user) {
+  if (!user) return;
+  var fullname = user.displayName || user.name || user.email || '—';
+  // Nav avatar circle
+  var av = document.getElementById('nav-av');
+  if (av) {
+    if (user.photoURL && user.photoURL !== '') av.innerHTML = '<img src="'+user.photoURL+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">';
+    else av.textContent = fullname[0].toUpperCase();
+  }
+  // Dropdown large avatar
+  var ddAv = document.getElementById('dd-av');
+  if (ddAv) {
+    if (user.photoURL && user.photoURL !== '') ddAv.innerHTML = '<img src="'+user.photoURL+'" style="width:100%;height:100%;object-fit:cover;" alt="">';
+    else ddAv.textContent = fullname[0].toUpperCase();
+  }
+  // Set name + email immediately from Firebase (Person ID comes later from sheet)
+  var el;
+  el = document.getElementById('dd-name');      if(el) el.textContent = fullname;
+  el = document.getElementById('dd-email-sub'); if(el) el.textContent = user.email||'';
+  el = document.getElementById('dd-email');     if(el) el.textContent = user.email||'—';
+  el = document.getElementById('dd-pid');       if(el) el.textContent = window._currentPersonId||'—';
+}
+
+// Configure has no Firebase — restore from sessionStorage
+(function() {
+  try {
+    var stored = sessionStorage.getItem('tt_user');
+    if (stored) {
+      var u = JSON.parse(stored);
+      if (u && u.email) {
+        window._currentPersonId = u.personId || null;  // set BEFORE setAccountPopover
+        setAccountPopover(u);
+        var ddPid = document.getElementById('dd-pid');
+        if (ddPid) ddPid.textContent = u.personId || '—';
+      }
+    } else {
+      // Not signed in — show Log In instead of avatar
+      var av = document.getElementById('nav-av');
+      var so = document.getElementById('nav-signout');
+      var li = document.getElementById('nav-login');
+      if(av) av.style.display = 'none';
+      if(so) so.style.display = 'none';
+      if(li) li.style.display = '';
+    }
+  } catch(e) {}
+})();
+</script>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.7.4</div>
 </body>
 </html>
