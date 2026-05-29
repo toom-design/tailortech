@@ -303,27 +303,25 @@ button { cursor: pointer; font-family: inherit; }
   <button class="nav-btn" onclick="doSignOut()">Sign out</button>
 
   <!-- Dropdown -->
-  <div id="nav-dd" style="display:none;position:absolute;top:52px;right:0;width:300px;background:#FAFAF8;border:1px solid rgba(26,25,22,0.20);border-radius:2px;box-shadow:0 12px 40px rgba(26,25,22,0.16);padding:20px;z-index:9999;font-family:'Jost',sans-serif;">
+  <div id="nav-dd" style="display:none;position:absolute;top:52px;right:0;width:260px;background:#FAFAF8;border:1px solid rgba(26,25,22,0.20);border-radius:2px;box-shadow:0 12px 40px rgba(26,25,22,0.16);padding:20px;z-index:9999;font-family:'Jost',sans-serif;">
+    <!-- Avatar + Name + Email -->
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
       <div id="dd-av" style="width:40px;height:40px;border-radius:50%;background:#1A1916;color:#FAFAF8;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"></div>
       <div>
         <div id="dd-name" style="font-size:13px;font-weight:600;color:#1A1916;margin-bottom:2px;">—</div>
-        <div id="dd-email-sub" style="font-size:11px;color:#8A8880;"></div>
+        <div id="dd-email-sub" style="font-size:11px;color:#8A8880;word-break:break-all;"></div>
       </div>
     </div>
+    <!-- Person ID displayed like a name -->
     <div style="height:1px;background:rgba(26,25,22,0.10);margin-bottom:14px;"></div>
-    <div style="margin-bottom:10px;">
-      <div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#8A8880;margin-bottom:4px;">Person ID</div>
-      <div id="dd-pid" style="font-size:12px;color:#1A1916;background:#EBE7DF;padding:7px 10px;border-radius:2px;border:1px solid rgba(26,25,22,0.10);">—</div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#8A8880;margin-bottom:5px;">Person ID</div>
+      <div id="dd-pid" style="font-size:15px;font-weight:600;color:#1A1916;letter-spacing:0.04em;">—</div>
     </div>
-    <div style="margin-bottom:14px;">
-      <div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#8A8880;margin-bottom:4px;">Email</div>
-      <div id="dd-email" style="font-size:12px;color:#1A1916;background:#EBE7DF;padding:7px 10px;border-radius:2px;border:1px solid rgba(26,25,22,0.10);word-break:break-all;">—</div>
-    </div>
-    <div style="display:flex;gap:8px;border-top:1px solid rgba(26,25,22,0.10);padding-top:14px;flex-wrap:wrap;">
-      <button onclick="ddCopy('pid')"   style="font-family:'Jost',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:7px 12px;border:1px solid rgba(26,25,22,0.20);background:transparent;color:#4A4844;border-radius:2px;cursor:pointer;">Copy ID</button>
-      <button onclick="ddCopy('email')" style="font-family:'Jost',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:7px 12px;border:1px solid rgba(26,25,22,0.20);background:transparent;color:#4A4844;border-radius:2px;cursor:pointer;">Copy Email</button>
-      <button onclick="doSignOut()"     style="font-family:'Jost',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:7px 12px;border:1px solid rgba(138,48,48,0.30);background:transparent;color:#8a3030;border-radius:2px;cursor:pointer;">Sign Out</button>
+    <!-- Buttons stacked vertically -->
+    <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid rgba(26,25,22,0.10);padding-top:14px;">
+      <a href="https://tailortech.toom.design/dashboard.html" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:none;background:#1A1916;color:#FAFAF8;border-radius:2px;cursor:pointer;text-decoration:none;display:block;text-align:center;">My Dashboard</a>
+      <button onclick="doSignOut()" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:1px solid rgba(138,48,48,0.30);background:transparent;color:#8a3030;border-radius:2px;cursor:pointer;width:100%;">Sign Out</button>
     </div>
   </div>
 </nav>
@@ -711,7 +709,7 @@ function loadProfile(user) {
       window._currentPersonId = res.client['Person ID'] || null;
       var _el;
       _el = document.getElementById('dd-pid');      if(_el) _el.textContent = window._currentPersonId || '—';
-      _el = document.getElementById('dd-email');    if(_el) _el.textContent = res.client['Email'] || '—';
+      _
       _el = document.getElementById('dd-email-sub');if(_el) _el.textContent = res.client['Email'] || '—';
       _el = document.getElementById('dd-name');     if(_el) _el.textContent = (res.client['First Name']||'') + ' ' + (res.client['Last Name']||'') || window._d.currentUser.displayName || '—';
     } else {
@@ -937,7 +935,6 @@ function setAccountPopover(user) {
   var el;
   el = document.getElementById('dd-name');      if(el) el.textContent = fullname;
   el = document.getElementById('dd-email-sub'); if(el) el.textContent = user.email||'';
-  el = document.getElementById('dd-email');     if(el) el.textContent = user.email||'—';
   el = document.getElementById('dd-pid');       if(el) el.textContent = window._currentPersonId||'—';
 }
 function copyVal(type) {
@@ -953,6 +950,6 @@ function ddCopy(type){copyVal(type);}
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.7.5</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.8.0</div>
 </body>
 </html>
