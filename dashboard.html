@@ -789,11 +789,12 @@ function saveProfile() {
   btn.disabled = true; lbl.style.display = 'none'; sp.style.display = 'block';
 
   // Pass uid AND email at top level — Apps Script uses both to find the row
-  saveClientJSONP(Object.assign({}, data, {
+  saveClientJSONP({
     uid:    user.uid,
     email:  user.email,
     action: 'saveClient',
-  }), function(res) {
+    data:   data,
+  }, function(res) {
     btn.disabled = false; lbl.style.display = ''; sp.style.display = 'none';
     if (res && res.success) {
       toast(res.action === 'created' ? 'Profile created!' : 'Profile saved!');
@@ -847,6 +848,6 @@ function copyVal(type) {
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.6.1</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.6.2</div>
 </body>
 </html>
