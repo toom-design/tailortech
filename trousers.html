@@ -131,9 +131,9 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 <!-- Nav -->
 <nav class="nav" style="position:relative;">
   <a class="nav-brand" href="https://tailortech.toom.design/">TailorTech</a>
-  <button class="nav-avatar" id="nav-av" type="button" onclick="toggleDropdown(event)"></button>
-  <a class="nav-btn" id="nav-login" href="https://tailortech.toom.design/auth.html" style="display:none">Log In</a>
-  <button class="nav-btn" id="nav-signout" onclick="doSignOut()">Sign out</button>
+  <button class="nav-avatar" id="nav-av" type="button" onclick="toggleDropdown(event)" style="display:none"></button>
+  <a class="nav-btn" id="nav-login" href="#" onclick="goToAuth(); return false;">Log In</a>
+  <button class="nav-btn" id="nav-signout" onclick="doSignOut()" style="display:none">Sign out</button>
 
   <!-- Dropdown -->
   <div id="nav-dd" style="display:none;position:absolute;top:52px;right:0;width:260px;background:#FAFAF8;border:1px solid rgba(26,25,22,0.20);border-radius:2px;box-shadow:0 12px 40px rgba(26,25,22,0.16);padding:20px;z-index:9999;font-family:'Jost',sans-serif;">
@@ -896,6 +896,122 @@ document.addEventListener('DOMContentLoaded',function(){
   // Show first img base onload to hide loading spinner
   document.getElementById('img-base').addEventListener('load',hideLoading);
 });
+</script>
+
+<!-- Version badge -->
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.8.3</div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const _app = initializeApp({
+  apiKey:            "AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY",
+  authDomain:        "tailortech-accounts.firebaseapp.com",
+  projectId:         "tailortech-accounts",
+  storageBucket:     "tailortech-accounts.firebasestorage.app",
+  messagingSenderId: "137614433833",
+  appId:             "1:137614433833:web:c78ea40b0d04ba89f3c638"
+});
+const _auth = getAuth(_app);
+window._fb = { auth: _auth, signOut };
+
+onAuthStateChanged(_auth, function(user) {
+  if (user) {
+    setAccountPopover(user);
+    document.getElementById('nav-av').style.display      = '';
+    document.getElementById('nav-signout').style.display = '';
+    document.getElementById('nav-login').style.display   = 'none';
+    if (!window._currentPersonId) {
+      getClientJSONP(user.email, user.uid, function(res) {
+        if (res && res.success && res.client && res.client['Person ID']) {
+          window._currentPersonId = res.client['Person ID'];
+          var el = document.getElementById('dd-pid');
+          if (el) el.textContent = window._currentPersonId;
+        }
+      });
+    }
+  } else {
+    var av = document.getElementById('nav-av');
+    if (av) { av.style.display = 'none'; av.innerHTML = ''; }
+    document.getElementById('nav-signout').style.display = 'none';
+    document.getElementById('nav-login').style.display   = '';
+    var dd = document.getElementById('nav-dd');
+    if (dd) dd.style.display = 'none';
+  }
+});
+</script>
+
+<script>
+// ── Nav ───────────────────────────────────────────────────────────
+function toggleDropdown(e) {
+  if (e) e.stopPropagation();
+  var d = document.getElementById('nav-dd');
+  if (!d) return;
+  d.style.display = (d.style.display === 'block') ? 'none' : 'block';
+}
+
+document.addEventListener('click', function(e) {
+  var d  = document.getElementById('nav-dd');
+  var av = document.getElementById('nav-av');
+  if (d && d.style.display === 'block' && !d.contains(e.target) && av && !av.contains(e.target))
+    d.style.display = 'none';
+});
+
+function goToAuth() {
+  try { sessionStorage.setItem('tt_return_url', window.location.href); } catch(e) {}
+  window.location.href = 'https://tailortech.toom.design/auth.html';
+}
+
+function doSignOut() {
+  var auth = window._fb && window._fb.auth;
+  var so   = window._fb && window._fb.signOut;
+  if (auth && so) so(auth);
+}
+
+function setAccountPopover(user) {
+  if (!user) return;
+  var fullname = user.displayName || user.email || '—';
+  var av = document.getElementById('nav-av');
+  if (av) {
+    if (user.photoURL) av.innerHTML = '<img src="' + user.photoURL + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">';
+    else av.textContent = fullname[0].toUpperCase();
+  }
+  var ddAv = document.getElementById('dd-av');
+  if (ddAv) {
+    if (user.photoURL) ddAv.innerHTML = '<img src="' + user.photoURL + '" style="width:100%;height:100%;object-fit:cover;" alt="">';
+    else ddAv.textContent = fullname[0].toUpperCase();
+  }
+  var el;
+  el = document.getElementById('dd-name');      if (el) el.textContent = fullname;
+  el = document.getElementById('dd-email-sub'); if (el) el.textContent = user.email || '';
+  el = document.getElementById('dd-pid');       if (el) el.textContent = window._currentPersonId || '—';
+}
+
+function getClientJSONP(email, uid, callback) {
+  var cbName  = '__ttGetClient_' + Date.now();
+  var payload = encodeURIComponent(JSON.stringify({ email: email, uid: uid || '' }));
+  var url     = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec?action=getClient&payload=' + payload + '&callback=' + cbName;
+  var script  = document.createElement('script');
+  var timer   = setTimeout(function() { cleanup(); callback(null); }, 8000);
+  function cleanup() {
+    clearTimeout(timer); delete window[cbName];
+    if (script.parentNode) document.body.removeChild(script);
+  }
+  window[cbName] = function(res) { cleanup(); callback(res); };
+  script.onerror = function()    { cleanup(); callback(null); };
+  script.src = url;
+  document.body.appendChild(script);
+}
+
+function ddCopy(type) {
+  var val = type === 'pid'
+    ? (window._currentPersonId || '')
+    : (window._fb && window._fb.auth && window._fb.auth.currentUser && window._fb.auth.currentUser.email) || '';
+  if (!val || val === '—') { showFeedback('Nothing to copy', false); return; }
+  if (navigator.clipboard) navigator.clipboard.writeText(val).then(function() { showFeedback(type.toUpperCase() + ' copied', true); });
+}
 </script>
 
 </body>
