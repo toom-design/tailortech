@@ -680,14 +680,19 @@ const state = {
 // ── URL builders ──────────────────────────────────────────────────
 function enc(s) { return encodeURIComponent(s); }
 const urls = {
-  base:      (fit, rise, v) => BASE + enc('trousers_m_live_fit-'+fit+'_rise-'+rise+'_'+v+'.png'),
+  base:      (fit, rise, v) => {
+    // Note: regular fit + regular rise + back view has no trousers_m_ prefix in repo
+    if (fit==='regular' && rise==='regular' && v==='b')
+      return BASE + enc('live_fit-regular_rise-regular_b.png');
+    return BASE + enc('trousers_m_live_fit-'+fit+'_rise-'+rise+'_'+v+'.png');
+  },
   adjust:    (adj, rise, v) => BASE + enc('trousers_m_live_'+adj+'_rise-'+rise+'_'+v+'.png'),
   waistband: (wb,  rise)    => BASE + enc('trousers_m_live_waistband-'+wb+'_rise-'+rise+'_f.png'),
   style:     (st,  rise)    => BASE + enc('trousers_m_live_style-'+st+'_rise-'+rise+'_f.png'),
   pocket:    (pk,  rise)    => BASE + enc('trousers_m_live_frontpocket-'+pk+'_rise-'+rise+'_f.png'),
   hem:       (fit, hem)     => {
     var p = fit==='wideleg' ? 'wide-leg' : fit==='baggy' ? 'baggy' : 'regular';
-    var h = hem==='selfhem' ? 'selfhem' : 'turned-up';
+    var h = hem==='selfhem' ? (fit==='regular' ? 'selfhem' : 'self hem') : 'turned-up';
     return BASE + enc('trousers_m_live_'+p+'_'+h+'_f-b.png');
   },
   watch:     (rise)         => BASE + enc('trousers_m_live_watchpocket_rise-'+rise+'_f.png'),
@@ -708,17 +713,16 @@ function updatePreview() {
   var v=state.view, r=state.rise, f=state.fit;
   setImg('img-base',      urls.base(f,r,v));
   setImg('img-adjust',    urls.adjust(state.adjust,r,v));
+  setImg('img-hem',       urls.hem(f,state.hem));   // f-b image: same for front and back
   if (v==='f') {
     setImg('img-waistband', urls.waistband(state.waistband,r));
     setImg('img-style',     urls.style(state.style,r));
     setImg('img-pocket',    urls.pocket(state.pocket,r));
-    setImg('img-hem',       urls.hem(f,state.hem));
     setImg('img-watch',     state.watch ? urls.watch(r) : '');
     setImg('img-backpocket','');
   } else {
     setImg('img-waistband',''); setImg('img-style','');
-    setImg('img-pocket','');   setImg('img-hem','');
-    setImg('img-watch','');
+    setImg('img-pocket','');    setImg('img-watch','');
     if (state.backpocket!=='none') {
       var s = state.backpocket==='both' ? 'left' : state.backpocket;
       setImg('img-backpocket', urls.backpocket(s,r));
@@ -899,7 +903,7 @@ document.addEventListener('DOMContentLoaded',function(){
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.8.4</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.8.7</div>
 
 <!-- Firebase -->
 <script type="module">
