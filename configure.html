@@ -145,7 +145,7 @@ h1 { font-size: 26px; font-weight: 300; letter-spacing: -0.01em; color: var(--in
     </div>
     <!-- Buttons stacked vertically -->
     <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid rgba(26,25,22,0.10);padding-top:14px;">
-      <a href="https://tailortech.toom.design/dashboard.html" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:none;background:#1A1916;color:#FAFAF8;border-radius:2px;cursor:pointer;text-decoration:none;display:block;text-align:center;">My Dashboard</a>
+      <a href="https://tailortech.toom.design/dashboard" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:none;background:#1A1916;color:#FAFAF8;border-radius:2px;cursor:pointer;text-decoration:none;display:block;text-align:center;">My Dashboard</a>
       <button onclick="doSignOut()" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:1px solid rgba(138,48,48,0.30);background:transparent;color:#8a3030;border-radius:2px;cursor:pointer;width:100%;">Sign Out</button>
     </div>
   </div>
@@ -160,7 +160,7 @@ h1 { font-size: 26px; font-weight: 300; letter-spacing: -0.01em; color: var(--in
 
   <div class="grid">
 
-    <div class="gcard" onclick="window.location.href='https://tailortech.toom.design/shirt.html'">
+    <div class="gcard" onclick="window.location.href='https://tailortech.toom.design/shirt'">
       <div class="gcard-icon">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.57a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.57a2 2 0 00-1.34-2.23z"/>
@@ -195,11 +195,12 @@ h1 { font-size: 26px; font-weight: 300; letter-spacing: -0.01em; color: var(--in
       <div class="gcard-cta">Coming soon</div>
     </div>
 
-    <div class="gcard" onclick="window.location.href='https://tailortech.toom.design/trousers.html'">
+    <div class="gcard disabled">
+      <span class="gcard-soon">Coming soon</span>
       <div class="gcard-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 3h16v5l-4 13H4V3zM20 3v5l4 13h-8l-4-13V8"/></svg></div>
       <div class="gcard-name">Trousers</div>
       <div class="gcard-desc">Tailored trousers and chinos with perfect rise and break.</div>
-      <div class="gcard-cta">Configure <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      <div class="gcard-cta">Coming soon</div>
     </div>
 
     <div class="gcard disabled">
@@ -214,7 +215,7 @@ h1 { font-size: 26px; font-weight: 300; letter-spacing: -0.01em; color: var(--in
 </div>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.8.2</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.8.1</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -276,7 +277,7 @@ document.addEventListener('click', function(e) {
 
 function goToAuth() {
   try { sessionStorage.setItem('tt_return_url', window.location.href); } catch(e) {}
-  window.location.href = 'https://tailortech.toom.design/auth.html';
+  window.location.href = 'https://tailortech.toom.design/auth';
 }
 
 function doSignOut() {
