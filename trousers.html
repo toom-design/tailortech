@@ -746,7 +746,7 @@ function setImg(id, url) {
 function updatePreview() {
   var v=state.view, r=state.rise, f=state.fit;
   setImg('img-base',      urls.base(f,r,v));
-  setImg('img-adjust',    urls.adjust(state.adjust,r,v));
+  setImg('img-adjust', (v==='b' && state.adjust==='sidebuckle') ? '' : urls.adjust(state.adjust,r,v));
   setImg('img-hem',       urls.hem(f,state.hem));   // f-b image: same for front and back
   if (v==='f') {
     setImg('img-waistband', urls.waistband(state.waistband,r));
@@ -754,7 +754,7 @@ function updatePreview() {
     setImg('img-pocket',    urls.pocket(state.pocket,r));
     setImg('img-watch',     state.watch ? urls.watch(r) : '');
     setImg('img-backpocket','');
-  } else {
+    setImg('img-backpocket2','');
     setImg('img-waistband',''); setImg('img-style','');
     setImg('img-pocket','');    setImg('img-watch','');
     if (state.backpocket!=='none') {
@@ -1010,9 +1010,6 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 </script>
 
-<!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.9.0</div>
-
 <!-- Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -1125,7 +1122,7 @@ function ddCopy(type) {
   if (navigator.clipboard) navigator.clipboard.writeText(val).then(function() { showFeedback(type.toUpperCase() + ' copied', true); });
 }
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.9.2</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.9.4</div>
 
 </body>
 </html>
