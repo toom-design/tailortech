@@ -831,27 +831,35 @@ function selectPillInGroup(btn) {
   var val=btn.textContent.trim().toLowerCase().replace(/ /g,'-');
   if(label==='Fit'){
     var m={'regular':'regular','wide-leg':'wideleg','baggy':'baggy'};
-    state.fit=m[val]||'regular'; updatePreview();
-    resetZoom();
+    state.fit=m[val]||'regular';
+    state.view='f'; document.querySelectorAll('.view-bar-btn').forEach(function(b){b.classList.remove('active');}); document.querySelector('.view-bar-btn:first-child').classList.add('active');
+    updatePreview(); resetZoom();
   }
   if(label==='Rise'){
-    state.rise=val.includes('high')?'high':'regular'; updatePreview();
-    zoomToRegion(2.6, 0.5, 0.12); // waistband / rise area top
+    state.rise=val.includes('high')?'high':'regular';
+    state.view='f'; document.querySelectorAll('.view-bar-btn').forEach(function(b){b.classList.remove('active');}); document.querySelector('.view-bar-btn:first-child').classList.add('active');
+    updatePreview(); resetZoom();
   }
   if(label==='Front Pockets'){
     var m={'slanted':'slanted','on-seam':'seam','jetted':'welt'};
-    state.pocket=m[val]||'slanted'; updatePreview();
-    zoomToRegion(2.8, 0.5, 0.2); // front pocket area
+    state.pocket=m[val]||'slanted';
+    state.view='f'; document.querySelectorAll('.view-bar-btn').forEach(function(b){b.classList.remove('active');}); document.querySelector('.view-bar-btn:first-child').classList.add('active');
+    updatePreview(); zoomToRegion(2.8, 0.5, 0.4);
   }
   if(label==='Waistband Style'){
-    state.waistband=val; updatePreview();
-    zoomToRegion(2.6, 0.5, 0.2); // waistband top area
-    state.adjust=val.includes('belt')?'beltloops':'sidebuckle'; updatePreview();
-    zoomToRegion(2.6, 0.5, 0.12); // waistband top area
+    state.waistband=val;
+    state.view='f'; document.querySelectorAll('.view-bar-btn').forEach(function(b){b.classList.remove('active');}); document.querySelector('.view-bar-btn:first-child').classList.add('active');
+    updatePreview(); zoomToRegion(2.6, 0.5, 0.4);
+  }
+  if(label==='Waist Adjustment'){
+    state.adjust=val.includes('belt')?'beltloops':'sidebuckle';
+    state.view='f'; document.querySelectorAll('.view-bar-btn').forEach(function(b){b.classList.remove('active');}); document.querySelector('.view-bar-btn:first-child').classList.add('active');
+    updatePreview(); zoomToRegion(2.6, 0.5, 0.4);
   }
   if(label==='Hem Finish'){
-    state.hem=val.includes('self')?'selfhem':'turned-up'; updatePreview();
-    zoomToRegion(2.6, 0.5, 0.6); // hem / bottom area
+    state.hem=val.includes('self')?'selfhem':'turned-up';
+    state.view='f'; document.querySelectorAll('.view-bar-btn').forEach(function(b){b.classList.remove('active');}); document.querySelector('.view-bar-btn:first-child').classList.add('active');
+    updatePreview(); zoomToRegion(2.6, 0.5, 0.8);
   }
 }
 function selectIconCard(btn, groupSelector, sectionName) {
@@ -872,8 +880,9 @@ function selectPleats(btn,val) {
   group.querySelectorAll('.pill').forEach(function(p){p.classList.remove('selected');});
   btn.classList.add('selected');
   var m={'none':'flatfront','single':'singlepleat','double':'doublepleats'};
-  state.style=m[val]||'flatfront'; updatePreview();
-  resetZoom(); // pleats use default zoom
+  state.style=m[val]||'flatfront';
+  state.view='f'; document.querySelectorAll('.view-bar-btn').forEach(function(b){b.classList.remove('active');}); document.querySelector('.view-bar-btn:first-child').classList.add('active');
+  updatePreview(); resetZoom();
 }
 function selectBackPocket(btn,val) {
   var group=btn.closest('.pill-group');
@@ -886,18 +895,20 @@ function selectBackPocket(btn,val) {
     var backBtn = document.querySelector('.view-bar-btn:last-child');
     if (backBtn) backBtn.classList.add('active');
     updatePreview();
-    zoomToRegion(2.6, 0.5, 0.3); // back pocket area
+    zoomToRegion(2.6, 0.5, 0.4); // back pocket area
   } else {
-    updatePreview();
-    resetZoom();
+    state.view='f'; document.querySelectorAll('.view-bar-btn').forEach(function(b){b.classList.remove('active');}); document.querySelector('.view-bar-btn:first-child').classList.add('active');
+    updatePreview(); resetZoom();
   }
 }
 function selectWatch(btn,show) {
   var group=btn.closest('.pill-group');
   group.querySelectorAll('.pill').forEach(function(p){p.classList.remove('selected');});
   btn.classList.add('selected');
-  state.watch=show; updatePreview();
-  if (show) zoomToRegion(3.0, 0.62, 0.3); // watch pocket: right side, mid-height
+  state.watch=show;
+  state.view='f'; document.querySelectorAll('.view-bar-btn').forEach(function(b){b.classList.remove('active');}); document.querySelector('.view-bar-btn:first-child').classList.add('active');
+  updatePreview();
+  if (show) zoomToRegion(3.0, 0.4, 0.4); // watch pocket
   else resetZoom();
 }
 
@@ -1000,7 +1011,7 @@ document.addEventListener('DOMContentLoaded',function(){
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.9.1</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.9.0</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -1114,6 +1125,7 @@ function ddCopy(type) {
   if (navigator.clipboard) navigator.clipboard.writeText(val).then(function() { showFeedback(type.toUpperCase() + ' copied', true); });
 }
 </script>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.9.2</div>
 
 </body>
 </html>
