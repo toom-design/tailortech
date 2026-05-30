@@ -287,9 +287,9 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 <!-- Nav -->
 <nav class="nav" style="position:relative;">
   <a class="nav-brand" href="https://tailortech.toom.design/">TailorTech</a>
-  <button class="nav-avatar" id="nav-av" type="button" onclick="toggleDropdown(event)"></button>
-<a class="nav-btn" id="nav-login" href="#" onclick="goToAuth(); return false;" style="display:none">Log In</a>
-  <button class="nav-btn" id="nav-signout" onclick="doSignOut()">Sign out</button>
+  <button class="nav-avatar" id="nav-av" type="button" onclick="toggleDropdown(event)" style="display:none"></button>
+  <a class="nav-btn" id="nav-login" href="#" onclick="goToAuth(); return false;">Log In</a>
+  <button class="nav-btn" id="nav-signout" onclick="doSignOut()" style="display:none">Sign out</button>
 
   <!-- Dropdown -->
   <div id="nav-dd" style="display:none;position:absolute;top:52px;right:0;width:260px;background:#FAFAF8;border:1px solid rgba(26,25,22,0.20);border-radius:2px;box-shadow:0 12px 40px rgba(26,25,22,0.16);padding:20px;z-index:9999;font-family:'Jost',sans-serif;">
@@ -1134,7 +1134,7 @@ function showFeedback(msg, color) {
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.8.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.8.1</div>
 <script>
 // ── Nav functions ──────────────────────────────────────────────
 function toggleDropdown(e) {
@@ -1142,6 +1142,11 @@ function toggleDropdown(e) {
   var d = document.getElementById('nav-dd');
   if (!d) return;
   d.style.display = (d.style.display === 'block') ? 'none' : 'block';
+}
+
+function goToAuth() {
+  try { sessionStorage.setItem('tt_return_url', window.location.href); } catch(e) {}
+  window.location.href = 'https://tailortech.toom.design/auth.html';
 }
 
 function ddCopy(type){copyVal(type);}
@@ -1341,13 +1346,6 @@ function getClientJSONP(email, uid, callback) {
   document.body.appendChild(script);
 }
 
-  //auth sign in
-  function goToAuth() {
-  try { sessionStorage.setItem('tt_return_url', window.location.href); } catch(e) {}
-  window.location.href = 'https://tailortech.toom.design/auth.html';
-}
-
-  
 // Configure has no Firebase — restore from sessionStorage
 (function() {
   try {
@@ -1357,6 +1355,13 @@ function getClientJSONP(email, uid, callback) {
       if (u && u.email) {
         window._currentPersonId = u.personId || null;
         setAccountPopover(u);
+        // Show avatar + sign-out, hide log-in
+        var av = document.getElementById('nav-av');
+        var so = document.getElementById('nav-signout');
+        var li = document.getElementById('nav-login');
+        if (av) av.style.display = '';
+        if (so) so.style.display = '';
+        if (li) li.style.display = 'none';
         var ddPid = document.getElementById('dd-pid');
         if (ddPid) ddPid.textContent = u.personId || '—';
 
@@ -1378,17 +1383,11 @@ function getClientJSONP(email, uid, callback) {
         }}
       }
     } else {
-      // Not signed in — show Log In instead of avatar
-      var av = document.getElementById('nav-av');
-      var so = document.getElementById('nav-signout');
-      var li = document.getElementById('nav-login');
-      if(av) av.style.display = 'none';
-      if(so) so.style.display = 'none';
-      if(li) li.style.display = '';
+      // Not signed in — defaults already correct (avatar+signout hidden, login visible)
     }
   } catch(e) {}
 })();
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.8.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.8.1</div>
 </body>
 </html>
