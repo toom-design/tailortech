@@ -27,7 +27,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 .layer-stack { position: relative; width: 380px; height: 580px; flex-shrink: 0; transform-origin: center center; transition: transform 0.6s cubic-bezier(0.4,0,0.2,1); }
 .layer-stack .layer { position: absolute; inset: 0; }
 .layer-stack .layer img { width: 100%; height: 100%; object-fit: contain; display: block; }
-.zoom-btns { position: absolute; top: 14px; right: 14px; display: flex; flex-direction: column; gap: 4px; }
+.zoom-btns { position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 4px; z-index: 50; }
 .zoom-btn { width: 28px; height: 28px; border: 1px solid var(--border-mid); background: var(--white); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; color: var(--ink-mid); }
 .view-bar { flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 12px 20px; gap: 0; border-top: 1px solid var(--border); }
 .view-bar-btn { font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; padding: 7px 28px; border: 1px solid var(--border-mid); background: transparent; color: var(--ink-light); cursor: pointer; transition: all 0.2s; }
@@ -191,9 +191,9 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
     </div>
     <div class="avatar-stage">
       <div class="zoom-btns">
-        <button class="zoom-btn" onclick="manualZoom(0.15)">+</button>
-        <button class="zoom-btn" onclick="manualZoom(-0.15)">−</button>
-        <button class="zoom-btn" onclick="resetZoom()">↻</button>
+        <button class="zoom-btn" onclick="manualZoom(0.25)" title="Zoom in">+</button>
+        <button class="zoom-btn" onclick="manualZoom(-0.25)" title="Zoom out">−</button>
+        <button class="zoom-btn" onclick="resetZoom()" title="Reset">↻</button>
       </div>
       <div id="stage-viewport" style="position:relative;width:100%;height:100%;overflow:hidden;display:flex;align-items:center;justify-content:center;">
         <div class="layer-stack" id="layer-stack">
@@ -291,8 +291,8 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
       <div class="section">
         <div class="section-label">Watch Pocket</div>
         <div class="pill-group">
-          <button class="pill selected" onclick="selectPillInGroup(this)">None</button>
-          <button class="pill"          onclick="selectPillInGroup(this)">Watch Pocket</button>
+          <button class="pill selected" onclick="selectWatch(this, false)">None</button>
+          <button class="pill"          onclick="selectWatch(this, true)">Watch Pocket</button>
         </div>
       </div>
 
@@ -493,6 +493,8 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 
   </div><!-- /config-panel -->
 </div><!-- /app -->
+
+
 
 <script>
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
@@ -777,8 +779,8 @@ function hideLoading() {
 
 // ── Zoom ──────────────────────────────────────────────────────────
 // ── Zoom (same approach as shirt) ────────────────────────────────
-var _z = { zoom: 2.0, panX: 0, panY: 0 };
-var DEFAULT_ZOOM = 2.0;
+var _z = { zoom: 1.7, panX: 0, panY: 0 };
+var DEFAULT_ZOOM = 1.7;
 var STACK_W = 420, STACK_H = 620;
 
 function applyTransform() {
@@ -839,19 +841,17 @@ function selectPillInGroup(btn) {
   if(label==='Front Pockets'){
     var m={'slanted':'slanted','on-seam':'seam','jetted':'welt'};
     state.pocket=m[val]||'slanted'; updatePreview();
-    zoomToRegion(2.8, 0.5, 0.45); // front pocket area
+    zoomToRegion(2.8, 0.5, 0.2); // front pocket area
   }
   if(label==='Waistband Style'){
     state.waistband=val; updatePreview();
-    zoomToRegion(2.6, 0.5, 0.12); // waistband top area
-  }
-  if(label==='Waist Adjustment'){
+    zoomToRegion(2.6, 0.5, 0.2); // waistband top area
     state.adjust=val.includes('belt')?'beltloops':'sidebuckle'; updatePreview();
     zoomToRegion(2.6, 0.5, 0.12); // waistband top area
   }
   if(label==='Hem Finish'){
     state.hem=val.includes('self')?'selfhem':'turned-up'; updatePreview();
-    zoomToRegion(2.6, 0.5, 0.88); // hem / bottom area
+    zoomToRegion(2.6, 0.5, 0.6); // hem / bottom area
   }
 }
 function selectIconCard(btn, groupSelector, sectionName) {
@@ -873,7 +873,7 @@ function selectPleats(btn,val) {
   btn.classList.add('selected');
   var m={'none':'flatfront','single':'singlepleat','double':'doublepleats'};
   state.style=m[val]||'flatfront'; updatePreview();
-  zoomToRegion(2.6, 0.5, 0.38); // pleat / front fly area
+  resetZoom(); // pleats use default zoom
 }
 function selectBackPocket(btn,val) {
   var group=btn.closest('.pill-group');
@@ -886,7 +886,7 @@ function selectBackPocket(btn,val) {
     var backBtn = document.querySelector('.view-bar-btn:last-child');
     if (backBtn) backBtn.classList.add('active');
     updatePreview();
-    zoomToRegion(2.6, 0.5, 0.42); // back pocket area
+    zoomToRegion(2.6, 0.5, 0.3); // back pocket area
   } else {
     updatePreview();
     resetZoom();
@@ -897,7 +897,7 @@ function selectWatch(btn,show) {
   group.querySelectorAll('.pill').forEach(function(p){p.classList.remove('selected');});
   btn.classList.add('selected');
   state.watch=show; updatePreview();
-  if (show) zoomToRegion(3.0, 0.62, 0.42); // watch pocket: right side, mid-height
+  if (show) zoomToRegion(3.0, 0.62, 0.3); // watch pocket: right side, mid-height
   else resetZoom();
 }
 
@@ -993,6 +993,7 @@ function showFeedback(msg,ok) {
 // ── Init ──────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded',function(){
   updatePreview();
+  applyTransform(); // apply default zoom on load
   // Show first img base onload to hide loading spinner
   document.getElementById('img-base').addEventListener('load',hideLoading);
 });
