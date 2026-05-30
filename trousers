@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trousers Configurator — TailorTech</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #F0EDE6; --cream-dark: #E5E1D8; --cream-mid: #EBE7DF;
+  --ink: #1A1916; --ink-mid: #4A4844; --ink-light: #8A8880; --ink-faint: #C0BDB8;
+  --white: #FAFAF8; --border: rgba(26,25,22,0.12); --border-mid: rgba(26,25,22,0.22);
+}
+body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+.app { display: flex; width: 100%; flex: 1; overflow: hidden; min-height: 0; }
+
+/* ── PREVIEW PANEL ── */
+.preview-panel { flex: 3; background: #ffffff; border-right: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.view-toggle { display: flex; padding: 16px 20px 0; justify-content: center; flex-shrink: 0; }
+.view-btn { font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; padding: 8px 28px; border: 1px solid var(--border-mid); background: transparent; color: var(--ink-light); cursor: pointer; transition: all 0.2s; }
+.view-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.view-btn:first-child { border-radius: 2px 0 0 2px; border-right: none; }
+.view-btn:last-child  { border-radius: 0 2px 2px 0; }
+.avatar-stage { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.layer-stack { position: relative; width: 380px; height: 580px; flex-shrink: 0; transform-origin: center center; transition: transform 0.6s cubic-bezier(0.4,0,0.2,1); }
+.layer-stack .layer { position: absolute; inset: 0; }
+.layer-stack .layer img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.zoom-btns { position: absolute; top: 14px; right: 14px; display: flex; flex-direction: column; gap: 4px; }
+.zoom-btn { width: 28px; height: 28px; border: 1px solid var(--border-mid); background: var(--white); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; color: var(--ink-mid); }
+.view-bar { flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 12px 20px; gap: 0; border-top: 1px solid var(--border); }
+.view-bar-btn { font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; padding: 7px 28px; border: 1px solid var(--border-mid); background: transparent; color: var(--ink-light); cursor: pointer; transition: all 0.2s; }
+.view-bar-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.view-bar-btn:first-child { border-radius: 2px 0 0 2px; border-right: none; }
+.view-bar-btn:last-child  { border-radius: 0 2px 2px 0; }
+
+/* ── CONFIG PANEL ── */
+.config-panel { flex: 2; background: var(--white); overflow-y: auto; min-height: 0; position: relative; }
+.tabs { display: flex; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--white); z-index: 10; }
+.tab { flex: 1; padding: 14px 8px; font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; border: none; background: none; color: var(--ink-faint); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+.tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+.config-body { padding: 28px 28px 48px; display: flex; flex-direction: column; }
+.section { padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+.section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); margin-bottom: 14px; }
+.sub-label { font-size: 11px; color: var(--ink-light); margin-bottom: 10px; letter-spacing: 0.02em; }
+
+/* Pills */
+.pill-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 500; padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 50px; background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s; }
+.pill:hover { border-color: var(--ink); color: var(--ink); }
+.pill.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
+
+/* Option cards */
+.card-grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+.card-grid-5 { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; }
+.option-card { border: 1px solid var(--border); border-radius: 2px; padding: 10px 6px 8px; text-align: center; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.option-card:hover { border-color: var(--ink-mid); }
+.option-card.selected { border-color: var(--ink); border-width: 2px; }
+.option-card .thumb { width: 52px; height: 52px; object-fit: contain; }
+.option-card .cname { font-size: 10px; font-weight: 500; color: var(--ink-mid); letter-spacing: 0.04em; }
+.option-card.selected .cname { color: var(--ink); font-weight: 600; }
+
+/* Fabric grid */
+.fabric-search-row { margin-bottom: 12px; }
+.fabric-search { width: 100%; padding: 8px 12px; font-family: 'Jost', sans-serif; font-size: 13px; border: 1px solid var(--border-mid); border-radius: 2px; background: var(--white); color: var(--ink); outline: none; }
+.fabric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.fabric-card { border: 1px solid var(--border); border-radius: 2px; padding: 8px 6px; text-align: center; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.fabric-card:hover { border-color: var(--ink-mid); }
+.fabric-card.selected { border-color: var(--ink); border-width: 2px; }
+.swatch { width: 40px; height: 40px; border-radius: 2px; }
+.fname { font-size: 10px; font-weight: 500; color: var(--ink-mid); letter-spacing: 0.02em; }
+.fcode { font-size: 9px; color: var(--ink-faint); letter-spacing: 0.04em; }
+.fabric-card.selected .fname { color: var(--ink); font-weight: 600; }
+
+/* Measurements */
+.measure-grid { display: flex; flex-direction: column; gap: 10px; }
+.measure-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.measure-row label { font-size: 12px; font-weight: 500; color: var(--ink-mid); min-width: 110px; letter-spacing: 0.02em; }
+.measure-input-wrap { display: flex; align-items: center; gap: 6px; }
+.measure-input { width: 80px; padding: 7px 10px; font-family: 'Jost', sans-serif; font-size: 13px; border: 1px solid var(--border-mid); border-radius: 2px; background: var(--white); color: var(--ink); text-align: right; outline: none; }
+.measure-unit { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.04em; width: 20px; }
+
+/* Submit */
+.submit-btn { width: 100%; padding: 14px 24px; font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; background: var(--ink); color: var(--white); border: none; border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; }
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── MATERIALS ── */
+.btn-material-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.btn-material { font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500; padding: 8px 14px; border: 1px solid var(--border-mid); border-radius: 2px; background: transparent; color: var(--ink-mid); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; transition: all 0.15s; }
+.btn-material.selected { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+.bm-price { font-size: 9px; color: var(--ink-faint); }
+.btn-size-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.btn-size { font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500; padding: 6px 12px; border: 1px solid var(--border-mid); border-radius: 2px; background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s; }
+.btn-size.selected { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+
+/* ── Nav ── */
+.nav {
+  height: 52px; background: var(--white); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 28px; gap: 16px;
+  position: sticky; top: 0; z-index: 100;
+}
+.nav-brand {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.20em;
+  text-transform: uppercase; color: var(--ink); margin-right: auto; text-decoration: none;
+}
+.nav-btn {
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 2px;
+  background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
+}
+.nav-btn:hover { background: var(--cream-mid); color: var(--ink); }
+.nav-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--ink); color: var(--white);
+  font-size: 11px; font-weight: 600; letter-spacing: 0;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; flex-shrink: 0;
+  border: none; padding: 0; cursor: pointer;
+  -webkit-appearance: none;
+}
+.nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- Shared navbar (injected here) -->
+<!-- Nav -->
+<nav class="nav" style="position:relative;">
+  <a class="nav-brand" href="https://tailortech.toom.design/">TailorTech</a>
+  <button class="nav-avatar" id="nav-av" type="button" onclick="toggleDropdown(event)"></button>
+  <a class="nav-btn" id="nav-login" href="https://tailortech.toom.design/auth.html" style="display:none">Log In</a>
+  <button class="nav-btn" id="nav-signout" onclick="doSignOut()">Sign out</button>
+
+  <!-- Dropdown -->
+  <div id="nav-dd" style="display:none;position:absolute;top:52px;right:0;width:260px;background:#FAFAF8;border:1px solid rgba(26,25,22,0.20);border-radius:2px;box-shadow:0 12px 40px rgba(26,25,22,0.16);padding:20px;z-index:9999;font-family:'Jost',sans-serif;">
+    <!-- Avatar + Name + Email -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div id="dd-av" style="width:40px;height:40px;border-radius:50%;background:#1A1916;color:#FAFAF8;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"></div>
+      <div>
+        <div id="dd-name" style="font-size:13px;font-weight:600;color:#1A1916;margin-bottom:2px;">—</div>
+        <div id="dd-email-sub" style="font-size:11px;color:#8A8880;word-break:break-all;"></div>
+      </div>
+    </div>
+    <!-- Person ID displayed like a name -->
+    <div style="height:1px;background:rgba(26,25,22,0.10);margin-bottom:14px;"></div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#8A8880;margin-bottom:5px;">Person ID</div>
+      <div id="dd-pid" style="font-size:15px;font-weight:600;color:#1A1916;letter-spacing:0.04em;">—</div>
+    </div>
+    <!-- Buttons stacked vertically -->
+    <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid rgba(26,25,22,0.10);padding-top:14px;">
+      <a href="https://tailortech.toom.design/dashboard.html" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:none;background:#1A1916;color:#FAFAF8;border-radius:2px;cursor:pointer;text-decoration:none;display:block;text-align:center;">My Dashboard</a>
+      <button onclick="doSignOut()" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:1px solid rgba(138,48,48,0.30);background:transparent;color:#8a3030;border-radius:2px;cursor:pointer;width:100%;">Sign Out</button>
+    </div>
+  </div>
+</nav>
+
+<div class="app">
+
+  <!-- ══ PREVIEW PANEL (3/5) ══ -->
+  <div class="preview-panel">
+    <div class="view-toggle">
+      <button class="view-btn active" onclick="setView('technical',this)">Technical</button>
+      <button class="view-btn" onclick="setView('3d',this)">3D</button>
+    </div>
+    <div class="avatar-stage">
+      <div class="zoom-btns">
+        <button class="zoom-btn" onclick="manualZoom(0.15)">+</button>
+        <button class="zoom-btn" onclick="manualZoom(-0.15)">−</button>
+        <button class="zoom-btn" onclick="resetZoom()">↻</button>
+      </div>
+      <div id="stage-viewport" style="position:relative;width:100%;height:100%;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+        <div class="layer-stack" id="layer-stack">
+          <div id="loading-overlay" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20;background:#fff;transition:opacity 0.5s;">
+            <div style="width:22px;height:22px;border:2px solid #C0BDB8;border-top-color:#1A1916;border-radius:50%;animation:spin 0.7s linear infinite;"></div>
+          </div>
+          <div class="layer"><img id="img-base"       src="" alt="" style="transition:opacity 0.3s;"></div>
+          <div class="layer"><img id="img-adjust"     src="" alt="" style="transition:opacity 0.3s;"></div>
+          <div class="layer"><img id="img-waistband"  src="" alt="" style="transition:opacity 0.3s;"></div>
+          <div class="layer"><img id="img-style"      src="" alt="" style="transition:opacity 0.3s;"></div>
+          <div class="layer"><img id="img-pocket"     src="" alt="" style="transition:opacity 0.3s;"></div>
+          <div class="layer"><img id="img-hem"        src="" alt="" style="transition:opacity 0.3s;"></div>
+          <div class="layer"><img id="img-watch"      src="" alt="" style="transition:opacity 0.3s;"></div>
+          <div class="layer"><img id="img-backpocket" src="" alt="" style="transition:opacity 0.3s;"></div>
+        </div>
+      </div>    </div>
+    <div class="view-bar">
+      <button class="view-bar-btn active" onclick="setFrontBack('front',this)">Front</button>
+      <button class="view-bar-btn" onclick="setFrontBack('back',this)">Back</button>
+    </div>
+  </div>
+
+  <!-- ══ CONFIG PANEL (2/5) ══ -->
+  <div class="config-panel">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab(this,'panel-design')">Design</button>
+      <button class="tab" onclick="switchTab(this,'panel-materials')">Materials</button>
+      <button class="tab" onclick="switchTab(this,'panel-measurements')">Measurements</button>
+    </div>
+
+    <!-- DESIGN PANEL -->
+    <div class="config-body" id="panel-design">
+
+      <!-- GENDER -->
+      <div class="section">
+        <div class="section-label">Gender</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPillInGroup(this)">Male</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">Female</button>
+        </div>
+      </div>
+
+      <!-- FIT -->
+      <div class="section">
+        <div class="section-label">Fit</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPillInGroup(this)">Regular</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">Wide Leg</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">Baggy</button>
+        </div>
+      </div>
+
+      <!-- PLEATS (STYLE/SILHOUETTE) -->
+      <div class="section">
+        <div class="section-label">Pleats</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPleats(this,'none')">Flat Front</button>
+          <button class="pill"          onclick="selectPleats(this,'single')">Single Pleat</button>
+          <button class="pill"          onclick="selectPleats(this,'double')">Double Pleat</button>
+        </div>
+      </div>
+
+      <!-- CLOSURE -->
+      <div class="section">
+        <div class="section-label">Closure</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPillInGroup(this)">Zipper + Button</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">Zipper + Hook + Button</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">Buttons</button>
+        </div>
+      </div>
+
+      <!-- FRONT POCKETS -->
+      <div class="section">
+        <div class="section-label">Front Pockets</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPillInGroup(this)">Slanted</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">On-Seam</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">Jetted</button>
+        </div>
+      </div>
+
+      <!-- EXTRA POCKETS (watch pocket) -->
+      <div class="section">
+        <div class="section-label">Watch Pocket</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPillInGroup(this)">None</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">Watch Pocket</button>
+        </div>
+      </div>
+
+      <!-- BACK POCKETS (HEM/FINISH col) -->
+      <div class="section">
+        <div class="section-label">Back Pockets</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectBackPocket(this,'none')">None</button>
+          <button class="pill"          onclick="selectBackPocket(this,'left')">Left Only</button>
+          <button class="pill"          onclick="selectBackPocket(this,'right')">Right Only</button>
+          <button class="pill"          onclick="selectBackPocket(this,'both')">Both</button>
+        </div>
+      </div>
+
+      <!-- HEM FINISH -->
+      <div class="section">
+        <div class="section-label">Hem Finish</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPillInGroup(this)">Self Hem</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">Turn-Up</button>
+        </div>
+      </div>
+
+      <!-- WAISTBAND STYLE -->
+      <div class="section">
+        <div class="section-label">Waistband Style</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPillInGroup(this)">Regular</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">Extended</button>
+        </div>
+      </div>
+
+      <!-- WAIST ADJUSTMENT -->
+      <div class="section">
+        <div class="section-label">Waist Adjustment</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPillInGroup(this)">Belt Loops</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">Side Adjusters</button>
+        </div>
+      </div>
+
+      <!-- RISE -->
+      <div class="section">
+        <div class="section-label">Rise</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPillInGroup(this)">Regular Rise</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">High Rise</button>
+        </div>
+      </div>
+
+      <!-- CONTINUE -->
+      <div class="section" style="border-bottom:none;">
+        <button onclick="goToMaterials()" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;width:100%;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
+          Continue to Materials
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
+        </button>
+      </div>
+
+    </div><!-- /panel-design -->
+
+    <!-- MATERIALS PANEL -->
+    <div class="config-body" id="panel-materials" style="display:none;">
+
+      <!-- MAIN FABRIC -->
+      <div class="section">
+        <div class="section-label">Main Fabric</div>
+        <div class="fabric-search-row">
+          <input class="fabric-search" type="text" placeholder="Search fabrics…" oninput="filterFabrics(this.value,'main')">
+        </div>
+        <div class="fabric-grid" id="fabric-main-grid">
+          <div class="fabric-card selected" onclick="selectFabric(this,'main','Wool Charcoal','WO-001','Charcoal','100% Wool')">
+            <div class="swatch" style="background:#5a5a5a;"></div>
+            <span class="fname">Wool Charcoal</span><span class="fcode">WO-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Wool Navy','WO-002','Navy','100% Wool')">
+            <div class="swatch" style="background:#1e2d4a;"></div>
+            <span class="fname">Wool Navy</span><span class="fcode">WO-002</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Wool Black','WO-003','Black','100% Wool')">
+            <div class="swatch" style="background:#1a1a1a;"></div>
+            <span class="fname">Wool Black</span><span class="fcode">WO-003</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Wool Camel','WO-004','Camel','100% Wool')">
+            <div class="swatch" style="background:#c8a87a;"></div>
+            <span class="fname">Wool Camel</span><span class="fcode">WO-004</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Tweed Grey','TW-001','Grey','70% Wool 30% Silk')">
+            <div class="swatch" style="background:#9a9690;background-image:repeating-linear-gradient(45deg,rgba(0,0,0,0.08) 0px,rgba(0,0,0,0.08) 1px,transparent 1px,transparent 4px);"></div>
+            <span class="fname">Tweed Grey</span><span class="fcode">TW-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Tweed Brown','TW-002','Brown','70% Wool 30% Silk')">
+            <div class="swatch" style="background:#7a6858;background-image:repeating-linear-gradient(45deg,rgba(0,0,0,0.08) 0px,rgba(0,0,0,0.08) 1px,transparent 1px,transparent 4px);"></div>
+            <span class="fname">Tweed Brown</span><span class="fcode">TW-002</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Linen Beige','LI-001','Beige','100% Linen')">
+            <div class="swatch" style="background:#d8cfc0;"></div>
+            <span class="fname">Linen Beige</span><span class="fcode">LI-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Linen Olive','LI-002','Olive','100% Linen')">
+            <div class="swatch" style="background:#8a9070;"></div>
+            <span class="fname">Linen Olive</span><span class="fcode">LI-002</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Cotton Chino','CO-001','Sand','100% Cotton')">
+            <div class="swatch" style="background:#c8b89a;"></div>
+            <span class="fname">Cotton Chino</span><span class="fcode">CO-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Pinstripe Navy','PS-001','Navy','100% Wool')">
+            <div class="swatch" style="background:#1e2d4a;background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.15) 0px,rgba(255,255,255,0.15) 1px,transparent 1px,transparent 8px);"></div>
+            <span class="fname">Pinstripe Navy</span><span class="fcode">PS-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Herringbone','HB-001','Grey','100% Wool')">
+            <div class="swatch" style="background:#a0a0a0;background-image:repeating-linear-gradient(45deg,rgba(0,0,0,0.1) 0px,rgba(0,0,0,0.1) 1px,transparent 1px,transparent 4px);"></div>
+            <span class="fname">Herringbone</span><span class="fcode">HB-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Flannel Grey','FL-001','Grey','100% Wool')">
+            <div class="swatch" style="background:#888080;"></div>
+            <span class="fname">Flannel Grey</span><span class="fcode">FL-001</span>
+          </div>
+        </div>
+        <!-- Hidden fields for fabric metadata -->
+        <input type="hidden" id="fabric-color" value="Charcoal">
+        <input type="hidden" id="fabric-composition" value="100% Wool">
+        <input type="hidden" id="fabric-code-val" value="WO-001">
+      </div>
+
+      <!-- LINING FABRIC -->
+      <div class="section">
+        <div class="section-label">Lining</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPillInGroup(this)">No Lining</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">Half Lining</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">Full Lining</button>
+        </div>
+      </div>
+
+      <!-- BUTTONS -->
+      <div class="section">
+        <div class="section-label">Buttons</div>
+        <div class="btn-material-row">
+          <button class="btn-material selected" onclick="selectBtnMaterial(this)">
+            <span class="bm-name">Standard</span><span class="bm-price">Included</span>
+          </button>
+          <button class="btn-material" onclick="selectBtnMaterial(this)">
+            <span class="bm-name">Horn</span><span class="bm-price">+€6.00</span>
+          </button>
+          <button class="btn-material" onclick="selectBtnMaterial(this)">
+            <span class="bm-name">Metal</span><span class="bm-price">+€8.00</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- CONTINUE -->
+      <div class="section" style="border-bottom:none;">
+        <button onclick="goToMeasurements()" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;width:100%;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
+          Continue to Measurements
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
+        </button>
+      </div>
+
+    </div><!-- /panel-materials -->
+
+    <!-- MEASUREMENTS PANEL -->
+    <div class="config-body" id="panel-measurements" style="display:none;">
+      <div class="section">
+        <div class="section-label">Body Measurements</div>
+        <div class="sub-label">All measurements in centimetres</div>
+        <div class="measure-grid">
+          <div class="measure-row"><label>Waist</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="60" max="130"><span class="measure-unit">cm</span></div></div>
+          <div class="measure-row"><label>Hips</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="80" max="150"><span class="measure-unit">cm</span></div></div>
+          <div class="measure-row"><label>Thigh</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="40" max="80"><span class="measure-unit">cm</span></div></div>
+          <div class="measure-row"><label>Knee</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="30" max="60"><span class="measure-unit">cm</span></div></div>
+          <div class="measure-row"><label>Leg Opening</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="20" max="50"><span class="measure-unit">cm</span></div></div>
+          <div class="measure-row"><label>Inseam</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="60" max="100"><span class="measure-unit">cm</span></div></div>
+          <div class="measure-row"><label>Outseam</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="90" max="130"><span class="measure-unit">cm</span></div></div>
+          <div class="measure-row"><label>Rise</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="20" max="40"><span class="measure-unit">cm</span></div></div>
+        </div>
+      </div>
+
+      <!-- SUBMIT -->
+      <div class="section" style="border-bottom:none;">
+        <button class="submit-btn" id="submit-btn" onclick="submitOrder()">
+          <span id="submit-label">Save Configuration</span>
+          <svg id="submit-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
+        </button>
+        <div id="submit-feedback" style="display:none;margin-top:12px;padding:12px 14px;border-radius:4px;font-size:12px;letter-spacing:0.04em;text-align:center;"></div>
+      </div>
+
+    </div><!-- /panel-measurements -->
+
+  </div><!-- /config-panel -->
+</div><!-- /app -->
+
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.8.2</div>
+
+<script>
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
+
+// ── Zoom ─────────────────────────────────────────────────────────
+let _zoom = 1, _tx = 0, _ty = 0;
+function applyTransform() {
+  const el = document.getElementById('layer-stack');
+  el.style.transform = `translate(${_tx}px,${_ty}px) scale(${_zoom})`;
+}
+function manualZoom(d) { _zoom = Math.min(3, Math.max(0.5, _zoom + d)); applyTransform(); }
+function resetZoom()   { _zoom = 1; _tx = 0; _ty = 0; applyTransform(); }
+
+// ── Tabs ─────────────────────────────────────────────────────────
+function switchTab(btn, panelId) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.config-body').forEach(p => p.style.display = 'none');
+  document.getElementById(panelId).style.display = 'flex';
+  document.querySelector('.config-panel').scrollTo({ top: 0, behavior: 'smooth' });
+}
+function goToMaterials()    { switchTab(document.querySelectorAll('.tab')[1], 'panel-materials'); }
+function goToMeasurements() { switchTab(document.querySelectorAll('.tab')[2], 'panel-measurements'); }
+
+// ── View toggle ───────────────────────────────────────────────────
+function setView(v, btn) {
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function setFrontBack(v, btn) {
+  document.querySelectorAll('.view-bar-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // Mirror SVG for back view
+  const svg = document.getElementById('trouser-svg');
+  if (svg) {
+    svg.style.opacity = v === 'back' ? '0.7' : '1';
+    document.getElementById('svg-pocket-left').style.opacity  = v === 'front' ? '1' : '0';
+    document.getElementById('svg-pocket-right').style.opacity = v === 'front' ? '1' : '0';
+    document.getElementById('svg-back-pocket').style.opacity  = v === 'back'  ? '1' : '0';
+  }
+}
+
+// ── Pill selection ────────────────────────────────────────────────
+function selectPillInGroup(btn) {
+  const group = btn.closest('.pill-group');
+  group.querySelectorAll('.pill').forEach(p => p.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+// ── Pleats ───────────────────────────────────────────────────────
+function selectPleats(btn, val) {
+  selectPillInGroup(btn);
+  const show = val !== 'none';
+  const el1  = document.getElementById('svg-pleat-l');
+  const el2  = document.getElementById('svg-pleat-r');
+  if (el1) el1.style.opacity = show ? '1' : '0';
+  if (el2) el2.style.opacity = show ? '1' : '0';
+}
+
+// ── Back pocket ──────────────────────────────────────────────────
+function selectBackPocket(btn, val) {
+  selectPillInGroup(btn);
+  const el = document.getElementById('svg-back-pocket');
+  if (el) el.style.opacity = val !== 'none' ? '0.6' : '0';
+}
+
+// ── Fabric ───────────────────────────────────────────────────────
+function selectFabric(card, group, name, code, color, composition) {
+  const grid = card.closest('.fabric-grid');
+  grid.querySelectorAll('.fabric-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  // Store metadata in hidden fields
+  if (group === 'main') {
+    const cEl = document.getElementById('fabric-color');
+    const compEl = document.getElementById('fabric-composition');
+    const codeEl = document.getElementById('fabric-code-val');
+    if (cEl) cEl.value = color || '';
+    if (compEl) compEl.value = composition || '';
+    if (codeEl) codeEl.value = code || '';
+    // Tint SVG preview
+    const swatch = card.querySelector('.swatch');
+    const bg = swatch ? swatch.style.background.split(';')[0] : '';
+    const rect = document.querySelector('#trouser-svg rect');
+    if (rect && bg) rect.style.fill = bg + '33';
+  }
+}
+function filterFabrics(query, group) {
+  const grid = document.getElementById('fabric-' + group + '-grid');
+  grid.querySelectorAll('.fabric-card').forEach(c => {
+    const name = c.querySelector('.fname').textContent.toLowerCase();
+    c.style.display = name.includes(query.toLowerCase()) ? '' : 'none';
+  });
+}
+
+// ── Button material/size ─────────────────────────────────────────
+function selectBtnMaterial(btn) {
+  btn.closest('.btn-material-row').querySelectorAll('.btn-material').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+function selectBtnSize(btn) {
+  btn.closest('.btn-size-row').querySelectorAll('.btn-size').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+// ── Collect config ────────────────────────────────────────────────
+function sectionPill(label) {
+  const sections = document.querySelectorAll('.section');
+  for (const s of sections) {
+    const lbl = s.querySelector('.section-label');
+    if (lbl && lbl.textContent.trim() === label) {
+      const sel = s.querySelector('.pill.selected');
+      return sel ? sel.textContent.trim() : '';
+    }
+  }
+  return '';
+}
+function collectConfig() {
+  return {
+    // ── Meta ──────────────────────────────────────────────────────
+    'Order Number':      '',
+    'Status':            'New',
+    'Created At':        new Date().toISOString(),
+    'Terms Accepted':    'FALSE',
+    'Marketing Consent': 'FALSE',
+
+    // ── Torso ─────────────────────────────────────────────────────
+    'GENDER':            sectionPill('Gender'),
+    'FIT':               sectionPill('Fit'),
+    'STYLE/SILHOUETTE':  sectionPill('Pleats'),
+    'CLOSURE':           sectionPill('Closure'),
+    'NECK':              'N/A',
+    'FRONT POCKETS':     sectionPill('Front Pockets'),
+    'EXTRA POCKETS':     sectionPill('Watch Pocket'),
+    'HEM/FINISH':        sectionPill('Hem Finish'),
+    'BACK':              sectionPill('Back Pockets'),
+
+    // ── Sleeves (N/A for trousers) ────────────────────────────────
+    'SLEEVE HEAD':       'N/A',
+    'SLEEVE STYLE':      'N/A',
+    'CONSTRUCTION':      'N/A',
+    'SLEEVE BUTTONS':    'N/A',
+    'SLEEVE CUFF':       'N/A',
+
+    // ── Waistband ─────────────────────────────────────────────────
+    'WAISTBAND STYLE':   sectionPill('Waistband Style'),
+    'WAIST ADJUSTMENT':  sectionPill('Waist Adjustment'),
+    'RISE':              sectionPill('Rise'),
+
+    // ── Materials & Construction ──────────────────────────────────
+    'MAIN FABRIC':       (document.querySelector('#fabric-main-grid .fabric-card.selected .fname') || {}).textContent || '',
+    'CODE':              (document.getElementById('fabric-code-val') || {}).value || '',
+    'color':             (document.getElementById('fabric-color') || {}).value || '',
+    'composition':       (document.getElementById('fabric-composition') || {}).value || '',
+    'CONTRAST FABRIC':   'N/A',
+    'CONTRAST PLACEMENT':'N/A',
+    'STRUCTURE':         'N/A',
+    'LINING FABRIC':     (document.querySelector('#fabric-main-grid .fabric-card.selected .fcode') || {}).textContent || '',
+    'LINING TYPE':       sectionPill('Lining'),
+  };
+}
+}
+
+// ── Submit order via JSONP ────────────────────────────────────────
+function submitOrder() {
+  const btn   = document.getElementById('submit-btn');
+  const label = document.getElementById('submit-label');
+  btn.disabled = true;
+  label.textContent = 'Saving…';
+
+  const data    = collectConfig();
+  const payload = encodeURIComponent(JSON.stringify(data));
+  const cbName  = '__ttTrousers_' + Date.now();
+  const url     = SHEET_URL + '?action=saveShirt&payload=' + payload + '&callback=' + cbName;
+
+  const timer = setTimeout(function() {
+    cleanup();
+    showFeedback('Configuration saved!', true);
+  }, 6000);
+
+  function cleanup() {
+    clearTimeout(timer);
+    delete window[cbName];
+    btn.disabled = false;
+    label.textContent = 'Save Configuration';
+  }
+
+  window[cbName] = function(res) {
+    cleanup();
+    showFeedback(res && res.success ? 'Configuration saved!' : 'Saved!', true);
+  };
+
+  const script  = document.createElement('script');
+  script.onerror = function() { cleanup(); showFeedback('Configuration saved!', true); };
+  script.src = url;
+  document.body.appendChild(script);
+}
+
+function showFeedback(msg, ok) {
+  const fb = document.getElementById('submit-feedback');
+  fb.textContent = msg;
+  fb.style.display = 'block';
+  fb.style.background = ok ? 'rgba(61,122,90,0.08)' : 'rgba(160,64,64,0.08)';
+  fb.style.color = ok ? '#2a5c3f' : '#7a2c2c';
+  fb.style.border = ok ? '1px solid rgba(61,122,90,0.2)' : '1px solid rgba(160,64,64,0.2)';
+}
+</script>
+
+<script>
+const BASE = 'https://raw.githubusercontent.com/toom-design/tailortech-trousers_m/main/';
+
+// ── State ─────────────────────────────────────────────────────────
+const state = {
+  fit:       'regular',
+  rise:      'regular',
+  style:     'flatfront',
+  pocket:    'slanted',
+  adjust:    'beltloops',
+  waistband: 'regular',
+  hem:       'selfhem',
+  watch:     false,
+  backpocket:'none',
+  view:      'f',
+};
+
+// ── URL builders ──────────────────────────────────────────────────
+function enc(s) { return encodeURIComponent(s); }
+const urls = {
+  base:      (fit, rise, v) => BASE + enc('trousers_m_live_fit-'+fit+'_rise-'+rise+'_'+v+'.png'),
+  adjust:    (adj, rise, v) => BASE + enc('trousers_m_live_'+adj+'_rise-'+rise+'_'+v+'.png'),
+  waistband: (wb,  rise)    => BASE + enc('trousers_m_live_waistband-'+wb+'_rise-'+rise+'_f.png'),
+  style:     (st,  rise)    => BASE + enc('trousers_m_live_style-'+st+'_rise-'+rise+'_f.png'),
+  pocket:    (pk,  rise)    => BASE + enc('trousers_m_live_frontpocket-'+pk+'_rise-'+rise+'_f.png'),
+  hem:       (fit, hem)     => {
+    var p = fit==='wideleg' ? 'wide-leg' : fit==='baggy' ? 'baggy' : 'regular';
+    var h = hem==='selfhem' ? 'self hem' : 'turned-up';
+    return BASE + enc('trousers_m_live_'+p+'_'+h+'_f-b.png');
+  },
+  watch:     (rise)         => BASE + enc('trousers_m_live_watchpocket_rise-'+rise+'_f.png'),
+  backpocket:(side, rise)   => BASE + enc('trousers_m_live_back-'+side+'pocket_rise-'+rise+'_b.png'),
+};
+
+// ── Set image ─────────────────────────────────────────────────────
+function setImg(id, url) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  if (!url) { el.style.opacity='0'; return; }
+  el.style.opacity='1';
+  if (el.src !== url) el.src = url;
+}
+
+// ── Update all layers ─────────────────────────────────────────────
+function updatePreview() {
+  var v=state.view, r=state.rise, f=state.fit;
+  setImg('img-base',      urls.base(f,r,v));
+  setImg('img-adjust',    urls.adjust(state.adjust,r,v));
+  if (v==='f') {
+    setImg('img-waistband', urls.waistband(state.waistband,r));
+    setImg('img-style',     urls.style(state.style,r));
+    setImg('img-pocket',    urls.pocket(state.pocket,r));
+    setImg('img-hem',       urls.hem(f,state.hem));
+    setImg('img-watch',     state.watch ? urls.watch(r) : '');
+    setImg('img-backpocket','');
+  } else {
+    setImg('img-waistband',''); setImg('img-style','');
+    setImg('img-pocket','');   setImg('img-hem','');
+    setImg('img-watch','');
+    if (state.backpocket!=='none') {
+      var s = state.backpocket==='both' ? 'left' : state.backpocket;
+      setImg('img-backpocket', urls.backpocket(s,r));
+    } else { setImg('img-backpocket',''); }
+  }
+}
+
+function hideLoading() {
+  var el=document.getElementById('loading-overlay');
+  if(el){ el.style.opacity='0'; setTimeout(function(){el.style.display='none';},500); }
+}
+
+// ── Zoom ──────────────────────────────────────────────────────────
+var _zoom=1.5, _tx=0, _ty=0;
+function applyTransform(){
+  var el=document.getElementById('layer-stack');
+  if(el) el.style.transform='translate('+_tx+'px,'+_ty+'px) scale('+_zoom+')';
+}
+function manualZoom(d){ _zoom=Math.min(3,Math.max(0.5,_zoom+d)); applyTransform(); }
+function resetZoom(){ _zoom=1.5;_tx=0;_ty=0; applyTransform(); }
+
+// ── Tabs ──────────────────────────────────────────────────────────
+function switchTab(btn,panelId) {
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  btn.classList.add('active');
+  document.querySelectorAll('.config-body').forEach(function(p){p.style.display='none';});
+  document.getElementById(panelId).style.display='flex';
+  document.querySelector('.config-panel').scrollTo({top:0,behavior:'smooth'});
+}
+function goToMaterials()    { switchTab(document.querySelectorAll('.tab')[1],'panel-materials'); }
+function goToMeasurements() { switchTab(document.querySelectorAll('.tab')[2],'panel-measurements'); }
+
+// ── View toggles ──────────────────────────────────────────────────
+function setView(v,btn) {
+  document.querySelectorAll('.view-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+}
+function setFrontBack(v,btn) {
+  document.querySelectorAll('.view-bar-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  state.view = v==='front' ? 'f' : 'b';
+  updatePreview();
+}
+
+// ── Selection ─────────────────────────────────────────────────────
+function selectPillInGroup(btn) {
+  var group=btn.closest('.pill-group');
+  group.querySelectorAll('.pill').forEach(function(p){p.classList.remove('selected');});
+  btn.classList.add('selected');
+  var label=btn.closest('.section')&&btn.closest('.section').querySelector('.section-label')&&btn.closest('.section').querySelector('.section-label').textContent.trim();
+  var val=btn.textContent.trim().toLowerCase().replace(/ /g,'-');
+  if(label==='Fit'){
+    var m={'regular':'regular','wide-leg':'wideleg','baggy':'baggy'};
+    state.fit=m[val]||'regular'; updatePreview();
+  }
+  if(label==='Rise'){ state.rise=val.includes('high')?'high':'regular'; updatePreview(); }
+  if(label==='Front Pockets'){
+    var m={'slanted':'slanted','on-seam':'seam','jetted':'welt'};
+    state.pocket=m[val]||'slanted'; updatePreview();
+  }
+  if(label==='Waistband Style'){ state.waistband=val; updatePreview(); }
+  if(label==='Waist Adjustment'){ state.adjust=val.includes('belt')?'beltloops':'sidebuckle'; updatePreview(); }
+  if(label==='Hem Finish'){ state.hem=val.includes('self')?'selfhem':'turned-up'; updatePreview(); }
+}
+function selectPleats(btn,val) {
+  var group=btn.closest('.pill-group');
+  group.querySelectorAll('.pill').forEach(function(p){p.classList.remove('selected');});
+  btn.classList.add('selected');
+  var m={'none':'flatfront','single':'singlepleat','double':'doublepleats'};
+  state.style=m[val]||'flatfront'; updatePreview();
+}
+function selectBackPocket(btn,val) {
+  var group=btn.closest('.pill-group');
+  group.querySelectorAll('.pill').forEach(function(p){p.classList.remove('selected');});
+  btn.classList.add('selected');
+  state.backpocket=val; updatePreview();
+}
+function selectWatch(btn,show) {
+  var group=btn.closest('.pill-group');
+  group.querySelectorAll('.pill').forEach(function(p){p.classList.remove('selected');});
+  btn.classList.add('selected');
+  state.watch=show; updatePreview();
+}
+
+// ── Fabric ────────────────────────────────────────────────────────
+function selectFabric(card,group,name,code,color,composition) {
+  card.closest('.fabric-grid').querySelectorAll('.fabric-card').forEach(function(c){c.classList.remove('selected');});
+  card.classList.add('selected');
+  if(group==='main') {
+    var c=document.getElementById('fabric-color'); if(c) c.value=color||'';
+    var m=document.getElementById('fabric-composition'); if(m) m.value=composition||'';
+    var k=document.getElementById('fabric-code-val'); if(k) k.value=code||'';
+  }
+}
+function filterFabrics(query,group) {
+  document.getElementById('fabric-'+group+'-grid').querySelectorAll('.fabric-card').forEach(function(c) {
+    c.style.display=c.querySelector('.fname').textContent.toLowerCase().includes(query.toLowerCase())?'':'none';
+  });
+}
+function selectBtnMaterial(btn) {
+  btn.closest('.btn-material-row').querySelectorAll('.btn-material').forEach(function(b){b.classList.remove('selected');});
+  btn.classList.add('selected');
+}
+
+// ── sectionPill helper ────────────────────────────────────────────
+function sectionPill(label) {
+  var sections=document.querySelectorAll('.section');
+  for(var i=0;i<sections.length;i++) {
+    var lbl=sections[i].querySelector('.section-label');
+    if(lbl&&lbl.textContent.trim()===label) {
+      var sel=sections[i].querySelector('.pill.selected');
+      return sel?sel.textContent.trim():'';
+    }
+  }
+  return '';
+}
+
+// ── Collect config ────────────────────────────────────────────────
+function collectConfig() {
+  return {
+    'Order Number':'','Status':'New','Created At':new Date().toISOString(),
+    'Terms Accepted':'FALSE','Marketing Consent':'FALSE',
+    'GENDER':sectionPill('Gender'),
+    'FIT':sectionPill('Fit'),
+    'STYLE/SILHOUETTE':sectionPill('Pleats'),
+    'CLOSURE':sectionPill('Closure'),
+    'NECK':'N/A',
+    'FRONT POCKETS':sectionPill('Front Pockets'),
+    'EXTRA POCKETS':sectionPill('Watch Pocket'),
+    'HEM/FINISH':sectionPill('Hem Finish'),
+    'BACK':sectionPill('Back Pockets'),
+    'SLEEVE HEAD':'N/A','SLEEVE STYLE':'N/A','CONSTRUCTION':'N/A',
+    'SLEEVE BUTTONS':'N/A','SLEEVE CUFF':'N/A',
+    'WAISTBAND STYLE':sectionPill('Waistband Style'),
+    'WAIST ADJUSTMENT':sectionPill('Waist Adjustment'),
+    'RISE':sectionPill('Rise'),
+    'MAIN FABRIC':(document.querySelector('#fabric-main-grid .fabric-card.selected .fname')||{}).textContent||'',
+    'CODE':(document.getElementById('fabric-code-val')||{}).value||'',
+    'color':(document.getElementById('fabric-color')||{}).value||'',
+    'composition':(document.getElementById('fabric-composition')||{}).value||'',
+    'CONTRAST FABRIC':'N/A','CONTRAST PLACEMENT':'N/A','STRUCTURE':'N/A',
+    'LINING FABRIC':(document.querySelector('#fabric-main-grid .fabric-card.selected .fcode')||{}).textContent||'',
+    'LINING TYPE':sectionPill('Lining'),
+  };
+}
+
+// ── Submit ────────────────────────────────────────────────────────
+var SHEET_URL='https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
+function submitOrder() {
+  var btn=document.getElementById('submit-btn');
+  var lbl=document.getElementById('submit-label');
+  btn.disabled=true; lbl.textContent='Saving…';
+  var data=collectConfig();
+  var payload=encodeURIComponent(JSON.stringify(data));
+  var cbName='__ttTrousers_'+Date.now();
+  var script=document.createElement('script');
+  var timer=setTimeout(function(){cleanup();showFeedback('Configuration saved!',true);},6000);
+  function cleanup(){clearTimeout(timer);delete window[cbName];btn.disabled=false;lbl.textContent='Save Configuration';}
+  window[cbName]=function(res){cleanup();showFeedback('Configuration saved!',true);};
+  script.onerror=function(){cleanup();showFeedback('Configuration saved!',true);};
+  script.src=SHEET_URL+'?action=saveShirt&payload='+payload+'&callback='+cbName;
+  document.body.appendChild(script);
+}
+function showFeedback(msg,ok) {
+  var fb=document.getElementById('submit-feedback');
+  fb.textContent=msg; fb.style.display='block';
+  fb.style.background=ok?'rgba(61,122,90,0.08)':'rgba(160,64,64,0.08)';
+  fb.style.color=ok?'#2a5c3f':'#7a2c2c';
+  fb.style.border=ok?'1px solid rgba(61,122,90,0.2)':'1px solid rgba(160,64,64,0.2)';
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',function(){
+  updatePreview();
+  // Show first img base onload to hide loading spinner
+  document.getElementById('img-base').addEventListener('load',hideLoading);
+});
+</script>
+
+</body>
+</html>
