@@ -342,7 +342,7 @@ button{cursor:pointer;font-family:inherit}
 'use strict';
 
 var SHEETS_API = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
-var DASHBOARD  = 'https://tailortech.toom.design/dashboard.html';
+var DASHBOARD  = 'https://tailortech.toom.design/dashboard';
 var LABELS     = {all:'All Measurements',shirt:'Shirt Measurements',hoodie:'Hoodie Measurements',suit:'Suit Measurements',trousers:'Trousers Measurements'};
 
 const GARMENT_SETS = {
@@ -664,7 +664,7 @@ function prefillMeasurements(rec) {
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.8.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.8.1</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -726,7 +726,7 @@ document.addEventListener('click', function(e) {
 
 function goToAuth() {
   try { sessionStorage.setItem('tt_return_url', window.location.href); } catch(e) {}
-  window.location.href = 'https://tailortech.toom.design/auth.html';
+  window.location.href = 'https://tailortech.toom.design/auth';
 }
 
 function doSignOut() {
