@@ -299,8 +299,9 @@ button { cursor: pointer; font-family: inherit; }
 <!-- Nav -->
 <nav class="nav" style="position:relative;">
   <a class="nav-brand" href="https://tailortech.toom.design/">TailorTech</a>
-  <button class="nav-avatar" id="nav-av" type="button" onclick="toggleDropdown(event)"></button>
-  <button class="nav-btn" onclick="doSignOut()">Sign out</button>
+  <button class="nav-avatar" id="nav-av" type="button" onclick="toggleDropdown(event)" style="display:none"></button>
+  <a class="nav-btn" id="nav-login" href="https://tailortech.toom.design/auth.html">Log In</a>
+  <button class="nav-btn" id="nav-signout" onclick="doSignOut()" style="display:none">Sign out</button>
 
   <!-- Dropdown -->
   <div id="nav-dd" style="display:none;position:absolute;top:52px;right:0;width:260px;background:#FAFAF8;border:1px solid rgba(26,25,22,0.20);border-radius:2px;box-shadow:0 12px 40px rgba(26,25,22,0.16);padding:20px;z-index:9999;font-family:'Jost',sans-serif;">
@@ -548,6 +549,9 @@ window._d = {
 onAuthStateChanged(_auth, function(user) {
   if (user) {
     window._d.currentUser = user;
+    document.getElementById('nav-av').style.display      = '';
+    document.getElementById('nav-signout').style.display = '';
+    document.getElementById('nav-login').style.display   = 'none';
     boot(user);
   } else {
     window.location.href = BASE + 'auth.html';
@@ -595,12 +599,7 @@ function boot(user) {
   document.getElementById('main').style.display    = 'block';
   setAccountPopover(user);
 
-  // Avatar
-  var av = document.getElementById('nav-av');
-  if (user.photoURL) { av.innerHTML = '<img src="' + user.photoURL + '" alt="">'; }
-  else { av.textContent = (user.displayName || user.email || '?')[0].toUpperCase(); }
-
-  // Save to sessionStorage so configure/shirt/measurements show correct nav
+  // Save to sessionStorage as fallback for pages not yet on Firebase
   try {
     sessionStorage.setItem('tt_user', JSON.stringify({
       email: user.email, displayName: user.displayName || '',
@@ -950,6 +949,6 @@ function ddCopy(type){copyVal(type);}
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.8.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.8.1</div>
 </body>
 </html>
