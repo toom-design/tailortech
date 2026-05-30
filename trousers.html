@@ -175,7 +175,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
     </div>
     <!-- Buttons stacked vertically -->
     <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid rgba(26,25,22,0.10);padding-top:14px;">
-      <a href="https://tailortech.toom.design/dashboard" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:none;background:#1A1916;color:#FAFAF8;border-radius:2px;cursor:pointer;text-decoration:none;display:block;text-align:center;">My Dashboard</a>
+      <a href="https://tailortech.toom.design/dashboard.html" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:none;background:#1A1916;color:#FAFAF8;border-radius:2px;cursor:pointer;text-decoration:none;display:block;text-align:center;">My Dashboard</a>
       <button onclick="doSignOut()" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:1px solid rgba(138,48,48,0.30);background:transparent;color:#8a3030;border-radius:2px;cursor:pointer;width:100%;">Sign Out</button>
     </div>
   </div>
@@ -1073,7 +1073,7 @@ document.addEventListener('click', function(e) {
 
 function goToAuth() {
   try { sessionStorage.setItem('tt_return_url', window.location.href); } catch(e) {}
-  window.location.href = 'https://tailortech.toom.design/auth';
+  window.location.href = 'https://tailortech.toom.design/auth.html';
 }
 
 function doSignOut() {
@@ -1125,7 +1125,7 @@ function ddCopy(type) {
   if (navigator.clipboard) navigator.clipboard.writeText(val).then(function() { showFeedback(type.toUpperCase() + ' copied', true); });
 }
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.9.5</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.9.4</div>
 
 </body>
 </html>
