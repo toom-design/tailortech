@@ -288,7 +288,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 <nav class="nav" style="position:relative;">
   <a class="nav-brand" href="https://tailortech.toom.design/">TailorTech</a>
   <button class="nav-avatar" id="nav-av" type="button" onclick="toggleDropdown(event)"></button>
-  <a class="nav-btn" id="nav-login" href="https://tailortech.toom.design/auth.html" style="display:none">Log In</a>
+<a class="nav-btn" id="nav-login" href="#" onclick="goToAuth(); return false;" style="display:none">Log In</a>
   <button class="nav-btn" id="nav-signout" onclick="doSignOut()">Sign out</button>
 
   <!-- Dropdown -->
@@ -1341,6 +1341,13 @@ function getClientJSONP(email, uid, callback) {
   document.body.appendChild(script);
 }
 
+  //auth sign in
+  function goToAuth() {
+  try { sessionStorage.setItem('tt_return_url', window.location.href); } catch(e) {}
+  window.location.href = 'https://tailortech.toom.design/auth.html';
+}
+
+  
 // Configure has no Firebase — restore from sessionStorage
 (function() {
   try {
