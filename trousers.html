@@ -47,6 +47,28 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 
 /* Pills */
 .pill-group { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ── Icon cards (closure, lining) ── */
+.icon-card-group { display: flex; flex-wrap: wrap; gap: 10px; }
+.icon-card {
+  position: relative; display: flex; flex-direction: column; align-items: center;
+  gap: 10px; padding: 14px 12px 12px; min-width: 100px; max-width: 120px;
+  background: var(--white); border: 1.5px solid var(--border-mid); border-radius: 4px;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  font-family: 'Jost', sans-serif;
+}
+.icon-card:hover { background: var(--cream-mid); }
+.icon-card.selected { border-color: var(--ink); background: var(--white); }
+.icon-card.selected::after {
+  content: '✓'; position: absolute; top: 7px; right: 8px;
+  width: 18px; height: 18px; background: var(--ink); color: var(--white);
+  border-radius: 50%; font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; line-height: 18px; text-align: center;
+}
+.icon-card img { width: 72px; height: 72px; object-fit: contain; }
+.icon-card-label { font-size: 10px; font-weight: 500; color: var(--ink); text-align: center; line-height: 1.4; letter-spacing: 0.02em; }
+.icon-card.disabled { opacity: 0.45; cursor: default; pointer-events: none; }
+.icon-card-soon { font-size: 9px; color: var(--ink-light); margin-top: -4px; }
 .pill { font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 500; padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 50px; background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s; }
 .pill:hover { border-color: var(--ink); color: var(--ink); }
 .pill.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
@@ -238,18 +260,19 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
       <!-- CLOSURE -->
       <div class="section">
         <div class="section-label">Closure</div>
-        <div class="pill-group" style="gap:10px;">
-          <button class="pill selected" onclick="selectPillInGroup(this)" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 12px;min-width:80px;">
-            <img src="https://raw.githubusercontent.com/toom-design/tailortech-trousers_m/main/trousers_m_icon_closure_zipper%2Bbutton.png" style="width:48px;height:48px;object-fit:contain;" alt="">
-            <span style="font-size:9px;">Zipper + Button</span>
+        <div class="icon-card-group">
+          <button class="icon-card selected" onclick="selectIconCard(this, '.icon-card-group', 'Closure')">
+            <img src="https://raw.githubusercontent.com/toom-design/tailortech-trousers_m/main/trousers_m_icon_closure_zipper%2Bbutton.png" alt="">
+            <span class="icon-card-label">Zipper + Button</span>
           </button>
-          <button class="pill" onclick="selectPillInGroup(this)" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 12px;min-width:80px;">
-            <img src="https://raw.githubusercontent.com/toom-design/tailortech-trousers_m/main/trousers_m_icon_closure_zipper%2Bhook%2Bbutton.png" style="width:48px;height:48px;object-fit:contain;" alt="">
-            <span style="font-size:9px;">Zipper + Hook + Button</span>
+          <button class="icon-card" onclick="selectIconCard(this, '.icon-card-group', 'Closure')">
+            <img src="https://raw.githubusercontent.com/toom-design/tailortech-trousers_m/main/trousers_m_icon_closure_zipper%2Bhook%2Bbutton.png" alt="">
+            <span class="icon-card-label">Zipper + Hook + Button</span>
           </button>
-          <button class="pill" onclick="selectPillInGroup(this)" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 12px;min-width:80px;">
-            <span style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:22px;">🔘</span>
-            <span style="font-size:9px;">Buttons</span>
+          <button class="icon-card disabled">
+            <span style="width:72px;height:72px;display:flex;align-items:center;justify-content:center;font-size:32px;opacity:0.3;">○</span>
+            <span class="icon-card-label">Buttons</span>
+            <span class="icon-card-soon">(Coming Soon)</span>
           </button>
         </div>
       </div>
@@ -398,10 +421,19 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
       <!-- LINING FABRIC -->
       <div class="section">
         <div class="section-label">Lining</div>
-        <div class="pill-group">
-          <button class="pill selected" onclick="selectPillInGroup(this)">No Lining</button>
-          <button class="pill"          onclick="selectPillInGroup(this)">Half Lining</button>
-          <button class="pill"          onclick="selectPillInGroup(this)">Full Lining</button>
+        <div class="icon-card-group">
+          <button class="icon-card selected" onclick="selectIconCard(this, '.icon-card-group', 'Lining')">
+            <img src="https://raw.githubusercontent.com/toom-design/tailortech-trousers_m/main/trousers_m_icon_no%20lining.png" alt="">
+            <span class="icon-card-label">No Lining</span>
+          </button>
+          <button class="icon-card" onclick="selectIconCard(this, '.icon-card-group', 'Lining')">
+            <img src="https://raw.githubusercontent.com/toom-design/tailortech-trousers_m/main/trousers_m_icon_half%20lining.png" alt="">
+            <span class="icon-card-label">Half Lining</span>
+          </button>
+          <button class="icon-card" onclick="selectIconCard(this, '.icon-card-group', 'Lining')">
+            <img src="https://raw.githubusercontent.com/toom-design/tailortech-trousers_m/main/trousers_m_icon_full%20lining.png" alt="">
+            <span class="icon-card-label">Full Lining</span>
+          </button>
         </div>
       </div>
 
@@ -462,20 +494,10 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
   </div><!-- /config-panel -->
 </div><!-- /app -->
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.8.2</div>
-
 <script>
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
 
-// ── Zoom ─────────────────────────────────────────────────────────
-let _zoom = 1, _tx = 0, _ty = 0;
-function applyTransform() {
-  const el = document.getElementById('layer-stack');
-  el.style.transform = `translate(${_tx}px,${_ty}px) scale(${_zoom})`;
-}
-function manualZoom(d) { _zoom = Math.min(3, Math.max(0.5, _zoom + d)); applyTransform(); }
-function resetZoom()   { _zoom = 1; _tx = 0; _ty = 0; applyTransform(); }
-
+// ── Zoom (defined in garment script block below) ─────────────────
 // ── Tabs ─────────────────────────────────────────────────────────
 function switchTab(btn, panelId) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -754,13 +776,26 @@ function hideLoading() {
 }
 
 // ── Zoom ──────────────────────────────────────────────────────────
-var _zoom=1.7, _tx=0, _ty=0;
-function applyTransform(){
-  var el=document.getElementById('layer-stack');
-  if(el) el.style.transform='translate('+_tx+'px,'+_ty+'px) scale('+_zoom+')';
+// ── Zoom (same approach as shirt) ────────────────────────────────
+var _z = { zoom: 2.0, panX: 0, panY: 0 };
+var DEFAULT_ZOOM = 2.0;
+var STACK_W = 420, STACK_H = 620;
+
+function applyTransform() {
+  var el = document.getElementById('layer-stack');
+  if (el) el.style.transform = 'translate('+_z.panX+'px,'+_z.panY+'px) scale('+_z.zoom+')';
 }
-function manualZoom(d){ _zoom=Math.min(3,Math.max(0.5,_zoom+d)); applyTransform(); }
-function resetZoom(){ _zoom=1.7;_tx=0;_ty=0; applyTransform(); }
+// cx, cy: 0–1 fractions of stack dimensions
+function zoomToRegion(scale, cx, cy) {
+  _z.zoom = scale;
+  var pointX = (cx - 0.5) * STACK_W;
+  var pointY = (cy - 0.5) * STACK_H;
+  _z.panX = -pointX * scale;
+  _z.panY = -pointY * scale;
+  applyTransform();
+}
+function resetZoom() { _z.zoom = DEFAULT_ZOOM; _z.panX = 0; _z.panY = 0; applyTransform(); }
+function manualZoom(d) { _z.zoom = Math.min(4, Math.max(0.5, _z.zoom + d)); applyTransform(); }
 
 // ── Tabs ──────────────────────────────────────────────────────────
 function switchTab(btn,panelId) {
@@ -795,25 +830,50 @@ function selectPillInGroup(btn) {
   if(label==='Fit'){
     var m={'regular':'regular','wide-leg':'wideleg','baggy':'baggy'};
     state.fit=m[val]||'regular'; updatePreview();
+    resetZoom();
   }
-  if(label==='Rise'){ state.rise=val.includes('high')?'high':'regular'; updatePreview(); }
+  if(label==='Rise'){
+    state.rise=val.includes('high')?'high':'regular'; updatePreview();
+    zoomToRegion(2.6, 0.5, 0.12); // waistband / rise area top
+  }
   if(label==='Front Pockets'){
     var m={'slanted':'slanted','on-seam':'seam','jetted':'welt'};
     state.pocket=m[val]||'slanted'; updatePreview();
-    // zoom to pocket area
-    _zoom=2.5; _tx=0; _ty=-(document.getElementById('layer-stack').offsetHeight||400)*0.30*0.5;
-    applyTransform();
+    zoomToRegion(2.8, 0.5, 0.45); // front pocket area
   }
-  if(label==='Waistband Style'){ state.waistband=val; updatePreview(); }
-  if(label==='Waist Adjustment'){ state.adjust=val.includes('belt')?'beltloops':'sidebuckle'; updatePreview(); }
-  if(label==='Hem Finish'){ state.hem=val.includes('self')?'selfhem':'turned-up'; updatePreview(); }
+  if(label==='Waistband Style'){
+    state.waistband=val; updatePreview();
+    zoomToRegion(2.6, 0.5, 0.12); // waistband top area
+  }
+  if(label==='Waist Adjustment'){
+    state.adjust=val.includes('belt')?'beltloops':'sidebuckle'; updatePreview();
+    zoomToRegion(2.6, 0.5, 0.12); // waistband top area
+  }
+  if(label==='Hem Finish'){
+    state.hem=val.includes('self')?'selfhem':'turned-up'; updatePreview();
+    zoomToRegion(2.6, 0.5, 0.88); // hem / bottom area
+  }
 }
+function selectIconCard(btn, groupSelector, sectionName) {
+  // Deselect all icon-cards in the same icon-card-group
+  var group = btn.closest('.icon-card-group');
+  group.querySelectorAll('.icon-card').forEach(function(c){ c.classList.remove('selected'); });
+  btn.classList.add('selected');
+  // sectionPill() reads from .pill.selected — but icon-cards aren't pills,
+  // so we store the value on the section for collectConfig to read
+  var labelEl = btn.querySelector('.icon-card-label');
+  var val = labelEl ? labelEl.textContent.trim() : '';
+  var section = btn.closest('.section');
+  if (section) section.setAttribute('data-icon-value', val);
+}
+
 function selectPleats(btn,val) {
   var group=btn.closest('.pill-group');
   group.querySelectorAll('.pill').forEach(function(p){p.classList.remove('selected');});
   btn.classList.add('selected');
   var m={'none':'flatfront','single':'singlepleat','double':'doublepleats'};
   state.style=m[val]||'flatfront'; updatePreview();
+  zoomToRegion(2.6, 0.5, 0.38); // pleat / front fly area
 }
 function selectBackPocket(btn,val) {
   var group=btn.closest('.pill-group');
@@ -821,19 +881,24 @@ function selectBackPocket(btn,val) {
   btn.classList.add('selected');
   state.backpocket=val;
   if (val !== 'none') {
-    // switch to back view
     state.view = 'b';
     document.querySelectorAll('.view-bar-btn').forEach(function(b){b.classList.remove('active');});
     var backBtn = document.querySelector('.view-bar-btn:last-child');
     if (backBtn) backBtn.classList.add('active');
+    updatePreview();
+    zoomToRegion(2.6, 0.5, 0.42); // back pocket area
+  } else {
+    updatePreview();
+    resetZoom();
   }
-  updatePreview();
 }
 function selectWatch(btn,show) {
   var group=btn.closest('.pill-group');
   group.querySelectorAll('.pill').forEach(function(p){p.classList.remove('selected');});
   btn.classList.add('selected');
   state.watch=show; updatePreview();
+  if (show) zoomToRegion(3.0, 0.62, 0.42); // watch pocket: right side, mid-height
+  else resetZoom();
 }
 
 // ── Fabric ────────────────────────────────────────────────────────
@@ -862,6 +927,8 @@ function sectionPill(label) {
   for(var i=0;i<sections.length;i++) {
     var lbl=sections[i].querySelector('.section-label');
     if(lbl&&lbl.textContent.trim()===label) {
+      // icon-card sections store value as data attribute
+      if(sections[i].hasAttribute('data-icon-value')) return sections[i].getAttribute('data-icon-value');
       var sel=sections[i].querySelector('.pill.selected');
       return sel?sel.textContent.trim():'';
     }
@@ -932,7 +999,7 @@ document.addEventListener('DOMContentLoaded',function(){
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.8.8</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.9.0</div>
 
 <!-- Firebase -->
 <script type="module">
