@@ -200,6 +200,7 @@ fetch('/navbar.html')
   </div>
 </div>
 
+<div class="version">v2.9</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -210,7 +211,7 @@ import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const SHEETS_API = "https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec";
-const DASHBOARD  = "https://tailortech.toom.design/dashboard.html";
+const DASHBOARD  = "https://tailortech.toom.design/dashboard";
 
 const _app  = initializeApp({
   apiKey:            "AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY",
@@ -271,7 +272,7 @@ window._doForgot = function(email) {
 <script>
 'use strict';
 var _wpUser = null;
-var DASHBOARD = 'https://tailortech.toom.design/dashboard.html';
+var DASHBOARD = 'https://tailortech.toom.design/dashboard';
 
 // ── Return URL: go back to wherever the user came from ────────────
 function getReturnUrl() {
@@ -282,6 +283,19 @@ function getReturnUrl() {
   } catch(e) {}
   return DASHBOARD;
 }
+function saveToSession(user, extra) {
+  try {
+    var data = {
+      uid:         user.uid,
+      email:       user.email,
+      displayName: user.displayName || '',
+      photoURL:    user.photoURL    || '',
+      personId:    (extra && extra.personId) || null,
+    };
+    sessionStorage.setItem('tt_user', JSON.stringify(data));
+  } catch(e) {}
+}
+
 function redirectAfterLogin() {
   window.location.href = getReturnUrl();
 }
@@ -387,6 +401,7 @@ function checkIfNewClient(user){
   window._fb.sheetReq('getClient',{uid:user.uid})
     .then(function(res){
       if(res&&res.success&&res.client&&res.client['Email']){
+        saveToSession(user, { personId: res.client['Person ID'] || null });
         redirectAfterLogin();
       } else {
         // Save minimum data immediately
@@ -398,7 +413,7 @@ function checkIfNewClient(user){
         showWelcomePopup(user);
       }
     })
-    .catch(function(){redirectAfterLogin();});
+    .catch(function(){ saveToSession(user); redirectAfterLogin(); });
 }
 
 function showWelcomePopup(user){
@@ -424,18 +439,16 @@ function wpSave(){
   saveClientJSONP({uid:_wpUser.uid,email:_wpUser.email,data:{
     'UID':_wpUser.uid,'First Name':fname,'Last Name':lname,
     'Email':_wpUser.email,'Phone Number':phone,'IG':ig,
-  }},function(){redirectAfterLogin();});
+  }},function(){ saveToSession(_wpUser); redirectAfterLogin(); });
 }
 
 function wpLater(){
-  if(!_wpUser){redirectAfterLogin();return;}
+  if(!_wpUser){ redirectAfterLogin(); return; }
   saveClientJSONP({uid:_wpUser.uid,email:_wpUser.email,data:{
     'UID':_wpUser.uid,'Email':_wpUser.email,
-  }},function(){redirectAfterLogin();});
+  }},function(){ saveToSession(_wpUser); redirectAfterLogin(); });
 }
 </script>
-
-  <div class="version">v2.8</div>
 
 </body>
 </html>
