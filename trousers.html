@@ -186,6 +186,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
           <div class="layer"><img id="img-hem"        src="" alt="" style="transition:opacity 0.3s;"></div>
           <div class="layer"><img id="img-watch"      src="" alt="" style="transition:opacity 0.3s;"></div>
           <div class="layer"><img id="img-backpocket" src="" alt="" style="transition:opacity 0.3s;"></div>
+          <div class="layer"><img id="img-backpocket2" src="" alt="" style="transition:opacity 0.3s;"></div>
         </div>
       </div>    </div>
     <div class="view-bar">
@@ -237,10 +238,19 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
       <!-- CLOSURE -->
       <div class="section">
         <div class="section-label">Closure</div>
-        <div class="pill-group">
-          <button class="pill selected" onclick="selectPillInGroup(this)">Zipper + Button</button>
-          <button class="pill"          onclick="selectPillInGroup(this)">Zipper + Hook + Button</button>
-          <button class="pill"          onclick="selectPillInGroup(this)">Buttons</button>
+        <div class="pill-group" style="gap:10px;">
+          <button class="pill selected" onclick="selectPillInGroup(this)" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 12px;min-width:80px;">
+            <img src="https://raw.githubusercontent.com/toom-design/tailortech-trousers_m/main/trousers_m_icon_closure_zipper%2Bbutton.png" style="width:48px;height:48px;object-fit:contain;" alt="">
+            <span style="font-size:9px;">Zipper + Button</span>
+          </button>
+          <button class="pill" onclick="selectPillInGroup(this)" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 12px;min-width:80px;">
+            <img src="https://raw.githubusercontent.com/toom-design/tailortech-trousers_m/main/trousers_m_icon_closure_zipper%2Bhook%2Bbutton.png" style="width:48px;height:48px;object-fit:contain;" alt="">
+            <span style="font-size:9px;">Zipper + Hook + Button</span>
+          </button>
+          <button class="pill" onclick="selectPillInGroup(this)" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 12px;min-width:80px;">
+            <span style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:22px;">🔘</span>
+            <span style="font-size:9px;">Buttons</span>
+          </button>
         </div>
       </div>
 
@@ -724,9 +734,17 @@ function updatePreview() {
     setImg('img-waistband',''); setImg('img-style','');
     setImg('img-pocket','');    setImg('img-watch','');
     if (state.backpocket!=='none') {
-      var s = state.backpocket==='both' ? 'left' : state.backpocket;
-      setImg('img-backpocket', urls.backpocket(s,r));
-    } else { setImg('img-backpocket',''); }
+      if (state.backpocket==='both') {
+        setImg('img-backpocket',  urls.backpocket('left',r));
+        setImg('img-backpocket2', urls.backpocket('right',r));
+      } else {
+        setImg('img-backpocket',  urls.backpocket(state.backpocket,r));
+        setImg('img-backpocket2', '');
+      }
+    } else {
+      setImg('img-backpocket','');
+      setImg('img-backpocket2','');
+    }
   }
 }
 
@@ -736,13 +754,13 @@ function hideLoading() {
 }
 
 // ── Zoom ──────────────────────────────────────────────────────────
-var _zoom=1.5, _tx=0, _ty=0;
+var _zoom=1.7, _tx=0, _ty=0;
 function applyTransform(){
   var el=document.getElementById('layer-stack');
   if(el) el.style.transform='translate('+_tx+'px,'+_ty+'px) scale('+_zoom+')';
 }
 function manualZoom(d){ _zoom=Math.min(3,Math.max(0.5,_zoom+d)); applyTransform(); }
-function resetZoom(){ _zoom=1.5;_tx=0;_ty=0; applyTransform(); }
+function resetZoom(){ _zoom=1.7;_tx=0;_ty=0; applyTransform(); }
 
 // ── Tabs ──────────────────────────────────────────────────────────
 function switchTab(btn,panelId) {
@@ -782,6 +800,9 @@ function selectPillInGroup(btn) {
   if(label==='Front Pockets'){
     var m={'slanted':'slanted','on-seam':'seam','jetted':'welt'};
     state.pocket=m[val]||'slanted'; updatePreview();
+    // zoom to pocket area
+    _zoom=2.5; _tx=0; _ty=-(document.getElementById('layer-stack').offsetHeight||400)*0.30*0.5;
+    applyTransform();
   }
   if(label==='Waistband Style'){ state.waistband=val; updatePreview(); }
   if(label==='Waist Adjustment'){ state.adjust=val.includes('belt')?'beltloops':'sidebuckle'; updatePreview(); }
@@ -798,7 +819,15 @@ function selectBackPocket(btn,val) {
   var group=btn.closest('.pill-group');
   group.querySelectorAll('.pill').forEach(function(p){p.classList.remove('selected');});
   btn.classList.add('selected');
-  state.backpocket=val; updatePreview();
+  state.backpocket=val;
+  if (val !== 'none') {
+    // switch to back view
+    state.view = 'b';
+    document.querySelectorAll('.view-bar-btn').forEach(function(b){b.classList.remove('active');});
+    var backBtn = document.querySelector('.view-bar-btn:last-child');
+    if (backBtn) backBtn.classList.add('active');
+  }
+  updatePreview();
 }
 function selectWatch(btn,show) {
   var group=btn.closest('.pill-group');
@@ -903,7 +932,7 @@ document.addEventListener('DOMContentLoaded',function(){
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.8.7</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.8.8</div>
 
 <!-- Firebase -->
 <script type="module">
