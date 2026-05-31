@@ -130,6 +130,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
           <div class="layer"><img id="img-lapel"         src="" alt=""></div>
           <div class="layer"><img id="img-frontpocket"   src="" alt=""></div>
           <div class="layer"><img id="img-ticketpocket"  src="" alt=""></div>
+          <div class="layer"><img id="img-chestpocket"   src="" alt=""></div>
           <div class="layer"><img id="img-insidepocket"  src="" alt=""></div>
           <div class="layer"><img id="img-sleevebtn"     src="" alt=""></div>
           <div class="layer"><img id="img-vent"          src="" alt=""></div>
@@ -520,6 +521,7 @@ function updatePreview() {
     setImg('img-lapel',        '');
     setImg('img-frontpocket',  '');
     setImg('img-ticketpocket', '');
+    setImg('img-chestpocket',  '');
     setImg('img-insidepocket', urls.insidepocket());
     setImg('img-sleevebtn',    '');
     setImg('img-vent',         '');
@@ -529,6 +531,7 @@ function updatePreview() {
     setImg('img-lapel',        urls.lapel());
     setImg('img-frontpocket',  urls.frontpocket());
     setImg('img-ticketpocket', urls.ticketpocket());
+    setImg('img-chestpocket',  urls.chestpocket());
     setImg('img-insidepocket', '');
     setImg('img-sleevebtn',    '');
     setImg('img-vent',         '');
@@ -539,6 +542,7 @@ function updatePreview() {
     setImg('img-lapel',        '');
     setImg('img-frontpocket',  '');
     setImg('img-ticketpocket', '');
+    setImg('img-chestpocket',  '');
     setImg('img-insidepocket', '');
     setImg('img-sleevebtn',    urls.sleevebtn());
     setImg('img-vent',         '');
@@ -643,7 +647,7 @@ function selectClosure(btn, type, btnVal) {
 function selectLapel(btn, val) {
   selectPillInGroup(btn);
   state.lapel = val;
-  goFront(); updatePreview(); zoomToRegion(3.0, 0.5, 0.4);
+  goFront(); updatePreview(); zoomToRegion(3.0, 0.5, 0.3);
 }
 function selectFrontPocket(btn, val) {
   selectPillInGroup(btn);
@@ -658,12 +662,12 @@ function selectTicketPocket(btn, val) {
 function selectChestPocket(btn, show) {
   selectPillInGroup(btn);
   state.chestpocket = show;
-  goFront(); updatePreview(); zoomToRegion(3.0, 0.65, 0.35);
+  goFront(); updatePreview(); zoomToRegion(3.0, 0.65, 0.25);
 }
 function selectInsidePocket(btn, val) {
   selectPillInGroup(btn);
   state.insidepocket = val;
-  if (val !== 'none') { goInside(); } else { goFront(); }
+  goInside();
   updatePreview(); zoomToRegion(2.5, 0.5, 0.5);
 }
 function selectVent(btn, val) {
@@ -932,7 +936,7 @@ function getClientJSONP(email, uid, callback) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.1.2</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.1.5</div>
 
 </body>
 </html>
