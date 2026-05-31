@@ -13,70 +13,62 @@
   --ink-light:#8A8880;--ink-faint:#C0BDB8;--white:#FAFAF8;
   --border:rgba(26,25,22,0.10);--border-mid:rgba(26,25,22,0.20);
 }
-body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;}
 button{cursor:pointer;font-family:inherit}
 
-/* ── Nav ── */
-.nav{height:52px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;position:sticky;top:0;z-index:100}
+/* ── Nav — fixed top ── */
+.nav{height:52px;flex-shrink:0;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;z-index:100;position:relative;}
 .nav-brand{font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);text-decoration:none;margin-right:auto}
 .nav-btn{font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;padding:7px 16px;border:1px solid var(--border-mid);border-radius:2px;background:transparent;color:var(--ink);cursor:pointer;text-decoration:none}
 .nav-avatar{width:32px;height:32px;border-radius:50%;background:var(--ink);color:var(--white);font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;border:none;cursor:pointer;padding:0}
 .nav-avatar img{width:100%;height:100%;object-fit:cover}
 
-/* ── Garment selection ── */
-#garment-panel{display:none}
-.g-page{max-width:800px;margin:0 auto;padding:52px 24px 80px}
-.g-eyebrow{font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px}
-.g-heading{font-size:26px;font-weight:300;letter-spacing:-0.01em;margin-bottom:36px}
-.g-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:2px}
-.g-card{background:var(--white);padding:28px 20px 22px;cursor:pointer;transition:background 0.15s;display:flex;flex-direction:column;}
-.g-card:hover{background:var(--cream-mid)}
-.g-card-icon{width:30px;height:30px;margin-bottom:14px;color:var(--ink-mid)}
-.g-card-name{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px}
-.g-card-desc{font-size:12px;color:var(--ink-light);line-height:1.5}
-.g-card-cta{margin-top:16px;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)}
+/* ── Form layout — fills remaining height ── */
+.form-layout{display:flex;flex:1;min-height:0;}
 
-/* ── Form layout ── */
-#form-panel{display:none}
-.form-layout{display:flex;min-height:calc(100vh - 52px)}
-
-/* Diagram panel */
+/* Diagram panel — fixed height, no scroll */
 .diag-panel{
   display:none;width:40%;flex-shrink:0;
   background:var(--white);border-right:1px solid var(--border);
-  position:sticky;top:52px;height:calc(100vh - 52px);
   align-items:center;justify-content:center;padding:2rem;
   overflow:hidden;
 }
 @media(min-width:1024px){.diag-panel{display:flex}}
-
-/* Diagram image */
-.diag-img-wrap{
-  width:100%;height:100%;display:flex;align-items:center;justify-content:center;
-  position:relative;
-}
-.diag-img{
-  max-width:100%;max-height:100%;object-fit:contain;
-  transition:opacity 0.25s ease, transform 0.25s ease;
-  opacity:1;
-}
+.diag-img-wrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:relative;}
+.diag-img{max-width:100%;max-height:100%;object-fit:contain;transition:opacity 0.25s ease,transform 0.25s ease;opacity:1;}
 .diag-img.fading{opacity:0;transform:scale(0.97)}
+.diag-label{position:absolute;bottom:20px;left:0;right:0;text-align:center;font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);transition:opacity 0.25s;}
 
-.diag-empty{text-align:center;color:var(--ink-faint)}
-.diag-empty svg{display:block;margin:0 auto 12px;opacity:0.2}
-.diag-empty p{font-size:12px;line-height:1.6;letter-spacing:0.02em}
+/* Form column — flex column so bottom bar sticks */
+.form-col{flex:1;min-width:0;display:flex;flex-direction:column;min-height:0;}
 
-/* Diagram label */
-.diag-label{
-  position:absolute;bottom:20px;left:0;right:0;text-align:center;
-  font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;
-  color:var(--ink-faint);transition:opacity 0.25s;
+/* Scrollable content area */
+.form-content{flex:1;min-height:0;overflow-y:auto;padding:40px 28px 24px;}
+
+/* ── Fixed bottom action bar ── */
+.bottom-bar{
+  flex-shrink:0;
+  background:var(--white);border-top:1px solid var(--border);
+  padding:14px 28px;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;
+  z-index:50;
 }
 
-/* Form content */
-.form-content{flex:1;min-width:0;padding:40px 28px 80px}
+/* Heading row */
 .form-heading{font-size:22px;font-weight:300;color:var(--ink);margin-bottom:4px;letter-spacing:-0.01em}
-.form-sub{font-size:12px;color:var(--ink-faint);letter-spacing:0.03em;margin-bottom:28px}
+.form-sub{font-size:12px;color:var(--ink-faint);letter-spacing:0.03em;margin-bottom:20px}
+
+/* ── Garment filter buttons ── */
+.garment-btns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:28px}
+.gbtn{
+  font-family:'Jost',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.12em;
+  text-transform:uppercase;padding:7px 14px;border-radius:2px;cursor:pointer;
+  transition:background 0.15s,color 0.15s,border-color 0.15s;
+  border:1px solid var(--border-mid);background:var(--white);color:var(--ink-mid);
+}
+.gbtn:hover{background:var(--cream-mid);color:var(--ink)}
+.gbtn.active-all{background:var(--ink);color:var(--white);border-color:var(--ink)}
+.gbtn.active-sub{background:var(--cream-mid);color:var(--ink);border-color:var(--ink-mid)}
 
 /* Section title */
 .sec-title{font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-light);padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:16px;display:flex;align-items:center;gap:7px;}
@@ -87,7 +79,6 @@ button{cursor:pointer;font-family:inherit}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .grid-3{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:12px}
 @media(max-width:500px){.grid-2{grid-template-columns:1fr}}
-.span-2{grid-column:1/-1}
 
 /* Field */
 .field{display:flex;flex-direction:column}
@@ -95,8 +86,6 @@ button{cursor:pointer;font-family:inherit}
 .field input,.field select{width:100%;padding:9px 12px;background:var(--white);border:1px solid var(--border-mid);border-radius:2px;color:var(--ink);font-size:13px;font-family:'Jost',sans-serif;outline:none;transition:border-color 0.15s;-webkit-appearance:none;}
 .field input:focus,.field select:focus{border-color:var(--ink)}
 .field input::placeholder{color:var(--ink-faint)}
-.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%238A8880' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;cursor:pointer;}
-.field select option{background:#fff}
 
 /* Input with unit */
 .unit-wrap{position:relative}
@@ -110,8 +99,6 @@ button{cursor:pointer;font-family:inherit}
 .info-popup p{padding:10px 12px;font-size:11px;color:var(--ink-light);line-height:1.5}
 .info-btn.open .info-popup{display:block}
 
-/* Action row */
-.action-row{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;padding-top:24px;border-top:1px solid var(--border);margin-top:8px;}
 .btn-reset{font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;padding:11px 22px;background:transparent;border:1px solid var(--border-mid);border-radius:2px;color:var(--ink-mid);cursor:pointer;transition:all 0.15s;display:inline-flex;align-items:center;gap:7px;}
 .btn-reset:hover{background:var(--cream-mid);color:var(--ink)}
 .btn-save{font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;padding:11px 28px;background:var(--ink);color:var(--white);border:none;border-radius:2px;cursor:pointer;transition:background 0.15s;display:inline-flex;align-items:center;gap:7px;}
@@ -131,7 +118,7 @@ button{cursor:pointer;font-family:inherit}
 <div id="toast"></div>
 
 <!-- Nav -->
-<nav class="nav" style="position:relative;">
+<nav class="nav">
   <a class="nav-brand" href="https://tailortech.toom.design/">TailorTech</a>
   <button class="nav-avatar" id="nav-av" type="button" onclick="toggleDropdown(event)" style="display:none"></button>
   <a class="nav-btn" id="nav-login" href="#" onclick="goToAuth(); return false;">Log In</a>
@@ -158,74 +145,33 @@ button{cursor:pointer;font-family:inherit}
   </div>
 </nav>
 
-<!-- Change Garment bar -->
-<div id="tt-nav-extra-bar" style="display:none;height:40px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;">
-  <button style="font-family:'Jost',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:6px 14px;border:1px solid rgba(26,25,22,0.20);border-radius:2px;background:transparent;color:#4A4844;cursor:pointer;" onclick="showGarmentSelect()">Change Garment</button>
-  <span id="nav-title" style="font-size:11px;letter-spacing:0.08em;color:#8A8880;text-transform:uppercase;font-weight:500;margin-left:auto;"></span>
-</div>
+<!-- ── Single page: always the form ── -->
+<div class="form-layout">
 
-<!-- ── Garment selection ── -->
-<div id="garment-panel">
-  <div class="g-page">
-    <div class="g-eyebrow">Measurements</div>
-    <h1 class="g-heading">Select Garment Type</h1>
-    <div class="g-grid">
-      <button class="g-card" onclick="startForm('all')">
-        <div class="g-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10H3M21 6H3M21 14H3M21 18H3"/></svg></div>
-        <div class="g-card-name">All</div>
-        <div class="g-card-desc">All measurements</div>
-        <div class="g-card-cta">Select →</div>
-      </button>
-      <button class="g-card" onclick="startForm('shirt')">
-        <div class="g-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.57a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.57a2 2 0 00-1.34-2.23z"/></svg></div>
-        <div class="g-card-name">Shirt</div>
-        <div class="g-card-desc">Shirt fitting</div>
-        <div class="g-card-cta">Select →</div>
-      </button>
-      <button class="g-card" onclick="startForm('hoodie')">
-        <div class="g-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2C9 2 6 5 6 5L2 7l2 4 3-1v12h14V10l3 1 2-4-4-2s-3-3-6-3z"/></svg></div>
-        <div class="g-card-name">Hoodie</div>
-        <div class="g-card-desc">Hoodie fitting</div>
-        <div class="g-card-cta">Select →</div>
-      </button>
-      <button class="g-card" onclick="startForm('suit')">
-        <div class="g-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7v13h18V7M3 7l4-5h4l1 5M21 7l-4-5h-4l-1 5M12 7v13"/></svg></div>
-        <div class="g-card-name">Suit</div>
-        <div class="g-card-desc">Suit fitting</div>
-        <div class="g-card-cta">Select →</div>
-      </button>
-      <button class="g-card" onclick="startForm('trousers')">
-        <div class="g-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 3h16v5l-4 13H4V3zM20 3v5l4 13h-8l-4-13V8"/></svg></div>
-        <div class="g-card-name">Trousers</div>
-        <div class="g-card-desc">Trousers fitting</div>
-        <div class="g-card-cta">Select →</div>
-      </button>
+  <!-- Diagram -->
+  <div class="diag-panel" id="diag-panel">
+    <div class="diag-img-wrap">
+      <img id="diag-img" class="diag-img" src="" alt="">
+      <div class="diag-label" id="diag-label" style="opacity:0"></div>
     </div>
   </div>
-</div>
 
-<!-- ── Measurement form ── -->
-<div id="form-panel">
-  <div class="form-layout">
+  <!-- Form column -->
+  <div class="form-col">
 
-    <!-- Diagram -->
-    <div class="diag-panel" id="diag-panel">
-      <div class="diag-img-wrap">
-        <img id="diag-img" class="diag-img" src="" alt="" style="display:none;">
-        <div class="diag-empty" id="diag-empty">
-          <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-            <path d="M12 2a5 5 0 100 10A5 5 0 0012 2zM4 22v-1a8 8 0 0116 0v1"/>
-          </svg>
-          <p>Focus a field<br>to see the guide</p>
-        </div>
-        <div class="diag-label" id="diag-label" style="opacity:0"></div>
-      </div>
-    </div>
-
-    <!-- Form -->
+    <!-- Scrollable area -->
     <div class="form-content">
       <h2 class="form-heading" id="form-heading">All Measurements</h2>
       <p class="form-sub">Enter your measurements below</p>
+
+      <!-- Garment filter buttons -->
+      <div class="garment-btns" id="garment-btns">
+        <button class="gbtn active-all" data-filter="all" onclick="setFilter('all')">All</button>
+        <button class="gbtn" data-filter="shirt" onclick="setFilter('shirt')">Shirt</button>
+        <button class="gbtn" data-filter="hoodie" onclick="setFilter('hoodie')">Hoodie</button>
+        <button class="gbtn" data-filter="suit" onclick="setFilter('suit')">Suit</button>
+        <button class="gbtn" data-filter="trousers" onclick="setFilter('trousers')">Trousers</button>
+      </div>
 
       <form id="mform" onsubmit="handleSubmit(event)" novalidate>
 
@@ -252,7 +198,7 @@ button{cursor:pointer;font-family:inherit}
           <div class="field" id="wrap-height">
             <label class="field-lbl">Height</label>
             <div class="unit-wrap">
-              <input type="number" id="f-height" name="height" step="0.1" min="100" max="250" placeholder="0.0" onfocus="focusField('Height','Height')">
+              <input type="number" id="f-height" name="height" step="0.1" min="100" max="250" placeholder="0.0" onfocus="focusField('Height','height')">
               <span class="unit">cm</span>
             </div>
           </div>
@@ -287,21 +233,10 @@ button{cursor:pointer;font-family:inherit}
           <div class="grid-3" id="grid-lin"></div>
         </div>
 
-        <div class="action-row">
-          <button type="button" class="btn-reset" onclick="resetForm()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-            Reset
-          </button>
-          <button type="submit" class="btn-save" id="btn-save">
-            <span id="save-lbl">Save Measurements</span>
-            <div class="spin" id="save-spin"></div>
-          </button>
-        </div>
-
       </form>
 
       <!-- Measurement History -->
-      <div id="meas-history" style="display:none;margin-top:48px;padding-bottom:40px">
+      <div id="meas-history" style="display:none;margin-top:48px;padding-bottom:24px">
         <div style="font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-light);padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:20px;display:flex;align-items:center;gap:7px;">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           Measurement History
@@ -310,8 +245,21 @@ button{cursor:pointer;font-family:inherit}
         <div id="meas-history-content"></div>
       </div>
 
+    </div><!-- /form-content -->
+
+    <!-- Fixed bottom bar -->
+    <div class="bottom-bar">
+      <button type="button" class="btn-reset" onclick="resetForm()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        Reset
+      </button>
+      <button type="submit" form="mform" class="btn-save" id="btn-save">
+        <span id="save-lbl">Save Measurements</span>
+        <div class="spin" id="save-spin"></div>
+      </button>
     </div>
-  </div>
+
+  </div><!-- /form-col -->
 </div>
 
 <script>
@@ -323,11 +271,8 @@ var LABELS     = {all:'All Measurements',shirt:'Shirt Measurements',hoodie:'Hood
 var RAW_BASE   = 'https://raw.githubusercontent.com/toom-design/measurements/main/';
 var FRONT_IMG  = RAW_BASE + 'MEASUREMENTS_front.png';
 
-// Map from field key to image filename (exact filenames from the repo)
 var FIELD_IMG = {
-  // Height / Weight
   'height':                  'MEASUREMENTS_Height.png',
-  // Volumetric
   'bustGirth':               'MEASUREMENTS_Bust girth.png',
   'calfGirth':               'MEASUREMENTS_Calf girth.png',
   'hipGirth':                'MEASUREMENTS_Hip girth.png',
@@ -337,7 +282,6 @@ var FIELD_IMG = {
   'upperBicepGirth':         'MEASUREMENTS_Upper bicep girth.png',
   'waistGirth':              'MEASUREMENTS_Waist girth.png',
   'wristGirth':              'MEASUREMENTS_Wrist girth.png',
-  // Linear
   'outerArmLength':          'MEASUREMENTS_Outer arm length.png',
   'backNeckToWaist':         'MEASUREMENTS_Back neck point to waist.png',
   'shoulderLength':          'MEASUREMENTS_Shoulder length.png',
@@ -403,46 +347,41 @@ const LIN = [
   ['aroundHead','Around head (cm)'],['eyeToEye','Eye to eye (cm)'],['palm','Palm (cm)'],['footGirth','Foot girth (cm)'],
 ];
 
-// ── Diagram functions ─────────────────────────────────────────────
-var _diagImg    = null;
-var _diagEmpty  = null;
-var _diagLabel  = null;
-var _diagActive = null; // current image URL shown
+// ── Diagram ───────────────────────────────────────────────────────
+var _diagImg   = null;
+var _diagLabel = null;
+var _diagActive = null;
 
 function initDiag() {
   _diagImg   = document.getElementById('diag-img');
-  _diagEmpty = document.getElementById('diag-empty');
   _diagLabel = document.getElementById('diag-label');
+  // Show front figurine immediately on load
+  _diagImg.onload = function() {
+    _diagImg.style.opacity = '1';
+    _diagLabel.style.opacity = '0';
+  };
+  _diagImg.src = FRONT_IMG;
+  _diagActive = FRONT_IMG;
 }
 
 function showDiagImage(url, labelText) {
   if (!_diagImg) return;
-  if (url === _diagActive) return; // already showing
-
+  if (url === _diagActive) return;
   _diagActive = url;
-
   _diagImg.classList.add('fading');
-  _diagEmpty.style.opacity = '0';
-
   setTimeout(function() {
     _diagImg.onload = function() {
-      _diagImg.style.display = '';
-      _diagEmpty.style.display = 'none';
       _diagImg.classList.remove('fading');
       _diagLabel.textContent = labelText || '';
-      _diagLabel.style.opacity = '1';
+      _diagLabel.style.opacity = labelText ? '1' : '0';
     };
     _diagImg.onerror = function() {
-      // Fall back to front view
       _diagImg.src = FRONT_IMG;
-      _diagLabel.textContent = 'Front view';
+      _diagLabel.style.opacity = '0';
+      _diagActive = FRONT_IMG;
     };
     _diagImg.src = url;
   }, 200);
-}
-
-function showDiagFront(labelText) {
-  showDiagImage(FRONT_IMG, labelText || '');
 }
 
 function focusField(label, key) {
@@ -450,11 +389,11 @@ function focusField(label, key) {
   if (key && FIELD_IMG[key]) {
     showDiagImage(RAW_BASE + encodeURIComponent(FIELD_IMG[key]), label);
   } else {
-    showDiagFront(label || '');
+    showDiagImage(FRONT_IMG, '');
   }
 }
 
-// ── Build field elements ──────────────────────────────────────────
+// ── Build fields ──────────────────────────────────────────────────
 function makeField(key, label) {
   var wrap = document.createElement('div');
   wrap.className = 'field'; wrap.dataset.key = key;
@@ -476,7 +415,6 @@ function makeField(key, label) {
   return wrap;
 }
 
-// Build grids once on load
 (function() {
   var gv = document.getElementById('grid-vol');
   var gl = document.getElementById('grid-lin');
@@ -485,22 +423,21 @@ function makeField(key, label) {
   initDiag();
 })();
 
-// ── Navigation ────────────────────────────────────────────────────
+// ── Garment filter ────────────────────────────────────────────────
 var currentFilter = 'all';
 
-function showGarmentSelect() {
-  document.getElementById('form-panel').style.display    = 'none';
-  document.getElementById('garment-panel').style.display = 'block';
-  document.getElementById('tt-nav-extra-bar').style.display = 'none';
-}
-
-function startForm(filter) {
+function setFilter(filter) {
   currentFilter = filter;
-  document.getElementById('garment-panel').style.display = 'none';
-  document.getElementById('form-panel').style.display    = 'block';
-  document.getElementById('tt-nav-extra-bar').style.display = 'flex';
-  document.getElementById('nav-title').textContent = LABELS[filter] || 'Measurements';
+  // Update button states
+  document.querySelectorAll('.gbtn').forEach(function(b) {
+    b.classList.remove('active-all','active-sub');
+    if (b.dataset.filter === filter) {
+      b.classList.add(filter === 'all' ? 'active-all' : 'active-sub');
+    }
+  });
+  // Update heading
   document.getElementById('form-heading').textContent = LABELS[filter] || 'Measurements';
+  // Apply field visibility
   applyFilter(filter);
 }
 
@@ -520,145 +457,131 @@ function applyFilter(filter) {
   document.getElementById('gap-vol-lin').style.display = (anyVol && anyLin) ? '' : 'none';
 }
 
-// ── Sheets request ────────────────────────────────────────────────
+// ── Sheets ────────────────────────────────────────────────────────
 function sheetsReq(action, payload) {
   payload = payload || {};
-  var readActions = ['getMeasurements'];
-  if (readActions.indexOf(action) >= 0) {
+  if (['getMeasurements'].indexOf(action) >= 0) {
     return new Promise(function(resolve, reject) {
-      var cbName  = '__ttMeas_' + Date.now();
-      var data    = Object.assign({ action: action }, payload);
-      var encoded = encodeURIComponent(JSON.stringify(data));
-      var url     = SHEETS_API + '?action=' + action + '&payload=' + encoded + '&callback=' + cbName;
-      var script  = document.createElement('script');
-      var timer   = setTimeout(function() { cleanup(); resolve({ success: false, records: [], message: 'timeout' }); }, 10000);
-      function cleanup() { clearTimeout(timer); delete window[cbName]; if (script.parentNode) document.body.removeChild(script); }
-      window[cbName] = function(res) { cleanup(); resolve(res); };
-      script.onerror  = function()   { cleanup(); reject(new Error('Script load failed')); };
-      script.src = url;
-      document.body.appendChild(script);
+      var cbName = '__ttMeas_' + Date.now();
+      var encoded = encodeURIComponent(JSON.stringify(Object.assign({action:action},payload)));
+      var url = SHEETS_API + '?action=' + action + '&payload=' + encoded + '&callback=' + cbName;
+      var script = document.createElement('script');
+      var timer = setTimeout(function(){ cleanup(); resolve({success:false,records:[],message:'timeout'}); }, 10000);
+      function cleanup(){ clearTimeout(timer); delete window[cbName]; if(script.parentNode) document.body.removeChild(script); }
+      window[cbName] = function(res){ cleanup(); resolve(res); };
+      script.onerror = function(){ cleanup(); reject(new Error('Script load failed')); };
+      script.src = url; document.body.appendChild(script);
     });
   }
-  return fetch(SHEETS_API, {
-    method: 'POST',
-    body:   JSON.stringify(Object.assign({ action: action }, payload))
-  }).then(function(r) { return r.json(); });
+  return fetch(SHEETS_API, {method:'POST',body:JSON.stringify(Object.assign({action:action},payload))}).then(function(r){return r.json();});
 }
 
-// ── Form submit ───────────────────────────────────────────────────
+// ── Submit ────────────────────────────────────────────────────────
 function handleSubmit(e) {
   e.preventDefault();
   var form = document.getElementById('mform');
   if (!form.checkValidity()) { form.reportValidity(); return; }
-  var btn=document.getElementById('btn-save'), lbl=document.getElementById('save-lbl'), sp=document.getElementById('save-spin');
+  var btn=document.getElementById('btn-save'),lbl=document.getElementById('save-lbl'),sp=document.getElementById('save-spin');
   btn.disabled=true; lbl.style.display='none'; sp.style.display='block';
-  var data = {garment: currentFilter, dateTime: new Date().toLocaleString()};
+  var data = {garment:currentFilter, dateTime:new Date().toLocaleString()};
   var fd = new FormData(form);
-  fd.forEach(function(v,k) { if(v) data[k]=v; });
+  fd.forEach(function(v,k){ if(v) data[k]=v; });
   var email = document.getElementById('f-email').value.trim();
-  sheetsReq('saveMeasurement', {email: email, data: data})
-    .then(function(res) {
-      if (res && res.success) {
-        showToast('Measurements saved!');
-        setTimeout(function(){ window.location.href = DASHBOARD; }, 1500);
-      } else {
-        showToast('Could not save — check connection', 'err');
-      }
+  sheetsReq('saveMeasurement',{email:email,data:data})
+    .then(function(res){
+      if(res&&res.success){ showToast('Measurements saved!'); setTimeout(function(){ window.location.href=DASHBOARD; },1500); }
+      else showToast('Could not save — check connection','err');
     })
-    .catch(function() { showToast('Network error', 'err'); })
-    .finally(function() { btn.disabled=false; lbl.style.display=''; sp.style.display='none'; });
+    .catch(function(){ showToast('Network error','err'); })
+    .finally(function(){ btn.disabled=false; lbl.style.display=''; sp.style.display='none'; });
 }
 
-function resetForm() { document.getElementById('mform').reset(); }
+function resetForm(){ document.getElementById('mform').reset(); }
 
 // ── Toast ─────────────────────────────────────────────────────────
-function showToast(msg, type) {
-  var t = document.getElementById('toast');
-  t.textContent = msg; t.className = type === 'err' ? 'err show' : 'show';
-  setTimeout(function() { t.classList.remove('show'); }, 3000);
+function showToast(msg,type){
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.className=type==='err'?'err show':'show';
+  setTimeout(function(){ t.classList.remove('show'); },3000);
 }
 
 // ── Close info popups ─────────────────────────────────────────────
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('.info-btn'))
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.info-btn'))
     document.querySelectorAll('.info-btn.open').forEach(function(b){ b.classList.remove('open'); });
 });
 
-// ── Init: read URL params ─────────────────────────────────────────
-(function() {
+// ── Init ──────────────────────────────────────────────────────────
+(function(){
   var params = new URLSearchParams(window.location.search);
   var email  = params.get('email');
   var filter = params.get('garment') || 'all';
 
+  // Apply garment from URL if provided
+  if (filter !== 'all') setFilter(filter);
+  else applyFilter('all');
+
   if (email) {
-    var decodedEmail    = decodeURIComponent(email);
-    var decodedPersonId = params.get('personId') ? decodeURIComponent(params.get('personId')) : '';
+    var decodedEmail = decodeURIComponent(email);
+    var decodedPid   = params.get('personId') ? decodeURIComponent(params.get('personId')) : '';
     var emailEl = document.getElementById('f-email');
-    if (emailEl) { emailEl.value = decodedEmail; emailEl.readOnly = true; emailEl.style.opacity = '0.6'; emailEl.style.cursor = 'not-allowed'; }
+    if (emailEl){ emailEl.value=decodedEmail; emailEl.readOnly=true; emailEl.style.opacity='0.6'; emailEl.style.cursor='not-allowed'; }
     var pidEl = document.getElementById('f-personId');
-    if (pidEl && decodedPersonId) { pidEl.value = decodedPersonId; pidEl.readOnly = true; pidEl.style.opacity = '0.6'; pidEl.style.cursor = 'not-allowed'; }
-    startForm(filter);
+    if (pidEl&&decodedPid){ pidEl.value=decodedPid; pidEl.readOnly=true; pidEl.style.opacity='0.6'; pidEl.style.cursor='not-allowed'; }
     loadMeasurementHistory(decodedEmail);
-  } else {
-    showGarmentSelect();
   }
 })();
 
-// ── Load measurement history ──────────────────────────────────────
-function loadMeasurementHistory(email) {
-  if (!email) return;
-  var section = document.getElementById('meas-history');
-  var loading = document.getElementById('meas-history-loading');
-  if (section) section.style.display = 'block';
-  sheetsReq('getMeasurements', { email: email }).then(function(res) {
-    if (!res || !res.success || !res.records || res.records.length === 0) {
-      if (loading) loading.textContent = 'No measurement history yet.'; return;
-    }
-    if (loading) loading.style.display = 'none';
-    var latest    = res.records[0];
-    var container = document.getElementById('meas-history-content');
+// ── History ───────────────────────────────────────────────────────
+function loadMeasurementHistory(email){
+  if(!email) return;
+  var section=document.getElementById('meas-history');
+  var loading=document.getElementById('meas-history-loading');
+  if(section) section.style.display='block';
+  sheetsReq('getMeasurements',{email:email}).then(function(res){
+    if(!res||!res.success||!res.records||res.records.length===0){ if(loading) loading.textContent='No measurement history yet.'; return; }
+    if(loading) loading.style.display='none';
+    var latest=res.records[0];
+    var container=document.getElementById('meas-history-content');
     prefillMeasurements(latest);
-    var summaryKeys = [
+    var summaryKeys=[
       {k:'Height [CM]',alt:'height',l:'Height'},{k:'Weight [KG]',alt:'weight',l:'Weight'},
       {k:'Bust girth [CM]',alt:'bustGirth',l:'Bust'},{k:'Waist girth [CM]',alt:'waistGirth',l:'Waist'},
       {k:'Hip girth [CM]',alt:'hipGirth',l:'Hips'},{k:'Shoulder length [CM]',alt:'shoulderLength',l:'Shoulder'},
     ];
-    if (container) {
-      container.innerHTML = res.records.map(function(rec, i) {
-        var date  = rec['Created At'] || rec['Updated At'] || rec['dateTime'] || '';
-        var chips = summaryKeys.map(function(k) {
-          var v = rec[k.k] || (k.alt && rec[k.alt]) || '';
-          if (!v || v === '0' || v === '0.0') return '';
-          return '<span style="display:inline-block;margin:3px 4px 3px 0;padding:4px 10px;background:var(--cream-mid);border:1px solid var(--border);border-radius:2px;font-size:11px;color:var(--ink-mid)"><strong style="color:var(--ink)">' + parseFloat(v).toFixed(1) + '</strong> ' + k.l + '</span>';
+    if(container){
+      container.innerHTML=res.records.map(function(rec,i){
+        var date=rec['Created At']||rec['Updated At']||rec['dateTime']||'';
+        var chips=summaryKeys.map(function(k){
+          var v=rec[k.k]||(k.alt&&rec[k.alt])||'';
+          if(!v||v==='0'||v==='0.0') return '';
+          return '<span style="display:inline-block;margin:3px 4px 3px 0;padding:4px 10px;background:var(--cream-mid);border:1px solid var(--border);border-radius:2px;font-size:11px;color:var(--ink-mid)"><strong style="color:var(--ink)">'+parseFloat(v).toFixed(1)+'</strong> '+k.l+'</span>';
         }).filter(Boolean).join('');
-        return '<div style="padding:16px 20px;background:var(--white);border:1px solid var(--border);border-radius:2px;margin-bottom:8px"><div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px">' + (i === 0 ? '⬤ Latest — ' : 'Record ' + (res.records.length - i) + ' — ') + date + '</div>' + (chips || '<span style="font-size:12px;color:var(--ink-faint);font-style:italic">No key measurements recorded</span>') + '</div>';
+        return '<div style="padding:16px 20px;background:var(--white);border:1px solid var(--border);border-radius:2px;margin-bottom:8px"><div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px">'+(i===0?'⬤ Latest — ':'Record '+(res.records.length-i)+' — ')+date+'</div>'+(chips||'<span style="font-size:12px;color:var(--ink-faint);font-style:italic">No key measurements recorded</span>')+'</div>';
       }).join('');
     }
-  }).catch(function(err) {
-    if (loading) loading.textContent = 'Could not load history.';
-    console.error('loadMeasurementHistory error:', err);
-  });
+  }).catch(function(err){ if(loading) loading.textContent='Could not load history.'; console.error(err); });
 }
 
-function prefillMeasurements(rec) {
-  if (!rec) return;
-  var heightEl = document.getElementById('f-height');
-  var weightEl = document.getElementById('f-weight');
-  var hVal = rec['Height [CM]'] || rec['height'] || '';
-  var wVal = rec['Weight [KG]'] || rec['weight'] || '';
-  if (heightEl && hVal && hVal !== '0') heightEl.value = parseFloat(hVal);
-  if (weightEl && wVal && wVal !== '0') weightEl.value = parseFloat(wVal);
-  Object.keys(rec).forEach(function(key) {
-    var val = rec[key];
-    if (!val || val === '0' || val === '0.0' || val === '') return;
-    var el = document.getElementById('f-' + key);
-    if (el && el.type === 'number') { var num = parseFloat(val); if (!isNaN(num) && num > 0) el.value = num; }
+function prefillMeasurements(rec){
+  if(!rec) return;
+  var heightEl=document.getElementById('f-height');
+  var weightEl=document.getElementById('f-weight');
+  var hVal=rec['Height [CM]']||rec['height']||'';
+  var wVal=rec['Weight [KG]']||rec['weight']||'';
+  if(heightEl&&hVal&&hVal!=='0') heightEl.value=parseFloat(hVal);
+  if(weightEl&&wVal&&wVal!=='0') weightEl.value=parseFloat(wVal);
+  Object.keys(rec).forEach(function(key){
+    var val=rec[key];
+    if(!val||val==='0'||val==='0.0'||val==='') return;
+    var el=document.getElementById('f-'+key);
+    if(el&&el.type==='number'){ var num=parseFloat(val); if(!isNaN(num)&&num>0) el.value=num; }
   });
 }
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.9.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.9.1</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -670,86 +593,73 @@ window._fb = { auth: _auth, signOut };
 onAuthStateChanged(_auth, function(user) {
   if (user) {
     setAccountPopover(user);
-    document.getElementById('nav-av').style.display = '';
-    document.getElementById('nav-signout').style.display = '';
-    document.getElementById('nav-login').style.display = 'none';
+    document.getElementById('nav-av').style.display='';
+    document.getElementById('nav-signout').style.display='';
+    document.getElementById('nav-login').style.display='none';
     if (!window._currentPersonId) {
-      getClientJSONP(user.email, user.uid, function(res) {
-        if (res && res.success && res.client && res.client['Person ID']) {
-          window._currentPersonId = res.client['Person ID'];
-          var el = document.getElementById('dd-pid');
-          if (el) el.textContent = window._currentPersonId;
+      getClientJSONP(user.email, user.uid, function(res){
+        if(res&&res.success&&res.client&&res.client['Person ID']){
+          window._currentPersonId=res.client['Person ID'];
+          var el=document.getElementById('dd-pid'); if(el) el.textContent=window._currentPersonId;
         }
       });
     }
   } else {
-    var av = document.getElementById('nav-av');
-    if (av) { av.style.display = 'none'; av.innerHTML = ''; }
-    document.getElementById('nav-signout').style.display = 'none';
-    document.getElementById('nav-login').style.display = '';
-    var dd = document.getElementById('nav-dd');
-    if (dd) dd.style.display = 'none';
+    var av=document.getElementById('nav-av'); if(av){av.style.display='none';av.innerHTML='';}
+    document.getElementById('nav-signout').style.display='none';
+    document.getElementById('nav-login').style.display='';
+    var dd=document.getElementById('nav-dd'); if(dd) dd.style.display='none';
   }
 });
 </script>
 
 <script>
-function toggleDropdown(e) {
-  if (e) e.stopPropagation();
-  var d = document.getElementById('nav-dd');
-  if (!d) return;
-  d.style.display = (d.style.display === 'block') ? 'none' : 'block';
+function toggleDropdown(e){
+  if(e) e.stopPropagation();
+  var d=document.getElementById('nav-dd'); if(!d) return;
+  d.style.display=(d.style.display==='block')?'none':'block';
 }
-document.addEventListener('click', function(e) {
-  var d  = document.getElementById('nav-dd');
-  var av = document.getElementById('nav-av');
-  if (d && d.style.display === 'block' && !d.contains(e.target) && av && !av.contains(e.target)) d.style.display = 'none';
+document.addEventListener('click',function(e){
+  var d=document.getElementById('nav-dd'),av=document.getElementById('nav-av');
+  if(d&&d.style.display==='block'&&!d.contains(e.target)&&av&&!av.contains(e.target)) d.style.display='none';
 });
-function goToAuth() {
-  try { sessionStorage.setItem('tt_return_url', window.location.href); } catch(e) {}
-  window.location.href = 'https://tailortech.toom.design/auth';
+function goToAuth(){
+  try{sessionStorage.setItem('tt_return_url',window.location.href);}catch(e){}
+  window.location.href='https://tailortech.toom.design/auth';
 }
-function doSignOut() {
-  var auth = window._fb && window._fb.auth;
-  var so   = window._fb && window._fb.signOut;
-  if (auth && so) so(auth);
+function doSignOut(){
+  var auth=window._fb&&window._fb.auth,so=window._fb&&window._fb.signOut;
+  if(auth&&so) so(auth);
 }
-function setAccountPopover(user) {
-  if (!user) return;
-  var fullname = user.displayName || user.email || '—';
-  var av = document.getElementById('nav-av');
-  if (av) {
-    if (user.photoURL) av.innerHTML = '<img src="' + user.photoURL + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">';
-    else av.textContent = fullname[0].toUpperCase();
-  }
-  var ddAv = document.getElementById('dd-av');
-  if (ddAv) {
-    if (user.photoURL) ddAv.innerHTML = '<img src="' + user.photoURL + '" style="width:100%;height:100%;object-fit:cover;" alt="">';
-    else ddAv.textContent = fullname[0].toUpperCase();
-  }
+function setAccountPopover(user){
+  if(!user) return;
+  var fullname=user.displayName||user.email||'—';
+  var av=document.getElementById('nav-av');
+  if(av){ if(user.photoURL) av.innerHTML='<img src="'+user.photoURL+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">'; else av.textContent=fullname[0].toUpperCase(); }
+  var ddAv=document.getElementById('dd-av');
+  if(ddAv){ if(user.photoURL) ddAv.innerHTML='<img src="'+user.photoURL+'" style="width:100%;height:100%;object-fit:cover;" alt="">'; else ddAv.textContent=fullname[0].toUpperCase(); }
   var el;
-  el = document.getElementById('dd-name');      if (el) el.textContent = fullname;
-  el = document.getElementById('dd-email-sub'); if (el) el.textContent = user.email || '';
-  el = document.getElementById('dd-pid');       if (el) el.textContent = window._currentPersonId || '—';
+  el=document.getElementById('dd-name'); if(el) el.textContent=fullname;
+  el=document.getElementById('dd-email-sub'); if(el) el.textContent=user.email||'';
+  el=document.getElementById('dd-pid'); if(el) el.textContent=window._currentPersonId||'—';
 }
-function getClientJSONP(email, uid, callback) {
-  var cbName  = '__ttGetClient_' + Date.now();
-  var payload = encodeURIComponent(JSON.stringify({ email: email, uid: uid || '' }));
-  var url     = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec?action=getClient&payload=' + payload + '&callback=' + cbName;
-  var script  = document.createElement('script');
-  var timer   = setTimeout(function() { cleanup(); callback(null); }, 8000);
-  function cleanup() { clearTimeout(timer); delete window[cbName]; if (script.parentNode) document.body.removeChild(script); }
-  window[cbName] = function(res) { cleanup(); callback(res); };
-  script.onerror = function() { cleanup(); callback(null); };
-  script.src = url;
-  document.body.appendChild(script);
+function getClientJSONP(email,uid,callback){
+  var cbName='__ttGetClient_'+Date.now();
+  var payload=encodeURIComponent(JSON.stringify({email:email,uid:uid||''}));
+  var url='https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec?action=getClient&payload='+payload+'&callback='+cbName;
+  var script=document.createElement('script');
+  var timer=setTimeout(function(){cleanup();callback(null);},8000);
+  function cleanup(){clearTimeout(timer);delete window[cbName];if(script.parentNode) document.body.removeChild(script);}
+  window[cbName]=function(res){cleanup();callback(res);};
+  script.onerror=function(){cleanup();callback(null);};
+  script.src=url; document.body.appendChild(script);
 }
-function ddCopy(type) {
-  var val = type === 'pid'
-    ? (window._currentPersonId || '')
-    : (window._fb && window._fb.auth && window._fb.auth.currentUser && window._fb.auth.currentUser.email) || '';
-  if (!val || val === '—') { showToast('Nothing to copy', true); return; }
-  if (navigator.clipboard) navigator.clipboard.writeText(val).then(function() { showToast(type.toUpperCase() + ' copied'); });
+function ddCopy(type){
+  var val=type==='pid'
+    ?(window._currentPersonId||'')
+    :(window._fb&&window._fb.auth&&window._fb.auth.currentUser&&window._fb.auth.currentUser.email)||'';
+  if(!val||val==='—'){showToast('Nothing to copy',true);return;}
+  if(navigator.clipboard) navigator.clipboard.writeText(val).then(function(){showToast(type.toUpperCase()+' copied');});
 }
 </script>
 </body>
