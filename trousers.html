@@ -759,11 +759,9 @@ function submitOrder() {
       cfg[k] = String(cfg[k]).replace(/[\uD800-\uDFFF]/g, '');
     });
 
-    // Use btoa(unescape(encodeURIComponent())) — the standard safe way to
-    // base64-encode a UTF-8 string for use in a URL, avoiding URIError entirely
     var json    = JSON.stringify(cfg);
-    var b64     = btoa(unescape(encodeURIComponent(json)));
-    var url     = SHEET_URL + '?action=saveTrousers&b64=1&payload=' + b64 + '&callback=' + cbName;
+    var payload = encodeURIComponent(json);
+    var url     = SHEET_URL + '?action=saveTrousers&payload=' + payload + '&callback=' + cbName;
 
     var script  = document.createElement('script');
     var timer   = setTimeout(function() {
@@ -950,7 +948,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.5</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.6</div>
 
 </body>
 </html>
