@@ -693,54 +693,41 @@ function selectBtnMaterial(btn) {
   btn.classList.add('selected');
 }
 
-// ── collectConfig — mirrors shirt pattern exactly ─────────────────
+// ── collectConfig — keys match TROUSERS_COLS in Apps Script exactly ──
 function collectConfig() {
   var selCard = document.querySelector('#fabric-main-grid .fabric-card.selected');
 
   return {
-    // ── Meta ──────────────────────────────────────────────────────
+    // ── Meta (matches TROUSERS_COLS) ──────────────────────────────
     'Order Number':      '',
     'Status':            'New',
     'Created At':        new Date().toISOString(),
-    'Terms Accepted':    'FALSE',
-    'Marketing Consent': 'FALSE',
+    'Person ID':         window._currentPersonId || '',
 
-    // ── Design ────────────────────────────────────────────────────
-    'GENDER':            sectionPill('Gender'),
+    // ── Design (matches TROUSERS_COLS) ───────────────────────────
     'FIT':               sectionPill('Fit'),
-    'STYLE/SILHOUETTE':  sectionPill('Pleats'),
+    'RISE':              sectionPill('Rise'),
+    'STYLE':             sectionPill('Pleats'),
     'CLOSURE':           sectionIconCard('Closure'),
-    'NECK':              'N/A',
     'FRONT POCKETS':     sectionPill('Front Pockets'),
-    'EXTRA POCKETS':     sectionPill('Watch Pocket'),
-    'HEM/FINISH':        sectionPill('Hem Finish'),
-    'BACK':              sectionPill('Back Pockets'),
-
-    // ── Sleeves (N/A for trousers) ────────────────────────────────
-    'SLEEVE HEAD':       'N/A',
-    'SLEEVE STYLE':      'N/A',
-    'CONSTRUCTION':      'N/A',
-    'SLEEVE BUTTONS':    'N/A',
-    'SLEEVE CUFF':       'N/A',
-
-    // ── Waistband ─────────────────────────────────────────────────
+    'WATCH POCKET':      sectionPill('Watch Pocket'),
+    'BACK POCKETS':      sectionPill('Back Pockets'),
+    'HEM FINISH':        sectionPill('Hem Finish'),
     'WAISTBAND STYLE':   sectionPill('Waistband Style'),
     'WAIST ADJUSTMENT':  sectionPill('Waist Adjustment'),
-    'RISE':              sectionPill('Rise'),
 
-    // ── Materials ─────────────────────────────────────────────────
+    // ── Materials (matches TROUSERS_COLS) ────────────────────────
+    'LINING':            sectionIconCard('Lining'),
     'MAIN FABRIC':       selCard ? selCard.querySelector('.fname').textContent.trim() : '',
     'CODE':              selCard ? (selCard.dataset.code        || selCard.querySelector('.fcode').textContent.trim()) : '',
     'color':             selCard ? (selCard.dataset.color       || '') : '',
     'composition':       selCard ? (selCard.dataset.composition || '') : '',
-    'CONTRAST FABRIC':   'N/A',
-    'CONTRAST PLACEMENT':'N/A',
-    'STRUCTURE':         'N/A',
-    'LINING FABRIC':     selCard ? selCard.querySelector('.fcode').textContent.trim() : '',
-    'LINING TYPE':       sectionIconCard('Lining'),
+
+    // ── Extra (not in TROUSERS_COLS but useful to have) ───────────
+    'GENDER':            sectionPill('Gender'),
     'BUTTONS':           (document.querySelector('.btn-material.selected .bm-name') || {}).textContent || '',
 
-    // ── Measurements — read by label, same as shirt ───────────────
+    // ── Measurements ─────────────────────────────────────────────
     'Waist (cm)':        inputVal('Waist'),
     'Hips (cm)':         inputVal('Hips'),
     'Thigh (cm)':        inputVal('Thigh'),
@@ -762,7 +749,7 @@ async function submitOrder() {
   try {
     var data    = collectConfig();
     var payload = encodeURIComponent(JSON.stringify(data));
-    var url     = SHEET_URL + '?payload=' + payload;
+    var url     = SHEET_URL + '?action=saveTrousers&payload=' + payload;
 
     await new Promise(function(resolve) {
       var iframe = document.createElement('iframe');
@@ -941,7 +928,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.1</div>
 
 </body>
 </html>
