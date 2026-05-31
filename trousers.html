@@ -758,9 +758,19 @@ function submitOrder() {
       cfg[k] = String(cfg[k]);
     });
 
-    // Send payload the exact same way the shirt does — plain encodeURIComponent of JSON
-    // action goes inside the payload object so doGet picks it up via payload.action
+    // Diagnose: test each field individually to find which one causes URIError
     cfg['action'] = 'saveTrousers';
+    var badKey = null;
+    Object.keys(cfg).forEach(function(k) {
+      try { encodeURIComponent(String(cfg[k])); }
+      catch(e) { badKey = k + '=' + JSON.stringify(cfg[k]); }
+    });
+    if (badKey) {
+      btn.disabled = false;
+      label.textContent = 'Save Configuration';
+      showFeedback('BAD FIELD: ' + badKey, '#a05050');
+      return;
+    }
     var json    = JSON.stringify(cfg);
     var payload = encodeURIComponent(json);
     var url     = SHEET_URL + '?payload=' + payload + '&callback=' + cbName;
@@ -950,7 +960,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.8</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.9-diag</div>
 
 </body>
 </html>
