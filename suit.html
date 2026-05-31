@@ -514,8 +514,8 @@ function setImg(id, url) {
 // ── Update all layers ─────────────────────────────────────────────
 function updatePreview() {
   if (state.view === 'i') {
-    // Inside view: show inside pockets layer only on plain base
-    setImg('img-base',         urls.base());
+    // Inside view: inside pocket layer only — no base, no front, no back
+    setImg('img-base',         '');
     setImg('img-closure',      '');
     setImg('img-lapel',        '');
     setImg('img-frontpocket',  '');
@@ -564,7 +564,7 @@ function zoomToRegion(scale, cx, cy) {
   _z.panY = -pointY * scale;
   applyTransform();
 }
-function resetZoom() { _z.zoom = 1.7; _z.panX = 0; _z.panY = 0; applyTransform(); }
+function resetZoom() { _z.zoom = 2.5; _z.panX = 0; _z.panY = 0; applyTransform(); }
 function manualZoom(d) { _z.zoom = Math.min(4, Math.max(0.5, _z.zoom + d)); applyTransform(); }
 
 // ── Tabs ──────────────────────────────────────────────────────────
@@ -643,38 +643,38 @@ function selectClosure(btn, type, btnVal) {
 function selectLapel(btn, val) {
   selectPillInGroup(btn);
   state.lapel = val;
-  goFront(); updatePreview(); zoomToRegion(2.6, 0.5, 0.3);
+  goFront(); updatePreview(); zoomToRegion(3.0, 0.5, 0.4);
 }
 function selectFrontPocket(btn, val) {
   selectPillInGroup(btn);
   state.frontpocket = val;
-  goFront(); updatePreview(); zoomToRegion(2.4, 0.5, 0.55);
+  goFront(); updatePreview(); zoomToRegion(3.0, 0.5, 0.55);
 }
 function selectTicketPocket(btn, val) {
   selectPillInGroup(btn);
   state.ticketpocket = val;
-  goFront(); updatePreview(); zoomToRegion(2.6, 0.6, 0.45);
+  goFront(); updatePreview(); zoomToRegion(3.0, 0.35, 0.55);
 }
 function selectChestPocket(btn, show) {
   selectPillInGroup(btn);
   state.chestpocket = show;
-  goFront(); updatePreview(); zoomToRegion(2.6, 0.38, 0.35);
+  goFront(); updatePreview(); zoomToRegion(3.0, 0.65, 0.35);
 }
 function selectInsidePocket(btn, val) {
   selectPillInGroup(btn);
   state.insidepocket = val;
   if (val !== 'none') { goInside(); } else { goFront(); }
-  updatePreview(); resetZoom();
+  updatePreview(); zoomToRegion(2.5, 0.5, 0.5);
 }
 function selectVent(btn, val) {
   selectPillInGroup(btn);
   state.vent = val;
-  goBack(); updatePreview(); resetZoom();
+  goBack(); updatePreview(); zoomToRegion(2.5, 0.5, 0.5);
 }
 function selectSleeveButtons(btn, val) {
   selectPillInGroup(btn);
   state.sleevebtn = val;
-  goBack(); updatePreview(); zoomToRegion(2.8, 0.25, 0.75);
+  goBack(); updatePreview(); zoomToRegion(3.0, 0.5, 0.65);
 }
 
 // ── Icon cards ────────────────────────────────────────────────────
@@ -932,7 +932,7 @@ function getClientJSONP(email, uid, callback) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.1.1</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.1.2</div>
 
 </body>
 </html>
