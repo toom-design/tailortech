@@ -758,58 +758,34 @@ function submitOrder() {
       cfg[k] = String(cfg[k]);
     });
 
-    // Diagnose: test each field individually to find which one causes URIError
     cfg['action'] = 'saveTrousers';
-    var badKey = null;
+
+    // Use fetch with no-cors — works in Safari, sends the GET request to Apps Script
+    // Apps Script doGet receives payload and saves to sheet
+    // no-cors means we can't read the response, but the data is written
+    var safeCfg = {};
     Object.keys(cfg).forEach(function(k) {
-      try { encodeURIComponent(String(cfg[k])); }
-      catch(e) { badKey = k + '=' + JSON.stringify(cfg[k]); }
+      var v = String(cfg[k] === undefined || cfg[k] === null ? '' : cfg[k]);
+      safeCfg[k] = v.replace(/[^\x00-\x7F]/g, ' ').trim();
     });
-    if (badKey) {
-      btn.disabled = false;
-      label.textContent = 'Save Configuration';
-      showFeedback('BAD FIELD: ' + badKey, '#a05050');
-      return;
-    }
-    var json    = JSON.stringify(cfg);
+
+    var json    = JSON.stringify(safeCfg);
     var payload = encodeURIComponent(json);
-    var url     = SHEET_URL + '?payload=' + payload + '&callback=' + cbName;
+    var url     = SHEET_URL + '?payload=' + payload + '&callback=none';
 
-    var script  = document.createElement('script');
-    var timer   = setTimeout(function() {
-      cleanup();
-      label.textContent = 'Save Configuration';
-      btn.disabled = false;
-      showFeedback('Request timed out - please try again', '#a05050');
-    }, 12000);
-
-    function cleanup() {
-      clearTimeout(timer);
-      delete window[cbName];
-      if (script.parentNode) document.body.removeChild(script);
-    }
-
-    window[cbName] = function(res) {
-      cleanup();
-      label.textContent = 'Save Configuration';
-      btn.disabled = false;
-      if (res && res.success) {
+    fetch(url, { method: 'GET', mode: 'no-cors' })
+      .then(function() {
+        label.textContent = 'Save Configuration';
+        btn.disabled = false;
         showFeedback('Configuration saved', '#4a8a5a');
         setTimeout(function() { window.location.href = 'https://tailortech.toom.design/dashboard'; }, 2000);
-      } else {
-        showFeedback('Could not save: ' + (res && res.message ? res.message : 'unknown error'), '#a05050');
-      }
-    };
-
-    script.onerror = function() {
-      cleanup();
-      label.textContent = 'Save Configuration';
-      btn.disabled = false;
-      showFeedback('Network error - please try again', '#a05050');
-    };
-
-    script.src = url;
-    document.body.appendChild(script);
+      })
+      .catch(function(err) {
+        label.textContent = 'Save Configuration';
+        btn.disabled = false;
+        showFeedback('Could not save: ' + err.message, '#a05050');
+      });
+    return;
 
   } catch(err) {
     btn.disabled = false;
@@ -960,7 +936,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.9-diag</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.2.0</div>
 
 </body>
 </html>
