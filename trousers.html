@@ -741,51 +741,51 @@ function collectConfig() {
   };
 }
 
-// ── submitOrder — identical to shirt ─────────────────────────────
-async function submitOrder() {
+// ── submitOrder — JSONP via <script> tag, same pattern as getClientJSONP ──
+function submitOrder() {
   var btn   = document.getElementById('submit-btn');
   var label = document.getElementById('submit-label');
   btn.disabled = true;
   label.textContent = 'Saving…';
 
-  try {
-    var data    = collectConfig();
-    var payload = encodeURIComponent(JSON.stringify(data));
-    var url     = SHEET_URL + '?action=saveTrousers&payload=' + payload;
-
-    await new Promise(function(resolve) {
-      var iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = url;
-
-      var handler = function(event) {
-        if (String(event.data).indexOf('shirt_') === 0) {
-          window.removeEventListener('message', handler);
-          document.body.removeChild(iframe);
-          resolve(event.data);
-        }
-      };
-      window.addEventListener('message', handler);
-
-      setTimeout(function() {
-        window.removeEventListener('message', handler);
-        if (iframe.parentNode) document.body.removeChild(iframe);
-        resolve('shirt_saved');
-      }, 8000);
-
-      document.body.appendChild(iframe);
-    });
-
+  var cbName  = '__ttSaveTrousers_' + Date.now();
+  var payload = encodeURIComponent(JSON.stringify(collectConfig()));
+  var url     = SHEET_URL + '?action=saveTrousers&payload=' + payload + '&callback=' + cbName;
+  var script  = document.createElement('script');
+  var timer   = setTimeout(function() {
+    cleanup();
     label.textContent = 'Save Configuration';
     btn.disabled = false;
-    showFeedback('✓ Configuration saved to Google Sheets', '#4a8a5a');
-    setTimeout(function() { window.location.href = 'https://tailortech.toom.design/dashboard'; }, 2000);
+    showFeedback('✕ Request timed out — please try again', '#a05050');
+  }, 10000);
 
-  } catch (err) {
-    label.textContent = 'Save Configuration';
-    btn.disabled = false;
-    showFeedback('✗ Could not save: ' + err.message, '#a05050');
+  function cleanup() {
+    clearTimeout(timer);
+    delete window[cbName];
+    if (script.parentNode) document.body.removeChild(script);
   }
+
+  window[cbName] = function(res) {
+    cleanup();
+    label.textContent = 'Save Configuration';
+    btn.disabled = false;
+    if (res && res.success) {
+      showFeedback('✓ Configuration saved', '#4a8a5a');
+      setTimeout(function() { window.location.href = 'https://tailortech.toom.design/dashboard'; }, 2000);
+    } else {
+      showFeedback('✕ Could not save: ' + (res && res.message ? res.message : 'unknown error'), '#a05050');
+    }
+  };
+
+  script.onerror = function() {
+    cleanup();
+    label.textContent = 'Save Configuration';
+    btn.disabled = false;
+    showFeedback('✕ Network error — please try again', '#a05050');
+  };
+
+  script.src = url;
+  document.body.appendChild(script);
 }
 
 function showFeedback(msg, color) {
@@ -930,7 +930,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.2</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.3</div>
 
 </body>
 </html>
