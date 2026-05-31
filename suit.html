@@ -139,6 +139,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
     <div class="view-bar">
       <button class="view-bar-btn active" onclick="setFrontBack('front',this)">Front</button>
       <button class="view-bar-btn" onclick="setFrontBack('back',this)">Back</button>
+      <button class="view-bar-btn" id="btn-inside" onclick="setFrontBack('inside',this)">Inside</button>
     </div>
   </div>
 
@@ -171,14 +172,18 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 
       <!-- CLOSURE: single breasted uses SB_ prefix, double uses DB1/DB2/etc. -->
       <div class="section">
-        <div class="section-label">Closure</div>
-        <div class="pill-group">
-          <button class="pill selected" onclick="selectClosure(this,'SB','1 button')">Single Button</button>
-          <button class="pill"          onclick="selectClosure(this,'SB','2 buttons')">Double Buttons</button>
-          <button class="pill"          onclick="selectClosure(this,'DB','2X1')">2×1</button>
-          <button class="pill"          onclick="selectClosure(this,'DB','4X1')">4×1</button>
-          <button class="pill"          onclick="selectClosure(this,'DB','6X1')">6×1</button>
-          <button class="pill"          onclick="selectClosure(this,'DB','6X2')">6×2</button>
+        <div class="section-label">Buttons</div>
+        <div class="sub-label">Single Breasted</div>
+        <div class="pill-group" id="closure-sb" style="margin-bottom:12px;">
+          <button class="pill selected" onclick="selectClosure(this,'SB','1 button')">1 Button</button>
+          <button class="pill"          onclick="selectClosure(this,'SB','2 buttons')">2 Buttons</button>
+        </div>
+        <div class="sub-label">Double Breasted</div>
+        <div class="pill-group" id="closure-db">
+          <button class="pill" onclick="selectClosure(this,'DB','2X1')">2×1</button>
+          <button class="pill" onclick="selectClosure(this,'DB','4X1')">4×1</button>
+          <button class="pill" onclick="selectClosure(this,'DB','6X1')">6×1</button>
+          <button class="pill" onclick="selectClosure(this,'DB','6X2')">6×2</button>
         </div>
       </div>
 
@@ -238,24 +243,6 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
           <button class="pill selected" onclick="selectVent(this,'none vent')">No Vent</button>
           <button class="pill"          onclick="selectVent(this,'single vent')">Single Vent</button>
           <button class="pill"          onclick="selectVent(this,'double vent')">Double Vent</button>
-        </div>
-      </div>
-
-      <!-- SLEEVE HEAD -->
-      <div class="section">
-        <div class="section-label">Sleeve Head</div>
-        <div class="pill-group">
-          <button class="pill selected" onclick="selectPillInGroup(this)">Low Sleeve Head</button>
-          <button class="pill"          onclick="selectPillInGroup(this)">High Sleeve Head</button>
-        </div>
-      </div>
-
-      <!-- SLEEVE STYLE -->
-      <div class="section">
-        <div class="section-label">Sleeve Style</div>
-        <div class="pill-group">
-          <button class="pill selected" onclick="selectPillInGroup(this)">One-Piece Sleeve</button>
-          <button class="pill"          onclick="selectPillInGroup(this)">Two-Piece Sleeve</button>
         </div>
       </div>
 
@@ -490,14 +477,14 @@ const urls = {
       return BASE + enc('suit_m_live_SB_' + state.lapel + '.png');
     }
     // DB prefix: DB1 for 2X1, DB2 for 4X1/6X1/6X2
-    var dbPfx = state.closureBtn === '2X1' ? 'DB1' : 'DB2';
+    var dbPfx = state.closureBtn === '6X2' ? 'DB2' : 'DB1';
     return BASE + enc('suit_m_live_' + dbPfx + '_' + state.lapel + '.png');
   },
   // Chest pocket: suit_m_live_SB_chest pocket.png / DB1_chest pocket.png
   chestpocket: function() {
     if (!state.chestpocket) return '';
     if (state.closureType === 'SB') return BASE + enc('suit_m_live_SB_chest pocket.png');
-    var dbPfx = state.closureBtn === '2X1' ? 'DB1' : 'DB2';
+    var dbPfx = state.closureBtn === '6X2' ? 'DB2' : 'DB1';
     return BASE + enc('suit_m_live_' + dbPfx + '_chest pocket.png');
   },
   // Front pocket: suit_m_live_FRONT FLAP POCKET.png etc.
@@ -526,13 +513,23 @@ function setImg(id, url) {
 
 // ── Update all layers ─────────────────────────────────────────────
 function updatePreview() {
-  if (state.view === 'f') {
+  if (state.view === 'i') {
+    // Inside view: show inside pockets layer only on plain base
+    setImg('img-base',         urls.base());
+    setImg('img-closure',      '');
+    setImg('img-lapel',        '');
+    setImg('img-frontpocket',  '');
+    setImg('img-ticketpocket', '');
+    setImg('img-insidepocket', urls.insidepocket());
+    setImg('img-sleevebtn',    '');
+    setImg('img-vent',         '');
+  } else if (state.view === 'f') {
     setImg('img-base',         urls.base());
     setImg('img-closure',      urls.closure());
     setImg('img-lapel',        urls.lapel());
     setImg('img-frontpocket',  urls.frontpocket());
     setImg('img-ticketpocket', urls.ticketpocket());
-    setImg('img-insidepocket', urls.insidepocket());
+    setImg('img-insidepocket', '');
     setImg('img-sleevebtn',    '');
     setImg('img-vent',         '');
   } else {
@@ -589,7 +586,7 @@ function setView(v, btn) {
 function setFrontBack(v, btn) {
   document.querySelectorAll('.view-bar-btn').forEach(function(b){ b.classList.remove('active'); });
   btn.classList.add('active');
-  state.view = (v === 'front') ? 'f' : 'b';
+  state.view = v === 'front' ? 'f' : v === 'back' ? 'b' : 'i';
   updatePreview();
 }
 function goFront() {
@@ -600,7 +597,12 @@ function goFront() {
 function goBack() {
   state.view = 'b';
   document.querySelectorAll('.view-bar-btn').forEach(function(b){ b.classList.remove('active'); });
-  document.querySelector('.view-bar-btn:last-child').classList.add('active');
+  document.querySelectorAll('.view-bar-btn')[1].classList.add('active');
+}
+function goInside() {
+  state.view = 'i';
+  document.querySelectorAll('.view-bar-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById('btn-inside').classList.add('active');
 }
 
 // ── Pill helper ───────────────────────────────────────────────────
@@ -631,7 +633,9 @@ function inputVal(label) {
 
 // ── Design selection handlers ─────────────────────────────────────
 function selectClosure(btn, type, btnVal) {
-  selectPillInGroup(btn);
+  // Deselect both SB and DB pill groups
+  document.querySelectorAll('#closure-sb .pill, #closure-db .pill').forEach(function(p){ p.classList.remove('selected'); });
+  btn.classList.add('selected');
   state.closureType = type;
   state.closureBtn  = btnVal;
   goFront(); updatePreview(); resetZoom();
@@ -659,7 +663,8 @@ function selectChestPocket(btn, show) {
 function selectInsidePocket(btn, val) {
   selectPillInGroup(btn);
   state.insidepocket = val;
-  goFront(); updatePreview(); resetZoom();
+  if (val !== 'none') { goInside(); } else { goFront(); }
+  updatePreview(); resetZoom();
 }
 function selectVent(btn, val) {
   selectPillInGroup(btn);
@@ -732,8 +737,8 @@ function collectConfig() {
     'HEM/FINISH':        'N/A',
     'BACK':              sectionPill('Back Vent'),
 
-    'SLEEVE HEAD':       sectionPill('Sleeve Head'),
-    'SLEEVE STYLE':      sectionPill('Sleeve Style'),
+    'SLEEVE HEAD':       'N/A',
+    'SLEEVE STYLE':      'N/A',
     'CONSTRUCTION':      sectionPill('Construction'),
     'SLEEVE BUTTONS':    sectionPill('Sleeve Buttons'),
     'SLEEVE CUFF':       'N/A',
@@ -927,7 +932,7 @@ function getClientJSONP(email, uid, callback) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.0.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.1.1</div>
 
 </body>
 </html>
