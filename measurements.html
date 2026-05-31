@@ -22,9 +22,6 @@ button{cursor:pointer;font-family:inherit}
 .nav-btn{font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;padding:7px 16px;border:1px solid var(--border-mid);border-radius:2px;background:transparent;color:var(--ink);cursor:pointer;text-decoration:none}
 .nav-avatar{width:32px;height:32px;border-radius:50%;background:var(--ink);color:var(--white);font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;border:none;cursor:pointer;padding:0}
 .nav-avatar img{width:100%;height:100%;object-fit:cover}
-#nav-dd{display:none;position:absolute;top:52px;right:0;width:260px;background:var(--white);border:1px solid var(--border-mid);border-radius:2px;box-shadow:0 12px 40px rgba(26,25,22,0.16);padding:20px;z-index:9999;font-family:'Jost',sans-serif}
-
-
 
 /* ── Garment selection ── */
 #garment-panel{display:none}
@@ -32,10 +29,7 @@ button{cursor:pointer;font-family:inherit}
 .g-eyebrow{font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px}
 .g-heading{font-size:26px;font-weight:300;letter-spacing:-0.01em;margin-bottom:36px}
 .g-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:2px}
-.g-card{
-  background:var(--white);padding:28px 20px 22px;cursor:pointer;
-  transition:background 0.15s;display:flex;flex-direction:column;
-}
+.g-card{background:var(--white);padding:28px 20px 22px;cursor:pointer;transition:background 0.15s;display:flex;flex-direction:column;}
 .g-card:hover{background:var(--cream-mid)}
 .g-card-icon{width:30px;height:30px;margin-bottom:14px;color:var(--ink-mid)}
 .g-card-name{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px}
@@ -52,11 +46,32 @@ button{cursor:pointer;font-family:inherit}
   background:var(--white);border-right:1px solid var(--border);
   position:sticky;top:52px;height:calc(100vh - 52px);
   align-items:center;justify-content:center;padding:2rem;
+  overflow:hidden;
 }
 @media(min-width:1024px){.diag-panel{display:flex}}
+
+/* Diagram image */
+.diag-img-wrap{
+  width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+  position:relative;
+}
+.diag-img{
+  max-width:100%;max-height:100%;object-fit:contain;
+  transition:opacity 0.25s ease, transform 0.25s ease;
+  opacity:1;
+}
+.diag-img.fading{opacity:0;transform:scale(0.97)}
+
 .diag-empty{text-align:center;color:var(--ink-faint)}
 .diag-empty svg{display:block;margin:0 auto 12px;opacity:0.2}
 .diag-empty p{font-size:12px;line-height:1.6;letter-spacing:0.02em}
+
+/* Diagram label */
+.diag-label{
+  position:absolute;bottom:20px;left:0;right:0;text-align:center;
+  font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--ink-faint);transition:opacity 0.25s;
+}
 
 /* Form content */
 .form-content{flex:1;min-width:0;padding:40px 28px 80px}
@@ -64,11 +79,7 @@ button{cursor:pointer;font-family:inherit}
 .form-sub{font-size:12px;color:var(--ink-faint);letter-spacing:0.03em;margin-bottom:28px}
 
 /* Section title */
-.sec-title{
-  font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;
-  color:var(--ink-light);padding-bottom:10px;border-bottom:1px solid var(--border);
-  margin-bottom:16px;display:flex;align-items:center;gap:7px;
-}
+.sec-title{font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-light);padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:16px;display:flex;align-items:center;gap:7px;}
 .sec-title svg{color:var(--ink-mid)}
 .sec-gap{height:28px}
 
@@ -80,21 +91,11 @@ button{cursor:pointer;font-family:inherit}
 
 /* Field */
 .field{display:flex;flex-direction:column}
-.field-lbl{
-  font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;
-  color:var(--ink-light);margin-bottom:5px;display:flex;align-items:center;gap:4px;line-height:1.4;
-}
-.field input,.field select{
-  width:100%;padding:9px 12px;background:var(--white);border:1px solid var(--border-mid);
-  border-radius:2px;color:var(--ink);font-size:13px;font-family:'Jost',sans-serif;
-  outline:none;transition:border-color 0.15s;-webkit-appearance:none;
-}
+.field-lbl{font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:5px;display:flex;align-items:center;gap:4px;line-height:1.4;}
+.field input,.field select{width:100%;padding:9px 12px;background:var(--white);border:1px solid var(--border-mid);border-radius:2px;color:var(--ink);font-size:13px;font-family:'Jost',sans-serif;outline:none;transition:border-color 0.15s;-webkit-appearance:none;}
 .field input:focus,.field select:focus{border-color:var(--ink)}
 .field input::placeholder{color:var(--ink-faint)}
-.field select{
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%238A8880' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;cursor:pointer;
-}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%238A8880' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;cursor:pointer;}
 .field select option{background:#fff}
 
 /* Input with unit */
@@ -103,52 +104,24 @@ button{cursor:pointer;font-family:inherit}
 .unit{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--ink-faint);pointer-events:none}
 
 /* Info button */
-.info-btn{
-  background:none;border:none;color:var(--ink-faint);padding:0;line-height:1;
-  flex-shrink:0;position:relative;transition:color 0.15s;cursor:pointer;
-}
+.info-btn{background:none;border:none;color:var(--ink-faint);padding:0;line-height:1;flex-shrink:0;position:relative;transition:color 0.15s;cursor:pointer;}
 .info-btn:hover{color:var(--ink-mid)}
-.info-popup{
-  display:none;position:absolute;left:calc(100% + 8px);top:50%;transform:translateY(-50%);
-  z-index:200;background:var(--white);border:1px solid var(--border-mid);border-radius:2px;
-  box-shadow:0 8px 24px rgba(0,0,0,0.12);overflow:hidden;width:200px;
-}
+.info-popup{display:none;position:absolute;left:calc(100% + 8px);top:50%;transform:translateY(-50%);z-index:200;background:var(--white);border:1px solid var(--border-mid);border-radius:2px;box-shadow:0 8px 24px rgba(0,0,0,0.12);overflow:hidden;width:200px;}
 .info-popup p{padding:10px 12px;font-size:11px;color:var(--ink-light);line-height:1.5}
 .info-btn.open .info-popup{display:block}
 
 /* Action row */
-.action-row{
-  display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;
-  padding-top:24px;border-top:1px solid var(--border);margin-top:8px;
-}
-.btn-reset{
-  font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.10em;
-  text-transform:uppercase;padding:11px 22px;background:transparent;
-  border:1px solid var(--border-mid);border-radius:2px;color:var(--ink-mid);cursor:pointer;transition:all 0.15s;
-  display:inline-flex;align-items:center;gap:7px;
-}
+.action-row{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;padding-top:24px;border-top:1px solid var(--border);margin-top:8px;}
+.btn-reset{font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;padding:11px 22px;background:transparent;border:1px solid var(--border-mid);border-radius:2px;color:var(--ink-mid);cursor:pointer;transition:all 0.15s;display:inline-flex;align-items:center;gap:7px;}
 .btn-reset:hover{background:var(--cream-mid);color:var(--ink)}
-.btn-save{
-  font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.14em;
-  text-transform:uppercase;padding:11px 28px;background:var(--ink);color:var(--white);
-  border:none;border-radius:2px;cursor:pointer;transition:background 0.15s;
-  display:inline-flex;align-items:center;gap:7px;
-}
+.btn-save{font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;padding:11px 28px;background:var(--ink);color:var(--white);border:none;border-radius:2px;cursor:pointer;transition:background 0.15s;display:inline-flex;align-items:center;gap:7px;}
 .btn-save:hover{background:#2d2c29}
 .btn-save:disabled{opacity:0.45;cursor:not-allowed}
-.spin{
-  width:13px;height:13px;border:1.5px solid rgba(255,255,255,0.3);border-top-color:#fff;
-  border-radius:50%;animation:spin 0.65s linear infinite;display:none;flex-shrink:0;
-}
+.spin{width:13px;height:13px;border:1.5px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.65s linear infinite;display:none;flex-shrink:0;}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* Toast */
-#toast{
-  position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);
-  background:var(--ink);color:var(--white);font-size:11px;font-weight:500;
-  letter-spacing:0.06em;padding:11px 20px;border-radius:2px;
-  opacity:0;transition:opacity 0.25s,transform 0.25s;pointer-events:none;z-index:9999;white-space:nowrap;
-}
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--white);font-size:11px;font-weight:500;letter-spacing:0.06em;padding:11px 20px;border-radius:2px;opacity:0;transition:opacity 0.25s,transform 0.25s;pointer-events:none;z-index:9999;white-space:nowrap;}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #toast.err{background:#7a2c2c}
 </style>
@@ -164,7 +137,6 @@ button{cursor:pointer;font-family:inherit}
   <a class="nav-btn" id="nav-login" href="#" onclick="goToAuth(); return false;">Log In</a>
   <button class="nav-btn" id="nav-signout" onclick="doSignOut()" style="display:none">Sign out</button>
 
-  <!-- Dropdown -->
   <div id="nav-dd" style="display:none;position:absolute;top:52px;right:0;width:260px;background:#FAFAF8;border:1px solid rgba(26,25,22,0.20);border-radius:2px;box-shadow:0 12px 40px rgba(26,25,22,0.16);padding:20px;z-index:9999;font-family:'Jost',sans-serif;">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
       <div id="dd-av" style="width:40px;height:40px;border-radius:50%;background:#1A1916;color:#FAFAF8;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"></div>
@@ -186,7 +158,7 @@ button{cursor:pointer;font-family:inherit}
   </div>
 </nav>
 
-<!-- Change Garment button (shown when form is active) -->
+<!-- Change Garment bar -->
 <div id="tt-nav-extra-bar" style="display:none;height:40px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;">
   <button style="font-family:'Jost',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:6px 14px;border:1px solid rgba(26,25,22,0.20);border-radius:2px;background:transparent;color:#4A4844;cursor:pointer;" onclick="showGarmentSelect()">Change Garment</button>
   <span id="nav-title" style="font-size:11px;letter-spacing:0.08em;color:#8A8880;text-transform:uppercase;font-weight:500;margin-left:auto;"></span>
@@ -237,12 +209,16 @@ button{cursor:pointer;font-family:inherit}
   <div class="form-layout">
 
     <!-- Diagram -->
-    <div class="diag-panel">
-      <div class="diag-empty" id="diag-empty">
-        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-          <path d="M12 2a5 5 0 100 10A5 5 0 0012 2zM4 22v-1a8 8 0 0116 0v1"/>
-        </svg>
-        <p>Focus a field<br>to see the guide</p>
+    <div class="diag-panel" id="diag-panel">
+      <div class="diag-img-wrap">
+        <img id="diag-img" class="diag-img" src="" alt="" style="display:none;">
+        <div class="diag-empty" id="diag-empty">
+          <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+            <path d="M12 2a5 5 0 100 10A5 5 0 0012 2zM4 22v-1a8 8 0 0116 0v1"/>
+          </svg>
+          <p>Focus a field<br>to see the guide</p>
+        </div>
+        <div class="diag-label" id="diag-label" style="opacity:0"></div>
       </div>
     </div>
 
@@ -276,14 +252,14 @@ button{cursor:pointer;font-family:inherit}
           <div class="field" id="wrap-height">
             <label class="field-lbl">Height</label>
             <div class="unit-wrap">
-              <input type="number" id="f-height" name="height" step="0.1" min="100" max="250" placeholder="0.0" onfocus="focusField('Height')">
+              <input type="number" id="f-height" name="height" step="0.1" min="100" max="250" placeholder="0.0" onfocus="focusField('Height','Height')">
               <span class="unit">cm</span>
             </div>
           </div>
           <div class="field" id="wrap-weight">
             <label class="field-lbl">Weight</label>
             <div class="unit-wrap">
-              <input type="number" id="f-weight" name="weight" step="0.1" min="30" max="300" placeholder="0.0">
+              <input type="number" id="f-weight" name="weight" step="0.1" min="30" max="300" placeholder="0.0" onfocus="focusField('Weight',null)">
               <span class="unit">kg</span>
             </div>
           </div>
@@ -324,15 +300,15 @@ button{cursor:pointer;font-family:inherit}
 
       </form>
 
-        <!-- ── Measurement History ── -->
-        <div id="meas-history" style="display:none;margin-top:48px;padding-bottom:40px">
-          <div style="font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-light);padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:20px;display:flex;align-items:center;gap:7px;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            Measurement History
-          </div>
-          <div id="meas-history-loading" style="padding:16px 0;color:var(--ink-faint);font-size:12px;letter-spacing:0.04em;">Loading history…</div>
-          <div id="meas-history-content"></div>
+      <!-- Measurement History -->
+      <div id="meas-history" style="display:none;margin-top:48px;padding-bottom:40px">
+        <div style="font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-light);padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:20px;display:flex;align-items:center;gap:7px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Measurement History
         </div>
+        <div id="meas-history-loading" style="padding:16px 0;color:var(--ink-faint);font-size:12px;letter-spacing:0.04em;">Loading history…</div>
+        <div id="meas-history-content"></div>
+      </div>
 
     </div>
   </div>
@@ -344,6 +320,35 @@ button{cursor:pointer;font-family:inherit}
 var SHEETS_API = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
 var DASHBOARD  = 'https://tailortech.toom.design/dashboard';
 var LABELS     = {all:'All Measurements',shirt:'Shirt Measurements',hoodie:'Hoodie Measurements',suit:'Suit Measurements',trousers:'Trousers Measurements'};
+var RAW_BASE   = 'https://raw.githubusercontent.com/toom-design/measurements/main/';
+var FRONT_IMG  = RAW_BASE + 'MEASUREMENTS_front.png';
+
+// Map from field key to image filename (exact filenames from the repo)
+var FIELD_IMG = {
+  // Height / Weight
+  'height':                  'MEASUREMENTS_Height.png',
+  // Volumetric
+  'bustGirth':               'MEASUREMENTS_Bust girth.png',
+  'calfGirth':               'MEASUREMENTS_Calf girth.png',
+  'hipGirth':                'MEASUREMENTS_Hip girth.png',
+  'kneeGirth':               'MEASUREMENTS_Knee girth.png',
+  'neckBaseGirth':           'MEASUREMENTS_Neck base girth.png',
+  'pantWaist':               'MEASUREMENTS_Pant waist.png',
+  'upperBicepGirth':         'MEASUREMENTS_Upper bicep girth.png',
+  'waistGirth':              'MEASUREMENTS_Waist girth.png',
+  'wristGirth':              'MEASUREMENTS_Wrist girth.png',
+  // Linear
+  'outerArmLength':          'MEASUREMENTS_Outer arm length.png',
+  'backNeckToWaist':         'MEASUREMENTS_Back neck point to waist.png',
+  'shoulderLength':          'MEASUREMENTS_Shoulder length.png',
+  'acrossBackShoulderWidth': 'MEASUREMENTS_Across back shoulder width.png',
+  'acrossBackWidth':         'MEASUREMENTS_Across back width.png',
+  'outsideLegLength':        'MEASUREMENTS_Side trousers length.png',
+  'upperArmLength':          'MEASUREMENTS_Upper arm length.png',
+  'waistToHipLength':        'MEASUREMENTS_Waist to hip length.png',
+  'shirtLength':             'MEASUREMENTS_Shirt length.png',
+  'rise':                    'MEASUREMENTS_Rise.png',
+};
 
 const GARMENT_SETS = {
   all:      null,
@@ -398,6 +403,57 @@ const LIN = [
   ['aroundHead','Around head (cm)'],['eyeToEye','Eye to eye (cm)'],['palm','Palm (cm)'],['footGirth','Foot girth (cm)'],
 ];
 
+// ── Diagram functions ─────────────────────────────────────────────
+var _diagImg    = null;
+var _diagEmpty  = null;
+var _diagLabel  = null;
+var _diagActive = null; // current image URL shown
+
+function initDiag() {
+  _diagImg   = document.getElementById('diag-img');
+  _diagEmpty = document.getElementById('diag-empty');
+  _diagLabel = document.getElementById('diag-label');
+}
+
+function showDiagImage(url, labelText) {
+  if (!_diagImg) return;
+  if (url === _diagActive) return; // already showing
+
+  _diagActive = url;
+
+  _diagImg.classList.add('fading');
+  _diagEmpty.style.opacity = '0';
+
+  setTimeout(function() {
+    _diagImg.onload = function() {
+      _diagImg.style.display = '';
+      _diagEmpty.style.display = 'none';
+      _diagImg.classList.remove('fading');
+      _diagLabel.textContent = labelText || '';
+      _diagLabel.style.opacity = '1';
+    };
+    _diagImg.onerror = function() {
+      // Fall back to front view
+      _diagImg.src = FRONT_IMG;
+      _diagLabel.textContent = 'Front view';
+    };
+    _diagImg.src = url;
+  }, 200);
+}
+
+function showDiagFront(labelText) {
+  showDiagImage(FRONT_IMG, labelText || '');
+}
+
+function focusField(label, key) {
+  if (!_diagImg) initDiag();
+  if (key && FIELD_IMG[key]) {
+    showDiagImage(RAW_BASE + encodeURIComponent(FIELD_IMG[key]), label);
+  } else {
+    showDiagFront(label || '');
+  }
+}
+
 // ── Build field elements ──────────────────────────────────────────
 function makeField(key, label) {
   var wrap = document.createElement('div');
@@ -415,7 +471,7 @@ function makeField(key, label) {
   wrap.appendChild(lbl);
   var inp = document.createElement('input');
   inp.type='number'; inp.id='f-'+key; inp.name=key; inp.step='0.1'; inp.min='0'; inp.max='999'; inp.placeholder='0.0';
-  inp.addEventListener('focus', function(){ focusField(label); });
+  inp.addEventListener('focus', function(){ focusField(label, key); });
   wrap.appendChild(inp);
   return wrap;
 }
@@ -426,6 +482,7 @@ function makeField(key, label) {
   var gl = document.getElementById('grid-lin');
   VOL.forEach(function(f){ gv.appendChild(makeField(f[0],f[1])); });
   LIN.forEach(function(f){ gl.appendChild(makeField(f[0],f[1])); });
+  initDiag();
 })();
 
 // ── Navigation ────────────────────────────────────────────────────
@@ -463,15 +520,9 @@ function applyFilter(filter) {
   document.getElementById('gap-vol-lin').style.display = (anyVol && anyLin) ? '' : 'none';
 }
 
-// ── Diagram focus ─────────────────────────────────────────────────
-function focusField(label) {
-  // Placeholder — diagram images would go here
-}
-
 // ── Sheets request ────────────────────────────────────────────────
 function sheetsReq(action, payload) {
   payload = payload || {};
-  // Use JSONP for read actions — works on Safari without CORS issues
   var readActions = ['getMeasurements'];
   if (readActions.indexOf(action) >= 0) {
     return new Promise(function(resolve, reject) {
@@ -480,20 +531,14 @@ function sheetsReq(action, payload) {
       var encoded = encodeURIComponent(JSON.stringify(data));
       var url     = SHEETS_API + '?action=' + action + '&payload=' + encoded + '&callback=' + cbName;
       var script  = document.createElement('script');
-      var timer   = setTimeout(function() {
-        cleanup(); resolve({ success: false, records: [], message: 'timeout' });
-      }, 10000);
-      function cleanup() {
-        clearTimeout(timer); delete window[cbName];
-        if (script.parentNode) document.body.removeChild(script);
-      }
+      var timer   = setTimeout(function() { cleanup(); resolve({ success: false, records: [], message: 'timeout' }); }, 10000);
+      function cleanup() { clearTimeout(timer); delete window[cbName]; if (script.parentNode) document.body.removeChild(script); }
       window[cbName] = function(res) { cleanup(); resolve(res); };
       script.onerror  = function()   { cleanup(); reject(new Error('Script load failed')); };
       script.src = url;
       document.body.appendChild(script);
     });
   }
-  // Write actions — bare POST, no headers
   return fetch(SHEETS_API, {
     method: 'POST',
     body:   JSON.stringify(Object.assign({ action: action }, payload))
@@ -548,29 +593,13 @@ document.addEventListener('click', function(e) {
   if (email) {
     var decodedEmail    = decodeURIComponent(email);
     var decodedPersonId = params.get('personId') ? decodeURIComponent(params.get('personId')) : '';
-
-    // Pre-fill email
     var emailEl = document.getElementById('f-email');
-    if (emailEl) {
-      emailEl.value    = decodedEmail;
-      emailEl.readOnly = true;
-      emailEl.style.opacity = '0.6';
-      emailEl.style.cursor  = 'not-allowed';
-    }
-    // Pre-fill Person ID
+    if (emailEl) { emailEl.value = decodedEmail; emailEl.readOnly = true; emailEl.style.opacity = '0.6'; emailEl.style.cursor = 'not-allowed'; }
     var pidEl = document.getElementById('f-personId');
-    if (pidEl && decodedPersonId) {
-      pidEl.value    = decodedPersonId;
-      pidEl.readOnly = true;
-      pidEl.style.opacity = '0.6';
-      pidEl.style.cursor  = 'not-allowed';
-    }
-
+    if (pidEl && decodedPersonId) { pidEl.value = decodedPersonId; pidEl.readOnly = true; pidEl.style.opacity = '0.6'; pidEl.style.cursor = 'not-allowed'; }
     startForm(filter);
-    // Load measurement history from sheet
     loadMeasurementHistory(decodedEmail);
   } else {
-    // No email — show garment selection
     showGarmentSelect();
   }
 })();
@@ -581,50 +610,28 @@ function loadMeasurementHistory(email) {
   var section = document.getElementById('meas-history');
   var loading = document.getElementById('meas-history-loading');
   if (section) section.style.display = 'block';
-
   sheetsReq('getMeasurements', { email: email }).then(function(res) {
     if (!res || !res.success || !res.records || res.records.length === 0) {
-      if (loading) loading.textContent = 'No measurement history yet.';
-      return;
+      if (loading) loading.textContent = 'No measurement history yet.'; return;
     }
     if (loading) loading.style.display = 'none';
-
-    var latest    = res.records[0]; // most recent first
+    var latest    = res.records[0];
     var container = document.getElementById('meas-history-content');
-
-    // ── Pre-fill form fields from latest record ───────────────────
     prefillMeasurements(latest);
-
-    // ── Display history cards ─────────────────────────────────────
     var summaryKeys = [
-      {k:'Height [CM]',   alt:'height',         l:'Height'},
-      {k:'Weight [KG]',   alt:'weight',          l:'Weight'},
-      {k:'Bust girth [CM]',  alt:'bustGirth',    l:'Bust'},
-      {k:'Waist girth [CM]', alt:'waistGirth',   l:'Waist'},
-      {k:'Hip girth [CM]',   alt:'hipGirth',     l:'Hips'},
-      {k:'Shoulder length [CM]', alt:'shoulderLength', l:'Shoulder'},
+      {k:'Height [CM]',alt:'height',l:'Height'},{k:'Weight [KG]',alt:'weight',l:'Weight'},
+      {k:'Bust girth [CM]',alt:'bustGirth',l:'Bust'},{k:'Waist girth [CM]',alt:'waistGirth',l:'Waist'},
+      {k:'Hip girth [CM]',alt:'hipGirth',l:'Hips'},{k:'Shoulder length [CM]',alt:'shoulderLength',l:'Shoulder'},
     ];
-
     if (container) {
       container.innerHTML = res.records.map(function(rec, i) {
         var date  = rec['Created At'] || rec['Updated At'] || rec['dateTime'] || '';
         var chips = summaryKeys.map(function(k) {
           var v = rec[k.k] || (k.alt && rec[k.alt]) || '';
           if (!v || v === '0' || v === '0.0') return '';
-          return '<span style="display:inline-block;margin:3px 4px 3px 0;padding:4px 10px;'
-            + 'background:var(--cream-mid);border:1px solid var(--border);border-radius:2px;'
-            + 'font-size:11px;color:var(--ink-mid)">'
-            + '<strong style="color:var(--ink)">' + parseFloat(v).toFixed(1) + '</strong> ' + k.l
-            + '</span>';
+          return '<span style="display:inline-block;margin:3px 4px 3px 0;padding:4px 10px;background:var(--cream-mid);border:1px solid var(--border);border-radius:2px;font-size:11px;color:var(--ink-mid)"><strong style="color:var(--ink)">' + parseFloat(v).toFixed(1) + '</strong> ' + k.l + '</span>';
         }).filter(Boolean).join('');
-        return '<div style="padding:16px 20px;background:var(--white);border:1px solid var(--border);'
-          + 'border-radius:2px;margin-bottom:8px">'
-          + '<div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;'
-          + 'color:var(--ink-faint);margin-bottom:8px">'
-          + (i === 0 ? '⬤ Latest — ' : 'Record ' + (res.records.length - i) + ' — ')
-          + date + '</div>'
-          + (chips || '<span style="font-size:12px;color:var(--ink-faint);font-style:italic">No key measurements recorded</span>')
-          + '</div>';
+        return '<div style="padding:16px 20px;background:var(--white);border:1px solid var(--border);border-radius:2px;margin-bottom:8px"><div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px">' + (i === 0 ? '⬤ Latest — ' : 'Record ' + (res.records.length - i) + ' — ') + date + '</div>' + (chips || '<span style="font-size:12px;color:var(--ink-faint);font-style:italic">No key measurements recorded</span>') + '</div>';
       }).join('');
     }
   }).catch(function(err) {
@@ -633,61 +640,39 @@ function loadMeasurementHistory(email) {
   });
 }
 
-// ── Pre-fill all form fields from a measurement record ────────────────────────
 function prefillMeasurements(rec) {
   if (!rec) return;
-
-  // Height and weight have fixed IDs
   var heightEl = document.getElementById('f-height');
   var weightEl = document.getElementById('f-weight');
   var hVal = rec['Height [CM]'] || rec['height'] || '';
   var wVal = rec['Weight [KG]'] || rec['weight'] || '';
   if (heightEl && hVal && hVal !== '0') heightEl.value = parseFloat(hVal);
   if (weightEl && wVal && wVal !== '0') weightEl.value = parseFloat(wVal);
-
-  // All other fields: field ID = 'f-' + camelCaseKey
-  // rec contains both sheet headers AND camelCase aliases from getMeasurements
   Object.keys(rec).forEach(function(key) {
     var val = rec[key];
     if (!val || val === '0' || val === '0.0' || val === '') return;
-    // Try camelCase field ID directly
     var el = document.getElementById('f-' + key);
-    if (el && el.type === 'number') {
-      var num = parseFloat(val);
-      if (!isNaN(num) && num > 0) el.value = num;
-    }
+    if (el && el.type === 'number') { var num = parseFloat(val); if (!isNaN(num) && num > 0) el.value = num; }
   });
 }
-
 </script>
 
-
-
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.8.1</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.9.0</div>
 
 <!-- Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-const _app = initializeApp({
-  apiKey:            "AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY",
-  authDomain:        "tailortech-accounts.firebaseapp.com",
-  projectId:         "tailortech-accounts",
-  storageBucket:     "tailortech-accounts.firebasestorage.app",
-  messagingSenderId: "137614433833",
-  appId:             "1:137614433833:web:c78ea40b0d04ba89f3c638"
-});
+const _app = initializeApp({apiKey:"AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY",authDomain:"tailortech-accounts.firebaseapp.com",projectId:"tailortech-accounts",storageBucket:"tailortech-accounts.firebasestorage.app",messagingSenderId:"137614433833",appId:"1:137614433833:web:c78ea40b0d04ba89f3c638"});
 const _auth = getAuth(_app);
 window._fb = { auth: _auth, signOut };
-
 onAuthStateChanged(_auth, function(user) {
   if (user) {
     setAccountPopover(user);
-    document.getElementById('nav-av').style.display      = '';
+    document.getElementById('nav-av').style.display = '';
     document.getElementById('nav-signout').style.display = '';
-    document.getElementById('nav-login').style.display   = 'none';
+    document.getElementById('nav-login').style.display = 'none';
     if (!window._currentPersonId) {
       getClientJSONP(user.email, user.uid, function(res) {
         if (res && res.success && res.client && res.client['Person ID']) {
@@ -701,7 +686,7 @@ onAuthStateChanged(_auth, function(user) {
     var av = document.getElementById('nav-av');
     if (av) { av.style.display = 'none'; av.innerHTML = ''; }
     document.getElementById('nav-signout').style.display = 'none';
-    document.getElementById('nav-login').style.display   = '';
+    document.getElementById('nav-login').style.display = '';
     var dd = document.getElementById('nav-dd');
     if (dd) dd.style.display = 'none';
   }
@@ -709,32 +694,26 @@ onAuthStateChanged(_auth, function(user) {
 </script>
 
 <script>
-// ── Nav ───────────────────────────────────────────────────────────
 function toggleDropdown(e) {
   if (e) e.stopPropagation();
   var d = document.getElementById('nav-dd');
   if (!d) return;
   d.style.display = (d.style.display === 'block') ? 'none' : 'block';
 }
-
 document.addEventListener('click', function(e) {
   var d  = document.getElementById('nav-dd');
   var av = document.getElementById('nav-av');
-  if (d && d.style.display === 'block' && !d.contains(e.target) && av && !av.contains(e.target))
-    d.style.display = 'none';
+  if (d && d.style.display === 'block' && !d.contains(e.target) && av && !av.contains(e.target)) d.style.display = 'none';
 });
-
 function goToAuth() {
   try { sessionStorage.setItem('tt_return_url', window.location.href); } catch(e) {}
   window.location.href = 'https://tailortech.toom.design/auth';
 }
-
 function doSignOut() {
   var auth = window._fb && window._fb.auth;
   var so   = window._fb && window._fb.signOut;
   if (auth && so) so(auth);
 }
-
 function setAccountPopover(user) {
   if (!user) return;
   var fullname = user.displayName || user.email || '—';
@@ -753,23 +732,18 @@ function setAccountPopover(user) {
   el = document.getElementById('dd-email-sub'); if (el) el.textContent = user.email || '';
   el = document.getElementById('dd-pid');       if (el) el.textContent = window._currentPersonId || '—';
 }
-
 function getClientJSONP(email, uid, callback) {
   var cbName  = '__ttGetClient_' + Date.now();
   var payload = encodeURIComponent(JSON.stringify({ email: email, uid: uid || '' }));
   var url     = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec?action=getClient&payload=' + payload + '&callback=' + cbName;
   var script  = document.createElement('script');
   var timer   = setTimeout(function() { cleanup(); callback(null); }, 8000);
-  function cleanup() {
-    clearTimeout(timer); delete window[cbName];
-    if (script.parentNode) document.body.removeChild(script);
-  }
+  function cleanup() { clearTimeout(timer); delete window[cbName]; if (script.parentNode) document.body.removeChild(script); }
   window[cbName] = function(res) { cleanup(); callback(res); };
-  script.onerror = function()    { cleanup(); callback(null); };
+  script.onerror = function() { cleanup(); callback(null); };
   script.src = url;
   document.body.appendChild(script);
 }
-
 function ddCopy(type) {
   var val = type === 'pid'
     ? (window._currentPersonId || '')
@@ -778,6 +752,5 @@ function ddCopy(type) {
   if (navigator.clipboard) navigator.clipboard.writeText(val).then(function() { showToast(type.toUpperCase() + ' copied'); });
 }
 </script>
-
 </body>
 </html>
