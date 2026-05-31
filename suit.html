@@ -32,7 +32,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 .view-bar-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
 .view-bar-btn:first-child { border-radius: 2px 0 0 2px; border-right: none; }
 .view-bar-btn:last-child  { border-radius: 0 2px 2px 0; }
-.config-panel { flex: 2; background: var(--white); overflow-y: auto; min-height: 0; position: relative; }
+.config-panel { flex: 2; background: var(--white); overflow-y: auto; min-height: 0; position: relative; display: flex; flex-direction: column; }
 .tabs { display: flex; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--white); z-index: 10; }
 .tab { flex: 1; padding: 14px 8px; font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; border: none; background: none; color: var(--ink-faint); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
 .tab.active { color: var(--ink); border-bottom-color: var(--ink); }
@@ -149,7 +149,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
     <div class="tabs">
       <button class="tab active" onclick="switchTab(this,'panel-design')">Design</button>
       <button class="tab" onclick="switchTab(this,'panel-materials')">Materials</button>
-      <button class="tab" onclick="switchTab(this,'panel-measurements')">Measurements</button>
+      <button class="tab" onclick="switchTab(this,'panel-measurements');measBuildFields()">Measurements</button>
     </div>
 
     <!-- DESIGN PANEL -->
@@ -399,29 +399,62 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 
     </div><!-- /panel-materials -->
 
-    <!-- MEASUREMENTS PANEL -->
-    <div class="config-body" id="panel-measurements" style="display:none;">
-      <div class="section">
-        <div class="section-label">Body Measurements</div>
-        <div class="sub-label">All measurements in centimetres</div>
-        <div class="measure-grid">
-          <div class="measure-row"><label>Chest</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="80" max="140"><span class="measure-unit">cm</span></div></div>
-          <div class="measure-row"><label>Waist</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="60" max="130"><span class="measure-unit">cm</span></div></div>
-          <div class="measure-row"><label>Hips</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="80" max="140"><span class="measure-unit">cm</span></div></div>
-          <div class="measure-row"><label>Shoulder</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="35" max="60"><span class="measure-unit">cm</span></div></div>
-          <div class="measure-row"><label>Sleeve Length</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="55" max="75"><span class="measure-unit">cm</span></div></div>
-          <div class="measure-row"><label>Back Length</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="65" max="90"><span class="measure-unit">cm</span></div></div>
-          <div class="measure-row"><label>Neck</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="30" max="55"><span class="measure-unit">cm</span></div></div>
-          <div class="measure-row"><label>Wrist</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="14" max="26"><span class="measure-unit">cm</span></div></div>
+    <!-- MEASUREMENTS PANEL — full body measurements -->
+    <div id="panel-measurements" style="display:none;flex:1;min-height:0;flex-direction:column;overflow:hidden;">
+
+      <!-- inner split: diagram 40% | form 60% -->
+      <div style="display:flex;flex:1;min-height:0;overflow:hidden;">
+
+        <!-- Diagram image panel -->
+        <div style="width:40%;flex-shrink:0;background:#ffffff;border-right:1px solid var(--border);display:flex;align-items:center;justify-content:center;padding:1.5rem;overflow:hidden;position:relative;">
+          <img id="meas-diag-img" src="https://raw.githubusercontent.com/toom-design/measurements/main/MEASUREMENTS_front.png" alt="" style="max-width:100%;max-height:100%;object-fit:contain;transition:opacity 0.25s,transform 0.25s;">
+          <div id="meas-diag-label" style="position:absolute;bottom:12px;left:0;right:0;text-align:center;font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);opacity:0;transition:opacity 0.25s;"></div>
+        </div>
+
+        <!-- Scrollable form -->
+        <div style="flex:1;min-width:0;overflow-y:auto;padding:24px 24px 16px;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink);margin-bottom:4px;">Body Measurements</div>
+          <div style="font-size:11px;color:var(--ink-light);letter-spacing:0.02em;margin-bottom:20px;">All measurements in centimetres</div>
+
+          <!-- Email -->
+          <div style="display:flex;align-items:center;border-bottom:1px solid var(--border);min-height:46px;gap:12px;">
+            <label style="flex:1;font-size:12px;font-weight:500;color:var(--ink-mid);">Email</label>
+            <input type="email" id="meas-email" placeholder="—" style="width:140px;flex-shrink:0;padding:7px 10px;background:var(--cream);border:1px solid var(--border);border-radius:2px;font-family:'Jost',sans-serif;font-size:12px;color:var(--ink);outline:none;text-align:right;">
+          </div>
+
+          <!-- Height -->
+          <div id="meas-wrap-height" style="display:flex;align-items:center;border-bottom:1px solid var(--border);min-height:46px;gap:12px;">
+            <label style="flex:1;font-size:12px;font-weight:500;color:var(--ink-mid);">Height</label>
+            <input type="number" id="meas-f-height" step="0.1" min="100" max="250" placeholder="—" onfocus="measFocusField('Height','height')" style="width:80px;flex-shrink:0;padding:7px 10px;background:var(--cream);border:1px solid var(--border);border-radius:2px;font-family:'Jost',sans-serif;font-size:13px;color:var(--ink);outline:none;text-align:right;">
+            <span style="font-size:11px;color:var(--ink-faint);width:20px;">cm</span>
+          </div>
+
+          <!-- Weight -->
+          <div id="meas-wrap-weight" style="display:flex;align-items:center;border-bottom:1px solid var(--border);min-height:46px;gap:12px;">
+            <label style="flex:1;font-size:12px;font-weight:500;color:var(--ink-mid);">Weight</label>
+            <input type="number" id="meas-f-weight" step="0.1" min="30" max="300" placeholder="—" onfocus="measFocusField('Weight',null)" style="width:80px;flex-shrink:0;padding:7px 10px;background:var(--cream);border:1px solid var(--border);border-radius:2px;font-family:'Jost',sans-serif;font-size:13px;color:var(--ink);outline:none;text-align:right;">
+            <span style="font-size:11px;color:var(--ink-faint);width:20px;">kg</span>
+          </div>
+
+          <!-- Volumetric section -->
+          <div style="font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);padding:16px 0 10px;border-bottom:1px solid var(--border);">Volumetric Measurements</div>
+          <div id="meas-grid-vol"></div>
+
+          <!-- Linear section -->
+          <div style="font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);padding:16px 0 10px;border-bottom:1px solid var(--border);">Linear Measurements</div>
+          <div id="meas-grid-lin"></div>
+
+          <div style="height:24px;"></div>
         </div>
       </div>
 
-      <div class="section" style="border-bottom:none;">
-        <button class="submit-btn" id="submit-btn" onclick="submitOrder()">
-          <span id="submit-label">Save Configuration</span>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
+      <!-- Save bar -->
+      <div style="flex-shrink:0;background:var(--white);border-top:1px solid var(--border);display:flex;">
+        <button onclick="submitMeasurements()" id="meas-submit-btn" style="flex:1;font-family:'Jost',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;padding:16px 24px;background:var(--ink);color:var(--white);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
+          <span id="meas-submit-label">Save Measurements</span>
+          <svg id="meas-submit-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <div id="meas-submit-spin" style="display:none;width:13px;height:13px;border:1.5px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.65s linear infinite;"></div>
         </button>
-        <div id="submit-feedback" style="display:none;margin-top:12px;padding:12px 14px;border-radius:4px;font-size:12px;letter-spacing:0.04em;text-align:center;"></div>
       </div>
 
     </div><!-- /panel-measurements -->
@@ -575,12 +608,19 @@ function manualZoom(d) { _z.zoom = Math.min(4, Math.max(0.5, _z.zoom + d)); appl
 function switchTab(btn, panelId) {
   document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
   btn.classList.add('active');
+  // Hide all panels (config-body + measurements panel)
   document.querySelectorAll('.config-body').forEach(function(p){ p.style.display='none'; });
-  document.getElementById(panelId).style.display = 'flex';
-  document.querySelector('.config-panel').scrollTo({ top:0, behavior:'smooth' });
+  document.getElementById('panel-measurements').style.display = 'none';
+  var panel = document.getElementById(panelId);
+  // Measurements panel uses flex column layout
+  panel.style.display = (panelId === 'panel-measurements') ? 'flex' : 'flex';
+  panel.style.flexDirection = (panelId === 'panel-measurements') ? 'column' : '';
+  if (panelId !== 'panel-measurements') {
+    document.querySelector('.config-panel').scrollTo({ top:0, behavior:'smooth' });
+  }
 }
 function goToMaterials()    { switchTab(document.querySelectorAll('.tab')[1], 'panel-materials'); }
-function goToMeasurements() { switchTab(document.querySelectorAll('.tab')[2], 'panel-measurements'); }
+function goToMeasurements() { switchTab(document.querySelectorAll('.tab')[2], 'panel-measurements'); measBuildFields(); }
 
 // ── View toggles ──────────────────────────────────────────────────
 function setView(v, btn) {
@@ -836,6 +876,220 @@ function showFeedback(msg, color) {
   el.style.color = color;
   el.style.border = '1px solid ' + color + '40';
   setTimeout(function(){ el.style.display = 'none'; }, 5000);
+}
+
+
+// ── MEASUREMENTS TAB — full field set ────────────────────────────
+var MEAS_RAW_BASE  = 'https://raw.githubusercontent.com/toom-design/measurements/main/';
+var MEAS_FRONT_IMG = MEAS_RAW_BASE + 'MEASUREMENTS_front.png';
+var MEAS_SHEETS    = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
+
+var MEAS_FIELD_IMG = {
+  'height':                  'MEASUREMENTS_Height.png',
+  'bustGirth':               'MEASUREMENTS_Bust girth.png',
+  'calfGirth':               'MEASUREMENTS_Calf girth.png',
+  'hipGirth':                'MEASUREMENTS_Hip girth.png',
+  'kneeGirth':               'MEASUREMENTS_Knee girth.png',
+  'neckBaseGirth':           'MEASUREMENTS_Neck base girth.png',
+  'pantWaist':               'MEASUREMENTS_Pant waist.png',
+  'upperBicepGirth':         'MEASUREMENTS_Upper bicep girth.png',
+  'waistGirth':              'MEASUREMENTS_Waist girth.png',
+  'wristGirth':              'MEASUREMENTS_Wrist girth.png',
+  'outerArmLength':          'MEASUREMENTS_Outer arm length.png',
+  'backNeckToWaist':         'MEASUREMENTS_Back neck point to waist.png',
+  'shoulderLength':          'MEASUREMENTS_Shoulder length.png',
+  'acrossBackShoulderWidth': 'MEASUREMENTS_Across back shoulder width.png',
+  'acrossBackWidth':         'MEASUREMENTS_Across back width.png',
+  'outsideLegLength':        'MEASUREMENTS_Side trousers length.png',
+  'upperArmLength':          'MEASUREMENTS_Upper arm length.png',
+  'waistToHipLength':        'MEASUREMENTS_Waist to hip length.png',
+  'shirtLength':             'MEASUREMENTS_Shirt length.png',
+  'rise':                    'MEASUREMENTS_Rise.png',
+};
+
+var MEAS_VOL = [
+  ['bustGirth','Bust girth'],['underBustGirth','Under bust girth'],['upperChestGirth','Upper chest girth'],
+  ['overarmGirth','Overarm girth'],['waistGirth','Waist girth'],['upperHipGirth','Upper hip girth'],
+  ['hipGirth','Hip girth'],['middleWaist','Middle waist'],['lowerWaist','Lower waist'],
+  ['pantWaist','Pant waist'],['upperArmGirth','Upper-arm girth'],['upperBicepGirth','Upper bicep girth'],
+  ['kneeGirth','Knee girth'],['ankleGirth','Ankle girth'],['wristGirth','Wrist girth'],
+  ['calfGirth','Calf girth'],['thighGirth','Thigh girth'],['thighBelowCrotch','Thigh 1 inch below crotch'],
+  ['midThighGirth','Mid-thigh girth'],['neckBaseGirth','Neck base girth'],['abdomenGirth','Abdomen girth'],
+  ['armscyeGirth','Armscye girth'],['neckGirth','Neck girth'],['neckGirthRelaxed','Neck girth relaxed'],
+  ['forearmGirthFlexed','Forearm girth flexed'],['elbowGirth','Elbow girth'],
+];
+var MEAS_LIN = [
+  ['neckToUpperHipLength','Neck to upper hip length'],['outsideLegLength','Outside leg length'],
+  ['outsideLegFromUpperHip','Outside leg from upper hip'],['insideLegLength','Inside leg length'],
+  ['insideLegToFloor','Inside leg to floor'],['insideCrotchToMidThigh','Inside crotch to mid-thigh'],
+  ['insideCrotchToKnee','Inside crotch to knee'],['insideCrotchToCalf','Inside crotch to calf'],
+  ['straightBodyRise','Straight body rise'],['outerArmLength','Outer arm length'],
+  ['underarmLength','Underarm length'],['backNeckToWrist','Back neck to wrist'],
+  ['backNeckToWristExtended','Back neck past wrist 1.5"'],['upperHipBreadth','Upper hip breadth'],
+  ['frontShoulderWidth','Front shoulder width'],['chestWidth','Chest width'],
+  ['shoulderLength','Shoulder length'],['shoulderSlope','Shoulder slope'],['neckBaseWidth','Neck base width'],
+  ['waistToHipLength','Waist to hip length'],['waistToKneeLength','Waist to knee length'],
+  ['abdomenToUpperKnee','Abdomen to upper knee'],['upperKneeToAnkle','Upper knee to ankle'],
+  ['backNeckToWaist','Back neck to waist'],['sideNeckToWaist','Side neck to waist'],
+  ['sideNeckToArmpit','Side neck to armpit'],['backNeckHeight','Back neck height'],
+  ['bustHeight','Bust height'],['hipHeight','Hip height'],['upperHipHeight','Upper hip height'],
+  ['kneeHeight','Knee height'],['outerAnkleHeight','Outer ankle height'],['waistHeight','Waist height'],
+  ['insideLegHeight','Inside leg height'],['acrossBackShoulderWidth','Across back shoulder width'],
+  ['acrossBackWidth','Across back width'],['totalCrotchLength','Total crotch length'],
+  ['waistBreadth','Waist breadth'],['neckLength','Neck length'],['upperArmLength','Upper arm length'],
+  ['lowerArmLength','Lower arm length'],['upperHipToHipLength','Upper hip to hip length'],
+  ['backShoulderWidth','Back shoulder width'],['rise','Rise'],
+  ['backNeckToHipLength','Back neck to hip length'],['torsoHeight','Torso height'],
+  ['frontCrotchLength','Front crotch length'],['backCrotchLength','Back crotch length'],
+  ['sideUpperHipToKnee','Side upper hip to knee'],['sideNeckToUpperHip','Side neck to upper hip'],
+  ['sideNeckToBust','Side neck to bust point'],['sideBustToWaist','Side bust to waist'],
+  ['sideWaistToAnkles','Side waist to ankles'],['sideNeckToKnee','Side neck to knee'],
+  ['waistDepth','Waist depth'],['axillaToWaist','Axilla to waist'],
+  ['neckSideToWaistBack','Neck side to waist back'],['neckFrontToWaist','Neck front to waist'],
+  ['inseamCrotchToAnkle','Inseam crotch to ankle'],['inseamCrotchToFloor','Inseam crotch to floor'],
+  ['jacketLength','Jacket length'],['sideNeckToThigh','Side neck to thigh'],
+  ['shirtLength','Shirt length'],['suitLength','Suit length'],['casualJacketLength','Casual jacket length'],
+  ['aroundHead','Around head'],['eyeToEye','Eye to eye'],['palm','Palm'],['footGirth','Foot girth'],
+];
+
+var _measDiagActive = MEAS_FRONT_IMG;
+
+function measFocusField(label, key) {
+  var img = document.getElementById('meas-diag-img');
+  var lbl = document.getElementById('meas-diag-label');
+  if (!img) return;
+  var url = (key && MEAS_FIELD_IMG[key])
+    ? MEAS_RAW_BASE + encodeURIComponent(MEAS_FIELD_IMG[key])
+    : MEAS_FRONT_IMG;
+  if (url === _measDiagActive) return;
+  _measDiagActive = url;
+  img.style.opacity = '0';
+  img.style.transform = 'scale(0.97)';
+  setTimeout(function() {
+    img.onload = function() {
+      img.style.opacity = '1';
+      img.style.transform = 'scale(1)';
+      if (lbl) { lbl.textContent = label || ''; lbl.style.opacity = label ? '1' : '0'; }
+    };
+    img.onerror = function() { img.src = MEAS_FRONT_IMG; _measDiagActive = MEAS_FRONT_IMG; };
+    img.src = url;
+  }, 200);
+}
+
+var _measFieldsBuilt = false;
+function measBuildFields() {
+  if (_measFieldsBuilt) return;
+  _measFieldsBuilt = true;
+  var gv = document.getElementById('meas-grid-vol');
+  var gl = document.getElementById('meas-grid-lin');
+  MEAS_VOL.forEach(function(f) { gv.appendChild(measMakeRow(f[0], f[1])); });
+  MEAS_LIN.forEach(function(f) { gl.appendChild(measMakeRow(f[0], f[1])); });
+
+  // Pre-fill from Firebase user if available
+  measTryPrefill();
+}
+
+function measMakeRow(key, label) {
+  var row = document.createElement('div');
+  row.style.cssText = 'display:flex;align-items:center;border-bottom:1px solid rgba(26,25,22,0.10);min-height:46px;gap:12px;';
+  row.dataset.key = key;
+
+  var lbl = document.createElement('label');
+  lbl.style.cssText = 'flex:1;font-size:12px;font-weight:500;color:var(--ink-mid);cursor:default;';
+  lbl.setAttribute('for', 'meas-f-' + key);
+  lbl.textContent = label;
+  row.appendChild(lbl);
+
+  var inp = document.createElement('input');
+  inp.type = 'number'; inp.id = 'meas-f-' + key; inp.step = '0.1'; inp.min = '0'; inp.max = '999';
+  inp.placeholder = '—';
+  inp.style.cssText = 'width:80px;flex-shrink:0;padding:7px 10px;background:var(--cream);border:1px solid rgba(26,25,22,0.12);border-radius:2px;font-family:'Jost',sans-serif;font-size:13px;color:var(--ink);outline:none;text-align:right;-webkit-appearance:none;';
+  inp.addEventListener('focus', function() { measFocusField(label, key); });
+  inp.addEventListener('focus', function() { this.style.borderColor = 'var(--ink)'; this.style.background = 'var(--white)'; });
+  inp.addEventListener('blur',  function() { this.style.borderColor = ''; this.style.background = 'var(--cream)'; });
+  row.appendChild(inp);
+
+  var unit = document.createElement('span');
+  unit.style.cssText = 'font-size:11px;color:var(--ink-faint);width:20px;flex-shrink:0;';
+  unit.textContent = 'cm';
+  row.appendChild(unit);
+
+  return row;
+}
+
+function measTryPrefill() {
+  // Pre-fill from measurement history via Sheets
+  var email = (window._fb && window._fb.auth && window._fb.auth.currentUser)
+    ? window._fb.auth.currentUser.email : '';
+  if (!email) return;
+  document.getElementById('meas-email').value = email;
+  var cbName = '__ttMeasPrefill_' + Date.now();
+  var payload = encodeURIComponent(JSON.stringify({ action: 'getMeasurements', email: email }));
+  var url = MEAS_SHEETS + '?action=getMeasurements&payload=' + payload + '&callback=' + cbName;
+  var script = document.createElement('script');
+  var timer = setTimeout(function() { cleanup(); }, 8000);
+  function cleanup() { clearTimeout(timer); delete window[cbName]; if (script.parentNode) document.body.removeChild(script); }
+  window[cbName] = function(res) {
+    cleanup();
+    if (res && res.success && res.records && res.records[0]) {
+      var rec = res.records[0];
+      var heightEl = document.getElementById('meas-f-height');
+      var weightEl = document.getElementById('meas-f-weight');
+      var hVal = rec['Height [CM]'] || rec['height'] || '';
+      var wVal = rec['Weight [KG]'] || rec['weight'] || '';
+      if (heightEl && hVal && hVal !== '0') heightEl.value = parseFloat(hVal);
+      if (weightEl && wVal && wVal !== '0') weightEl.value = parseFloat(wVal);
+      Object.keys(rec).forEach(function(k) {
+        var v = rec[k]; if (!v || v === '0' || v === '0.0') return;
+        var el = document.getElementById('meas-f-' + k);
+        if (el && el.type === 'number') { var n = parseFloat(v); if (!isNaN(n) && n > 0) el.value = n; }
+      });
+    }
+  };
+  script.onerror = function() { cleanup(); };
+  script.src = url;
+  document.body.appendChild(script);
+}
+
+function submitMeasurements() {
+  var btn   = document.getElementById('meas-submit-btn');
+  var label = document.getElementById('meas-submit-label');
+  var arrow = document.getElementById('meas-submit-arrow');
+  var spin  = document.getElementById('meas-submit-spin');
+  btn.disabled = true; label.textContent = 'Saving…'; if (arrow) arrow.style.display = 'none'; if (spin) spin.style.display = '';
+
+  var email = (document.getElementById('meas-email') || {}).value || '';
+  var data = { garment: 'suit', dateTime: new Date().toLocaleString() };
+  // height + weight
+  var hEl = document.getElementById('meas-f-height'); if (hEl && hEl.value) data['height'] = hEl.value;
+  var wEl = document.getElementById('meas-f-weight'); if (wEl && wEl.value) data['weight'] = wEl.value;
+  // all other fields
+  MEAS_VOL.concat(MEAS_LIN).forEach(function(f) {
+    var el = document.getElementById('meas-f-' + f[0]);
+    if (el && el.value) data[f[0]] = el.value;
+  });
+
+  fetch(MEAS_SHEETS, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'saveMeasurement', email: email, data: data })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    if (res && res.success) {
+      label.textContent = 'Saved!';
+      setTimeout(function() {
+        label.textContent = 'Save Measurements';
+        btn.disabled = false; if (arrow) arrow.style.display = ''; if (spin) spin.style.display = 'none';
+      }, 2000);
+    } else {
+      label.textContent = 'Save Measurements';
+      btn.disabled = false; if (arrow) arrow.style.display = ''; if (spin) spin.style.display = 'none';
+    }
+  })
+  .catch(function() {
+    label.textContent = 'Save Measurements';
+    btn.disabled = false; if (arrow) arrow.style.display = ''; if (spin) spin.style.display = 'none';
+  });
 }
 
 // ── Init ──────────────────────────────────────────────────────────
