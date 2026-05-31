@@ -741,7 +741,7 @@ function collectConfig() {
   };
 }
 
-// ── submitOrder — JSONP GET with btoa encoding (avoids encodeURIComponent issues) ──
+// ── submitOrder — JSONP, payload sent as base64 to avoid any URI encoding errors ──
 function submitOrder() {
   var btn   = document.getElementById('submit-btn');
   var label = document.getElementById('submit-label');
@@ -752,16 +752,18 @@ function submitOrder() {
 
   try {
     var cfg = collectConfig();
-    // Sanitize all values to plain ASCII-safe strings
+    // Sanitize all values to strings
     Object.keys(cfg).forEach(function(k) {
       if (cfg[k] === undefined || cfg[k] === null) cfg[k] = '';
-      // Convert to string and strip any non-BMP or surrogate characters
-      cfg[k] = String(cfg[k]).replace(/[\uD800-\uDFFF]/g, '');
+      cfg[k] = String(cfg[k]);
     });
 
+    // Send payload the exact same way the shirt does — plain encodeURIComponent of JSON
+    // action goes inside the payload object so doGet picks it up via payload.action
+    cfg['action'] = 'saveTrousers';
     var json    = JSON.stringify(cfg);
     var payload = encodeURIComponent(json);
-    var url     = SHEET_URL + '?action=saveTrousers&payload=' + payload + '&callback=' + cbName;
+    var url     = SHEET_URL + '?payload=' + payload + '&callback=' + cbName;
 
     var script  = document.createElement('script');
     var timer   = setTimeout(function() {
@@ -948,7 +950,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.6</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.8</div>
 
 </body>
 </html>
