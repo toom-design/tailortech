@@ -18,10 +18,11 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);-web
 button{cursor:pointer;font-family:inherit}
 
 /* ── Nav — fixed top ── */
-.nav{height:52px;flex-shrink:0;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;z-index:100;position:relative;}
-.nav-brand{font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);text-decoration:none;margin-right:auto}
-.nav-btn{font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;padding:7px 16px;border:1px solid var(--border-mid);border-radius:2px;background:transparent;color:var(--ink);cursor:pointer;text-decoration:none}
-.nav-avatar{width:32px;height:32px;border-radius:50%;background:var(--ink);color:var(--white);font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;border:none;cursor:pointer;padding:0}
+.nav{height:52px;flex-shrink:0;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:16px;z-index:100;position:relative;}
+.nav-brand{font-size:12px;font-weight:600;letter-spacing:0.20em;text-transform:uppercase;color:var(--ink);text-decoration:none;margin-right:auto}
+.nav-btn{font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;padding:7px 16px;border:1px solid var(--border-mid);border-radius:2px;background:transparent;color:var(--ink-mid);cursor:pointer;transition:all 0.15s;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.nav-btn:hover{background:var(--cream-mid);color:var(--ink)}
+.nav-avatar{width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--white);font-size:11px;font-weight:600;letter-spacing:0;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;border:none;padding:0;cursor:pointer;-webkit-appearance:none}
 .nav-avatar img{width:100%;height:100%;object-fit:cover}
 
 /* ── Form layout — fills remaining height ── */
@@ -118,28 +119,30 @@ button{cursor:pointer;font-family:inherit}
 <div id="toast"></div>
 
 <!-- Nav -->
-<nav class="nav">
+<nav class="nav" style="position:relative;">
   <a class="nav-brand" href="https://tailortech.toom.design/">TailorTech</a>
   <button class="nav-avatar" id="nav-av" type="button" onclick="toggleDropdown(event)" style="display:none"></button>
   <a class="nav-btn" id="nav-login" href="#" onclick="goToAuth(); return false;">Log In</a>
   <button class="nav-btn" id="nav-signout" onclick="doSignOut()" style="display:none">Sign out</button>
 
   <div id="nav-dd" style="display:none;position:absolute;top:52px;right:0;width:260px;background:#FAFAF8;border:1px solid rgba(26,25,22,0.20);border-radius:2px;box-shadow:0 12px 40px rgba(26,25,22,0.16);padding:20px;z-index:9999;font-family:'Jost',sans-serif;">
+    <!-- Avatar + Name + Email -->
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
       <div id="dd-av" style="width:40px;height:40px;border-radius:50%;background:#1A1916;color:#FAFAF8;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"></div>
       <div>
-        <div id="dd-name" style="font-size:13px;font-weight:600;color:#1A1916;line-height:1.3;"></div>
-        <div id="dd-email-sub" style="font-size:11px;color:#8A8880;letter-spacing:0.02em;margin-top:1px;"></div>
+        <div id="dd-name" style="font-size:13px;font-weight:600;color:#1A1916;margin-bottom:2px;">—</div>
+        <div id="dd-email-sub" style="font-size:11px;color:#8A8880;word-break:break-all;"></div>
       </div>
     </div>
-    <div style="border-top:1px solid rgba(26,25,22,0.10);padding-top:12px;margin-bottom:12px;">
-      <div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#C0BDB8;margin-bottom:6px;">Person ID</div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <div id="dd-pid" style="font-size:13px;font-weight:500;color:#1A1916;flex:1;">—</div>
-        <button onclick="ddCopy('pid')" style="font-family:'Jost',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:4px 10px;border:1px solid rgba(26,25,22,0.20);border-radius:2px;background:transparent;color:#4A4844;cursor:pointer;">Copy</button>
-      </div>
+    <!-- Person ID -->
+    <div style="height:1px;background:rgba(26,25,22,0.10);margin-bottom:14px;"></div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#8A8880;margin-bottom:5px;">Person ID</div>
+      <div id="dd-pid" style="font-size:15px;font-weight:600;color:#1A1916;letter-spacing:0.04em;">—</div>
     </div>
-    <div style="border-top:1px solid rgba(26,25,22,0.10);padding-top:12px;">
+    <!-- Buttons stacked vertically -->
+    <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid rgba(26,25,22,0.10);padding-top:14px;">
+      <a href="https://tailortech.toom.design/dashboard" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:none;background:#1A1916;color:#FAFAF8;border-radius:2px;cursor:pointer;text-decoration:none;display:block;text-align:center;">My Dashboard</a>
       <button onclick="doSignOut()" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:1px solid rgba(138,48,48,0.30);background:transparent;color:#8a3030;border-radius:2px;cursor:pointer;width:100%;">Sign Out</button>
     </div>
   </div>
