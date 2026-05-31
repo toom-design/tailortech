@@ -746,11 +746,26 @@ function submitOrder() {
   var btn   = document.getElementById('submit-btn');
   var label = document.getElementById('submit-label');
   btn.disabled = true;
-  label.textContent = 'Saving…';
+  label.textContent = 'Saving...';
 
   var cbName  = '__ttSaveTrousers_' + Date.now();
-  var payload = encodeURIComponent(JSON.stringify(collectConfig()));
-  var url     = SHEET_URL + '?action=saveTrousers&payload=' + payload + '&callback=' + cbName;
+  var json, payload;
+  try {
+    // Sanitize: replace any undefined/null values with empty string
+    var cfg = collectConfig();
+    Object.keys(cfg).forEach(function(k) {
+      if (cfg[k] === undefined || cfg[k] === null) cfg[k] = '';
+      cfg[k] = String(cfg[k]);
+    });
+    json    = JSON.stringify(cfg);
+    payload = encodeURIComponent(json);
+  } catch(encErr) {
+    btn.disabled = false;
+    label.textContent = 'Save Configuration';
+    showFeedback('Could not encode data: ' + encErr.message, '#a05050');
+    return;
+  }
+  var url = SHEET_URL + '?action=saveTrousers&payload=' + payload + '&callback=' + cbName;
   var script  = document.createElement('script');
   var timer   = setTimeout(function() {
     cleanup();
@@ -930,7 +945,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.3</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.4</div>
 
 </body>
 </html>
