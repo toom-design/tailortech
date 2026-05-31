@@ -166,8 +166,8 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
       <div class="section">
         <div class="section-label">Fit</div>
         <div class="pill-group">
-          <button class="pill selected" onclick="selectPillInGroup(this)">Regular</button>
-          <button class="pill"          onclick="selectPillInGroup(this)">Comfort</button>
+          <button class="pill selected" onclick="selectFit(this)">Regular</button>
+          <button class="pill"          onclick="selectFit(this)">Comfort</button>
         </div>
       </div>
 
@@ -636,6 +636,11 @@ function inputVal(label) {
 }
 
 // ── Design selection handlers ─────────────────────────────────────
+function selectFit(btn) {
+  selectPillInGroup(btn);
+  goFront(); updatePreview();
+}
+
 function selectClosure(btn, type, btnVal) {
   // Deselect both SB and DB pill groups
   document.querySelectorAll('#closure-sb .pill, #closure-db .pill').forEach(function(p){ p.classList.remove('selected'); });
@@ -647,7 +652,7 @@ function selectClosure(btn, type, btnVal) {
 function selectLapel(btn, val) {
   selectPillInGroup(btn);
   state.lapel = val;
-  goFront(); updatePreview(); zoomToRegion(3.0, 0.5, 0.3);
+  goFront(); updatePreview(); zoomToRegion(3.0, 0.5, 0.5);
 }
 function selectFrontPocket(btn, val) {
   selectPillInGroup(btn);
@@ -662,7 +667,7 @@ function selectTicketPocket(btn, val) {
 function selectChestPocket(btn, show) {
   selectPillInGroup(btn);
   state.chestpocket = show;
-  goFront(); updatePreview(); zoomToRegion(3.0, 0.65, 0.25);
+  goFront(); updatePreview(); zoomToRegion(3.0, 0.65, 0.45);
 }
 function selectInsidePocket(btn, val) {
   selectPillInGroup(btn);
@@ -936,7 +941,7 @@ function getClientJSONP(email, uid, callback) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.1.5</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.1.6</div>
 
 </body>
 </html>
