@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suit Configurator — TailorTech</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #F0EDE6; --cream-dark: #E5E1D8; --cream-mid: #EBE7DF;
+  --ink: #1A1916; --ink-mid: #4A4844; --ink-light: #8A8880; --ink-faint: #C0BDB8;
+  --white: #FAFAF8; --border: rgba(26,25,22,0.12); --border-mid: rgba(26,25,22,0.22);
+}
+body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+.app { display: flex; width: 100%; flex: 1; overflow: hidden; min-height: 0; }
+.preview-panel { flex: 3; background: #ffffff; border-right: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.view-toggle { display: flex; padding: 16px 20px 0; justify-content: center; flex-shrink: 0; }
+.view-btn { font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; padding: 8px 28px; border: 1px solid var(--border-mid); background: transparent; color: var(--ink-light); cursor: pointer; transition: all 0.2s; }
+.view-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.view-btn:first-child { border-radius: 2px 0 0 2px; border-right: none; }
+.view-btn:last-child  { border-radius: 0 2px 2px 0; }
+.avatar-stage { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.layer-stack { position: relative; width: 380px; height: 580px; flex-shrink: 0; transform-origin: center center; transition: transform 0.6s cubic-bezier(0.4,0,0.2,1); }
+.layer-stack .layer { position: absolute; inset: 0; }
+.layer-stack .layer img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.zoom-btns { position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 4px; z-index: 50; }
+.zoom-btn { width: 28px; height: 28px; border: 1px solid var(--border-mid); background: var(--white); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; color: var(--ink-mid); }
+.view-bar { flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 12px 20px; gap: 0; border-top: 1px solid var(--border); }
+.view-bar-btn { font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; padding: 7px 28px; border: 1px solid var(--border-mid); background: transparent; color: var(--ink-light); cursor: pointer; transition: all 0.2s; }
+.view-bar-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.view-bar-btn:first-child { border-radius: 2px 0 0 2px; border-right: none; }
+.view-bar-btn:last-child  { border-radius: 0 2px 2px 0; }
+.config-panel { flex: 2; background: var(--white); overflow-y: auto; min-height: 0; position: relative; display: flex; flex-direction: column; }
+.tabs { display: flex; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--white); z-index: 10; }
+.tab { flex: 1; padding: 14px 8px; font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; border: none; background: none; color: var(--ink-faint); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+.tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+.config-body { padding: 28px 28px 48px; display: flex; flex-direction: column; }
+.section { padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+.section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); margin-bottom: 14px; }
+.sub-label { font-size: 11px; color: var(--ink-light); margin-bottom: 10px; letter-spacing: 0.02em; }
+.pill-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 500; padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 50px; background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s; }
+.pill:hover { border-color: var(--ink); color: var(--ink); }
+.pill.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.icon-card-group { display: flex; flex-wrap: wrap; gap: 10px; }
+.icon-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 14px 12px 12px; min-width: 88px; max-width: 110px; background: var(--white); border: 1.5px solid var(--border-mid); border-radius: 4px; cursor: pointer; transition: border-color 0.15s, background 0.15s; font-family: 'Jost', sans-serif; }
+.icon-card:hover { background: var(--cream-mid); }
+.icon-card.selected { border-color: var(--ink); background: var(--white); }
+.icon-card.selected::after { content: '✓'; position: absolute; top: 7px; right: 8px; width: 18px; height: 18px; background: var(--ink); color: var(--white); border-radius: 50%; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; line-height: 18px; text-align: center; }
+.icon-card-label { font-size: 10px; font-weight: 500; color: var(--ink); text-align: center; line-height: 1.4; letter-spacing: 0.02em; }
+.fabric-search-row { margin-bottom: 12px; }
+.fabric-search { width: 100%; padding: 8px 12px; font-family: 'Jost', sans-serif; font-size: 13px; border: 1px solid var(--border-mid); border-radius: 2px; background: var(--white); color: var(--ink); outline: none; }
+.fabric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.fabric-card { border: 1px solid var(--border); border-radius: 2px; padding: 8px 6px; text-align: center; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.fabric-card:hover { border-color: var(--ink-mid); }
+.fabric-card.selected { border-color: var(--ink); border-width: 2px; }
+.swatch { width: 40px; height: 40px; border-radius: 2px; }
+.fname { font-size: 10px; font-weight: 500; color: var(--ink-mid); letter-spacing: 0.02em; }
+.fcode { font-size: 9px; color: var(--ink-faint); letter-spacing: 0.04em; }
+.fabric-card.selected .fname { color: var(--ink); font-weight: 600; }
+.btn-material-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.btn-material { font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500; padding: 8px 14px; border: 1px solid var(--border-mid); border-radius: 2px; background: transparent; color: var(--ink-mid); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; transition: all 0.15s; }
+.btn-material.selected { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+.bm-price { font-size: 9px; color: var(--ink-faint); }
+.measure-grid { display: flex; flex-direction: column; gap: 10px; }
+.measure-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.measure-row label { font-size: 12px; font-weight: 500; color: var(--ink-mid); min-width: 110px; letter-spacing: 0.02em; }
+.measure-input-wrap { display: flex; align-items: center; gap: 6px; }
+.measure-input { width: 80px; padding: 7px 10px; font-family: 'Jost', sans-serif; font-size: 13px; border: 1px solid var(--border-mid); border-radius: 2px; background: var(--white); color: var(--ink); text-align: right; outline: none; }
+.measure-unit { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.04em; width: 20px; }
+.submit-btn { width: 100%; padding: 14px 24px; font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; background: var(--ink); color: var(--white); border: none; border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; }
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.nav { height: 52px; background: var(--white); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 28px; gap: 16px; position: sticky; top: 0; z-index: 100; }
+.nav-brand { font-size: 12px; font-weight: 600; letter-spacing: 0.20em; text-transform: uppercase; color: var(--ink); margin-right: auto; text-decoration: none; }
+.nav-btn { font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.10em; text-transform: uppercase; padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 2px; background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+.nav-btn:hover { background: var(--cream-mid); color: var(--ink); }
+.nav-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: var(--white); font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; border: none; padding: 0; cursor: pointer; -webkit-appearance: none; }
+.nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<nav class="nav" style="position:relative;">
+  <a class="nav-brand" href="https://tailortech.toom.design/">TailorTech</a>
+  <button class="nav-avatar" id="nav-av" type="button" onclick="toggleDropdown(event)" style="display:none"></button>
+  <a class="nav-btn" id="nav-login" href="#" onclick="goToAuth(); return false;">Log In</a>
+  <button class="nav-btn" id="nav-signout" onclick="doSignOut()" style="display:none">Sign out</button>
+  <div id="nav-dd" style="display:none;position:absolute;top:52px;right:0;width:260px;background:#FAFAF8;border:1px solid rgba(26,25,22,0.20);border-radius:2px;box-shadow:0 12px 40px rgba(26,25,22,0.16);padding:20px;z-index:9999;font-family:'Jost',sans-serif;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div id="dd-av" style="width:40px;height:40px;border-radius:50%;background:#1A1916;color:#FAFAF8;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"></div>
+      <div><div id="dd-name" style="font-size:13px;font-weight:600;color:#1A1916;margin-bottom:2px;">—</div><div id="dd-email-sub" style="font-size:11px;color:#8A8880;word-break:break-all;"></div></div>
+    </div>
+    <div style="height:1px;background:rgba(26,25,22,0.10);margin-bottom:14px;"></div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#8A8880;margin-bottom:5px;">Person ID</div>
+      <div id="dd-pid" style="font-size:15px;font-weight:600;color:#1A1916;letter-spacing:0.04em;">—</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid rgba(26,25,22,0.10);padding-top:14px;">
+      <a href="https://tailortech.toom.design/dashboard.html" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:none;background:#1A1916;color:#FAFAF8;border-radius:2px;cursor:pointer;text-decoration:none;display:block;text-align:center;">My Dashboard</a>
+      <button onclick="doSignOut()" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:1px solid rgba(138,48,48,0.30);background:transparent;color:#8a3030;border-radius:2px;cursor:pointer;width:100%;">Sign Out</button>
+    </div>
+  </div>
+</nav>
+
+<div class="app">
+
+  <!-- PREVIEW PANEL -->
+  <div class="preview-panel">
+    <div class="view-toggle">
+      <button class="view-btn active" onclick="setView('technical',this)">Technical</button>
+      <button class="view-btn" onclick="setView('3d',this)">3D</button>
+    </div>
+    <div class="avatar-stage">
+      <div class="zoom-btns">
+        <button class="zoom-btn" onclick="manualZoom(0.25)">+</button>
+        <button class="zoom-btn" onclick="manualZoom(-0.25)">−</button>
+        <button class="zoom-btn" onclick="resetZoom()">↻</button>
+      </div>
+      <div id="stage-viewport" style="position:relative;width:100%;height:100%;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+        <div class="layer-stack" id="layer-stack">
+          <div id="loading-overlay" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20;background:#fff;transition:opacity 0.5s;">
+            <div style="width:22px;height:22px;border:2px solid #C0BDB8;border-top-color:#1A1916;border-radius:50%;animation:spin 0.7s linear infinite;"></div>
+          </div>
+          <!-- Layer order: base → closure → lapel → front pocket → ticket pocket → inside pockets → sleeve buttons (back) → back vent (back) -->
+          <div class="layer"><img id="img-base"          src="" alt=""></div>
+          <div class="layer"><img id="img-closure"       src="" alt=""></div>
+          <div class="layer"><img id="img-lapel"         src="" alt=""></div>
+          <div class="layer"><img id="img-frontpocket"   src="" alt=""></div>
+          <div class="layer"><img id="img-ticketpocket"  src="" alt=""></div>
+          <div class="layer"><img id="img-chestpocket"   src="" alt=""></div>
+          <div class="layer"><img id="img-insidepocket"  src="" alt=""></div>
+          <div class="layer"><img id="img-sleevebtn"     src="" alt=""></div>
+          <div class="layer"><img id="img-vent"          src="" alt=""></div>
+        </div>
+      </div>
+    </div>
+    <div class="view-bar">
+      <button class="view-bar-btn active" onclick="setFrontBack('front',this)">Front</button>
+      <button class="view-bar-btn" onclick="setFrontBack('back',this)">Back</button>
+      <button class="view-bar-btn" id="btn-inside" onclick="setFrontBack('inside',this)">Inside</button>
+    </div>
+  </div>
+
+  <!-- CONFIG PANEL -->
+  <div class="config-panel">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab(this,'panel-design')">Design</button>
+      <button class="tab" onclick="switchTab(this,'panel-materials')">Materials</button>
+      <button class="tab" onclick="switchTab(this,'panel-measurements');measBuildFields()">Measurements</button>
+    </div>
+
+    <!-- DESIGN PANEL -->
+    <div class="config-body" id="panel-design">
+
+      <div class="section">
+        <div class="section-label">Gender</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPillInGroup(this)">Male</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">Female</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Fit</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectFit(this)">Regular</button>
+          <button class="pill"          onclick="selectFit(this)">Comfort</button>
+        </div>
+      </div>
+
+      <!-- CLOSURE: single breasted uses SB_ prefix, double uses DB1/DB2/etc. -->
+      <div class="section">
+        <div class="section-label">Buttons</div>
+        <div class="sub-label">Single Breasted</div>
+        <div class="pill-group" id="closure-sb" style="margin-bottom:12px;">
+          <button class="pill selected" onclick="selectClosure(this,'SB','1 button')">1 Button</button>
+          <button class="pill"          onclick="selectClosure(this,'SB','2 buttons')">2 Buttons</button>
+        </div>
+        <div class="sub-label">Double Breasted</div>
+        <div class="pill-group" id="closure-db">
+          <button class="pill" onclick="selectClosure(this,'DB','2X1')">2×1</button>
+          <button class="pill" onclick="selectClosure(this,'DB','4X1')">4×1</button>
+          <button class="pill" onclick="selectClosure(this,'DB','6X1')">6×1</button>
+          <button class="pill" onclick="selectClosure(this,'DB','6X2')">6×2</button>
+        </div>
+      </div>
+
+      <!-- LAPEL: depends on SB vs DB prefix -->
+      <div class="section">
+        <div class="section-label">Lapel</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectLapel(this,'notch lapel')">Notch Lapel</button>
+          <button class="pill"          onclick="selectLapel(this,'peak lapel')">Peak Lapel</button>
+          <button class="pill"          onclick="selectLapel(this,'shawl lapel')">Shawl Lapel</button>
+        </div>
+      </div>
+
+      <!-- FRONT POCKETS -->
+      <div class="section">
+        <div class="section-label">Front Pockets</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectFrontPocket(this,'FRONT FLAP POCKET')">Flap</button>
+          <button class="pill"          onclick="selectFrontPocket(this,'FRONT JETTED POCKET')">Jetted</button>
+          <button class="pill"          onclick="selectFrontPocket(this,'FRONT PATCH POCKET')">Patch</button>
+        </div>
+      </div>
+
+      <!-- TICKET POCKET -->
+      <div class="section">
+        <div class="section-label">Ticket Pocket</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectTicketPocket(this,'none')">None</button>
+          <button class="pill"          onclick="selectTicketPocket(this,'TICKET FLAP POCKET')">Flap</button>
+          <button class="pill"          onclick="selectTicketPocket(this,'TICKET JETTED POCKET')">Jetted</button>
+        </div>
+      </div>
+
+      <!-- CHEST POCKET — shown on front as part of lapel layer, just config -->
+      <div class="section">
+        <div class="section-label">Chest Pocket</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectChestPocket(this, true)">Yes</button>
+          <button class="pill"          onclick="selectChestPocket(this, false)">None</button>
+        </div>
+      </div>
+
+      <!-- INSIDE POCKETS -->
+      <div class="section">
+        <div class="section-label">Inside Pockets</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectInsidePocket(this,'none')">None</button>
+          <button class="pill"          onclick="selectInsidePocket(this,'single')">Single</button>
+          <button class="pill"          onclick="selectInsidePocket(this,'double')">Double</button>
+        </div>
+      </div>
+
+      <!-- BACK VENT -->
+      <div class="section">
+        <div class="section-label">Back Vent</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectVent(this,'none vent')">No Vent</button>
+          <button class="pill"          onclick="selectVent(this,'single vent')">Single Vent</button>
+          <button class="pill"          onclick="selectVent(this,'double vent')">Double Vent</button>
+        </div>
+      </div>
+
+      <!-- SLEEVE BUTTONS -->
+      <div class="section">
+        <div class="section-label">Sleeve Buttons</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectSleeveButtons(this,'3')">3</button>
+          <button class="pill"          onclick="selectSleeveButtons(this,'4')">4</button>
+          <button class="pill"          onclick="selectSleeveButtons(this,'5')">5</button>
+        </div>
+      </div>
+
+      <div class="section" style="border-bottom:none;">
+        <button onclick="goToMaterials()" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;width:100%;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
+          Continue to Materials
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
+        </button>
+      </div>
+
+    </div><!-- /panel-design -->
+
+    <!-- MATERIALS PANEL -->
+    <div class="config-body" id="panel-materials" style="display:none;">
+
+      <div class="section">
+        <div class="section-label">Main Fabric</div>
+        <div class="fabric-search-row">
+          <input class="fabric-search" type="text" placeholder="Search fabrics…" oninput="filterFabrics(this.value,'main')">
+        </div>
+        <div class="fabric-grid" id="fabric-main-grid">
+          <div class="fabric-card selected" onclick="selectFabric(this,'main','Wool Charcoal','WO-001','Charcoal','100% Wool')">
+            <div class="swatch" style="background:#5a5a5a;"></div>
+            <span class="fname">Wool Charcoal</span><span class="fcode">WO-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Wool Navy','WO-002','Navy','100% Wool')">
+            <div class="swatch" style="background:#1e2d4a;"></div>
+            <span class="fname">Wool Navy</span><span class="fcode">WO-002</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Wool Black','WO-003','Black','100% Wool')">
+            <div class="swatch" style="background:#1a1a1a;"></div>
+            <span class="fname">Wool Black</span><span class="fcode">WO-003</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Wool Camel','WO-004','Camel','100% Wool')">
+            <div class="swatch" style="background:#c8a87a;"></div>
+            <span class="fname">Wool Camel</span><span class="fcode">WO-004</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Tweed Grey','TW-001','Grey','70% Wool 30% Silk')">
+            <div class="swatch" style="background:#9a9690;background-image:repeating-linear-gradient(45deg,rgba(0,0,0,0.08) 0px,rgba(0,0,0,0.08) 1px,transparent 1px,transparent 4px);"></div>
+            <span class="fname">Tweed Grey</span><span class="fcode">TW-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Tweed Brown','TW-002','Brown','70% Wool 30% Silk')">
+            <div class="swatch" style="background:#7a6858;background-image:repeating-linear-gradient(45deg,rgba(0,0,0,0.08) 0px,rgba(0,0,0,0.08) 1px,transparent 1px,transparent 4px);"></div>
+            <span class="fname">Tweed Brown</span><span class="fcode">TW-002</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Pinstripe Navy','PS-001','Navy','100% Wool')">
+            <div class="swatch" style="background:#1e2d4a;background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.15) 0px,rgba(255,255,255,0.15) 1px,transparent 1px,transparent 8px);"></div>
+            <span class="fname">Pinstripe Navy</span><span class="fcode">PS-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Herringbone','HB-001','Grey','100% Wool')">
+            <div class="swatch" style="background:#a0a0a0;background-image:repeating-linear-gradient(45deg,rgba(0,0,0,0.1) 0px,rgba(0,0,0,0.1) 1px,transparent 1px,transparent 4px);"></div>
+            <span class="fname">Herringbone</span><span class="fcode">HB-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Flannel Grey','FL-001','Grey','100% Wool')">
+            <div class="swatch" style="background:#888080;"></div>
+            <span class="fname">Flannel Grey</span><span class="fcode">FL-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Linen Beige','LI-001','Beige','100% Linen')">
+            <div class="swatch" style="background:#d8cfc0;"></div>
+            <span class="fname">Linen Beige</span><span class="fcode">LI-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Linen Olive','LI-002','Olive','100% Linen')">
+            <div class="swatch" style="background:#8a9070;"></div>
+            <span class="fname">Linen Olive</span><span class="fcode">LI-002</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'main','Velvet Black','VL-001','Black','100% Silk Velvet')">
+            <div class="swatch" style="background:#0a0a0a;"></div>
+            <span class="fname">Velvet Black</span><span class="fcode">VL-001</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTRAST FABRIC (lapels) -->
+      <div class="section">
+        <div class="section-label">Contrast Fabric</div>
+        <div class="sub-label">Used for lapels</div>
+        <div class="comp-toggle pill-group" style="margin-bottom:14px;">
+          <button class="pill selected" onclick="toggleContrast(this,'same')">Same as Main</button>
+          <button class="pill"          onclick="toggleContrast(this,'custom')">Custom</button>
+        </div>
+        <div class="fabric-grid" id="fabric-contrast-grid" style="opacity:0.35;pointer-events:none;">
+          <div class="fabric-card selected" onclick="selectFabric(this,'contrast','Wool Charcoal','WO-001','Charcoal','100% Wool')">
+            <div class="swatch" style="background:#5a5a5a;"></div>
+            <span class="fname">Wool Charcoal</span><span class="fcode">WO-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'contrast','Wool Navy','WO-002','Navy','100% Wool')">
+            <div class="swatch" style="background:#1e2d4a;"></div>
+            <span class="fname">Wool Navy</span><span class="fcode">WO-002</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'contrast','Velvet Black','VL-001','Black','100% Silk Velvet')">
+            <div class="swatch" style="background:#0a0a0a;"></div>
+            <span class="fname">Velvet Black</span><span class="fcode">VL-001</span>
+          </div>
+          <div class="fabric-card" onclick="selectFabric(this,'contrast','Silk Ivory','SI-001','Ivory','100% Silk')">
+            <div class="swatch" style="background:#f5f0e8;border:1px solid #e0d8cc;"></div>
+            <span class="fname">Silk Ivory</span><span class="fcode">SI-001</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONSTRUCTION -->
+      <div class="section">
+        <div class="section-label">Construction</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPillInGroup(this)">Half Canvas</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">Full Canvas</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">Fused</button>
+        </div>
+      </div>
+
+      <!-- LINING -->
+      <div class="section">
+        <div class="section-label">Lining</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPillInGroup(this)">Full Lining</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">Half Lining</button>
+          <button class="pill"          onclick="selectPillInGroup(this)">Quarter Lining</button>
+        </div>
+      </div>
+
+      <!-- BUTTONS -->
+      <div class="section">
+        <div class="section-label">Buttons</div>
+        <div class="btn-material-row">
+          <button class="btn-material selected" onclick="selectBtnMaterial(this)">
+            <span class="bm-name">Standard</span><span class="bm-price">Included</span>
+          </button>
+          <button class="btn-material" onclick="selectBtnMaterial(this)">
+            <span class="bm-name">Horn</span><span class="bm-price">+€8.00</span>
+          </button>
+          <button class="btn-material" onclick="selectBtnMaterial(this)">
+            <span class="bm-name">Metal</span><span class="bm-price">+€12.00</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="section" style="border-bottom:none;">
+        <button onclick="goToMeasurements()" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;width:100%;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
+          Continue to Measurements
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
+        </button>
+      </div>
+
+    </div><!-- /panel-materials -->
+
+    <!-- MEASUREMENTS PANEL — full body measurements -->
+    <div id="panel-measurements" style="display:none;flex:1;min-height:0;flex-direction:column;overflow:hidden;">
+
+      <!-- inner split: diagram 40% | form 60% -->
+      <div style="display:flex;flex:1;min-height:0;overflow:hidden;">
+
+        <!-- Diagram image panel -->
+        <div style="width:40%;flex-shrink:0;background:#ffffff;border-right:1px solid var(--border);display:flex;align-items:center;justify-content:center;padding:1.5rem;overflow:hidden;position:relative;">
+          <img id="meas-diag-img" src="https://raw.githubusercontent.com/toom-design/measurements/main/MEASUREMENTS_front.png" alt="" style="max-width:100%;max-height:100%;object-fit:contain;transition:opacity 0.25s,transform 0.25s;">
+          <div id="meas-diag-label" style="position:absolute;bottom:12px;left:0;right:0;text-align:center;font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);opacity:0;transition:opacity 0.25s;"></div>
+        </div>
+
+        <!-- Scrollable form -->
+        <div style="flex:1;min-width:0;overflow-y:auto;padding:24px 24px 16px;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink);margin-bottom:4px;">Body Measurements</div>
+          <div style="font-size:11px;color:var(--ink-light);letter-spacing:0.02em;margin-bottom:20px;">All measurements in centimetres</div>
+
+          <!-- Email -->
+          <div style="display:flex;align-items:center;border-bottom:1px solid var(--border);min-height:46px;gap:12px;">
+            <label style="flex:1;font-size:12px;font-weight:500;color:var(--ink-mid);">Email</label>
+            <input type="email" id="meas-email" placeholder="—" style="width:140px;flex-shrink:0;padding:7px 10px;background:var(--cream);border:1px solid var(--border);border-radius:2px;font-family:'Jost',sans-serif;font-size:12px;color:var(--ink);outline:none;text-align:right;">
+          </div>
+
+          <!-- Height -->
+          <div id="meas-wrap-height" style="display:flex;align-items:center;border-bottom:1px solid var(--border);min-height:46px;gap:12px;">
+            <label style="flex:1;font-size:12px;font-weight:500;color:var(--ink-mid);">Height</label>
+            <input type="number" id="meas-f-height" step="0.1" min="100" max="250" placeholder="—" onfocus="measFocusField('Height','height')" style="width:80px;flex-shrink:0;padding:7px 10px;background:var(--cream);border:1px solid var(--border);border-radius:2px;font-family:'Jost',sans-serif;font-size:13px;color:var(--ink);outline:none;text-align:right;">
+            <span style="font-size:11px;color:var(--ink-faint);width:20px;">cm</span>
+          </div>
+
+          <!-- Weight -->
+          <div id="meas-wrap-weight" style="display:flex;align-items:center;border-bottom:1px solid var(--border);min-height:46px;gap:12px;">
+            <label style="flex:1;font-size:12px;font-weight:500;color:var(--ink-mid);">Weight</label>
+            <input type="number" id="meas-f-weight" step="0.1" min="30" max="300" placeholder="—" onfocus="measFocusField('Weight',null)" style="width:80px;flex-shrink:0;padding:7px 10px;background:var(--cream);border:1px solid var(--border);border-radius:2px;font-family:'Jost',sans-serif;font-size:13px;color:var(--ink);outline:none;text-align:right;">
+            <span style="font-size:11px;color:var(--ink-faint);width:20px;">kg</span>
+          </div>
+
+          <!-- Volumetric section -->
+          <div style="font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);padding:16px 0 10px;border-bottom:1px solid var(--border);">Volumetric Measurements</div>
+          <div id="meas-grid-vol"></div>
+
+          <!-- Linear section -->
+          <div style="font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint);padding:16px 0 10px;border-bottom:1px solid var(--border);">Linear Measurements</div>
+          <div id="meas-grid-lin"></div>
+
+          <div style="height:24px;"></div>
+        </div>
+      </div>
+
+      <!-- Save bar -->
+      <div style="flex-shrink:0;background:var(--white);border-top:1px solid var(--border);display:flex;">
+        <button onclick="submitMeasurements()" id="meas-submit-btn" style="flex:1;font-family:'Jost',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;padding:16px 24px;background:var(--ink);color:var(--white);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
+          <span id="meas-submit-label">Save Measurements</span>
+          <svg id="meas-submit-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <div id="meas-submit-spin" style="display:none;width:13px;height:13px;border:1.5px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.65s linear infinite;"></div>
+        </button>
+      </div>
+
+    </div><!-- /panel-measurements -->
+
+  </div><!-- /config-panel -->
+</div><!-- /app -->
+
+<script>
+// ─────────────────────────────────────────────────────────────────
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
+const BASE      = 'https://raw.githubusercontent.com/toom-design/tailortech-suit_m/main/';
+
+// ── State ─────────────────────────────────────────────────────────
+// closureType: 'SB' or 'DB'
+// closureBtn:  '1 button' | '2 buttons' | '2X1' | '4X1' | '6X1' | '6X2'
+// lapel:       'notch lapel' | 'peak lapel' | 'shawl lapel'
+// frontpocket: 'FRONT FLAP POCKET' | 'FRONT JETTED POCKET' | 'FRONT PATCH POCKET'
+// ticketpocket:'none' | 'TICKET FLAP POCKET' | 'TICKET JETTED POCKET'
+// chestpocket: true | false
+// insidepocket:'none' | 'single' | 'double'
+// vent:        'none vent' | 'single vent' | 'double vent'
+// sleevebtn:   '3' | '4' | '5'
+// view:        'f' | 'b'
+const state = {
+  closureType: 'SB', closureBtn: '1 button',
+  lapel: 'notch lapel',
+  frontpocket: 'FRONT FLAP POCKET',
+  ticketpocket: 'none',
+  chestpocket: true,
+  insidepocket: 'none',
+  vent: 'none vent',
+  sleevebtn: '3',
+  view: 'f',
+};
+
+// ── URL builders — derived from exact GitHub filenames ────────────
+function enc(s) { return encodeURIComponent(s); }
+
+const urls = {
+  // Base: suit_m_live_SINGLE.png (SB) or suit_m_live_DOUBLE_2X1.png (DB)
+  base: function() {
+    if (state.closureType === 'SB') return BASE + enc('suit_m_live_SINGLE.png');
+    return BASE + enc('suit_m_live_DOUBLE_' + state.closureBtn + '.png');
+  },
+  // Closure buttons layer (SB only — 1 or 2 buttons)
+  closure: function() {
+    if (state.closureType === 'DB') return '';
+    // SB_1 button.png or SB_2 buttons.png
+    return BASE + enc('suit_m_live_SB_' + state.closureBtn + '.png');
+  },
+  // Lapel: suit_m_live_SB_notch lapel.png / DB1_notch lapel.png etc.
+  lapel: function() {
+    if (state.closureType === 'SB') {
+      return BASE + enc('suit_m_live_SB_' + state.lapel + '.png');
+    }
+    // DB prefix: DB1 for 2X1, DB2 for 4X1/6X1/6X2
+    var dbPfx = state.closureBtn === '6X2' ? 'DB2' : 'DB1';
+    return BASE + enc('suit_m_live_' + dbPfx + '_' + state.lapel + '.png');
+  },
+  // Chest pocket: suit_m_live_SB_chest pocket.png / DB1_chest pocket.png
+  chestpocket: function() {
+    if (!state.chestpocket) return '';
+    if (state.closureType === 'SB') return BASE + enc('suit_m_live_SB_chest pocket.png');
+    var dbPfx = state.closureBtn === '6X2' ? 'DB2' : 'DB1';
+    return BASE + enc('suit_m_live_' + dbPfx + '_chest pocket.png');
+  },
+  // Front pocket: suit_m_live_FRONT FLAP POCKET.png etc.
+  frontpocket: function() { return BASE + enc('suit_m_live_' + state.frontpocket + '.png'); },
+  // Ticket pocket
+  ticketpocket: function() {
+    if (state.ticketpocket === 'none') return '';
+    return BASE + enc('suit_m_live_' + state.ticketpocket + '.png');
+  },
+  // Inside pockets: suit_m_live_inside pockets none/single/double.png
+  insidepocket: function() { return BASE + enc('suit_m_live_inside pockets ' + state.insidepocket + '.png'); },
+  // Sleeve buttons (back view only): suit_m_live_sleeve buttons 3_b.png
+  sleevebtn: function() { return BASE + enc('suit_m_live_sleeve buttons ' + state.sleevebtn + '_b.png'); },
+  // Back vent: suit_m_live_BACK none vent.png / single vent / double vent
+  vent: function() { return BASE + enc('suit_m_live_BACK ' + state.vent + '.png'); },
+};
+
+// ── Image helper ──────────────────────────────────────────────────
+function setImg(id, url) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  if (!url) { el.style.opacity = '0'; return; }
+  el.style.opacity = '1';
+  if (el.src !== url) el.src = url;
+}
+
+// ── Update all layers ─────────────────────────────────────────────
+function updatePreview() {
+  if (state.view === 'i') {
+    // Inside view: inside pocket layer only — no base, no front, no back
+    setImg('img-base',         '');
+    setImg('img-closure',      '');
+    setImg('img-lapel',        '');
+    setImg('img-frontpocket',  '');
+    setImg('img-ticketpocket', '');
+    setImg('img-chestpocket',  '');
+    setImg('img-insidepocket', urls.insidepocket());
+    setImg('img-sleevebtn',    '');
+    setImg('img-vent',         '');
+  } else if (state.view === 'f') {
+    setImg('img-base',         urls.base());
+    setImg('img-closure',      urls.closure());
+    setImg('img-lapel',        urls.lapel());
+    setImg('img-frontpocket',  urls.frontpocket());
+    setImg('img-ticketpocket', urls.ticketpocket());
+    setImg('img-chestpocket',  urls.chestpocket());
+    setImg('img-insidepocket', '');
+    setImg('img-sleevebtn',    '');
+    setImg('img-vent',         '');
+  } else {
+    // Back view: vent + sleeve buttons
+    setImg('img-base',         urls.vent());
+    setImg('img-closure',      '');
+    setImg('img-lapel',        '');
+    setImg('img-frontpocket',  '');
+    setImg('img-ticketpocket', '');
+    setImg('img-chestpocket',  '');
+    setImg('img-insidepocket', '');
+    setImg('img-sleevebtn',    urls.sleevebtn());
+    setImg('img-vent',         '');
+  }
+}
+
+function hideLoading() {
+  var el = document.getElementById('loading-overlay');
+  if (el) { el.style.opacity='0'; setTimeout(function(){ el.style.display='none'; }, 500); }
+}
+
+// ── Zoom ──────────────────────────────────────────────────────────
+var _z = { zoom: 2.5, panX: 0, panY: 0 };
+function applyTransform() {
+  var el = document.getElementById('layer-stack');
+  if (el) el.style.transform = 'translate('+_z.panX+'px,'+_z.panY+'px) scale('+_z.zoom+')';
+}
+function zoomToRegion(scale, cx, cy) {
+  _z.zoom = scale;
+  var pointX = (cx - 0.5) * 380;
+  var pointY = (cy - 0.5) * 580;
+  _z.panX = -pointX * scale;
+  _z.panY = -pointY * scale;
+  applyTransform();
+}
+function resetZoom() { _z.zoom = 2.5; _z.panX = 0; _z.panY = 0; applyTransform(); }
+function manualZoom(d) { _z.zoom = Math.min(4, Math.max(0.5, _z.zoom + d)); applyTransform(); }
+
+// ── Tabs ──────────────────────────────────────────────────────────
+function switchTab(btn, panelId) {
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  btn.classList.add('active');
+  // Hide all panels (config-body + measurements panel)
+  document.querySelectorAll('.config-body').forEach(function(p){ p.style.display='none'; });
+  document.getElementById('panel-measurements').style.display = 'none';
+  var panel = document.getElementById(panelId);
+  // Measurements panel uses flex column layout
+  panel.style.display = (panelId === 'panel-measurements') ? 'flex' : 'flex';
+  panel.style.flexDirection = (panelId === 'panel-measurements') ? 'column' : '';
+  if (panelId !== 'panel-measurements') {
+    document.querySelector('.config-panel').scrollTo({ top:0, behavior:'smooth' });
+  }
+}
+function goToMaterials()    { switchTab(document.querySelectorAll('.tab')[1], 'panel-materials'); }
+function goToMeasurements() { switchTab(document.querySelectorAll('.tab')[2], 'panel-measurements'); measBuildFields(); }
+
+// ── View toggles ──────────────────────────────────────────────────
+function setView(v, btn) {
+  document.querySelectorAll('.view-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+}
+function setFrontBack(v, btn) {
+  document.querySelectorAll('.view-bar-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  state.view = v === 'front' ? 'f' : v === 'back' ? 'b' : 'i';
+  updatePreview();
+}
+function goFront() {
+  state.view = 'f';
+  document.querySelectorAll('.view-bar-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelector('.view-bar-btn:first-child').classList.add('active');
+}
+function goBack() {
+  state.view = 'b';
+  document.querySelectorAll('.view-bar-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelectorAll('.view-bar-btn')[1].classList.add('active');
+}
+function goInside() {
+  state.view = 'i';
+  document.querySelectorAll('.view-bar-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById('btn-inside').classList.add('active');
+}
+
+// ── Pill helper ───────────────────────────────────────────────────
+function selectPillInGroup(btn) {
+  btn.closest('.pill-group').querySelectorAll('.pill').forEach(function(p){ p.classList.remove('selected'); });
+  btn.classList.add('selected');
+}
+function sectionPill(label) {
+  var sections = document.querySelectorAll('.section');
+  for (var i=0; i<sections.length; i++) {
+    var lbl = sections[i].querySelector('.section-label');
+    if (lbl && lbl.textContent.trim() === label) {
+      var sel = sections[i].querySelector('.pill.selected');
+      return sel ? sel.textContent.trim() : '';
+    }
+  }
+  return '';
+}
+function inputVal(label) {
+  var rows = document.querySelectorAll('.measure-row');
+  for (var i=0; i<rows.length; i++) {
+    var lbl = rows[i].querySelector('label');
+    if (lbl && lbl.textContent.trim() === label)
+      return rows[i].querySelector('.measure-input').value || '';
+  }
+  return '';
+}
+
+// ── Design selection handlers ─────────────────────────────────────
+function selectFit(btn) {
+  selectPillInGroup(btn);
+  goFront(); updatePreview();
+}
+
+function selectClosure(btn, type, btnVal) {
+  // Deselect both SB and DB pill groups
+  document.querySelectorAll('#closure-sb .pill, #closure-db .pill').forEach(function(p){ p.classList.remove('selected'); });
+  btn.classList.add('selected');
+  state.closureType = type;
+  state.closureBtn  = btnVal;
+  goFront(); updatePreview(); resetZoom();
+}
+function selectLapel(btn, val) {
+  selectPillInGroup(btn);
+  state.lapel = val;
+  goFront(); updatePreview(); zoomToRegion(3.0, 0.5, 0.5);
+}
+function selectFrontPocket(btn, val) {
+  selectPillInGroup(btn);
+  state.frontpocket = val;
+  goFront(); updatePreview(); zoomToRegion(3.0, 0.5, 0.55);
+}
+function selectTicketPocket(btn, val) {
+  selectPillInGroup(btn);
+  state.ticketpocket = val;
+  goFront(); updatePreview(); zoomToRegion(3.0, 0.35, 0.55);
+}
+function selectChestPocket(btn, show) {
+  selectPillInGroup(btn);
+  state.chestpocket = show;
+  goFront(); updatePreview(); zoomToRegion(3.0, 0.65, 0.45);
+}
+function selectInsidePocket(btn, val) {
+  selectPillInGroup(btn);
+  state.insidepocket = val;
+  goInside();
+  updatePreview(); zoomToRegion(2.5, 0.5, 0.5);
+}
+function selectVent(btn, val) {
+  selectPillInGroup(btn);
+  state.vent = val;
+  goBack(); updatePreview(); zoomToRegion(2.5, 0.5, 0.5);
+}
+function selectSleeveButtons(btn, val) {
+  selectPillInGroup(btn);
+  state.sleevebtn = val;
+  goBack(); updatePreview(); zoomToRegion(3.0, 0.5, 0.65);
+}
+
+// ── Icon cards ────────────────────────────────────────────────────
+function selectIconCard(btn) {
+  btn.closest('.icon-card-group').querySelectorAll('.icon-card').forEach(function(c){ c.classList.remove('selected'); });
+  btn.classList.add('selected');
+}
+
+// ── Fabric ────────────────────────────────────────────────────────
+function selectFabric(card, group, name, code, color, composition) {
+  card.closest('.fabric-grid').querySelectorAll('.fabric-card').forEach(function(c){ c.classList.remove('selected'); });
+  card.classList.add('selected');
+  card.dataset.color       = color       || '';
+  card.dataset.composition = composition || '';
+  card.dataset.code        = code        || '';
+}
+function filterFabrics(query, group) {
+  document.getElementById('fabric-'+group+'-grid').querySelectorAll('.fabric-card').forEach(function(c) {
+    c.style.display = c.querySelector('.fname').textContent.toLowerCase().includes(query.toLowerCase()) ? '' : 'none';
+  });
+}
+function toggleContrast(btn, mode) {
+  btn.closest('.comp-toggle').querySelectorAll('.pill').forEach(function(b){ b.classList.remove('selected'); });
+  btn.classList.add('selected');
+  var grid = document.getElementById('fabric-contrast-grid');
+  grid.style.opacity      = mode === 'custom' ? '1'    : '0.35';
+  grid.style.pointerEvents = mode === 'custom' ? ''     : 'none';
+}
+function selectBtnMaterial(btn) {
+  btn.closest('.btn-material-row').querySelectorAll('.btn-material').forEach(function(b){ b.classList.remove('selected'); });
+  btn.classList.add('selected');
+}
+
+// ── collectConfig ─────────────────────────────────────────────────
+function collectConfig() {
+  var mainCard     = document.querySelector('#fabric-main-grid .fabric-card.selected');
+  var contrastGrid = document.getElementById('fabric-contrast-grid');
+  var contrastSame = contrastGrid.style.pointerEvents === 'none';
+  var contrastCard = contrastGrid.querySelector('.fabric-card.selected');
+
+  // Build full closure label for sheet
+  var closureLabel = state.closureType === 'SB'
+    ? 'Single Breasted ' + state.closureBtn
+    : 'Double Breasted ' + state.closureBtn;
+
+  return {
+    'Order Number':      '',
+    'Status':            'New',
+    'Created At':        new Date().toISOString(),
+    'Terms Accepted':    'FALSE',
+    'Marketing Consent': 'FALSE',
+
+    'GENDER':            sectionPill('Gender'),
+    'FIT':               sectionPill('Fit'),
+    'STYLE/SILHOUETTE':  state.closureType === 'SB' ? 'Single Breasted' : 'Double Breasted',
+    'CLOSURE':           closureLabel,
+    'NECK':              sectionPill('Lapel'),
+    'FRONT POCKETS':     sectionPill('Front Pockets'),
+    'EXTRA POCKETS':     sectionPill('Ticket Pocket') + ' | Chest: ' + sectionPill('Chest Pocket') + ' | Inside: ' + sectionPill('Inside Pockets'),
+    'HEM/FINISH':        'N/A',
+    'BACK':              sectionPill('Back Vent'),
+
+    'SLEEVE HEAD':       'N/A',
+    'SLEEVE STYLE':      'N/A',
+    'CONSTRUCTION':      sectionPill('Construction'),
+    'SLEEVE BUTTONS':    sectionPill('Sleeve Buttons'),
+    'SLEEVE CUFF':       'N/A',
+
+    'WAISTBAND STYLE':   'N/A',
+    'WAIST ADJUSTMENT':  'N/A',
+    'RISE':              'N/A',
+
+    'MAIN FABRIC':       mainCard ? mainCard.querySelector('.fname').textContent.trim() : '',
+    'CODE':              mainCard ? (mainCard.dataset.code || mainCard.querySelector('.fcode').textContent.trim()) : '',
+    'color':             mainCard ? (mainCard.dataset.color || '') : '',
+    'composition':       mainCard ? (mainCard.dataset.composition || '') : '',
+    'CONTRAST FABRIC':   contrastSame ? 'Same as Main' : (contrastCard ? contrastCard.querySelector('.fname').textContent.trim() : ''),
+    'CONTRAST PLACEMENT':'lapels',
+    'STRUCTURE':         sectionPill('Construction'),
+    'LINING FABRIC':     'N/A',
+    'LINING TYPE':       sectionPill('Lining'),
+
+    // Measurements
+    'Chest (cm)':        inputVal('Chest'),
+    'Waist (cm)':        inputVal('Waist'),
+    'Hips (cm)':         inputVal('Hips'),
+    'Shoulder (cm)':     inputVal('Shoulder'),
+    'Sleeve Length (cm)':inputVal('Sleeve Length'),
+    'Back Length (cm)':  inputVal('Back Length'),
+    'Neck (cm)':         inputVal('Neck'),
+    'Wrist (cm)':        inputVal('Wrist'),
+  };
+}
+
+// ── submitOrder — hidden form POST to hidden iframe ───────────────
+function submitOrder() {
+  var btn   = document.getElementById('submit-btn');
+  var label = document.getElementById('submit-label');
+  btn.disabled = true;
+  label.textContent = 'Saving...';
+
+  try {
+    var cfg = collectConfig();
+    cfg['action'] = 'saveSuits';
+
+    var iframeName = 'tt_submit_' + Date.now();
+    var iframe = document.createElement('iframe');
+    iframe.name = iframeName;
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = SHEET_URL;
+    form.target = iframeName;
+    form.style.display = 'none';
+
+    var input = document.createElement('input');
+    input.type  = 'hidden';
+    input.name  = 'payload';
+    input.value = JSON.stringify(cfg);
+    form.appendChild(input);
+
+    document.body.appendChild(form);
+    form.submit();
+
+    setTimeout(function() {
+      if (form.parentNode)   document.body.removeChild(form);
+      if (iframe.parentNode) document.body.removeChild(iframe);
+      btn.disabled = false;
+      label.textContent = 'Save Configuration';
+      showFeedback('Configuration saved', '#4a8a5a');
+      setTimeout(function() {
+        window.location.href = 'https://tailortech.toom.design/dashboard';
+      }, 2000);
+    }, 4000);
+
+  } catch(err) {
+    btn.disabled = false;
+    label.textContent = 'Save Configuration';
+    showFeedback('Could not save: ' + err.message, '#a05050');
+  }
+}
+
+function showFeedback(msg, color) {
+  var el = document.getElementById('submit-feedback');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.background = color + '18';
+  el.style.color = color;
+  el.style.border = '1px solid ' + color + '40';
+  setTimeout(function(){ el.style.display = 'none'; }, 5000);
+}
+
+
+// ── MEASUREMENTS TAB — full field set ────────────────────────────
+var MEAS_RAW_BASE  = 'https://raw.githubusercontent.com/toom-design/measurements/main/';
+var MEAS_FRONT_IMG = MEAS_RAW_BASE + 'MEASUREMENTS_front.png';
+var MEAS_SHEETS    = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
+
+var MEAS_FIELD_IMG = {
+  'height':                  'MEASUREMENTS_Height.png',
+  'bustGirth':               'MEASUREMENTS_Bust girth.png',
+  'calfGirth':               'MEASUREMENTS_Calf girth.png',
+  'hipGirth':                'MEASUREMENTS_Hip girth.png',
+  'kneeGirth':               'MEASUREMENTS_Knee girth.png',
+  'neckBaseGirth':           'MEASUREMENTS_Neck base girth.png',
+  'pantWaist':               'MEASUREMENTS_Pant waist.png',
+  'upperBicepGirth':         'MEASUREMENTS_Upper bicep girth.png',
+  'waistGirth':              'MEASUREMENTS_Waist girth.png',
+  'wristGirth':              'MEASUREMENTS_Wrist girth.png',
+  'outerArmLength':          'MEASUREMENTS_Outer arm length.png',
+  'backNeckToWaist':         'MEASUREMENTS_Back neck point to waist.png',
+  'shoulderLength':          'MEASUREMENTS_Shoulder length.png',
+  'acrossBackShoulderWidth': 'MEASUREMENTS_Across back shoulder width.png',
+  'acrossBackWidth':         'MEASUREMENTS_Across back width.png',
+  'outsideLegLength':        'MEASUREMENTS_Side trousers length.png',
+  'upperArmLength':          'MEASUREMENTS_Upper arm length.png',
+  'waistToHipLength':        'MEASUREMENTS_Waist to hip length.png',
+  'shirtLength':             'MEASUREMENTS_Shirt length.png',
+  'rise':                    'MEASUREMENTS_Rise.png',
+};
+
+var MEAS_VOL = [
+  ['bustGirth','Bust girth'],['underBustGirth','Under bust girth'],['upperChestGirth','Upper chest girth'],
+  ['overarmGirth','Overarm girth'],['waistGirth','Waist girth'],['upperHipGirth','Upper hip girth'],
+  ['hipGirth','Hip girth'],['middleWaist','Middle waist'],['lowerWaist','Lower waist'],
+  ['pantWaist','Pant waist'],['upperArmGirth','Upper-arm girth'],['upperBicepGirth','Upper bicep girth'],
+  ['kneeGirth','Knee girth'],['ankleGirth','Ankle girth'],['wristGirth','Wrist girth'],
+  ['calfGirth','Calf girth'],['thighGirth','Thigh girth'],['thighBelowCrotch','Thigh 1 inch below crotch'],
+  ['midThighGirth','Mid-thigh girth'],['neckBaseGirth','Neck base girth'],['abdomenGirth','Abdomen girth'],
+  ['armscyeGirth','Armscye girth'],['neckGirth','Neck girth'],['neckGirthRelaxed','Neck girth relaxed'],
+  ['forearmGirthFlexed','Forearm girth flexed'],['elbowGirth','Elbow girth'],
+];
+var MEAS_LIN = [
+  ['neckToUpperHipLength','Neck to upper hip length'],['outsideLegLength','Outside leg length'],
+  ['outsideLegFromUpperHip','Outside leg from upper hip'],['insideLegLength','Inside leg length'],
+  ['insideLegToFloor','Inside leg to floor'],['insideCrotchToMidThigh','Inside crotch to mid-thigh'],
+  ['insideCrotchToKnee','Inside crotch to knee'],['insideCrotchToCalf','Inside crotch to calf'],
+  ['straightBodyRise','Straight body rise'],['outerArmLength','Outer arm length'],
+  ['underarmLength','Underarm length'],['backNeckToWrist','Back neck to wrist'],
+  ['backNeckToWristExtended','Back neck past wrist 1.5"'],['upperHipBreadth','Upper hip breadth'],
+  ['frontShoulderWidth','Front shoulder width'],['chestWidth','Chest width'],
+  ['shoulderLength','Shoulder length'],['shoulderSlope','Shoulder slope'],['neckBaseWidth','Neck base width'],
+  ['waistToHipLength','Waist to hip length'],['waistToKneeLength','Waist to knee length'],
+  ['abdomenToUpperKnee','Abdomen to upper knee'],['upperKneeToAnkle','Upper knee to ankle'],
+  ['backNeckToWaist','Back neck to waist'],['sideNeckToWaist','Side neck to waist'],
+  ['sideNeckToArmpit','Side neck to armpit'],['backNeckHeight','Back neck height'],
+  ['bustHeight','Bust height'],['hipHeight','Hip height'],['upperHipHeight','Upper hip height'],
+  ['kneeHeight','Knee height'],['outerAnkleHeight','Outer ankle height'],['waistHeight','Waist height'],
+  ['insideLegHeight','Inside leg height'],['acrossBackShoulderWidth','Across back shoulder width'],
+  ['acrossBackWidth','Across back width'],['totalCrotchLength','Total crotch length'],
+  ['waistBreadth','Waist breadth'],['neckLength','Neck length'],['upperArmLength','Upper arm length'],
+  ['lowerArmLength','Lower arm length'],['upperHipToHipLength','Upper hip to hip length'],
+  ['backShoulderWidth','Back shoulder width'],['rise','Rise'],
+  ['backNeckToHipLength','Back neck to hip length'],['torsoHeight','Torso height'],
+  ['frontCrotchLength','Front crotch length'],['backCrotchLength','Back crotch length'],
+  ['sideUpperHipToKnee','Side upper hip to knee'],['sideNeckToUpperHip','Side neck to upper hip'],
+  ['sideNeckToBust','Side neck to bust point'],['sideBustToWaist','Side bust to waist'],
+  ['sideWaistToAnkles','Side waist to ankles'],['sideNeckToKnee','Side neck to knee'],
+  ['waistDepth','Waist depth'],['axillaToWaist','Axilla to waist'],
+  ['neckSideToWaistBack','Neck side to waist back'],['neckFrontToWaist','Neck front to waist'],
+  ['inseamCrotchToAnkle','Inseam crotch to ankle'],['inseamCrotchToFloor','Inseam crotch to floor'],
+  ['jacketLength','Jacket length'],['sideNeckToThigh','Side neck to thigh'],
+  ['shirtLength','Shirt length'],['suitLength','Suit length'],['casualJacketLength','Casual jacket length'],
+  ['aroundHead','Around head'],['eyeToEye','Eye to eye'],['palm','Palm'],['footGirth','Foot girth'],
+];
+
+var _measDiagActive = MEAS_FRONT_IMG;
+
+function measFocusField(label, key) {
+  var img = document.getElementById('meas-diag-img');
+  var lbl = document.getElementById('meas-diag-label');
+  if (!img) return;
+  var url = (key && MEAS_FIELD_IMG[key])
+    ? MEAS_RAW_BASE + encodeURIComponent(MEAS_FIELD_IMG[key])
+    : MEAS_FRONT_IMG;
+  if (url === _measDiagActive) return;
+  _measDiagActive = url;
+  img.style.opacity = '0';
+  img.style.transform = 'scale(0.97)';
+  setTimeout(function() {
+    img.onload = function() {
+      img.style.opacity = '1';
+      img.style.transform = 'scale(1)';
+      if (lbl) { lbl.textContent = label || ''; lbl.style.opacity = label ? '1' : '0'; }
+    };
+    img.onerror = function() { img.src = MEAS_FRONT_IMG; _measDiagActive = MEAS_FRONT_IMG; };
+    img.src = url;
+  }, 200);
+}
+
+var _measFieldsBuilt = false;
+function measBuildFields() {
+  if (_measFieldsBuilt) return;
+  _measFieldsBuilt = true;
+  var gv = document.getElementById('meas-grid-vol');
+  var gl = document.getElementById('meas-grid-lin');
+  MEAS_VOL.forEach(function(f) { gv.appendChild(measMakeRow(f[0], f[1])); });
+  MEAS_LIN.forEach(function(f) { gl.appendChild(measMakeRow(f[0], f[1])); });
+
+  // Pre-fill from Firebase user if available
+  measTryPrefill();
+}
+
+function measMakeRow(key, label) {
+  var row = document.createElement('div');
+  row.style.cssText = 'display:flex;align-items:center;border-bottom:1px solid rgba(26,25,22,0.10);min-height:46px;gap:12px;';
+  row.dataset.key = key;
+
+  var lbl = document.createElement('label');
+  lbl.style.cssText = 'flex:1;font-size:12px;font-weight:500;color:var(--ink-mid);cursor:default;';
+  lbl.setAttribute('for', 'meas-f-' + key);
+  lbl.textContent = label;
+  row.appendChild(lbl);
+
+  var inp = document.createElement('input');
+  inp.type = 'number'; inp.id = 'meas-f-' + key; inp.step = '0.1'; inp.min = '0'; inp.max = '999';
+  inp.placeholder = '—';
+  inp.style.cssText = 'width:80px;flex-shrink:0;padding:7px 10px;background:var(--cream);border:1px solid rgba(26,25,22,0.12);border-radius:2px;font-family:'Jost',sans-serif;font-size:13px;color:var(--ink);outline:none;text-align:right;-webkit-appearance:none;';
+  inp.addEventListener('focus', function() { measFocusField(label, key); });
+  inp.addEventListener('focus', function() { this.style.borderColor = 'var(--ink)'; this.style.background = 'var(--white)'; });
+  inp.addEventListener('blur',  function() { this.style.borderColor = ''; this.style.background = 'var(--cream)'; });
+  row.appendChild(inp);
+
+  var unit = document.createElement('span');
+  unit.style.cssText = 'font-size:11px;color:var(--ink-faint);width:20px;flex-shrink:0;';
+  unit.textContent = 'cm';
+  row.appendChild(unit);
+
+  return row;
+}
+
+function measTryPrefill() {
+  // Pre-fill from measurement history via Sheets
+  var email = (window._fb && window._fb.auth && window._fb.auth.currentUser)
+    ? window._fb.auth.currentUser.email : '';
+  if (!email) return;
+  document.getElementById('meas-email').value = email;
+  var cbName = '__ttMeasPrefill_' + Date.now();
+  var payload = encodeURIComponent(JSON.stringify({ action: 'getMeasurements', email: email }));
+  var url = MEAS_SHEETS + '?action=getMeasurements&payload=' + payload + '&callback=' + cbName;
+  var script = document.createElement('script');
+  var timer = setTimeout(function() { cleanup(); }, 8000);
+  function cleanup() { clearTimeout(timer); delete window[cbName]; if (script.parentNode) document.body.removeChild(script); }
+  window[cbName] = function(res) {
+    cleanup();
+    if (res && res.success && res.records && res.records[0]) {
+      var rec = res.records[0];
+      var heightEl = document.getElementById('meas-f-height');
+      var weightEl = document.getElementById('meas-f-weight');
+      var hVal = rec['Height [CM]'] || rec['height'] || '';
+      var wVal = rec['Weight [KG]'] || rec['weight'] || '';
+      if (heightEl && hVal && hVal !== '0') heightEl.value = parseFloat(hVal);
+      if (weightEl && wVal && wVal !== '0') weightEl.value = parseFloat(wVal);
+      Object.keys(rec).forEach(function(k) {
+        var v = rec[k]; if (!v || v === '0' || v === '0.0') return;
+        var el = document.getElementById('meas-f-' + k);
+        if (el && el.type === 'number') { var n = parseFloat(v); if (!isNaN(n) && n > 0) el.value = n; }
+      });
+    }
+  };
+  script.onerror = function() { cleanup(); };
+  script.src = url;
+  document.body.appendChild(script);
+}
+
+function submitMeasurements() {
+  var btn   = document.getElementById('meas-submit-btn');
+  var label = document.getElementById('meas-submit-label');
+  var arrow = document.getElementById('meas-submit-arrow');
+  var spin  = document.getElementById('meas-submit-spin');
+  btn.disabled = true; label.textContent = 'Saving…'; if (arrow) arrow.style.display = 'none'; if (spin) spin.style.display = '';
+
+  var email = (document.getElementById('meas-email') || {}).value || '';
+  var data = { garment: 'suit', dateTime: new Date().toLocaleString() };
+  // height + weight
+  var hEl = document.getElementById('meas-f-height'); if (hEl && hEl.value) data['height'] = hEl.value;
+  var wEl = document.getElementById('meas-f-weight'); if (wEl && wEl.value) data['weight'] = wEl.value;
+  // all other fields
+  MEAS_VOL.concat(MEAS_LIN).forEach(function(f) {
+    var el = document.getElementById('meas-f-' + f[0]);
+    if (el && el.value) data[f[0]] = el.value;
+  });
+
+  fetch(MEAS_SHEETS, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'saveMeasurement', email: email, data: data })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    if (res && res.success) {
+      label.textContent = 'Saved!';
+      setTimeout(function() {
+        label.textContent = 'Save Measurements';
+        btn.disabled = false; if (arrow) arrow.style.display = ''; if (spin) spin.style.display = 'none';
+      }, 2000);
+    } else {
+      label.textContent = 'Save Measurements';
+      btn.disabled = false; if (arrow) arrow.style.display = ''; if (spin) spin.style.display = 'none';
+    }
+  })
+  .catch(function() {
+    label.textContent = 'Save Measurements';
+    btn.disabled = false; if (arrow) arrow.style.display = ''; if (spin) spin.style.display = 'none';
+  });
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  var defaultCard = document.querySelector('#fabric-main-grid .fabric-card.selected');
+  if (defaultCard) {
+    defaultCard.dataset.color       = 'Charcoal';
+    defaultCard.dataset.composition = '100% Wool';
+    defaultCard.dataset.code        = 'WO-001';
+  }
+  updatePreview();
+  applyTransform();
+  document.getElementById('img-base').addEventListener('load', hideLoading);
+});
+</script>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+const _app = initializeApp({
+  apiKey:"AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY",authDomain:"tailortech-accounts.firebaseapp.com",
+  projectId:"tailortech-accounts",storageBucket:"tailortech-accounts.firebasestorage.app",
+  messagingSenderId:"137614433833",appId:"1:137614433833:web:c78ea40b0d04ba89f3c638"
+});
+const _auth = getAuth(_app);
+window._fb = { auth: _auth, signOut };
+onAuthStateChanged(_auth, function(user) {
+  if (user) {
+    setAccountPopover(user);
+    document.getElementById('nav-av').style.display      = '';
+    document.getElementById('nav-signout').style.display = '';
+    document.getElementById('nav-login').style.display   = 'none';
+    if (!window._currentPersonId) {
+      getClientJSONP(user.email, user.uid, function(res) {
+        if (res && res.success && res.client && res.client['Person ID']) {
+          window._currentPersonId = res.client['Person ID'];
+          var el = document.getElementById('dd-pid');
+          if (el) el.textContent = window._currentPersonId;
+        }
+      });
+    }
+  } else {
+    var av = document.getElementById('nav-av');
+    if (av) { av.style.display='none'; av.innerHTML=''; }
+    document.getElementById('nav-signout').style.display = 'none';
+    document.getElementById('nav-login').style.display   = '';
+    var dd = document.getElementById('nav-dd');
+    if (dd) dd.style.display = 'none';
+  }
+});
+</script>
+
+<script>
+function toggleDropdown(e) {
+  if (e) e.stopPropagation();
+  var d = document.getElementById('nav-dd');
+  if (!d) return;
+  d.style.display = (d.style.display === 'block') ? 'none' : 'block';
+}
+document.addEventListener('click', function(e) {
+  var d=document.getElementById('nav-dd'), av=document.getElementById('nav-av');
+  if (d && d.style.display==='block' && !d.contains(e.target) && av && !av.contains(e.target))
+    d.style.display = 'none';
+});
+function goToAuth() {
+  try { sessionStorage.setItem('tt_return_url', window.location.href); } catch(e) {}
+  window.location.href = 'https://tailortech.toom.design/auth.html';
+}
+function doSignOut() {
+  var auth=window._fb&&window._fb.auth, so=window._fb&&window._fb.signOut;
+  if (auth && so) so(auth);
+}
+function setAccountPopover(user) {
+  if (!user) return;
+  var fullname = user.displayName || user.email || '—';
+  var av = document.getElementById('nav-av');
+  if (av) {
+    if (user.photoURL) av.innerHTML='<img src="'+user.photoURL+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">';
+    else av.textContent = fullname[0].toUpperCase();
+  }
+  var ddAv = document.getElementById('dd-av');
+  if (ddAv) {
+    if (user.photoURL) ddAv.innerHTML='<img src="'+user.photoURL+'" style="width:100%;height:100%;object-fit:cover;" alt="">';
+    else ddAv.textContent = fullname[0].toUpperCase();
+  }
+  var el;
+  el=document.getElementById('dd-name');      if(el) el.textContent=fullname;
+  el=document.getElementById('dd-email-sub'); if(el) el.textContent=user.email||'';
+  el=document.getElementById('dd-pid');       if(el) el.textContent=window._currentPersonId||'—';
+}
+function getClientJSONP(email, uid, callback) {
+  var cbName='__ttGetClient_'+Date.now();
+  var payload=encodeURIComponent(JSON.stringify({email:email,uid:uid||''}));
+  var url='https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec?action=getClient&payload='+payload+'&callback='+cbName;
+  var script=document.createElement('script');
+  var timer=setTimeout(function(){cleanup();callback(null);},8000);
+  function cleanup(){clearTimeout(timer);delete window[cbName];if(script.parentNode)document.body.removeChild(script);}
+  window[cbName]=function(res){cleanup();callback(res);};
+  script.onerror=function(){cleanup();callback(null);};
+  script.src=url;
+  document.body.appendChild(script);
+}
+</script>
+
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.1.6</div>
+
+</body>
+</html>
