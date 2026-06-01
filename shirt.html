@@ -777,14 +777,17 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 
           </div><!-- /scroll -->
 
-          <div style="flex-shrink:0;background:var(--white);border-top:1px solid var(--border);padding:12px 28px;display:flex;justify-content:flex-end;gap:10px;">
-            <button type="button" onclick="measResetForm()" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;padding:10px 20px;background:transparent;border:1px solid var(--border-mid);border-radius:2px;color:var(--ink-mid);cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-              Reset
+          <div style="flex-shrink:0;background:var(--white);border-top:1px solid var(--border);padding:12px 28px;display:flex;justify-content:space-between;align-items:center;gap:10px;">
+            <!-- Left: save to account (secondary) -->
+            <button type="submit" form="meas-form" onclick="measHandleSubmit(event)" id="meas-save-btn" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;padding:10px 20px;background:transparent;border:1px solid var(--border-mid);border-radius:2px;color:var(--ink-mid);cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all 0.15s;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span id="meas-save-lbl">Save to Account</span>
+              <div id="meas-save-spin" style="display:none;width:12px;height:12px;border:1.5px solid rgba(26,25,22,0.25);border-top-color:var(--ink);border-radius:50%;animation:spin 0.65s linear infinite;"></div>
             </button>
-            <button type="submit" form="meas-form" onclick="measHandleSubmit(event)" id="meas-save-btn" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;padding:10px 24px;background:var(--ink);color:var(--white);border:none;border-radius:2px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;">
-              <span id="meas-save-lbl">Save Measurements</span>
-              <div id="meas-save-spin" style="display:none;width:12px;height:12px;border:1.5px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.65s linear infinite;"></div>
+            <!-- Right: place order (primary) -->
+            <button type="button" onclick="submitOrder()" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;padding:10px 28px;background:var(--ink);color:var(--white);border:none;border-radius:2px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:opacity 0.15s;">
+              Place Order
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="5,12 19,12"/><polyline points="13,6 19,12 13,18"/></svg>
             </button>
           </div>
 
@@ -1102,47 +1105,42 @@ function collectConfig() {
     'LINING TYPE':         selText('.btn-stitch-card.selected .cname'),
   };
 }
+window.collectConfig = collectConfig;
 
 async function submitOrder() {
-  const btn   = document.getElementById('submit-btn');
-  const label = document.getElementById('submit-label');
-  btn.disabled = true;
-  label.textContent = 'Saving…';
+  // Use the Place Order button itself as the target
+  var orderBtn = document.querySelector('[onclick="submitOrder()"]');
+  if (orderBtn) { orderBtn.disabled = true; orderBtn.style.opacity = '0.6'; }
 
   try {
-    const data = collectConfig();
-    const payload = encodeURIComponent(JSON.stringify(data));
-    const url     = SHEET_URL + '?payload=' + payload;
-
-    await new Promise(function(resolve) {
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = url;
-      const handler = function(event) {
-        if (String(event.data).indexOf('shirt_') === 0) {
-          window.removeEventListener('message', handler);
-          document.body.removeChild(iframe);
-          resolve(event.data);
-        }
-      };
-      window.addEventListener('message', handler);
-      setTimeout(function() {
-        window.removeEventListener('message', handler);
-        if (iframe.parentNode) document.body.removeChild(iframe);
-        resolve('shirt_saved');
-      }, 8000);
-      document.body.appendChild(iframe);
+    var email     = document.getElementById('mf-email').value.trim();
+    var measData  = (function() {
+      var d = { garment: 'shirt', dateTime: new Date().toLocaleString() };
+      var fd = new FormData(document.getElementById('meas-form'));
+      fd.forEach(function(v, k){ if (v) d[k] = v; });
+      return d;
+    })();
+    var configData = collectConfig();
+    var orderData  = Object.assign({}, configData, {
+      email:      email,
+      'Status':   'Pending',
+      measurements: JSON.stringify(measData),
     });
 
-    label.textContent = 'Save Configuration';
-    btn.disabled = false;
-    showFeedback('✓ Configuration saved to Google Sheets', '#4a8a5a');
-    setTimeout(function() { window.location.href = 'https://tailortech.toom.design/dashboard'; }, 2000);
+    // Save measurements first, then the order/config
+    await Promise.all([
+      fetch(SHEET_URL, { method: 'POST', body: JSON.stringify({ action: 'saveMeasurement', email: email, data: measData }) }),
+      fetch(SHEET_URL, { method: 'POST', body: JSON.stringify({ action: 'saveOrder',       email: email, data: orderData }) }),
+    ]);
+
+    toast('Order saved — redirecting to checkout…');
+    setTimeout(function() {
+      window.location.href = 'https://tailortech.toom.design/cart';
+    }, 1500);
 
   } catch (err) {
-    label.textContent = 'Save Configuration';
-    btn.disabled = false;
-    showFeedback('✗ Could not save: ' + err.message, '#a05050');
+    toast('Could not place order — check connection', 'err');
+    if (orderBtn) { orderBtn.disabled = false; orderBtn.style.opacity = ''; }
   }
 }
 
@@ -1329,27 +1327,39 @@ function showFeedback(msg, color) {
     }).catch(function(){ if (loading) loading.textContent = 'Could not load history.'; });
   }
 
+  // Collect measurements from the form into a plain object
+  function collectMeasurements() {
+    var data = { garment: 'shirt', dateTime: new Date().toLocaleString() };
+    var fd = new FormData(document.getElementById('meas-form'));
+    fd.forEach(function(v, k){ if (v) data[k] = v; });
+    return data;
+  }
+
+  // Save to Account — saves measurements + config, stays on page / goes to dashboard
   window.measHandleSubmit = function(e) {
     if (e) e.preventDefault();
-    var form = document.getElementById('meas-form');
-    if (!form) return;
     var btn = document.getElementById('meas-save-btn');
     var lbl = document.getElementById('meas-save-lbl');
     var sp  = document.getElementById('meas-save-spin');
     btn.disabled = true; lbl.style.display = 'none'; sp.style.display = 'block';
-    var data = {garment:'shirt', dateTime: new Date().toLocaleString()};
-    var fd = new FormData(form);
-    fd.forEach(function(v, k){ if (v) data[k] = v; });
+
     var email = document.getElementById('mf-email').value.trim();
-    sheetsReq('saveMeasurement', {email: email, data: data})
-      .then(function(res) {
-        if (res && res.success) {
-          toast('Measurements saved!');
-        } else {
-          toast('Could not save — check connection', 'err');
-        }
+    var measData = collectMeasurements();
+    var configData = window.collectConfig ? window.collectConfig() : {};
+
+    // Save measurements
+    sheetsReq('saveMeasurement', { email: email, data: measData })
+      .then(function() {
+        // Also save config snapshot against this account
+        return sheetsReq('saveConfig', { email: email, data: Object.assign({}, configData, { email: email }) });
       })
-      .catch(function(){ toast('Network error', 'err'); })
+      .then(function(res) {
+        toast('Configuration & measurements saved!');
+        setTimeout(function() {
+          window.location.href = 'https://tailortech.toom.design/dashboard';
+        }, 1800);
+      })
+      .catch(function(){ toast('Could not save — check connection', 'err'); })
       .finally(function(){ btn.disabled = false; lbl.style.display = ''; sp.style.display = 'none'; });
   };
 
@@ -1379,7 +1389,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.9.3</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.9.5</div>
 
 <!-- Firebase -->
 <script type="module">
