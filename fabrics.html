@@ -303,8 +303,8 @@
   .btn-icon svg { width: 14px; height: 14px; }
   .btn-icon.danger:hover { background: #fff0ee; border-color: #f5c9bb; color: var(--warning); }
 
-  /* ── ADD / EDIT FABRIC FORM ── */
-  #page-add-fabric, #page-log-usage, #page-scan { padding: 32px 24px; max-width: 740px; margin: 0 auto; }
+  #page-add-fabric, #page-log-usage { padding: 32px 24px; max-width: 740px; margin: 0 auto; }
+  #page-scan { padding: 32px 24px; max-width: 860px; margin: 0 auto; }
   .back-title {
     display: flex; align-items: center; gap: 10px; margin-bottom: 28px;
   }
@@ -422,12 +422,13 @@
   .empty-state p { font-size: 14px; }
 
   /* ── SCAN ── */
+  #page-scan { max-width: 860px; }
   .scan-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 28px;
-    display: flex; flex-direction: column; gap: 16px;
+    padding: 20px;
+    display: flex; flex-direction: column; gap: 14px;
   }
   .btn-green {
     display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -440,34 +441,108 @@
   .btn-green:hover { background: #1f5038; }
   .btn-green svg { width: 18px; height: 18px; }
   .scan-input-wrap { position: relative; }
-  .scan-input-wrap svg {
+  .scan-input-wrap .scan-icon {
     position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
     width: 18px; height: 18px; color: var(--text-light);
     pointer-events: none;
   }
+  .scan-input-wrap .scan-clear {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    width: 20px; height: 20px; border-radius: 50%;
+    border: none; background: var(--border);
+    cursor: pointer; display: none; align-items: center; justify-content: center;
+    color: var(--text-muted); font-size: 14px; line-height: 1;
+    transition: background .15s;
+  }
+  .scan-input-wrap .scan-clear:hover { background: #d0cdc8; }
+  .scan-input-wrap .scan-clear.visible { display: flex; }
   .scan-input {
-    width: 100%; padding: 12px 14px 12px 42px;
+    width: 100%; padding: 12px 40px 12px 42px;
     border: 1px solid var(--border); border-radius: var(--radius-sm);
     font-family: inherit; font-size: 14px; outline: none;
-    background: var(--bg); color: var(--text);
+    background: var(--surface); color: var(--text);
     transition: border-color .15s;
   }
-  .scan-input:focus { border-color: #aaa; background: white; }
+  .scan-input:focus { border-color: var(--accent); }
+  .scan-input.has-value { border-color: var(--accent); }
   .scan-input::placeholder { color: var(--text-light); }
-  .scan-result {
+
+  /* scan result card */
+  .scan-result-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 20px; margin-top: 16px;
+    overflow: hidden;
+    margin-top: 16px;
+    animation: modalIn .2s ease;
   }
-  .scan-result h3 { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
-  .scan-result-grid {
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 8px 20px; font-size: 13px;
+  .scan-result-body {
+    display: grid; grid-template-columns: 2fr 3fr;
+    gap: 0;
   }
-  .scan-result-item { display: flex; flex-direction: column; gap: 2px; }
-  .scan-result-item .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500; }
-  .scan-result-item .value { font-weight: 500; }
+  .scan-result-left {
+    padding: 20px;
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .scan-media-row { display: flex; gap: 10px; }
+  .scan-photo-box {
+    flex: 1; aspect-ratio: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; color: var(--text-light); font-size: 11px;
+    overflow: hidden;
+    min-height: 100px;
+  }
+  .scan-photo-box img { width: 100%; height: 100%; object-fit: cover; }
+  .scan-photo-box svg { width: 28px; height: 28px; }
+  .scan-qr-box {
+    width: 100px; flex-shrink: 0;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; color: var(--text-light); font-size: 11px;
+    min-height: 100px;
+    padding: 8px;
+  }
+  .scan-qr-box svg { width: 36px; height: 36px; }
+  .scan-fabric-type {
+    font-size: 22px; font-weight: 700; letter-spacing: -0.3px;
+    text-transform: uppercase; line-height: 1.1;
+  }
+  .scan-fabric-code-sub { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .scan-details-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .scan-details-table tr { border-top: 1px solid var(--border); }
+  .scan-details-table tr:first-child { border-top: none; }
+  .scan-details-table td { padding: 7px 4px; vertical-align: top; }
+  .scan-details-table td:first-child { color: var(--text-muted); width: 110px; padding-right: 12px; }
+  .scan-details-table td:last-child { font-weight: 400; color: var(--text); }
+
+  .scan-result-right { padding: 20px; display: flex; flex-direction: column; }
+  .scan-result-right h3 { font-size: 17px; font-weight: 700; margin-bottom: 14px; font-family: monospace; letter-spacing: 0.5px; }
+  .scan-history-table { width: 100%; border-collapse: collapse; font-size: 12px; flex: 1; }
+  .scan-history-table thead th {
+    text-align: left; padding: 6px 8px;
+    font-size: 11px; font-weight: 600; color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .scan-history-table thead th.right { text-align: right; }
+  .scan-history-table .qty-header { text-align: center; border-bottom: 1px solid var(--border); }
+  .scan-history-table tbody td { padding: 7px 8px; border-bottom: 1px solid var(--border); color: var(--text); }
+  .scan-history-table tbody td.green { color: #2d6a4f; font-weight: 600; }
+  .scan-history-table tbody td.right { text-align: right; }
+  .scan-history-table tbody tr:last-child td { border-bottom: none; }
+  .scan-empty-rows td { color: var(--text-light) !important; }
+  .scan-result-footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .scan-result-footer .scan-date { font-size: 12px; color: var(--text-muted); }
+  .scan-result-footer .scan-actions { display: flex; gap: 8px; }
 
   /* ── MODAL ── */
   .modal-overlay {
@@ -507,6 +582,7 @@
   }
   .toast.show { display: block; animation: toastIn .3s ease; }
   @keyframes toastIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   @media (max-width: 640px) {
     .stats-row { grid-template-columns: 1fr; }
@@ -637,6 +713,9 @@
     <button class="btn-primary" onclick="showPage('add-fabric')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Add Fabric
+    </button>
+    <button class="nav-btn" onclick="reloadInventory()" title="Refresh from sheet" style="padding:8px 10px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
     </button>
   </div>
 
@@ -867,20 +946,24 @@
     <button class="back-btn" onclick="goBack()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
-    <h2>Scan Fabric</h2>
+    <div>
+      <h2>Scan Fabric</h2>
+      <p style="color:var(--text-muted);font-size:13px;margin-top:2px">Point camera at a QR code or type a code below</p>
+    </div>
   </div>
-  <p style="color:var(--text-muted);margin-bottom:20px;font-size:14px">Point camera at a QR code or type a code below</p>
   <div class="scan-card">
     <button class="btn-green" onclick="openCamera()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
       Open Camera
     </button>
     <div class="scan-input-wrap">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2m10 0h2a2 2 0 0 1 2 2v2M3 17v2a2 2 0 0 0 2 2h2m10 0h2a2 2 0 0 0 2-2v-2M7 12h10"/></svg>
-      <input class="scan-input" id="scan-code-input" placeholder="Or type Fabric Code / QR Code..." oninput="scanLookup(this.value)">
+      <svg class="scan-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2m10 0h2a2 2 0 0 1 2 2v2M3 17v2a2 2 0 0 0 2 2h2m10 0h2a2 2 0 0 0 2-2v-2M7 12h10"/></svg>
+      <input class="scan-input" id="scan-code-input" placeholder="Or type Fabric Code / QR Code..."
+        oninput="scanLookup(this.value); toggleScanClear(this.value)">
+      <button class="scan-clear" id="scan-clear-btn" onclick="clearScanInput()" title="Clear">×</button>
     </div>
   </div>
-  <div id="scan-result" style="display:none"></div>
+  <div id="scan-result"></div>
 </div>
 
 <!-- ══════════════════════════════════════════ DELETE MODAL ══ -->
@@ -895,22 +978,166 @@
   </div>
 </div>
 
+<!-- ── LOADING ── -->
+<div id="loading-indicator" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(244,242,239,0.75);z-index:400;align-items:center;justify-content:center;flex-direction:column;gap:12px">
+  <div style="width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite"></div>
+  <p style="font-size:13px;color:var(--text-muted);font-weight:500">Loading from sheet…</p>
+</div>
+
 <!-- ── TOAST ── -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ── DATA ──────────────────────────────────────────────────────────────────
+// ── CONFIG ────────────────────────────────────────────────────────────────
+const VERSION = '1.1.0'; // keep in sync with version tag at bottom of file
+const API_URL = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
 const LOW_STOCK_THRESHOLD = 2;
-let fabrics = JSON.parse(localStorage.getItem('fabrics') || '[]');
-let usageLog = JSON.parse(localStorage.getItem('usageLog') || '[]');
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+let fabrics  = [];   // internal format (see sheetToFabric / fabricToSheet)
+let usageLog = [];   // internal format (see sheetToUsage / usageToSheet)
 let prevPage = 'home';
 let deleteTarget = null;
 let editingPhoto = null;
+let isLoading = false;
 
-function save() {
-  localStorage.setItem('fabrics', JSON.stringify(fabrics));
-  localStorage.setItem('usageLog', JSON.stringify(usageLog));
+// ── FIELD MAPPING: sheet ↔ internal ──────────────────────────────────────
+// Sheet columns: FabricCode, Photo FACE, photo BACK, QR_Code, URL_QR,
+//   URL_QR_pic, ProductName, Type, Color, Pattern, Composition,
+//   Weight_gsm, Width_cm, CareSymbols, Supplier, PurchaseDate,
+//   PurchasePrice_EUR_perUnit, PRICE, Unit,
+//   Quantity_Initial, Quantity_Used, Quantity_Remaining, Notes
+
+function sheetToFabric(row) {
+  return {
+    code:        row['FabricCode']               || '',
+    name:        row['ProductName']              || '',
+    type:        row['Type']                     || '',
+    color:       row['Color']                    || '',
+    pattern:     row['Pattern']                  || '',
+    composition: row['Composition']              || '',
+    weight:      row['Weight_gsm']               || '',
+    width:       row['Width_cm']                 || '',
+    care:        row['CareSymbols']              || '',
+    supplier:    row['Supplier']                 || '',
+    date:        row['PurchaseDate']             || '',
+    price:       row['PurchasePrice_EUR_perUnit']|| row['PRICE'] || '',
+    unit:        row['Unit']                     || 'm',
+    qty:         parseFloat(row['Quantity_Initial'])   || 0,
+    used:        parseFloat(row['Quantity_Used'])      || 0,
+    remaining:   parseFloat(row['Quantity_Remaining']) || 0,
+    notes:       row['Notes']                    || '',
+    qr:          row['QR_Code']                  || '',
+    photo:       row['Photo FACE']               || '',
+    photoBack:   row['photo BACK']               || '',
+    urlQR:       row['URL_QR']                   || '',
+  };
 }
+
+function fabricToSheet(f) {
+  return {
+    'FabricCode':                f.code        || '',
+    'Photo FACE':                f.photo       || '',
+    'photo BACK':                f.photoBack   || '',
+    'QR_Code':                   f.qr          || f.code || '',
+    'URL_QR':                    f.urlQR       || '',
+    'URL_QR_pic':                '',
+    'ProductName':               f.name        || '',
+    'Type':                      f.type        || '',
+    'Color':                     f.color       || '',
+    'Pattern':                   f.pattern     || '',
+    'Composition':               f.composition || '',
+    'Weight_gsm':                f.weight      || '',
+    'Width_cm':                  f.width       || '',
+    'CareSymbols':               f.care        || '',
+    'Supplier':                  f.supplier    || '',
+    'PurchaseDate':              f.date        || '',
+    'PurchasePrice_EUR_perUnit': f.price       || '',
+    'PRICE':                     f.price       || '',
+    'Unit':                      f.unit        || 'm',
+    'Quantity_Initial':          f.qty         || 0,
+    'Quantity_Used':             f.used        || 0,
+    'Quantity_Remaining':        f.remaining   !== undefined ? f.remaining : f.qty,
+    'Notes':                     f.notes       || '',
+  };
+}
+
+// Sheet columns: UsageID, FabricCode, Date, Project,
+//   Amount_Before, Quantity, Amount_After, Unit, Purpose, Notes
+
+function sheetToUsage(row) {
+  return {
+    id:         row['UsageID']       || '',
+    fabricCode: row['FabricCode']    || '',
+    date:       row['Date']          || '',
+    project:    row['Project']       || '',
+    before:     parseFloat(row['Amount_Before']) || 0,
+    qty:        parseFloat(row['Quantity'])      || 0,
+    after:      parseFloat(row['Amount_After'])  || 0,
+    unit:       row['Unit']          || 'm',
+    purpose:    row['Purpose']       || '',
+    notes:      row['Notes']         || '',
+  };
+}
+
+function usageToSheet(u) {
+  return {
+    'UsageID':      u.id         || '',
+    'FabricCode':   u.fabricCode || '',
+    'Date':         u.date       || '',
+    'Project':      u.project    || '',
+    'Amount_Before':u.before     || 0,
+    'Quantity':     u.qty        || 0,
+    'Amount_After': u.after      || 0,
+    'Unit':         u.unit       || 'm',
+    'Purpose':      u.purpose    || '',
+    'Notes':        u.notes      || '',
+  };
+}
+
+// ── SHEET API ─────────────────────────────────────────────────────────────
+async function apiGet(action) {
+  const res = await fetch(`${API_URL}?action=${action}`);
+  return res.json();
+}
+
+async function apiPost(body) {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
+
+// ── LOAD FROM SHEET ───────────────────────────────────────────────────────
+async function loadData() {
+  setLoading(true);
+  try {
+    const [fRes, uRes] = await Promise.all([
+      apiGet('getFabrics'),
+      apiGet('getFabricUsageLog'),
+    ]);
+    if (fRes.success) {
+      fabrics = (fRes.fabrics || []).map(sheetToFabric);
+    }
+    if (uRes.success) {
+      usageLog = (uRes.log || []).map(sheetToUsage).reverse(); // newest first
+    }
+  } catch(e) {
+    showToast('Could not connect to sheet — check network');
+    console.error(e);
+  }
+  setLoading(false);
+}
+
+function setLoading(on) {
+  isLoading = on;
+  const ind = document.getElementById('loading-indicator');
+  if (ind) ind.style.display = on ? 'flex' : 'none';
+}
+
+// legacy no-op (no more localStorage writes needed)
+function save() {}
 
 // ── NAVIGATION ────────────────────────────────────────────────────────────
 function showPage(id) {
@@ -937,10 +1164,24 @@ function showPage(id) {
     editingPhoto = null;
   }
   if (id === 'log-usage') { populateLogSelect(); renderLogTable(); setTodayDate('log-date'); }
-  if (id === 'scan') { document.getElementById('scan-code-input').value = ''; document.getElementById('scan-result').style.display='none'; }
+  if (id === 'scan') {
+    const inp = document.getElementById('scan-code-input');
+    inp.value = '';
+    inp.classList.remove('has-value');
+    document.getElementById('scan-clear-btn').classList.remove('visible');
+    document.getElementById('scan-result').innerHTML = '';
+  }
 }
 
 function goBack() { showPage(prevPage || 'home'); }
+
+// ── RELOAD ────────────────────────────────────────────────────────────────
+async function reloadInventory() {
+  await loadData();
+  renderStats();
+  renderTable();
+  showToast('Refreshed from sheet');
+}
 
 // ── HOME ──────────────────────────────────────────────────────────────────
 function updateHomeBadge() {
@@ -948,15 +1189,13 @@ function updateHomeBadge() {
 }
 
 // ── STATS ─────────────────────────────────────────────────────────────────
+// Use sheet-provided values; remaining comes from Quantity_Remaining column
 function getRemaining(f) {
-  const used = usageLog.filter(u => u.fabricCode === f.code && u.project !== 'Initial qty')
-    .reduce((s, u) => s + u.qty, 0);
-  return Math.max(0, f.qty + (f.manualRemaining !== undefined ? 0 : 0) - used);
+  return parseFloat(f.remaining) || 0;
 }
 
 function getUsed(f) {
-  return usageLog.filter(u => u.fabricCode === f.code && u.project !== 'Initial qty')
-    .reduce((s, u) => s + u.qty, 0);
+  return parseFloat(f.used) || 0;
 }
 
 function renderStats() {
@@ -1046,7 +1285,7 @@ function handlePhoto(e) {
   reader.readAsDataURL(file);
 }
 
-function saveFabric() {
+async function saveFabric() {
   const code = document.getElementById('f-code').value.trim();
   const name = document.getElementById('f-name').value.trim();
   const type = document.getElementById('f-type').value.trim();
@@ -1054,40 +1293,55 @@ function saveFabric() {
   if (!code || !name || !type || !color) { showToast('Please fill in required fields (*)'); return; }
 
   const editId = document.getElementById('edit-id').value;
+  const existing = fabrics.find(f => f.code === editId || f.code === code);
+  const qty = parseFloat(document.getElementById('f-qty').value) || 0;
+
   const fabric = {
     code,
     name,
     type,
     color,
-    pattern: document.getElementById('f-pattern').value.trim(),
+    pattern:     document.getElementById('f-pattern').value.trim(),
     composition: document.getElementById('f-composition').value.trim(),
-    qty: parseFloat(document.getElementById('f-qty').value) || 0,
-    unit: document.getElementById('f-unit').value,
-    weight: document.getElementById('f-weight').value,
-    width: document.getElementById('f-width').value,
-    supplier: document.getElementById('f-supplier').value.trim(),
-    date: document.getElementById('f-date').value,
-    price: document.getElementById('f-price').value,
-    care: document.getElementById('f-care').value.trim(),
-    notes: document.getElementById('f-notes').value.trim(),
-    photo: editingPhoto || (editId ? (fabrics.find(f=>f.code===editId)||{}).photo : null),
-    qr: document.getElementById('f-qr').value || code,
+    qty,
+    used:      existing ? existing.used : 0,
+    remaining: existing ? existing.remaining : qty,
+    unit:      document.getElementById('f-unit').value,
+    weight:    document.getElementById('f-weight').value,
+    width:     document.getElementById('f-width').value,
+    supplier:  document.getElementById('f-supplier').value.trim(),
+    date:      document.getElementById('f-date').value,
+    price:     document.getElementById('f-price').value,
+    care:      document.getElementById('f-care').value.trim(),
+    notes:     document.getElementById('f-notes').value.trim(),
+    photo:     editingPhoto || (existing ? existing.photo : ''),
+    photoBack: existing ? existing.photoBack : '',
+    qr:        document.getElementById('f-qr').value || code,
+    urlQR:     existing ? existing.urlQR : '',
   };
 
-  if (editId && editId !== code) {
-    // code changed — update usage logs too
-    usageLog.forEach(u => { if (u.fabricCode === editId) u.fabricCode = code; });
-    fabrics = fabrics.filter(f => f.code !== editId);
-  } else if (!editId) {
+  // if adding new fabric, remaining = initial qty
+  if (!editId) {
     if (fabrics.find(f => f.code === code)) { showToast('Fabric Code already exists'); return; }
-  } else {
-    fabrics = fabrics.filter(f => f.code !== code);
+    fabric.remaining = qty;
   }
 
-  fabrics.push(fabric);
-  save();
-  showToast(editId ? 'Fabric updated' : 'Fabric added');
-  showPage('inventory');
+  const btn = document.querySelector('#page-add-fabric .btn-save');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  try {
+    const res = await apiPost({ action: 'saveFabric', data: fabricToSheet(fabric) });
+    if (!res.success) { showToast('Save failed: ' + res.message); btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Fabric'; return; }
+    // update local cache
+    fabrics = fabrics.filter(f => f.code !== editId && f.code !== code);
+    fabrics.push(fabric);
+    showToast(editId ? 'Fabric updated ✓' : 'Fabric added ✓');
+    showPage('inventory');
+  } catch(e) {
+    showToast('Network error — try again');
+  }
+  btn.disabled=false;
+  btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Fabric';
 }
 
 function editFabric(code) {
@@ -1128,12 +1382,21 @@ function closeModal() {
   document.getElementById('delete-modal').classList.remove('open');
   deleteTarget = null;
 }
-function confirmDelete() {
+async function confirmDelete() {
   if (!deleteTarget) return;
-  fabrics = fabrics.filter(f => f.code !== deleteTarget);
-  save(); closeModal();
-  showToast('Fabric deleted');
-  renderStats(); renderTable();
+  const btn = document.querySelector('#delete-modal .btn-save');
+  btn.disabled = true; btn.textContent = 'Deleting…';
+  try {
+    const res = await apiPost({ action: 'deleteFabric', code: deleteTarget });
+    if (!res.success) { showToast('Delete failed: ' + res.message); btn.disabled=false; btn.textContent='Delete'; return; }
+    fabrics = fabrics.filter(f => f.code !== deleteTarget);
+    closeModal();
+    showToast('Fabric deleted');
+    renderStats(); renderTable();
+  } catch(e) {
+    showToast('Network error — try again');
+  }
+  btn.disabled=false; btn.textContent='Delete';
 }
 
 // ── LOG USAGE ─────────────────────────────────────────────────────────────
@@ -1143,33 +1406,57 @@ function populateLogSelect() {
     fabrics.map(f => `<option value="${esc(f.code)}">${esc(f.code)} – ${esc(f.name||'')}</option>`).join('');
 }
 
-function logUsage() {
+async function logUsage() {
   const code = document.getElementById('log-fabric').value;
-  const qty = parseFloat(document.getElementById('log-qty').value);
+  const qty  = parseFloat(document.getElementById('log-qty').value);
   if (!code || !qty || qty <= 0) { showToast('Select a fabric and enter a valid quantity'); return; }
   const fabric = fabrics.find(f => f.code === code);
   if (!fabric) return;
   const before = getRemaining(fabric);
   if (qty > before) { showToast('Not enough stock (remaining: ' + before + ' ' + fabric.unit + ')'); return; }
 
+  const after = parseFloat((before - qty).toFixed(3));
   const entry = {
-    id: 'USE-' + String(usageLog.length + 1).padStart(4,'0'),
+    id:         '',  // auto-generated by sheet
     fabricCode: code,
-    date: document.getElementById('log-date').value || new Date().toISOString().split('T')[0],
-    project: document.getElementById('log-project').value.trim() || '--',
+    date:       document.getElementById('log-date').value || new Date().toISOString().split('T')[0],
+    project:    document.getElementById('log-project').value.trim() || '--',
     before,
     qty,
-    after: before - qty,
-    unit: fabric.unit,
-    notes: document.getElementById('log-notes').value.trim(),
+    after,
+    unit:       fabric.unit,
+    purpose:    '',
+    notes:      document.getElementById('log-notes').value.trim(),
   };
-  usageLog.unshift(entry);
-  save();
-  showToast('Usage logged');
-  document.getElementById('log-qty').value = '';
-  document.getElementById('log-project').value = '';
-  document.getElementById('log-notes').value = '';
-  renderLogTable();
+
+  const btn = document.querySelector('#page-log-usage .btn-save');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  try {
+    // 1. log the usage entry
+    const logRes = await apiPost({ action: 'logFabricUsage', data: usageToSheet(entry) });
+    if (!logRes.success) { showToast('Log failed: ' + logRes.message); btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Log Usage'; return; }
+
+    // 2. update fabric remaining + used in sheet
+    const updatedFabric = { ...fabric, used: parseFloat((fabric.used + qty).toFixed(3)), remaining: after };
+    await apiPost({ action: 'saveFabric', data: fabricToSheet(updatedFabric) });
+
+    // update local cache
+    entry.id = logRes.usageId || entry.id;
+    usageLog.unshift(entry);
+    fabric.used = updatedFabric.used;
+    fabric.remaining = after;
+
+    showToast('Usage logged ✓');
+    document.getElementById('log-qty').value = '';
+    document.getElementById('log-project').value = '';
+    document.getElementById('log-notes').value = '';
+    renderLogTable();
+  } catch(e) {
+    showToast('Network error — try again');
+  }
+  btn.disabled=false;
+  btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Log Usage';
 }
 
 function renderLogTable() {
@@ -1191,40 +1478,146 @@ function renderLogTable() {
 }
 
 // ── SCAN ──────────────────────────────────────────────────────────────────
+function toggleScanClear(val) {
+  const btn = document.getElementById('scan-clear-btn');
+  const inp = document.getElementById('scan-code-input');
+  if (val) { btn.classList.add('visible'); inp.classList.add('has-value'); }
+  else { btn.classList.remove('visible'); inp.classList.remove('has-value'); }
+}
+
+function clearScanInput() {
+  const inp = document.getElementById('scan-code-input');
+  inp.value = '';
+  toggleScanClear('');
+  scanLookup('');
+  inp.focus();
+}
+
 function scanLookup(val) {
   const v = val.trim().toLowerCase();
   const res = document.getElementById('scan-result');
-  if (!v) { res.style.display='none'; return; }
+  res.innerHTML = '';
+
+  if (!v) return;
+
   const f = fabrics.find(x => x.code.toLowerCase()===v || (x.qr||'').toLowerCase()===v);
   if (!f) {
-    res.style.display='block';
-    res.innerHTML = `<div class="scan-result"><p style="color:var(--text-muted)">No fabric found for code "<strong>${esc(v)}</strong>".</p></div>`;
+    res.innerHTML = `<div class="scan-result-card" style="padding:24px;text-align:center;color:var(--text-muted)">
+      No fabric found for code "<strong style="color:var(--text)">${esc(val.trim())}</strong>".
+    </div>`;
     return;
   }
-  const rem = getRemaining(f);
-  const low = rem <= LOW_STOCK_THRESHOLD;
-  res.style.display='block';
-  res.innerHTML = `<div class="scan-result">
-    <h3>${esc(f.name||f.code)}</h3>
-    <div class="scan-result-grid">
-      <div class="scan-result-item"><span class="label">Code</span><span class="value">${esc(f.code)}</span></div>
-      <div class="scan-result-item"><span class="label">Type</span><span class="value">${esc(f.type||'--')}</span></div>
-      <div class="scan-result-item"><span class="label">Color</span><span class="value">${esc(f.color||'--')}</span></div>
-      <div class="scan-result-item"><span class="label">Composition</span><span class="value">${esc(f.composition||'--')}</span></div>
-      <div class="scan-result-item"><span class="label">Initial Qty</span><span class="value">${f.qty} ${f.unit||'m'}</span></div>
-      <div class="scan-result-item"><span class="label">Remaining</span><span class="value ${low?'remaining-low':''}">${rem} ${f.unit||'m'}</span></div>
-      ${f.supplier?`<div class="scan-result-item"><span class="label">Supplier</span><span class="value">${esc(f.supplier)}</span></div>`:''}
-      ${f.care?`<div class="scan-result-item"><span class="label">Care</span><span class="value">${esc(f.care)}</span></div>`:''}
+
+  // build usage history rows for this fabric (chronological)
+  const history = usageLog.filter(u => u.fabricCode === f.code).slice().reverse();
+  const ROWS = 10;
+  let histRows = '';
+  for (let i = 0; i < ROWS; i++) {
+    const u = history[i];
+    if (u) {
+      const isInitial = u.project === 'Initial qty' || u.project === 'Initial qtty';
+      histRows += `<tr>
+        <td>${esc(u.date||'')}</td>
+        <td>${esc(u.project||'--')}</td>
+        <td class="right">${u.before}</td>
+        <td class="${isInitial?'green':''} right">${isInitial?'+'+u.qty:u.qty}</td>
+        <td class="right">${u.after}</td>
+      </tr>`;
+    } else {
+      histRows += `<tr class="scan-empty-rows"><td></td><td></td><td></td><td></td><td></td></tr>`;
+    }
+  }
+
+  const photoHtml = f.photo
+    ? `<img src="${f.photo}" alt="fabric photo">`
+    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg><span>Fabric photo</span>`;
+
+  // detail rows
+  const detailRows = [
+    ['color', f.color],
+    ['pattern', f.pattern],
+    ['composition', f.composition],
+    ['weight', f.weight ? f.weight + ' gsm' : null],
+    ['width', f.width ? f.width + ' cm' : null],
+    ['source', f.supplier],
+    ['notes', f.notes],
+  ].filter(([,v]) => v).map(([k,v]) =>
+    `<tr><td>${k}</td><td>${esc(v)}</td></tr>`
+  ).join('');
+
+  const today = new Date().toISOString().split('T')[0];
+
+  res.innerHTML = `<div class="scan-result-card">
+    <div class="scan-result-body">
+      <!-- LEFT -->
+      <div class="scan-result-left">
+        <div class="scan-media-row">
+          <div class="scan-photo-box">${photoHtml}</div>
+          <div class="scan-qr-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/>
+              <rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/>
+            </svg>
+            <span>[QR Code]</span>
+          </div>
+        </div>
+        <div>
+          <div class="scan-fabric-type">${esc(f.type||'--')}</div>
+          <div class="scan-fabric-code-sub">${esc(f.code)}</div>
+        </div>
+        <table class="scan-details-table">
+          ${detailRows}
+        </table>
+      </div>
+      <!-- RIGHT -->
+      <div class="scan-result-right">
+        <h3>${esc(f.code)}</h3>
+        <table class="scan-history-table">
+          <thead>
+            <tr>
+              <th rowspan="2">date</th>
+              <th rowspan="2">project</th>
+              <th colspan="3" class="qty-header" style="text-align:center;padding-bottom:2px">quantity</th>
+            </tr>
+            <tr>
+              <th class="right">before</th>
+              <th class="right">use</th>
+              <th class="right">after</th>
+            </tr>
+          </thead>
+          <tbody>${histRows}</tbody>
+        </table>
+      </div>
     </div>
-    <div style="margin-top:14px;display:flex;gap:8px">
-      <button class="btn-secondary" onclick="editFabric('${esc(f.code)}')">Edit</button>
-      <button class="btn-primary" onclick="showPage('log-usage');document.getElementById('log-fabric').value='${esc(f.code)}'">Log Usage</button>
+    <div class="scan-result-footer">
+      <button class="btn-secondary" onclick="clearScanInput()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+        New scan
+      </button>
+      <span class="scan-date">${today}</span>
+      <div class="scan-actions">
+        <button class="btn-secondary" onclick="editFabric('${esc(f.code)}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit
+        </button>
+        <button class="btn-primary" onclick="goToLogUsage('${esc(f.code)}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
+          Log Usage
+        </button>
+      </div>
     </div>
   </div>`;
 }
 
+function goToLogUsage(code) {
+  showPage('log-usage');
+  setTimeout(() => { document.getElementById('log-fabric').value = code; }, 50);
+}
+
 function openCamera() {
-  showToast('Camera access requires a native environment or HTTPS + getUserMedia');
+  showToast('Camera access requires a native app or HTTPS with getUserMedia support');
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
@@ -1250,10 +1643,12 @@ document.getElementById('delete-modal').addEventListener('click', function(e) {
 });
 
 // ── INIT ──────────────────────────────────────────────────────────────────
-showPage('home');
+(async function() {
+  showPage('home');
+  await loadData();
+  updateHomeBadge();
+})();
 </script>
-
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.0.0</div>
-
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.1.0</div>
 </body>
 </html>
