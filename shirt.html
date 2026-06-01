@@ -31,7 +31,12 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
   display: flex; flex-direction: column;
   min-height: 0;
   overflow: hidden;
+  transition: flex 0.35s cubic-bezier(0.4,0,0.2,1);
 }
+
+/* MEASUREMENTS ACTIVE — swap to 2:3 */
+.app.measurements-active .preview-panel { flex: 2; }
+.app.measurements-active .config-panel  { flex: 3; }
 
 /* view toggle at top */
 .view-toggle { display: flex; padding: 16px 20px 0; justify-content: center; gap: 0; flex-shrink: 0; }
@@ -110,7 +115,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 .view-bar-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
 
 /* ── RIGHT PANEL ── */
-.config-panel { flex: 2; background: var(--white); overflow-y: auto; min-height: 0; position: relative; display: flex; flex-direction: column; }
+.config-panel { flex: 2; background: var(--white); overflow-y: auto; min-height: 0; position: relative; display: flex; flex-direction: column; transition: flex 0.35s cubic-bezier(0.4,0,0.2,1); }
 
 
 .tabs {
@@ -294,7 +299,6 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 
   <!-- Dropdown -->
   <div id="nav-dd" style="display:none;position:absolute;top:52px;right:0;width:260px;background:#FAFAF8;border:1px solid rgba(26,25,22,0.20);border-radius:2px;box-shadow:0 12px 40px rgba(26,25,22,0.16);padding:20px;z-index:9999;font-family:'Jost',sans-serif;">
-    <!-- Avatar + Name + Email -->
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
       <div id="dd-av" style="width:40px;height:40px;border-radius:50%;background:#1A1916;color:#FAFAF8;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"></div>
       <div>
@@ -302,13 +306,11 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
         <div id="dd-email-sub" style="font-size:11px;color:#8A8880;word-break:break-all;"></div>
       </div>
     </div>
-    <!-- Person ID displayed like a name -->
     <div style="height:1px;background:rgba(26,25,22,0.10);margin-bottom:14px;"></div>
     <div style="margin-bottom:16px;">
       <div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#8A8880;margin-bottom:5px;">Person ID</div>
       <div id="dd-pid" style="font-size:15px;font-weight:600;color:#1A1916;letter-spacing:0.04em;">—</div>
     </div>
-    <!-- Buttons stacked vertically -->
     <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid rgba(26,25,22,0.10);padding-top:14px;">
       <a href="https://tailortech.toom.design/dashboard" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:none;background:#1A1916;color:#FAFAF8;border-radius:2px;cursor:pointer;text-decoration:none;display:block;text-align:center;">My Dashboard</a>
       <button onclick="doSignOut()" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:1px solid rgba(138,48,48,0.30);background:transparent;color:#8a3030;border-radius:2px;cursor:pointer;width:100%;">Sign Out</button>
@@ -318,7 +320,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 
 
 
-<div class="app">
+<div class="app" id="main-app">
 
   <!-- ══ PREVIEW PANEL (3/5) ══ -->
   <div class="preview-panel">
@@ -669,7 +671,6 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
       <div class="section">
         <div class="section-label">Buttons</div>
 
-        <!-- Button material -->
         <div class="btn-material-row">
           <button class="btn-material selected" onclick="selectBtnMaterial(this)">
             <span class="bm-name">Standard</span>
@@ -685,7 +686,6 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
           </button>
         </div>
 
-        <!-- Button size -->
         <div class="btn-size-row">
           <button class="btn-size selected" onclick="selectBtnSize(this)">N.11</button>
           <button class="btn-size" onclick="selectBtnSize(this)">N.12</button>
@@ -694,7 +694,6 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
           <button class="btn-size" onclick="selectBtnSize(this)">N.15</button>
         </div>
 
-        <!-- Button stitching -->
         <div class="sub-label" style="margin-top:20px;margin-bottom:10px;">Button Stitching</div>
         <div class="btn-stitch-grid">
           <div class="btn-stitch-card selected" onclick="selectBtnStitch(this,'normal')">
@@ -723,17 +722,14 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
     <!-- MEASUREMENTS PANEL -->
     <div class="config-body" id="panel-measurements" style="display:none;padding:0;">
 
-        <!-- Form column (avatar is in left preview panel) -->
         <div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0;overflow:hidden;height:100%;">
 
-          <!-- Scrollable form -->
           <div style="flex:1;overflow-y:auto;padding:28px 28px 16px;" id="meas-form-scroll">
 
             <div style="font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink);margin-bottom:18px;">Shirt Measurements</div>
 
             <form id="meas-form" novalidate>
 
-              <!-- Personal info (pre-filled, read-only when logged in) -->
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
                 <div style="display:flex;flex-direction:column;">
                   <label style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:5px;">Email Address</label>
@@ -745,7 +741,6 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
                 </div>
               </div>
 
-              <!-- Height -->
               <div style="margin-bottom:20px;">
                 <div style="display:flex;flex-direction:column;max-width:200px;">
                   <label style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:5px;">Height</label>
@@ -756,14 +751,12 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
                 </div>
               </div>
 
-              <!-- Volumetric section -->
               <div style="font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-light);padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px;display:flex;align-items:center;gap:7px;">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4v10l-9 4-9-4V7z"/></svg>
                 Volumetric Measurements
               </div>
               <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:20px;" id="meas-grid-vol"></div>
 
-              <!-- Linear section -->
               <div style="font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-light);padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px;display:flex;align-items:center;gap:7px;">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20M2 7l2 5-2 5M22 7l-2 5 2 5"/></svg>
                 Linear Measurements
@@ -772,7 +765,6 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 
             </form>
 
-            <!-- Measurement History -->
             <div id="meas-history-panel" style="display:none;margin-top:36px;">
               <div style="font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-light);padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px;display:flex;align-items:center;gap:7px;">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -784,7 +776,6 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 
           </div><!-- /scroll -->
 
-          <!-- Sticky bottom bar -->
           <div style="flex-shrink:0;background:var(--white);border-top:1px solid var(--border);padding:12px 28px;display:flex;justify-content:flex-end;gap:10px;">
             <button type="button" onclick="measResetForm()" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;padding:10px 20px;background:transparent;border:1px solid var(--border-mid);border-radius:2px;color:var(--ink-mid);cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
@@ -796,7 +787,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
             </button>
           </div>
 
-        </div><!-- /form column -->
+        </div>
 
     </div><!-- /panel-measurements -->
 
@@ -818,21 +809,13 @@ const state = {
   panY: 0
 };
 
-// ── URL builders ──
 const urls = {
   fit: f => BASE + `shirt_M_live_fit_${f}_f-b.webp`,
-
   placket: p => p === 'seamless'
     ? BASE + 'shirt_M_live_palcket_seamless_f.webp'
     : BASE + `shirt_M_live_placket_${p}_f.webp`,
-
   collar: c => BASE + `shirt_M_live_collar_${c}_f.webp`,
-
-  cuffs: (c, side) => {
-    // All 5 cuffs confirmed to have both _f and _b
-    return BASE + `shirt_M_live_cuffs_${c}_${side === 'back' ? 'b' : 'f'}.webp`;
-  },
-
+  cuffs: (c, side) => BASE + `shirt_M_live_cuffs_${c}_${side === 'back' ? 'b' : 'f'}.webp`,
   back: v => {
     if (v === 'plain') return BASE + 'shirt_M_live_back_base.webp';
     if (v === 'box-pleat') return BASE + 'shirt_M_live_back_box-pleat_b.webp';
@@ -841,22 +824,16 @@ const urls = {
   }
 };
 
-// ── Apply transform to layer-stack ──
 function applyTransform() {
   const el = document.getElementById('layer-stack');
   el.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.zoom})`;
 }
 
-// Zoom to a region and center it in the visible viewport.
-// cx, cy: 0–1 fractions of the layer-stack dimensions (420 × 620).
 function zoomToRegion(scale, cx, cy) {
   state.zoom = scale;
   const stackW = 420, stackH = 620;
-  // Point on the stack we want centered (relative to stack center, pre-scale)
   const pointX = (cx - 0.5) * stackW;
   const pointY = (cy - 0.5) * stackH;
-  // After scaling around center, that point moves to pointX*scale, pointY*scale.
-  // We need to translate it back to 0,0 (viewport center).
   state.panX = -pointX * scale;
   state.panY = -pointY * scale;
   applyTransform();
@@ -872,7 +849,6 @@ function manualZoom(delta) {
   applyTransform();
 }
 
-// ── Image setters ──
 function setImg(id, url) { document.getElementById(id).src = url; }
 
 function updateCuffsLayer() {
@@ -906,7 +882,6 @@ function preloadAll() {
   setTimeout(() => document.getElementById('loading-overlay').classList.add('done'), 5000);
 }
 
-// ── Selection handlers ──
 function selectFit(el, v) {
   el.closest('.pill-group').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
   el.classList.add('selected');
@@ -921,7 +896,6 @@ function selectPlacket(el, v) {
   state.placket = v;
   setImg('img-placket', urls.placket(v));
   setFrontBack('front');
-  // 10% up from previous 0.38 → 0.28 (10% of 620 = 62px / 620 = 0.10)
   zoomToRegion(2.4, 0.5, 0.5);
 }
 
@@ -931,7 +905,6 @@ function selectCollar(el, v) {
   state.collar = v;
   setImg('img-collar', urls.collar(v));
   setFrontBack('front');
-  // 40% up from previous 0.10 → -0.14 (clamped: 40% of 620 = 248px / 620 = 0.40)
   zoomToRegion(2.8, 0.5, 0.3);
 }
 
@@ -940,7 +913,6 @@ function selectPocket(el, v) {
   el.classList.add('selected');
   setFrontBack('front');
   if (v !== 'none') {
-    // 10% up from previous 0.30 → 0.20; cx=0.36 = 36% from left (151px of 420px)
     zoomToRegion(2.6, 0.5, 0.4);
   } else {
     resetZoom();
@@ -952,7 +924,6 @@ function selectBack(el, v) {
   el.classList.add('selected');
   const backUrl = urls.back(v);
   if (backUrl) state.backUrl = backUrl;
-  // switch to back view — setFrontBack will apply state.backUrl
   setFrontBack('back');
   resetZoom();
 }
@@ -971,7 +942,6 @@ function selectPillInGroup(el) {
   el.classList.add('selected');
 }
 
-// ── Front / Back toggle ──
 function setFrontBack(side) {
   state.side = side;
   document.getElementById('btn-front').classList.toggle('active', side === 'front');
@@ -985,7 +955,6 @@ function setFrontBack(side) {
     document.getElementById('img-collar').style.opacity = '1';
   } else {
     setImg('img-fit', urls.fit(state.fit));
-    // always apply the stored back overlay (defaults to back_base / plain)
     setImg('img-placket', state.backUrl);
     document.getElementById('img-placket').style.opacity = '1';
     document.getElementById('img-collar').style.opacity = '0';
@@ -993,7 +962,6 @@ function setFrontBack(side) {
   updateCuffsLayer();
 }
 
-// ── Technical / 3D toggle ──
 function setTechView(v) {
   document.getElementById('btn-technical').classList.toggle('active', v === 'technical');
   document.getElementById('btn-3d').classList.toggle('active', v === '3d');
@@ -1017,7 +985,9 @@ function switchTab(el, panelId) {
 
   var isMeas = (panelId === 'panel-measurements');
 
-  // Toggle left panel: shirt preview <-> measurement avatar
+  // ── Toggle 2:3 ratio for measurements tab ──
+  document.getElementById('main-app').classList.toggle('measurements-active', isMeas);
+
   var viewToggle   = document.querySelector('.view-toggle');
   var avatarStage  = document.getElementById('stage-viewport') && document.getElementById('stage-viewport').closest('.avatar-stage');
   var shirtViewBar = document.getElementById('shirt-view-bar');
@@ -1028,7 +998,6 @@ function switchTab(el, panelId) {
   if (shirtViewBar) shirtViewBar.style.display  = isMeas ? 'none' : '';
   if (measAvatar)   measAvatar.style.display    = isMeas ? 'flex'  : 'none';
 
-  // Init measurement diagram on first open
   if (isMeas) {
     var di = document.getElementById('meas-diag-img');
     if (di && !di.getAttribute('data-inited')) {
@@ -1083,20 +1052,10 @@ applyTransform();
 preloadAll();
 
 // ── Google Sheets Integration ──
-// Paste your Apps Script Web App URL here after setup:
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
 
 function collectConfig() {
-  // helpers
   const selText = (selector) => document.querySelector(selector)?.textContent.trim() || '';
-  const inputVal = (label) => {
-    const rows = document.querySelectorAll('.measure-row');
-    for (const row of rows) {
-      if (row.querySelector('label')?.textContent.trim() === label)
-        return row.querySelector('.measure-input')?.value || '';
-    }
-    return '';
-  };
   const sectionPill = (labelText) => {
     const sections = document.querySelectorAll('.section');
     for (const s of sections) {
@@ -1107,15 +1066,12 @@ function collectConfig() {
   };
 
   return {
-    // ── Meta ──
-    'Order Number':        '',                          // generated server-side
+    'Order Number':        '',
     'Status':              'New',
     'Created At':          new Date().toISOString(),
     'Terms Accepted':      '',
     'Marketing Consent':   '',
-
-    // ── Torso ──
-    'GENDER':              'M',                         // shirt_M = Men's
+    'GENDER':              'M',
     'FIT':                 sectionPill('Fit'),
     'STYLE/SILHOUETTE':    '',
     'CLOSURE':             sectionPill('Closure — Placket'),
@@ -1124,20 +1080,14 @@ function collectConfig() {
     'EXTRA POCKETS':       '',
     'HEM/FINISH':          sectionPill('Hem / Finish'),
     'BACK':                sectionPill('Back'),
-
-    // ── Sleeves ──
     'SLEEVE HEAD':         '',
     'SLEEVE STYLE':        '',
     'CONSTRUCTION':        sectionPill('Collar Interlining'),
     'SLEEVE BUTTONS':      sectionPill('Collar Stays'),
     'SLEEVE CUFF':         selText('#cuffs-grid .option-card.selected .cname'),
-
-    // ── Waistband ──
     'WAISTBAND STYLE':     '',
     'WAIST ADJUSTMENT':    '',
     'RISE':                '',
-
-    // ── Materials & Construction ──
     'MAIN FABRIC':         selText('#fabric-main-grid .fabric-card.selected .fname'),
     'CODE':                selText('#fabric-main-grid .fabric-card.selected .fcode'),
     'color':               '',
@@ -1160,8 +1110,6 @@ async function submitOrder() {
 
   try {
     const data = collectConfig();
-
-    // Load Apps Script URL in hidden iframe — bypasses CORS completely
     const payload = encodeURIComponent(JSON.stringify(data));
     const url     = SHEET_URL + '?payload=' + payload;
 
@@ -1169,8 +1117,6 @@ async function submitOrder() {
       const iframe = document.createElement('iframe');
       iframe.style.display = 'none';
       iframe.src = url;
-
-      // Listen for postMessage from iframe
       const handler = function(event) {
         if (String(event.data).indexOf('shirt_') === 0) {
           window.removeEventListener('message', handler);
@@ -1179,14 +1125,11 @@ async function submitOrder() {
         }
       };
       window.addEventListener('message', handler);
-
-      // Fallback — if no message in 8s, assume saved
       setTimeout(function() {
         window.removeEventListener('message', handler);
         if (iframe.parentNode) document.body.removeChild(iframe);
         resolve('shirt_saved');
       }, 8000);
-
       document.body.appendChild(iframe);
     });
 
@@ -1213,7 +1156,7 @@ function showFeedback(msg, color) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// MEASUREMENTS PANEL — full engine from measurements.html
+// MEASUREMENTS PANEL ENGINE
 // ═══════════════════════════════════════════════════════════
 (function() {
   'use strict';
@@ -1242,7 +1185,6 @@ function showFeedback(msg, color) {
     'shirtLength':             'MEASUREMENTS_Shirt length.png',
   };
 
-  // Shirt-only field set
   var SHIRT_VOL = [
     ['bustGirth','Bust girth (cm)'],
     ['waistGirth','Waist girth (cm)'],
@@ -1323,7 +1265,6 @@ function showFeedback(msg, color) {
     initMeasDiag();
   }
 
-  // Sheets helpers
   function sheetsReq(action, payload) {
     payload = payload || {};
     if (action === 'getMeasurements') {
@@ -1416,7 +1357,6 @@ function showFeedback(msg, color) {
     if (form) form.reset();
   };
 
-  // Auto-fill from Firebase user when panel becomes active
   window._measPanelReady = false;
   window._measInitForUser = function(user, personId) {
     if (window._measPanelReady) return;
@@ -1428,22 +1368,17 @@ function showFeedback(msg, color) {
     loadHistory(user.email);
   };
 
-  // Build fields on DOM ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', buildFields);
   } else {
     buildFields();
   }
 
-})(); // end measurements engine
+})();
 </script>
 
-
-
-
-
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.9.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.9.1</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -1467,17 +1402,14 @@ onAuthStateChanged(_auth, function(user) {
     document.getElementById('nav-av').style.display      = '';
     document.getElementById('nav-signout').style.display = '';
     document.getElementById('nav-login').style.display   = 'none';
-    // Fetch Person ID from sheet if not already loaded
     if (!window._currentPersonId) {
       getClientJSONP(user.email, user.uid, function(res) {
         if (res && res.success && res.client && res.client['Person ID']) {
           window._currentPersonId = res.client['Person ID'];
           var el = document.getElementById('dd-pid');
           if (el) el.textContent = window._currentPersonId;
-          // Init measurements panel now that we have the Person ID
           if (window._measInitForUser) window._measInitForUser(user, window._currentPersonId);
         } else {
-          // No Person ID but still init measurements panel
           if (window._measInitForUser) window._measInitForUser(user, '');
         }
       });
@@ -1485,7 +1417,6 @@ onAuthStateChanged(_auth, function(user) {
       if (window._measInitForUser) window._measInitForUser(user, window._currentPersonId);
     }
   } else {
-    // Signed out — reset nav
     var av = document.getElementById('nav-av');
     if (av) { av.style.display = 'none'; av.innerHTML = ''; }
     document.getElementById('nav-signout').style.display = 'none';
@@ -1497,7 +1428,6 @@ onAuthStateChanged(_auth, function(user) {
 </script>
 
 <script>
-// ── Nav ───────────────────────────────────────────────────────────
 function toggleDropdown(e) {
   if (e) e.stopPropagation();
   var d = document.getElementById('nav-dd');
@@ -1518,7 +1448,6 @@ function goToAuth() {
 }
 
 function doSignOut() {
-  // Firebase onAuthStateChanged fires after signOut and resets the nav automatically
   var auth = window._fb && window._fb.auth;
   var so   = window._fb && window._fb.signOut;
   if (auth && so) so(auth);
@@ -1543,7 +1472,6 @@ function setAccountPopover(user) {
   el = document.getElementById('dd-pid');       if (el) el.textContent = window._currentPersonId || '—';
 }
 
-// ── Fetch Person ID from Google Sheet via JSONP ───────────────────
 function getClientJSONP(email, uid, callback) {
   var cbName  = '__ttGetClient_' + Date.now();
   var payload = encodeURIComponent(JSON.stringify({ email: email, uid: uid || '' }));
@@ -1560,7 +1488,6 @@ function getClientJSONP(email, uid, callback) {
   document.body.appendChild(script);
 }
 
-// ── Toast ─────────────────────────────────────────────────────────
 function toast(msg, type) {
   var t = document.createElement('div');
   t.textContent = msg;
