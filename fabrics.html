@@ -515,7 +515,6 @@ async function submitLogModal(){
   try{
     const logRes=await apiPost({action:'logFabricUsage',data:usageToSheet({id:'',fabricCode:f.code,date:document.getElementById('modal-log-date').value,project:document.getElementById('modal-log-project').value.trim()||'--',before:cur,qty:qtyNeg,after,unit:f.unit,purpose:'',notes:document.getElementById('modal-log-notes').value.trim()})});
     if(!logRes.success){showToast('Error: '+logRes.message);btn.disabled=false;btn.textContent='Save';return;}
-    await apiPost({action:'saveFabric',data:fabricToSheet({...f,qty:after})});
     f.qty=after;usageLog.unshift({id:logRes.usageId||'',fabricCode:f.code,date:document.getElementById('modal-log-date').value,project:document.getElementById('modal-log-project').value.trim()||'--',before:cur,qty,after,unit:f.unit,notes:document.getElementById('modal-log-notes').value.trim()});
     closeLogModal();renderDetail();showToast('Usage logged \u2713');
   }catch(e){showToast('Network error \u2014 try again');}
@@ -607,7 +606,6 @@ async function logUsage(){
   try{
     const logRes=await apiPost({action:'logFabricUsage',data:usageToSheet({id:'',fabricCode:code,date:document.getElementById('log-date').value||new Date().toISOString().split('T')[0],project:document.getElementById('log-project').value.trim()||'--',before:cur,qty,after,unit:fabric.unit,purpose:'',notes:document.getElementById('log-notes').value.trim()})});
     if(!logRes.success){showToast('Log failed: '+logRes.message);btn.disabled=false;btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Log Usage';return;}
-    await apiPost({action:'saveFabric',data:fabricToSheet({...fabric,qty:after})});
     fabric.qty=after;usageLog.unshift({id:logRes.usageId||'',fabricCode:code,date:document.getElementById('log-date').value||new Date().toISOString().split('T')[0],project:document.getElementById('log-project').value.trim()||'--',before:cur,qty:qtyNeg,after,unit:fabric.unit,notes:document.getElementById('log-notes').value.trim()});
     showToast('Usage logged \u2713');document.getElementById('log-qty').value='';document.getElementById('log-project').value='';document.getElementById('log-notes').value='';document.getElementById('log-fabric-custom').value='';document.getElementById('log-fabric').value='';renderLogTable();
   }catch(e){showToast('Network error \u2014 try again');}
@@ -628,7 +626,6 @@ async function logRestock(){
   try{
     const logRes=await apiPost({action:'logFabricUsage',data:usageToSheet({id:'',fabricCode:code,date:document.getElementById('log-date').value||new Date().toISOString().split('T')[0],project:document.getElementById('log-project').value.trim()||'Restock',before:cur,qty:qtyPos,after,unit:fabric.unit,purpose:'restock',notes:document.getElementById('log-notes').value.trim()})});
     if(!logRes.success){showToast('Restock failed: '+logRes.message);btn.disabled=false;btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7-7 7 7"/></svg>Restock';return;}
-    await apiPost({action:'saveFabric',data:fabricToSheet({...fabric,qty:after})});
     fabric.qty=after;usageLog.unshift({id:logRes.usageId||'',fabricCode:code,date:document.getElementById('log-date').value||new Date().toISOString().split('T')[0],project:document.getElementById('log-project').value.trim()||'Restock',before:cur,qty:qtyPos,after,unit:fabric.unit,notes:document.getElementById('log-notes').value.trim()});
     showToast('Restock logged ✓');document.getElementById('log-qty').value='';document.getElementById('log-project').value='';document.getElementById('log-notes').value='';document.getElementById('log-fabric-custom').value='';document.getElementById('log-fabric').value='';renderLogTable();
   }catch(e){showToast('Network error — try again');}
@@ -669,6 +666,6 @@ document.getElementById('log-modal').addEventListener('click',function(e){if(e.t
   navigate('inventory');
 })();
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.0.1</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.0.2</div>
 </body>
 </html>
