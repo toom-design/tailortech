@@ -385,7 +385,7 @@ tbody td{padding:11px 14px;vertical-align:middle}
 
 <script>
 const VERSION  = '2.0.0';
-const BASE_URL = 'https://tailortech.toom.design/fabrics';
+const BASE_URL = 'https://tailortech.toom.design/fabrics.html';
 const API_URL  = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
 const LOW_STOCK = 2;
 
@@ -409,16 +409,24 @@ async function loadData(){
 }
 function setLoading(on){document.getElementById('loading-indicator').style.display=on?'flex':'none';}
 
-function getCodeFromPath(){
-  const p=location.pathname.replace(/\/+$/,'');
-  const parts=p.split('/');
-  const last=parts[parts.length-1];
-  if(last&&last!=='fabrics'&&!last.includes('.')&&last!=='index')return decodeURIComponent(last);
-  return null;
+function getCodeFromPath() {
+  return location.hash ? decodeURIComponent(location.hash.slice(1)) : null;
 }
-function fabricUrl(code){return BASE_URL+'/'+encodeURIComponent(code);}
-function pushUrl(code){history.pushState({code:code||null},'',code?fabricUrl(code):BASE_URL+'/');}
-
+function fabricUrl(code) {
+  return BASE_URL + '#' + encodeURIComponent(code);
+}
+function pushUrl(code) {
+  history.pushState({ code: code || null }, '', code ? fabricUrl(code) : BASE_URL);
+}
+  
+  window.addEventListener('hashchange', function() {
+  const code = location.hash ? decodeURIComponent(location.hash.slice(1)) : null;
+  if (code) {
+    const f = fabrics.find(x => x.code === code);
+    if (f) { currentFabric = f; showPages('detail'); showNav('det'); document.getElementById('nav-det-title').textContent = f.name||f.type||''; document.getElementById('nav-det-code').textContent = f.code; renderDetail(); }
+  } else { navigate('inventory'); }
+});
+  
 function showNav(which){
   document.getElementById('nav-inv').style.display=which==='inv'?'flex':'none';
   document.getElementById('nav-det').style.display=which==='det'?'flex':'none';
