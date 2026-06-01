@@ -615,7 +615,7 @@ function prefillMeasurements(rec){
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.9.2</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.9.3</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -630,10 +630,20 @@ onAuthStateChanged(_auth, function(user) {
     document.getElementById('nav-av').style.display='';
     document.getElementById('nav-signout').style.display='';
     document.getElementById('nav-login').style.display='none';
+    // If no email param in URL, prefill email field and load measurements now
+    var _hasEmailParam = new URLSearchParams(window.location.search).get('email');
+    if (!_hasEmailParam) {
+      var emailEl = document.getElementById('f-email');
+      if (emailEl && !emailEl.value) { emailEl.value = user.email; emailEl.readOnly = true; emailEl.style.opacity = '0.6'; emailEl.style.cursor = 'not-allowed'; }
+      var notif = document.getElementById('meas-loading-notif');
+      if (notif) notif.classList.add('visible');
+      loadMeasurementHistory(user.email);
+    }
     if (!window._currentPersonId) {
       getClientJSONP(user.email, user.uid, function(res){
         if(res&&res.success&&res.client&&res.client['Person ID']){
           window._currentPersonId=res.client['Person ID'];
+          var pidEl=document.getElementById('f-personId'); if(pidEl&&!pidEl.value){ pidEl.value=res.client['Person ID']; pidEl.readOnly=true; pidEl.style.opacity='0.6'; pidEl.style.cursor='not-allowed'; }
           var el=document.getElementById('dd-pid'); if(el) el.textContent=window._currentPersonId;
         }
       });
