@@ -4,1701 +4,630 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TailorTech — Fabrics</title>
-<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
-  :root {
-    --bg: #f0ede8;
-    --surface: #ffffff;
-    --border: #e8e4de;
-    --text: #1a1916;
-    --text-muted: #8a8780;
-    --text-light: #b8b5b0;
-    --accent: #c1440e;
-    --accent-hover: #a33a0c;
-    --accent-light: #fdf0eb;
-    --green: #2d6a4f;
-    --green-light: #edf5f1;
-    --status-healthy: #e8f5ee;
-    --status-healthy-text: #2d6a4f;
-    --status-low: #fff3e0;
-    --status-low-text: #b45309;
-    --status-critical: #fde8e8;
-    --status-critical-text: #c1440e;
-    --blue: #1e4d8c;
-    --purple: #5c3d8f;
-    --warning: #c1440e;
-    --warning-bg: #fff5f2;
-    --radius: 10px;
-    --radius-sm: 6px;
-    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: 'Jost', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    font-size: 14px;
-    line-height: 1.5;
-    letter-spacing: 0.01em;
-  }
-
-  /* ── NAV ── */
-  nav {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    padding: 0 28px;
-    height: 52px;
-    gap: 4px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .nav-logo {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    font-weight: 600;
-    font-size: 13px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    margin-right: 24px;
-    text-decoration: none;
-    color: var(--text);
-    cursor: pointer;
-  }
-  .nav-logo-word { font-weight: 700; letter-spacing: 0.14em; }
-  .nav-logo-sub  { font-weight: 400; letter-spacing: 0.14em; color: var(--text-muted); padding-left: 6px; border-left: 1px solid var(--border); margin-left: 6px; }
-  .nav-link {
-    display: flex; align-items: center; gap: 6px;
-    padding: 5px 12px;
-    border-radius: 5px;
-    text-decoration: none;
-    color: var(--text-muted);
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.03em;
-    cursor: pointer;
-    border: none; background: none;
-    transition: all .15s;
-  }
-  .nav-link:hover { color: var(--text); background: var(--bg); }
-  .nav-link.active { color: var(--text); background: var(--bg); }
-  .nav-link svg { width: 15px; height: 15px; }
-  .nav-spacer { flex: 1; }
-  .nav-btn {
-    display: flex; align-items: center; gap: 6px;
-    padding: 5px 13px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--text);
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    cursor: pointer;
-    transition: all .15s;
-    text-decoration: none;
-  }
-  .nav-btn:hover { background: var(--bg); }
-  .nav-btn svg { width: 14px; height: 14px; }
-
-  /* ── PAGES ── */
-  .page { display: none; min-height: calc(100vh - 56px); }
-  .page.active { display: block; }
-
-  /* ── HOME ── */
-  #page-home {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    padding: 60px 24px;
-  }
-  #page-home.active { display: flex; }
-  .home-header { text-align: center; margin-bottom: 48px; }
-  .home-header h1 {
-    font-family: 'DM Serif Display', serif;
-    font-size: 36px;
-    font-weight: 400;
-    letter-spacing: -0.5px;
-  }
-  .home-header p {
-    color: var(--text-muted);
-    font-size: 12px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    margin-top: 4px;
-    font-weight: 500;
-  }
-  .home-cards { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 560px; }
-  .home-card {
-    display: flex; align-items: center; gap: 16px;
-    background: var(--surface);
-    border-radius: var(--radius);
-    padding: 20px 20px 20px 16px;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    transition: all .2s;
-    text-decoration: none;
-    color: var(--text);
-  }
-  .home-card:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
-  .home-card-icon {
-    width: 56px; height: 56px;
-    border-radius: 14px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    font-size: 22px;
-  }
-  .home-card-icon.orange { background: var(--accent); color: white; }
-  .home-card-icon.blue { background: var(--blue); color: white; }
-  .home-card-icon.green { background: var(--green); color: white; }
-  .home-card-icon.purple { background: var(--purple); color: white; }
-  .home-card-body { flex: 1; }
-  .home-card-title {
-    font-size: 15px; font-weight: 600;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .home-card-title .badge {
-    font-size: 11px; font-weight: 500;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    padding: 1px 8px;
-    border-radius: 20px;
-    color: var(--text-muted);
-  }
-  .home-card-desc { color: var(--text-muted); font-size: 13px; margin-top: 2px; }
-  .home-card-arrow { color: var(--text-light); font-size: 18px; }
-
-  /* ── INVENTORY ── */
-  #page-inventory { padding: 32px 24px; max-width: 1200px; margin: 0 auto; }
-  h2.page-title {
-    font-family: 'DM Serif Display', serif;
-    font-size: 26px;
-    font-weight: 400;
-    margin-bottom: 24px;
-  }
-  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
-  .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px 24px;
-  }
-  .stat-card.warning { background: var(--warning-bg); border-color: #f5c9bb; }
-  .stat-label {
-    font-size: 12px; color: var(--text-muted); font-weight: 500;
-    display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
-  }
-  .stat-label svg { width: 14px; height: 14px; }
-  .stat-value { font-size: 36px; font-weight: 300; letter-spacing: -1px; line-height: 1; }
-  .stat-card.warning .stat-value { color: var(--warning); }
-
-  .toolbar {
-    display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
-  }
-  .search-wrap { position: relative; flex: 1; max-width: 380px; }
-  .search-wrap svg {
-    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-    width: 16px; height: 16px; color: var(--text-light);
-    pointer-events: none;
-  }
-  .search-input {
-    width: 100%; padding: 9px 12px 9px 36px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    font-family: inherit; font-size: 14px;
-    outline: none; color: var(--text);
-    transition: border-color .15s;
-  }
-  .search-input:focus { border-color: #aaa; }
-  .filter-select {
-    padding: 9px 32px 9px 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    font-family: inherit; font-size: 14px;
-    outline: none; color: var(--text);
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    cursor: pointer;
-  }
-  .btn-primary {
-    display: flex; align-items: center; gap: 6px;
-    padding: 9px 18px;
-    background: var(--accent);
-    color: white;
-    border: none;
-    border-radius: var(--radius-sm);
-    font-family: inherit; font-size: 14px; font-weight: 500;
-    cursor: pointer;
-    transition: background .15s;
-    margin-left: auto;
-  }
-  .btn-primary:hover { background: var(--accent-hover); }
-  .btn-primary svg { width: 16px; height: 16px; }
-
-  /* ── TABLE ── */
-  .table-wrap {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-  }
-  table { width: 100%; border-collapse: collapse; }
-  thead th {
-    text-align: left;
-    padding: 11px 14px;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-muted);
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
-    letter-spacing: 0.3px;
-  }
-  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
-  tbody tr:last-child { border-bottom: none; }
-  tbody tr:hover { background: #faf9f7; }
-  tbody td { padding: 12px 14px; vertical-align: middle; }
-  .fabric-thumb {
-    width: 44px; height: 44px;
-    border-radius: 6px;
-    object-fit: cover;
-    border: 1px solid var(--border);
-    display: block;
-    background: var(--bg);
-  }
-  .fabric-thumb-placeholder {
-    width: 44px; height: 44px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--text-light);
-  }
-  .fabric-thumb-placeholder svg { width: 18px; height: 18px; }
-  .fabric-name-cell { display: flex; flex-direction: column; gap: 2px; }
-  .fabric-name-cell .fname { font-weight: 500; font-size: 13px; }
-  .fabric-name-cell .fcomp { font-size: 12px; color: var(--text-muted); }
-  .fabric-name-cell .fcode {
-    font-size: 11px; color: var(--text-light);
-    font-family: monospace; letter-spacing: 0.03em;
-    background: var(--bg); border: 1px solid var(--border);
-    border-radius: 4px; padding: 1px 5px; display: inline-block; margin-top: 2px;
-  }
-  .color-dot {
-    width: 12px; height: 12px; border-radius: 50%;
-    display: inline-block; margin-right: 6px;
-    border: 1px solid rgba(0,0,0,0.1);
-    vertical-align: middle; flex-shrink: 0;
-  }
-  .color-cell { display: flex; align-items: center; gap: 6px; }
-  .status-badge {
-    display: inline-flex; align-items: center;
-    padding: 3px 10px; border-radius: 20px;
-    font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
-    white-space: nowrap;
-  }
-  .status-badge.healthy  { background: var(--status-healthy);  color: var(--status-healthy-text); }
-  .status-badge.low      { background: var(--status-low);      color: var(--status-low-text); }
-  .status-badge.critical { background: var(--status-critical); color: var(--status-critical-text); }
-  .value-cell { font-size: 13px; color: var(--text-muted); }
-  .type-badge {
-    display: inline-block;
-    padding: 3px 9px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 500;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    white-space: nowrap;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-  }
-  .remaining-low { color: var(--warning); font-weight: 600; }
-  .remaining-ok { font-weight: 600; }
-  .actions-cell { display: flex; gap: 6px; }
-  .btn-icon {
-    width: 30px; height: 30px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: all .15s;
-    color: var(--text-muted);
-  }
-  .btn-icon:hover { background: var(--bg); color: var(--text); }
-  .btn-icon svg { width: 14px; height: 14px; }
-  .btn-icon.danger:hover { background: #fff0ee; border-color: #f5c9bb; color: var(--warning); }
-
-  #page-add-fabric, #page-log-usage { padding: 32px 24px; max-width: 740px; margin: 0 auto; }
-  #page-scan { padding: 32px 24px; max-width: 860px; margin: 0 auto; }
-  .back-title {
-    display: flex; align-items: center; gap: 10px; margin-bottom: 28px;
-  }
-  .back-btn {
-    width: 32px; height: 32px; border-radius: 8px;
-    border: none; background: none;
-    cursor: pointer; color: var(--text-muted);
-    display: flex; align-items: center; justify-content: center;
-    transition: all .15s;
-  }
-  .back-btn:hover { background: var(--border); color: var(--text); }
-  .back-btn svg { width: 18px; height: 18px; }
-  .back-title h2 {
-    font-family: 'DM Serif Display', serif;
-    font-size: 24px; font-weight: 400;
-  }
-
-  .form-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 28px;
-  }
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-  .form-row.single { grid-template-columns: 1fr; }
-  .form-row.thirds { grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
-  .form-group { display: flex; flex-direction: column; gap: 6px; }
-  .form-label {
-    font-size: 13px; font-weight: 500; color: var(--text);
-  }
-  .form-label span { color: var(--warning); }
-  .form-input, .form-select, .form-textarea {
-    padding: 9px 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    font-family: inherit; font-size: 14px;
-    color: var(--text); background: var(--surface);
-    outline: none; transition: border-color .15s;
-    width: 100%;
-  }
-  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: #aaa; }
-  .form-input::placeholder, .form-textarea::placeholder { color: var(--text-light); }
-  .form-input.readonly { background: var(--bg); color: var(--text-muted); }
-  .form-hint { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-  .form-select {
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    cursor: pointer;
-  }
-  .form-textarea { resize: vertical; min-height: 90px; }
-
-  .photo-area {
-    display: flex; flex-direction: column; align-items: center; gap: 10px;
-  }
-  .photo-preview {
-    width: 160px; height: 160px;
-    border: 2px dashed var(--border);
-    border-radius: var(--radius);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--text-light); font-size: 28px;
-    overflow: hidden;
-    background: var(--bg);
-  }
-  .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
-  .btn-secondary {
-    display: flex; align-items: center; gap: 6px;
-    padding: 8px 14px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    font-family: inherit; font-size: 13px;
-    cursor: pointer; transition: all .15s; color: var(--text);
-  }
-  .btn-secondary:hover { background: var(--bg); }
-  .btn-secondary svg { width: 14px; height: 14px; }
-
-  .form-actions {
-    display: flex; justify-content: flex-end; gap: 10px;
-    padding-top: 20px; border-top: 1px solid var(--border); margin-top: 8px;
-  }
-  .btn-cancel {
-    padding: 9px 20px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    font-family: inherit; font-size: 14px;
-    cursor: pointer; transition: all .15s; color: var(--text);
-  }
-  .btn-cancel:hover { background: var(--bg); }
-  .btn-save {
-    display: flex; align-items: center; gap: 6px;
-    padding: 9px 20px;
-    background: var(--accent); color: white;
-    border: none; border-radius: var(--radius-sm);
-    font-family: inherit; font-size: 14px; font-weight: 500;
-    cursor: pointer; transition: background .15s;
-  }
-  .btn-save:hover { background: var(--accent-hover); }
-  .btn-save svg { width: 15px; height: 15px; }
-
-  /* ── LOG USAGE ── */
-  .log-table-wrap {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    margin-top: 20px;
-  }
-  .empty-state {
-    padding: 48px 24px; text-align: center; color: var(--text-muted);
-  }
-  .empty-state svg { width: 40px; height: 40px; color: var(--border); margin-bottom: 12px; }
-  .empty-state p { font-size: 14px; }
-
-  /* ── SCAN ── */
-  #page-scan { max-width: 860px; }
-  .scan-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-    display: flex; flex-direction: column; gap: 14px;
-  }
-  .btn-green {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 14px 24px;
-    background: var(--green); color: white;
-    border: none; border-radius: var(--radius-sm);
-    font-family: inherit; font-size: 15px; font-weight: 500;
-    cursor: pointer; transition: background .15s; width: 100%;
-  }
-  .btn-green:hover { background: #1f5038; }
-  .btn-green svg { width: 18px; height: 18px; }
-  .scan-input-wrap { position: relative; }
-  .scan-input-wrap .scan-icon {
-    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-    width: 18px; height: 18px; color: var(--text-light);
-    pointer-events: none;
-  }
-  .scan-input-wrap .scan-clear {
-    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-    width: 20px; height: 20px; border-radius: 50%;
-    border: none; background: var(--border);
-    cursor: pointer; display: none; align-items: center; justify-content: center;
-    color: var(--text-muted); font-size: 14px; line-height: 1;
-    transition: background .15s;
-  }
-  .scan-input-wrap .scan-clear:hover { background: #d0cdc8; }
-  .scan-input-wrap .scan-clear.visible { display: flex; }
-  .scan-input {
-    width: 100%; padding: 12px 40px 12px 42px;
-    border: 1px solid var(--border); border-radius: var(--radius-sm);
-    font-family: inherit; font-size: 14px; outline: none;
-    background: var(--surface); color: var(--text);
-    transition: border-color .15s;
-  }
-  .scan-input:focus { border-color: var(--accent); }
-  .scan-input.has-value { border-color: var(--accent); }
-  .scan-input::placeholder { color: var(--text-light); }
-
-  /* scan result card */
-  .scan-result-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    margin-top: 16px;
-    animation: modalIn .2s ease;
-  }
-  .scan-result-body {
-    display: grid; grid-template-columns: 2fr 3fr;
-    gap: 0;
-  }
-  .scan-result-left {
-    padding: 20px;
-    border-right: 1px solid var(--border);
-    display: flex; flex-direction: column; gap: 14px;
-  }
-  .scan-media-row { display: flex; gap: 10px; }
-  .scan-photo-box {
-    flex: 1; aspect-ratio: 1;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 6px; color: var(--text-light); font-size: 11px;
-    overflow: hidden;
-    min-height: 100px;
-  }
-  .scan-photo-box img { width: 100%; height: 100%; object-fit: cover; }
-  .scan-photo-box svg { width: 28px; height: 28px; }
-  .scan-qr-box {
-    width: 100px; flex-shrink: 0;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 6px; color: var(--text-light); font-size: 11px;
-    min-height: 100px;
-    padding: 8px;
-  }
-  .scan-qr-box svg { width: 36px; height: 36px; }
-  .scan-fabric-type {
-    font-size: 22px; font-weight: 700; letter-spacing: -0.3px;
-    text-transform: uppercase; line-height: 1.1;
-  }
-  .scan-fabric-code-sub { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
-  .scan-details-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .scan-details-table tr { border-top: 1px solid var(--border); }
-  .scan-details-table tr:first-child { border-top: none; }
-  .scan-details-table td { padding: 7px 4px; vertical-align: top; }
-  .scan-details-table td:first-child { color: var(--text-muted); width: 110px; padding-right: 12px; }
-  .scan-details-table td:last-child { font-weight: 400; color: var(--text); }
-
-  .scan-result-right { padding: 20px; display: flex; flex-direction: column; }
-  .scan-result-right h3 { font-size: 17px; font-weight: 700; margin-bottom: 14px; font-family: monospace; letter-spacing: 0.5px; }
-  .scan-history-table { width: 100%; border-collapse: collapse; font-size: 12px; flex: 1; }
-  .scan-history-table thead th {
-    text-align: left; padding: 6px 8px;
-    font-size: 11px; font-weight: 600; color: var(--text-muted);
-    border-bottom: 1px solid var(--border);
-  }
-  .scan-history-table thead th.right { text-align: right; }
-  .scan-history-table .qty-header { text-align: center; border-bottom: 1px solid var(--border); }
-  .scan-history-table tbody td { padding: 7px 8px; border-bottom: 1px solid var(--border); color: var(--text); }
-  .scan-history-table tbody td.green { color: #2d6a4f; font-weight: 600; }
-  .scan-history-table tbody td.right { text-align: right; }
-  .scan-history-table tbody tr:last-child td { border-bottom: none; }
-  .scan-empty-rows td { color: var(--text-light) !important; }
-  .scan-result-footer {
-    padding: 14px 20px;
-    border-top: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .scan-result-footer .scan-date { font-size: 12px; color: var(--text-muted); }
-  .scan-result-footer .scan-actions { display: flex; gap: 8px; }
-
-  /* ── MODAL ── */
-  .modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.3);
-    z-index: 200;
-    display: none; align-items: center; justify-content: center;
-    padding: 24px;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--surface);
-    border-radius: var(--radius);
-    padding: 28px;
-    width: 100%; max-width: 480px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-    animation: modalIn .2s ease;
-  }
-  @keyframes modalIn { from { opacity: 0; transform: scale(.96) translateY(8px); } to { opacity: 1; transform: none; } }
-  .modal h3 { font-size: 17px; font-weight: 600; margin-bottom: 16px; }
-  .modal .form-group { margin-bottom: 16px; }
-  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-
-  /* ── TOAST ── */
-  .toast {
-    position: fixed; bottom: 24px; right: 24px;
-    background: var(--text);
-    color: white;
-    padding: 12px 18px;
-    border-radius: 8px;
-    font-size: 14px; font-weight: 500;
-    z-index: 300;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-    transform: translateY(0); opacity: 1;
-    transition: all .3s;
-    display: none;
-  }
-  .toast.show { display: block; animation: toastIn .3s ease; }
-  @keyframes toastIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  @media (max-width: 640px) {
-    .stats-row { grid-template-columns: 1fr; }
-    .form-row { grid-template-columns: 1fr; }
-    .form-row.thirds { grid-template-columns: 1fr 1fr; }
-    .toolbar { flex-wrap: wrap; }
-  }
+:root{--bg:#f0ede8;--surface:#fff;--border:#e8e4de;--text:#1a1916;--text-muted:#8a8780;--text-light:#b8b5b0;--accent:#c1440e;--accent-hover:#a33a0c;--green:#2d6a4f;--sh:#e8f5ee;--sh-t:#2d6a4f;--sl:#fff3e0;--sl-t:#b45309;--sc:#fde8e8;--sc-t:#c1440e;--blue:#1e4d8c;--purple:#5c3d8f;--radius:10px;--radius-sm:6px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Jost',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;letter-spacing:.01em}
+nav{background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;height:52px;gap:6px;position:sticky;top:0;z-index:100}
+.nav-logo{display:flex;align-items:center;font-size:13px;text-transform:uppercase;text-decoration:none;color:var(--text);cursor:pointer;margin-right:12px}
+.nav-logo-word{font-weight:700;letter-spacing:.14em}
+.nav-logo-sub{font-weight:400;letter-spacing:.14em;color:var(--text-muted);padding-left:6px;border-left:1px solid var(--border);margin-left:6px}
+.nav-spacer{flex:1}
+.nav-btn{display:flex;align-items:center;gap:6px;padding:5px 13px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:12px;font-weight:500;letter-spacing:.04em;cursor:pointer;transition:all .15s}
+.nav-btn:hover{background:var(--bg)}
+.nav-btn svg{width:14px;height:14px}
+.nav-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.nav-btn.primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.nav-back{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer;border:none;background:none;padding:5px 0;transition:color .15s;letter-spacing:.03em}
+.nav-back:hover{color:var(--text)}
+.nav-back svg{width:16px;height:16px}
+.nav-divider{width:1px;height:18px;background:var(--border);margin:0 4px}
+.nav-code-pill{font-size:12px;color:var(--text-muted);font-family:monospace;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:2px 7px}
+.page{display:none;min-height:calc(100vh - 52px)}
+.page.active{display:block}
+#page-inventory{padding:32px 24px;max-width:1200px;margin:0 auto}
+h2.page-title{font-size:22px;font-weight:600;letter-spacing:-.2px;margin-bottom:24px}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px}
+.stat-card.warning{background:#fff5f2;border-color:#f5c9bb}
+.stat-label{font-size:12px;color:var(--text-muted);font-weight:500;display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.stat-label svg{width:14px;height:14px}
+.stat-value{font-size:36px;font-weight:300;letter-spacing:-1px;line-height:1}
+.stat-card.warning .stat-value{color:var(--accent)}
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.search-wrap{position:relative;flex:1;max-width:360px}
+.search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--text-light);pointer-events:none}
+.search-input{width:100%;padding:8px 12px 8px 34px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);font-family:inherit;font-size:14px;outline:none;color:var(--text);transition:border-color .15s}
+.search-input:focus{border-color:#aaa}
+.filter-select{padding:8px 28px 8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);font-family:inherit;font-size:14px;outline:none;color:var(--text);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;cursor:pointer}
+.btn-primary{display:flex;align-items:center;gap:6px;padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:background .15s;margin-left:auto}
+.btn-primary:hover{background:var(--accent-hover)}
+.btn-primary svg{width:15px;height:15px}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead th{text-align:left;padding:11px 14px;font-size:11px;font-weight:600;color:var(--text-muted);border-bottom:1px solid var(--border);white-space:nowrap;letter-spacing:.04em;text-transform:uppercase}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr.clickable{cursor:pointer}
+tbody tr.clickable:hover td{background:#f5f3ef}
+tbody td{padding:11px 14px;vertical-align:middle}
+.fabric-thumb{width:44px;height:44px;border-radius:6px;object-fit:cover;border:1px solid var(--border);display:block;background:var(--bg)}
+.fabric-thumb-placeholder{width:44px;height:44px;border-radius:6px;border:1px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--text-light)}
+.fabric-thumb-placeholder svg{width:18px;height:18px}
+.fcode{font-size:11px;color:var(--text-light);font-family:monospace;letter-spacing:.03em;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 5px;display:inline-block;margin-top:2px}
+.fcomp{font-size:12px;color:var(--text-muted)}
+.fnc{display:flex;flex-direction:column;gap:2px}
+.color-dot{width:11px;height:11px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.1);flex-shrink:0}
+.color-cell{display:flex;align-items:center;gap:7px}
+.type-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;background:var(--bg);border:1px solid var(--border);color:var(--text-muted);white-space:nowrap;text-transform:uppercase;letter-spacing:.3px}
+.status-badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.04em;white-space:nowrap}
+.status-badge.healthy{background:var(--sh);color:var(--sh-t)}
+.status-badge.low{background:var(--sl);color:var(--sl-t)}
+.status-badge.critical{background:var(--sc);color:var(--sc-t)}
+.remaining-low{color:var(--accent);font-weight:600}
+.remaining-ok{font-weight:600}
+.actions-cell{display:flex;gap:6px}
+.btn-icon{width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;color:var(--text-muted)}
+.btn-icon:hover{background:var(--bg);color:var(--text)}
+.btn-icon svg{width:14px;height:14px}
+.btn-icon.danger:hover{background:#fff0ee;border-color:#f5c9bb;color:var(--accent)}
+.empty-state{padding:48px 24px;text-align:center;color:var(--text-muted)}
+.empty-state svg{width:40px;height:40px;color:var(--border);margin-bottom:12px}
+.empty-state p{font-size:14px}
+#page-detail{padding:32px 24px;max-width:1100px;margin:0 auto}
+.detail-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.detail-body{display:grid;grid-template-columns:2fr 3fr}
+.detail-left{padding:28px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:20px}
+.detail-right{padding:28px;display:flex;flex-direction:column;gap:16px}
+.media-row{display:flex;gap:12px}
+.photo-box{flex:1;aspect-ratio:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--text-light);font-size:11px;overflow:hidden;min-height:140px}
+.photo-box img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-box svg{width:32px;height:32px}
+.qr-box{width:110px;flex-shrink:0;background:var(--bg);border:1px solid var(--border);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:110px;padding:10px;text-align:center}
+.qr-box-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-light)}
+.fabric-type-big{font-size:26px;font-weight:700;letter-spacing:-.3px;text-transform:uppercase;line-height:1.1}
+.fabric-name-sub{font-size:14px;color:var(--text-muted);margin-top:3px}
+.stock-row{display:flex;gap:12px}
+.stock-item{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:3px}
+.stock-item .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);font-weight:600}
+.stock-item .val{font-size:22px;font-weight:300;letter-spacing:-.5px}
+.stock-item .val.critical{color:var(--sc-t)}
+.stock-item .val.low{color:var(--sl-t)}
+.stock-item .val.healthy{color:var(--sh-t)}
+.stock-item .utag{font-size:12px;color:var(--text-muted)}
+.dtable{width:100%;border-collapse:collapse;font-size:13px}
+.dtable tr{border-top:1px solid var(--border)}
+.dtable tr:first-child{border-top:none}
+.dtable td{padding:8px 4px;vertical-align:top}
+.dtable td:first-child{color:var(--text-muted);width:110px;padding-right:14px;font-size:12px;white-space:nowrap}
+.dtable a{color:var(--accent);text-decoration:none}
+.dtable a:hover{text-decoration:underline}
+.usage-header{display:flex;align-items:center;justify-content:space-between}
+.usage-header h3{font-size:15px;font-weight:600}
+.usage-count{font-size:12px;color:var(--text-muted);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:2px 9px}
+.utbl{width:100%;border-collapse:collapse;font-size:13px}
+.utbl thead th{text-align:left;padding:6px 10px;font-size:11px;font-weight:600;color:var(--text-muted);border-bottom:1px solid var(--border);letter-spacing:.04em;text-transform:uppercase}
+.utbl thead th.r{text-align:right}
+.utbl tbody td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text)}
+.utbl tbody tr:last-child td{border-bottom:none}
+.utbl tbody tr:hover td{background:#faf9f7}
+.utbl td.r{text-align:right}
+.utbl td.plus{color:var(--green);font-weight:600}
+.utbl td.minus{color:var(--accent);font-weight:600}
+.ptag{display:inline-block;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 7px;font-size:12px;color:var(--text-muted)}
+.detail-footer{padding:16px 28px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#faf9f7}
+.footer-date{font-size:12px;color:var(--text-muted)}
+.footer-actions{display:flex;gap:8px}
+.qr-url-btn{font-size:10px;color:var(--accent);cursor:pointer;margin-top:2px;background:none;border:none;font-family:inherit;text-decoration:underline;padding:0}
+#page-add-fabric,#page-log-usage,#page-scan{padding:32px 24px;max-width:740px;margin:0 auto}
+.back-title{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+.back-btn{width:32px;height:32px;border-radius:8px;border:none;background:none;cursor:pointer;color:var(--text-muted);display:flex;align-items:center;justify-content:center;transition:all .15s}
+.back-btn:hover{background:var(--border);color:var(--text)}
+.back-btn svg{width:18px;height:18px}
+.back-title h2{font-size:20px;font-weight:600}
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+.form-row.single{grid-template-columns:1fr}
+.form-row.thirds{grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-label{font-size:13px;font-weight:500;color:var(--text)}
+.form-label span{color:var(--accent)}
+.form-input,.form-select,.form-textarea{padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:14px;color:var(--text);background:var(--surface);outline:none;transition:border-color .15s;width:100%}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:#aaa}
+.form-input::placeholder,.form-textarea::placeholder{color:var(--text-light)}
+.form-input.readonly{background:var(--bg);color:var(--text-muted)}
+.form-hint{font-size:12px;color:var(--text-muted);margin-top:2px}
+.form-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;cursor:pointer}
+.form-textarea{resize:vertical;min-height:90px}
+.photo-area{display:flex;flex-direction:column;align-items:center;gap:10px}
+.photo-preview{width:160px;height:160px;border:2px dashed var(--border);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:var(--text-light);overflow:hidden;background:var(--bg)}
+.photo-preview img{width:100%;height:100%;object-fit:cover}
+.btn-secondary{display:flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);font-family:inherit;font-size:13px;cursor:pointer;transition:all .15s;color:var(--text)}
+.btn-secondary:hover{background:var(--bg)}
+.btn-secondary svg{width:14px;height:14px}
+.form-actions{display:flex;justify-content:flex-end;gap:10px;padding-top:20px;border-top:1px solid var(--border);margin-top:8px}
+.btn-cancel{padding:9px 20px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);font-family:inherit;font-size:14px;cursor:pointer;transition:all .15s;color:var(--text)}
+.btn-cancel:hover{background:var(--bg)}
+.btn-save{display:flex;align-items:center;gap:6px;padding:9px 20px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;transition:background .15s}
+.btn-save:hover{background:var(--accent-hover)}
+.btn-save svg{width:15px;height:15px}
+#page-scan{max-width:860px}
+.scan-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;gap:14px}
+.btn-green{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 24px;background:var(--green);color:#fff;border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:15px;font-weight:500;cursor:pointer;transition:background .15s;width:100%}
+.btn-green:hover{background:#1f5038}
+.btn-green svg{width:18px;height:18px}
+.scan-input-wrap{position:relative}
+.scan-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:var(--text-light);pointer-events:none}
+.scan-clear{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:20px;height:20px;border-radius:50%;border:none;background:var(--border);cursor:pointer;display:none;align-items:center;justify-content:center;color:var(--text-muted);font-size:14px;line-height:1;transition:background .15s}
+.scan-clear:hover{background:#d0cdc8}
+.scan-clear.visible{display:flex}
+.scan-input{width:100%;padding:12px 40px 12px 42px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:14px;outline:none;background:var(--surface);color:var(--text);transition:border-color .15s}
+.scan-input:focus,.scan-input.has-value{border-color:var(--accent)}
+.scan-input::placeholder{color:var(--text-light)}
+.scan-result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-top:16px;animation:fadeUp .2s ease}
+.scan-result-body{display:grid;grid-template-columns:2fr 3fr}
+.scan-result-left{padding:20px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:14px}
+.scan-result-right{padding:20px;display:flex;flex-direction:column}
+.scan-result-right h3{font-size:17px;font-weight:700;margin-bottom:14px;font-family:monospace;letter-spacing:.5px}
+.scan-media-row{display:flex;gap:10px}
+.scan-photo-box{flex:1;aspect-ratio:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--text-light);font-size:11px;overflow:hidden;min-height:100px}
+.scan-photo-box img{width:100%;height:100%;object-fit:cover}
+.scan-photo-box svg{width:28px;height:28px}
+.scan-qr-box{width:100px;flex-shrink:0;background:var(--bg);border:1px solid var(--border);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--text-light);font-size:11px;min-height:100px;padding:8px}
+.scan-fabric-type{font-size:22px;font-weight:700;letter-spacing:-.3px;text-transform:uppercase;line-height:1.1}
+.scan-fabric-code-sub{font-size:13px;color:var(--text-muted);margin-top:2px}
+.scan-details-table{width:100%;border-collapse:collapse;font-size:13px}
+.scan-details-table tr{border-top:1px solid var(--border)}
+.scan-details-table tr:first-child{border-top:none}
+.scan-details-table td{padding:7px 4px;vertical-align:top}
+.scan-details-table td:first-child{color:var(--text-muted);width:110px;padding-right:12px}
+.scan-history-table{width:100%;border-collapse:collapse;font-size:12px;flex:1}
+.scan-history-table thead th{text-align:left;padding:6px 8px;font-size:11px;font-weight:600;color:var(--text-muted);border-bottom:1px solid var(--border)}
+.scan-history-table thead th.right,.scan-history-table tbody td.right{text-align:right}
+.scan-history-table .qty-header{text-align:center;border-bottom:1px solid var(--border)}
+.scan-history-table tbody td{padding:7px 8px;border-bottom:1px solid var(--border);color:var(--text)}
+.scan-history-table tbody td.green{color:#2d6a4f;font-weight:600}
+.scan-history-table tbody tr:last-child td{border-bottom:none}
+.scan-empty-rows td{color:var(--text-light)!important}
+.scan-result-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.scan-date{font-size:12px;color:var(--text-muted)}
+.scan-actions{display:flex;gap:8px}
+.log-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-top:20px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:200;display:none;align-items:center;justify-content:center;padding:24px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius);padding:28px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:fadeUp .2s ease}
+.modal h3{font-size:17px;font-weight:600;margin-bottom:16px}
+.modal .form-group{margin-bottom:16px}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+.modal-row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:500;z-index:300;box-shadow:0 4px 20px rgba(0,0,0,.2);display:none}
+.toast.show{display:block;animation:fadeUp .3s ease}
+#loading-indicator{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(240,237,232,.82);z-index:400;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media(max-width:700px){.detail-body,.scan-result-body{grid-template-columns:1fr}.detail-left{border-right:none;border-bottom:1px solid var(--border)}.stats-row{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}.form-row.thirds{grid-template-columns:1fr 1fr}.toolbar{flex-wrap:wrap}}
 </style>
 </head>
 <body>
 
-<!-- ── NAV ── -->
-<nav id="main-nav">
-  <a class="nav-logo" onclick="showPage('inventory')">
-    <span class="nav-logo-word">TailorTech</span>
-    <span class="nav-logo-sub">Fabrics</span>
-  </a>
-  <div class="nav-spacer"></div>
-  <button class="nav-btn" onclick="showPage('log-usage')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
-    Log Usage
-  </button>
-  <button class="nav-btn" onclick="showPage('scan')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2m10 0h2a2 2 0 0 1 2 2v2M3 17v2a2 2 0 0 0 2 2h2m10 0h2a2 2 0 0 0 2-2v-2M7 12h10"/></svg>
-    Scan Fabric
-  </button>
+<nav>
+  <a class="nav-logo" onclick="navigate('inventory')"><span class="nav-logo-word">TailorTech</span><span class="nav-logo-sub">Fabrics</span></a>
+  <div id="nav-inv" style="display:flex;align-items:center;gap:6px;flex:1">
+    <div class="nav-spacer"></div>
+    <button class="nav-btn" onclick="navigate('log-usage')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>Log Usage</button>
+    <button class="nav-btn" onclick="navigate('scan')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2m10 0h2a2 2 0 0 1 2 2v2M3 17v2a2 2 0 0 0 2 2h2m10 0h2a2 2 0 0 0 2-2v-2M7 12h10"/></svg>Scan Fabric</button>
+  </div>
+  <div id="nav-det" style="display:none;align-items:center;gap:6px;flex:1">
+    <button class="nav-back" onclick="navigate('inventory')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>Inventory</button>
+    <div class="nav-divider"></div>
+    <span id="nav-det-title" style="font-size:13px;font-weight:600"></span>
+    <span id="nav-det-code" class="nav-code-pill"></span>
+    <div class="nav-spacer"></div>
+    <button class="nav-btn" onclick="openLogModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>Log Usage</button>
+    <button class="nav-btn primary" onclick="navigate('add-fabric','__edit__')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit</button>
+  </div>
+  <div id="nav-sub" style="display:none;align-items:center;gap:6px;flex:1">
+    <button class="nav-back" id="nav-sub-back" onclick="history.back()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>Back</button>
+  </div>
 </nav>
 
-<!-- ══════════════════════════════════════════ HOME ══ -->
-<div id="page-home" class="page">
-  <div class="home-header">
-    <h1>TailorTech</h1>
-    <p>Fabric Stock</p>
-  </div>
-  <div class="home-cards">
-    <a class="home-card" onclick="showPage('inventory')">
-      <div class="home-card-icon orange">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-      </div>
-      <div class="home-card-body">
-        <div class="home-card-title">
-          INVENTORY
-          <span class="badge" id="home-count-badge">0 items</span>
-        </div>
-        <div class="home-card-desc">View and manage your fabric stock</div>
-      </div>
-      <div class="home-card-arrow">›</div>
-    </a>
-    <a class="home-card" onclick="showPage('log-usage')">
-      <div class="home-card-icon blue">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
-      </div>
-      <div class="home-card-body">
-        <div class="home-card-title">Log Usage</div>
-        <div class="home-card-desc">Record fabric used in a project</div>
-      </div>
-      <div class="home-card-arrow">›</div>
-    </a>
-    <a class="home-card" onclick="showPage('scan')">
-      <div class="home-card-icon green">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2m10 0h2a2 2 0 0 1 2 2v2M3 17v2a2 2 0 0 0 2 2h2m10 0h2a2 2 0 0 0 2-2v-2M7 12h10"/></svg>
-      </div>
-      <div class="home-card-body">
-        <div class="home-card-title">Scan Fabric</div>
-        <div class="home-card-desc">Look up a fabric by QR or code</div>
-      </div>
-      <div class="home-card-arrow">›</div>
-    </a>
-    <a class="home-card" onclick="showPage('add-fabric')">
-      <div class="home-card-icon purple">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-      </div>
-      <div class="home-card-body">
-        <div class="home-card-title">Add Fabric</div>
-        <div class="home-card-desc">Add a new fabric to your inventory</div>
-      </div>
-      <div class="home-card-arrow">›</div>
-    </a>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════ INVENTORY ══ -->
+<!-- INVENTORY -->
 <div id="page-inventory" class="page">
   <h2 class="page-title">Inventory Summary</h2>
   <div class="stats-row">
-    <div class="stat-card">
-      <div class="stat-label">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-        Total Items
-      </div>
-      <div class="stat-value" id="stat-total">0</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-        Estimated Value
-      </div>
-      <div class="stat-value" id="stat-value">€0.00</div>
-    </div>
-    <div class="stat-card warning">
-      <div class="stat-label">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        Low Stock Items
-      </div>
-      <div class="stat-value" id="stat-low">0</div>
-    </div>
+    <div class="stat-card"><div class="stat-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>Total Items</div><div class="stat-value" id="stat-total">0</div></div>
+    <div class="stat-card"><div class="stat-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>Estimated Value</div><div class="stat-value" id="stat-value">&#8364;0.00</div></div>
+    <div class="stat-card warning"><div class="stat-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Low Stock Items</div><div class="stat-value" id="stat-low">0</div></div>
   </div>
-
   <div class="toolbar">
-    <div class="search-wrap">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input class="search-input" id="search-input" placeholder="Search by code, name, type..." oninput="renderTable()">
-    </div>
-    <select class="filter-select" id="filter-unit" onchange="renderTable()">
-      <option value="">All Units</option>
-      <option value="m">Meters</option>
-      <option value="yd">Yards</option>
-      <option value="pcs">Pieces</option>
-    </select>
-    <button class="btn-primary" onclick="showPage('add-fabric')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Add Fabric
-    </button>
-    <button class="nav-btn" onclick="reloadInventory()" title="Refresh from sheet" style="padding:8px 10px">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
-    </button>
+    <div class="search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input class="search-input" id="search-input" placeholder="Search by code, name, type..." oninput="renderTable()"></div>
+    <select class="filter-select" id="filter-unit" onchange="renderTable()"><option value="">All Units</option><option value="m">Meters</option><option value="yd">Yards</option><option value="pcs">Pieces</option></select>
+    <button class="btn-primary" onclick="navigate('add-fabric')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Fabric</button>
+    <button class="nav-btn" onclick="reloadInventory()" title="Refresh" style="padding:7px 10px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg></button>
   </div>
-
   <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th style="width:60px"></th>
-          <th>Fabric</th>
-          <th>Category</th>
-          <th>Color</th>
-          <th style="text-align:right">Stock</th>
-          <th>Unit</th>
-          <th style="text-align:right">Unit Price</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="inventory-tbody"></tbody>
-    </table>
-    <div id="table-empty" class="empty-state" style="display:none">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-      <p>No fabrics found. <a href="#" onclick="showPage('add-fabric')" style="color:var(--accent)">Add one to get started.</a></p>
+    <table><thead><tr><th style="width:60px"></th><th>Fabric</th><th>Category</th><th>Color</th><th style="text-align:right">Stock</th><th>Unit</th><th style="text-align:right">Unit Price</th><th>Actions</th></tr></thead><tbody id="inventory-tbody"></tbody></table>
+    <div id="table-empty" class="empty-state" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg><p>No fabrics found. <a href="#" onclick="navigate('add-fabric')" style="color:var(--accent)">Add one to get started.</a></p></div>
+  </div>
+</div>
+
+<!-- DETAIL -->
+<div id="page-detail" class="page">
+  <div id="detail-loading" style="padding:80px;text-align:center;color:var(--text-muted)"><div class="spinner" style="margin:0 auto 12px"></div><p>Loading&#8230;</p></div>
+  <div id="detail-wrap" style="display:none">
+    <div class="detail-card">
+      <div class="detail-body">
+        <div class="detail-left">
+          <div class="media-row">
+            <div class="photo-box" id="d-photo-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg><span style="font-size:10px;text-transform:uppercase;letter-spacing:.06em">Fabric photo</span></div>
+            <div class="qr-box"><div id="d-qr-canvas"></div><span class="qr-box-label">QR Code</span><button class="qr-url-btn" onclick="copyFabricUrl()">Copy URL</button></div>
+          </div>
+          <div><div class="fabric-type-big" id="d-type">&#8212;</div><div class="fabric-name-sub" id="d-name"></div><div class="fcode" id="d-code" style="margin-top:5px">&#8212;</div></div>
+          <div class="stock-row">
+            <div class="stock-item"><div class="lbl">Stock</div><div class="val" id="d-stock">&#8212;</div><div class="utag" id="d-unit-tag">m</div></div>
+            <div class="stock-item"><div class="lbl">Unit Price</div><div class="val" id="d-price" style="font-size:17px">&#8212;</div><div class="utag">EUR</div></div>
+            <div class="stock-item" style="justify-content:center"><div class="lbl" style="margin-bottom:6px">Status</div><span class="status-badge" id="d-status">&#8212;</span></div>
+          </div>
+          <table class="dtable" id="d-details-table"></table>
+        </div>
+        <div class="detail-right">
+          <div class="usage-header"><h3>Usage History</h3><span class="usage-count" id="d-usage-count">0 entries</span></div>
+          <table class="utbl"><thead><tr><th rowspan="2">Date</th><th rowspan="2">Project</th><th class="r" colspan="3" style="text-align:center;border-bottom:1px solid var(--border);padding-bottom:2px">Quantity</th></tr><tr><th class="r">Before</th><th class="r">Used</th><th class="r">After</th></tr></thead><tbody id="d-usage-tbody"></tbody></table>
+        </div>
+      </div>
+      <div class="detail-footer">
+        <span class="footer-date" id="d-footer-date"></span>
+        <div class="footer-actions">
+          <button class="nav-btn" onclick="openLogModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>Log Usage</button>
+          <button class="nav-btn primary" onclick="navigate('add-fabric','__edit__')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit Fabric</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════ ADD FABRIC ══ -->
+<!-- ADD/EDIT FABRIC -->
 <div id="page-add-fabric" class="page">
-  <div class="back-title">
-    <button class="back-btn" onclick="goBack()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-    </button>
-    <h2 id="add-form-title">Add New Fabric</h2>
-  </div>
+  <div class="back-title"><button class="back-btn" onclick="history.back()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button><h2 id="add-form-title">Add New Fabric</h2></div>
   <div class="form-card">
     <input type="hidden" id="edit-id">
     <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Fabric Code <span>*</span></label>
-        <input class="form-input" id="f-code" placeholder="e.g. FAB-001" oninput="autoFillQR()">
-      </div>
-      <div class="form-group photo-area">
-        <label class="form-label">Photo</label>
-        <div class="photo-preview" id="photo-preview">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg>
-        </div>
-        <button class="btn-secondary" onclick="document.getElementById('photo-file').click()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          Take / Choose photo
-        </button>
-        <input type="file" id="photo-file" accept="image/*" style="display:none" onchange="handlePhoto(event)">
-      </div>
+      <div class="form-group"><label class="form-label">Fabric Code <span>*</span></label><input class="form-input" id="f-code" placeholder="e.g. FAB-001" oninput="autoFillQR()"></div>
+      <div class="form-group photo-area"><label class="form-label">Photo</label><div class="photo-preview" id="photo-preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg></div><button class="btn-secondary" onclick="document.getElementById('photo-file').click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Take / Choose photo</button><input type="file" id="photo-file" accept="image/*" style="display:none" onchange="handlePhoto(event)"></div>
     </div>
-
-    <div class="form-row single">
-      <div class="form-group">
-        <label class="form-label">QR Code</label>
-        <input class="form-input readonly" id="f-qr" placeholder="Auto-filled from Fabric Code" readonly>
-        <div class="form-hint">Matches Fabric Code by default. Edit to use a custom QR value.</div>
-      </div>
-    </div>
-
-    <div class="form-row single">
-      <div class="form-group">
-        <label class="form-label">Product Name <span>*</span></label>
-        <input class="form-input" id="f-name" placeholder="e.g. Japanese Selvedge Denim">
-      </div>
-    </div>
-
+    <div class="form-row single"><div class="form-group"><label class="form-label">QR Code</label><input class="form-input readonly" id="f-qr" placeholder="Auto-filled from Fabric Code" readonly><div class="form-hint">Matches Fabric Code by default.</div></div></div>
+    <div class="form-row single"><div class="form-group"><label class="form-label">Product Name <span>*</span></label><input class="form-input" id="f-name" placeholder="e.g. Japanese Selvedge Denim"></div></div>
     <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Type <span>*</span></label>
-        <input class="form-input" id="f-type" placeholder="e.g. Cotton, Linen, Silk">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Color <span>*</span></label>
-        <input class="form-input" id="f-color" placeholder="e.g. Indigo">
-      </div>
+      <div class="form-group"><label class="form-label">Type <span>*</span></label><input class="form-input" id="f-type" placeholder="e.g. Cotton, Linen, Silk"></div>
+      <div class="form-group"><label class="form-label">Color <span>*</span></label><input class="form-input" id="f-color" placeholder="e.g. Indigo"></div>
     </div>
-
     <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Pattern</label>
-        <input class="form-input" id="f-pattern" placeholder="e.g. Stripes, Floral">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Composition</label>
-        <input class="form-input" id="f-composition" placeholder="e.g. 100% Cotton">
-      </div>
+      <div class="form-group"><label class="form-label">Pattern</label><input class="form-input" id="f-pattern" placeholder="e.g. Stripes, Floral"></div>
+      <div class="form-group"><label class="form-label">Composition</label><input class="form-input" id="f-composition" placeholder="e.g. 100% Cotton"></div>
     </div>
-
     <div class="form-row thirds">
-      <div class="form-group">
-        <label class="form-label">Init Quantity <span>*</span></label>
-        <input class="form-input" id="f-qty" type="number" step="0.1" min="0" value="0">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Unit <span>*</span></label>
-        <select class="form-select" id="f-unit">
-          <option value="m">Meters</option>
-          <option value="yd">Yards</option>
-          <option value="pcs">Pieces</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Weight (GSM)</label>
-        <input class="form-input" id="f-weight" type="number" min="0" value="0">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Width (cm)</label>
-        <input class="form-input" id="f-width" type="number" min="0" value="0">
-      </div>
+      <div class="form-group"><label class="form-label">Stock <span>*</span></label><input class="form-input" id="f-qty" type="number" step="0.1" min="0" value="0"></div>
+      <div class="form-group"><label class="form-label">Unit <span>*</span></label><select class="form-select" id="f-unit"><option value="m">Meters</option><option value="yd">Yards</option><option value="pcs">Pieces</option></select></div>
+      <div class="form-group"><label class="form-label">Weight (GSM)</label><input class="form-input" id="f-weight" type="number" min="0" value="0"></div>
+      <div class="form-group"><label class="form-label">Width (cm)</label><input class="form-input" id="f-width" type="number" min="0" value="0"></div>
     </div>
-
     <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Supplier</label>
-        <input class="form-input" id="f-supplier" placeholder="e.g. Kurabo Mills">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Purchase Date</label>
-        <input class="form-input" id="f-date" type="date">
-      </div>
+      <div class="form-group"><label class="form-label">Supplier</label><input class="form-input" id="f-supplier" placeholder="e.g. Kurabo Mills"></div>
+      <div class="form-group"><label class="form-label">Purchase Date</label><input class="form-input" id="f-date" type="date"></div>
     </div>
-
     <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Price/Unit (EUR)</label>
-        <input class="form-input" id="f-price" type="number" step="0.01" min="0" value="0">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Care Symbols</label>
-        <input class="form-input" id="f-care" placeholder="e.g. Wash 30°C, Do not bleach">
-      </div>
+      <div class="form-group"><label class="form-label">Unit Price (EUR)</label><input class="form-input" id="f-price" type="number" step="0.01" min="0" value="0"></div>
+      <div class="form-group"><label class="form-label">Care Symbols</label><input class="form-input" id="f-care" placeholder="e.g. Wash 30&#176;C"></div>
     </div>
-
-    <div class="form-row single">
-      <div class="form-group">
-        <label class="form-label">Notes</label>
-        <textarea class="form-textarea" id="f-notes" placeholder="Any additional details..."></textarea>
-      </div>
-    </div>
-
+    <div class="form-row single"><div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="f-notes" placeholder="Any additional details..."></textarea></div></div>
     <div class="form-actions">
-      <button class="btn-cancel" onclick="goBack()">Cancel</button>
-      <button class="btn-save" onclick="saveFabric()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        Save Fabric
-      </button>
+      <button class="btn-cancel" onclick="history.back()">Cancel</button>
+      <button class="btn-save" id="save-fabric-btn" onclick="saveFabric()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Save Fabric</button>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════ LOG USAGE ══ -->
+<!-- LOG USAGE PAGE -->
 <div id="page-log-usage" class="page">
-  <div class="back-title">
-    <button class="back-btn" onclick="showPage('inventory')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-    </button>
-    <h2>Usage Log</h2>
-  </div>
-
+  <div class="back-title"><button class="back-btn" onclick="navigate('inventory')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button><h2>Usage Log</h2></div>
   <div class="form-card">
     <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Fabric Code <span>*</span></label>
-        <select class="form-select" id="log-fabric">
-          <option value="">Select fabric...</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Project</label>
-        <input class="form-input" id="log-project" placeholder="e.g. Suit for John">
-      </div>
+      <div class="form-group"><label class="form-label">Fabric Code <span>*</span></label><select class="form-select" id="log-fabric"><option value="">Select fabric...</option></select></div>
+      <div class="form-group"><label class="form-label">Project</label><input class="form-input" id="log-project" placeholder="e.g. Suit for John"></div>
     </div>
     <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Quantity Used <span>*</span></label>
-        <input class="form-input" id="log-qty" type="number" step="0.1" min="0.1" placeholder="0.0">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Date</label>
-        <input class="form-input" id="log-date" type="date">
-      </div>
+      <div class="form-group"><label class="form-label">Quantity Used <span>*</span></label><input class="form-input" id="log-qty" type="number" step="0.1" min="0.1" placeholder="0.0"></div>
+      <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="log-date" type="date"></div>
     </div>
-    <div class="form-row single">
-      <div class="form-group">
-        <label class="form-label">Notes</label>
-        <input class="form-input" id="log-notes" placeholder="Optional notes...">
-      </div>
-    </div>
-    <div class="form-actions">
-      <button class="btn-save" onclick="logUsage()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        Log Usage
-      </button>
-    </div>
+    <div class="form-row single"><div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="log-notes" placeholder="Optional notes..."></div></div>
+    <div class="form-actions"><button class="btn-save" id="log-usage-btn" onclick="logUsage()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Log Usage</button></div>
   </div>
-
   <div class="log-table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Usage ID</th>
-          <th>Fabric Code</th>
-          <th>Date</th>
-          <th>Project</th>
-          <th>Qty Before</th>
-          <th>Qty Used</th>
-          <th>Qty After</th>
-          <th>Unit</th>
-          <th>Notes</th>
-        </tr>
-      </thead>
-      <tbody id="log-tbody"></tbody>
-    </table>
-    <div id="log-empty" class="empty-state">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
-      <p>No usage logged yet.</p>
-    </div>
+    <table><thead><tr><th>Usage ID</th><th>Fabric Code</th><th>Date</th><th>Project</th><th>Before</th><th>Used</th><th>After</th><th>Unit</th><th>Notes</th></tr></thead><tbody id="log-tbody"></tbody></table>
+    <div id="log-empty" class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg><p>No usage logged yet.</p></div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════ SCAN ══ -->
+<!-- SCAN PAGE -->
 <div id="page-scan" class="page">
-  <div class="back-title">
-    <button class="back-btn" onclick="goBack()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-    </button>
-    <div>
-      <h2>Scan Fabric</h2>
-      <p style="color:var(--text-muted);font-size:13px;margin-top:2px">Point camera at a QR code or type a code below</p>
-    </div>
-  </div>
+  <div class="back-title"><button class="back-btn" onclick="navigate('inventory')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button><div><h2>Scan Fabric</h2><p style="color:var(--text-muted);font-size:13px;margin-top:2px">Point camera at a QR code or type a code below</p></div></div>
   <div class="scan-card">
-    <button class="btn-green" onclick="openCamera()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      Open Camera
-    </button>
-    <div class="scan-input-wrap">
-      <svg class="scan-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2m10 0h2a2 2 0 0 1 2 2v2M3 17v2a2 2 0 0 0 2 2h2m10 0h2a2 2 0 0 0 2-2v-2M7 12h10"/></svg>
-      <input class="scan-input" id="scan-code-input" placeholder="Or type Fabric Code / QR Code..."
-        oninput="scanLookup(this.value); toggleScanClear(this.value)">
-      <button class="scan-clear" id="scan-clear-btn" onclick="clearScanInput()" title="Clear">×</button>
-    </div>
+    <button class="btn-green" onclick="openCamera()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Open Camera</button>
+    <div class="scan-input-wrap"><svg class="scan-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2m10 0h2a2 2 0 0 1 2 2v2M3 17v2a2 2 0 0 0 2 2h2m10 0h2a2 2 0 0 0 2-2v-2M7 12h10"/></svg><input class="scan-input" id="scan-code-input" placeholder="Or type Fabric Code / QR Code..." oninput="scanLookup(this.value);toggleScanClear(this.value)"><button class="scan-clear" id="scan-clear-btn" onclick="clearScanInput()">&#215;</button></div>
   </div>
   <div id="scan-result"></div>
 </div>
 
-<!-- ══════════════════════════════════════════ DELETE MODAL ══ -->
+<!-- DELETE MODAL -->
 <div class="modal-overlay" id="delete-modal">
+  <div class="modal"><h3>Delete Fabric</h3><p style="color:var(--text-muted);font-size:14px">Are you sure you want to remove this fabric? This cannot be undone.</p><div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" style="background:#c0392b" onclick="confirmDelete()">Delete</button></div></div>
+</div>
+
+<!-- LOG USAGE MODAL (from detail) -->
+<div class="modal-overlay" id="log-modal">
   <div class="modal">
-    <h3>Delete Fabric</h3>
-    <p style="color:var(--text-muted);font-size:14px">Are you sure you want to remove this fabric from inventory? This cannot be undone.</p>
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-      <button class="btn-save" style="background:#c0392b" onclick="confirmDelete()">Delete</button>
+    <h3>Log Usage</h3>
+    <div class="modal-row2">
+      <div class="form-group"><label class="form-label">Quantity Used <span style="color:var(--accent)">*</span></label><input class="form-input" id="modal-log-qty" type="number" step="0.1" min="0.1" placeholder="0.0"></div>
+      <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="modal-log-date" type="date"></div>
     </div>
+    <div class="form-group" style="margin-bottom:16px"><label class="form-label">Project</label><input class="form-input" id="modal-log-project" placeholder="e.g. Suit for John"></div>
+    <div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="modal-log-notes" placeholder="Optional&#8230;"></div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeLogModal()">Cancel</button><button class="btn-save" id="modal-log-save" onclick="submitLogModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Save</button></div>
   </div>
 </div>
 
-<!-- ── LOADING ── -->
-<div id="loading-indicator" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(244,242,239,0.75);z-index:400;align-items:center;justify-content:center;flex-direction:column;gap:12px">
-  <div style="width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite"></div>
-  <p style="font-size:13px;color:var(--text-muted);font-weight:500">Loading from sheet…</p>
-</div>
-
-<!-- ── TOAST ── -->
+<div id="loading-indicator"><div class="spinner"></div><p style="font-size:13px;color:var(--text-muted);font-weight:500">Loading from sheet&#8230;</p></div>
 <div class="toast" id="toast"></div>
 
 <script>
-// ── CONFIG ────────────────────────────────────────────────────────────────
-const VERSION = '1.4.1'; // keep in sync with version tag at bottom of file
-const API_URL = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
-const LOW_STOCK_THRESHOLD = 2;
+const VERSION  = '2.0.0';
+const BASE_URL = 'https://tailortech.toom.design/fabrics';
+const API_URL  = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
+const LOW_STOCK = 2;
 
-// ── STATE ─────────────────────────────────────────────────────────────────
-let fabrics  = [];   // internal format (see sheetToFabric / fabricToSheet)
-let usageLog = [];   // internal format (see sheetToUsage / usageToSheet)
-let prevPage = 'home';
-let deleteTarget = null;
-let editingPhoto = null;
-let isLoading = false;
+let fabrics=[], usageLog=[], currentFabric=null, deleteTarget=null, editingPhoto=null;
 
-// ── FIELD MAPPING: sheet ↔ internal ──────────────────────────────────────
-// Sheet columns: FabricCode, Photo FACE, photo BACK, QR_Code, URL_QR,
-//   URL_QR_pic, ProductName, Type, Color, Pattern, Composition,
-//   Weight_gsm, Width_cm, CareSymbols, Supplier, PurchaseDate,
-//   PurchasePrice_EUR_perUnit, UnitPrice, Unit, Stock, Notes
+function sheetToFabric(r){return{code:r['FabricCode']||'',name:r['ProductName']||'',type:r['Type']||'',color:r['Color']||'',pattern:r['Pattern']||'',composition:r['Composition']||'',weight:r['Weight_gsm']||'',width:r['Width_cm']||'',care:r['CareSymbols']||'',supplier:r['Supplier']||'',date:r['PurchaseDate']||'',purchasePrice:r['PurchasePrice_EUR_perUnit']||'',price:r['UnitPrice']||r['PurchasePrice_EUR_perUnit']||'',unit:r['Unit']||'m',qty:parseFloat(r['Stock'])||0,notes:r['Notes']||'',qr:r['QR_Code']||'',photo:r['Photo FACE']||'',photoBack:r['photo BACK']||'',urlQR:r['URL_QR']||''};}
+function fabricToSheet(f){return{'FabricCode':f.code||'','Photo FACE':f.photo||'','photo BACK':f.photoBack||'','QR_Code':f.qr||f.code||'','URL_QR':f.urlQR||'','URL_QR_pic':'','ProductName':f.name||'','Type':f.type||'','Color':f.color||'','Pattern':f.pattern||'','Composition':f.composition||'','Weight_gsm':f.weight||'','Width_cm':f.width||'','CareSymbols':f.care||'','Supplier':f.supplier||'','PurchaseDate':f.date||'','PurchasePrice_EUR_perUnit':f.purchasePrice||f.price||'','UnitPrice':f.price||'','Unit':f.unit||'m','Stock':f.qty||0,'Notes':f.notes||''};}
+function sheetToUsage(r){return{id:r['UsageID']||'',fabricCode:r['FabricCode']||'',date:r['Date']||'',project:r['Project']||'',before:parseFloat(r['Amount_Before'])||0,qty:parseFloat(r['Quantity'])||0,after:parseFloat(r['Amount_After'])||0,unit:r['Unit']||'m',purpose:r['Purpose']||'',notes:r['Notes']||''};}
+function usageToSheet(u){return{'UsageID':u.id||'','FabricCode':u.fabricCode||'','Date':u.date||'','Project':u.project||'','Amount_Before':u.before||0,'Quantity':u.qty||0,'Amount_After':u.after||0,'Unit':u.unit||'m','Purpose':u.purpose||'','Notes':u.notes||''};}
 
-function sheetToFabric(row) {
-  return {
-    code:        row['FabricCode']                || '',
-    name:        row['ProductName']               || '',
-    type:        row['Type']                      || '',
-    color:       row['Color']                     || '',
-    pattern:     row['Pattern']                   || '',
-    composition: row['Composition']               || '',
-    weight:      row['Weight_gsm']                || '',
-    width:       row['Width_cm']                  || '',
-    care:        row['CareSymbols']               || '',
-    supplier:    row['Supplier']                  || '',
-    date:        row['PurchaseDate']              || '',
-    purchasePrice: row['PurchasePrice_EUR_perUnit'] || '',
-    price:       row['UnitPrice']                 || row['PurchasePrice_EUR_perUnit'] || '',
-    unit:        row['Unit']                      || 'm',
-    qty:         parseFloat(row['Stock'])         || 0,
-    notes:       row['Notes']                     || '',
-    qr:          row['QR_Code']                   || '',
-    photo:       row['Photo FACE']                || '',
-    photoBack:   row['photo BACK']                || '',
-    urlQR:       row['URL_QR']                    || '',
-  };
-}
+async function apiGet(a){return(await fetch(API_URL+'?action='+a)).json();}
+async function apiPost(b){return(await fetch(API_URL,{method:'POST',body:JSON.stringify(b)})).json();}
 
-function fabricToSheet(f) {
-  return {
-    'FabricCode':                f.code          || '',
-    'Photo FACE':                f.photo         || '',
-    'photo BACK':                f.photoBack     || '',
-    'QR_Code':                   f.qr            || f.code || '',
-    'URL_QR':                    f.urlQR         || '',
-    'URL_QR_pic':                '',
-    'ProductName':               f.name          || '',
-    'Type':                      f.type          || '',
-    'Color':                     f.color         || '',
-    'Pattern':                   f.pattern       || '',
-    'Composition':               f.composition   || '',
-    'Weight_gsm':                f.weight        || '',
-    'Width_cm':                  f.width         || '',
-    'CareSymbols':               f.care          || '',
-    'Supplier':                  f.supplier      || '',
-    'PurchaseDate':              f.date          || '',
-    'PurchasePrice_EUR_perUnit': f.purchasePrice || f.price || '',
-    'UnitPrice':                 f.price         || '',
-    'Unit':                      f.unit          || 'm',
-    'Stock':                     f.qty           || 0,
-    'Notes':                     f.notes         || '',
-  };
-}
-
-// Sheet columns: UsageID, FabricCode, Date, Project,
-//   Amount_Before, Quantity, Amount_After, Unit, Purpose, Notes
-
-function sheetToUsage(row) {
-  return {
-    id:         row['UsageID']       || '',
-    fabricCode: row['FabricCode']    || '',
-    date:       row['Date']          || '',
-    project:    row['Project']       || '',
-    before:     parseFloat(row['Amount_Before']) || 0,
-    qty:        parseFloat(row['Quantity'])      || 0,
-    after:      parseFloat(row['Amount_After'])  || 0,
-    unit:       row['Unit']          || 'm',
-    purpose:    row['Purpose']       || '',
-    notes:      row['Notes']         || '',
-  };
-}
-
-function usageToSheet(u) {
-  return {
-    'UsageID':      u.id         || '',
-    'FabricCode':   u.fabricCode || '',
-    'Date':         u.date       || '',
-    'Project':      u.project    || '',
-    'Amount_Before':u.before     || 0,
-    'Quantity':     u.qty        || 0,
-    'Amount_After': u.after      || 0,
-    'Unit':         u.unit       || 'm',
-    'Purpose':      u.purpose    || '',
-    'Notes':        u.notes      || '',
-  };
-}
-
-// ── SHEET API ─────────────────────────────────────────────────────────────
-async function apiGet(action) {
-  const res = await fetch(`${API_URL}?action=${action}`);
-  return res.json();
-}
-
-async function apiPost(body) {
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    body: JSON.stringify(body),
-  });
-  return res.json();
-}
-
-// ── LOAD FROM SHEET ───────────────────────────────────────────────────────
-async function loadData() {
+async function loadData(){
   setLoading(true);
-  try {
-    const [fRes, uRes] = await Promise.all([
-      apiGet('getFabrics'),
-      apiGet('getFabricUsageLog'),
-    ]);
-    if (fRes.success) {
-      fabrics = (fRes.fabrics || []).map(sheetToFabric);
-    }
-    if (uRes.success) {
-      usageLog = (uRes.log || []).map(sheetToUsage).reverse(); // newest first
-    }
-  } catch(e) {
-    showToast('Could not connect to sheet — check network');
-    console.error(e);
-  }
+  try{const[fR,uR]=await Promise.all([apiGet('getFabrics'),apiGet('getFabricUsageLog')]);
+  if(fR.success)fabrics=(fR.fabrics||[]).map(sheetToFabric);
+  if(uR.success)usageLog=(uR.log||[]).map(sheetToUsage).reverse();}
+  catch(e){showToast('Could not connect to sheet');console.error(e);}
   setLoading(false);
 }
+function setLoading(on){document.getElementById('loading-indicator').style.display=on?'flex':'none';}
 
-function setLoading(on) {
-  isLoading = on;
-  const ind = document.getElementById('loading-indicator');
-  if (ind) ind.style.display = on ? 'flex' : 'none';
+function getCodeFromPath(){
+  const p=location.pathname.replace(/\/+$/,'');
+  const parts=p.split('/');
+  const last=parts[parts.length-1];
+  if(last&&last!=='fabrics'&&!last.includes('.')&&last!=='index')return decodeURIComponent(last);
+  return null;
 }
+function fabricUrl(code){return BASE_URL+'/'+encodeURIComponent(code);}
+function pushUrl(code){history.pushState({code:code||null},'',code?fabricUrl(code):BASE_URL+'/');}
 
-// legacy no-op (no more localStorage writes needed)
-function save() {}
+function showNav(which){
+  document.getElementById('nav-inv').style.display=which==='inv'?'flex':'none';
+  document.getElementById('nav-det').style.display=which==='det'?'flex':'none';
+  document.getElementById('nav-sub').style.display=which==='sub'?'flex':'none';
+}
+function showPages(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const el=document.getElementById('page-'+id);if(el)el.classList.add('active');}
 
-// ── NAVIGATION ────────────────────────────────────────────────────────────
-function showPage(id) {
-  const prev = document.querySelector('.page.active');
-  if (prev) { prevPage = prev.id.replace('page-',''); prev.classList.remove('active'); }
-
-  const pg = document.getElementById('page-' + id);
-  if (pg) pg.classList.add('active');
-
-  // page-specific setup
-  if (id === 'inventory') { renderStats(); renderTable(); }
-  if (id === 'home') { showPage('inventory'); return; }
-  if (id === 'add-fabric') {
-    clearForm();
-    document.getElementById('add-form-title').textContent = 'Add New Fabric';
-    document.getElementById('edit-id').value = '';
-    editingPhoto = null;
-  }
-  if (id === 'log-usage') { populateLogSelect(); renderLogTable(); setTodayDate('log-date'); }
-  if (id === 'scan') {
-    const inp = document.getElementById('scan-code-input');
-    inp.value = '';
-    inp.classList.remove('has-value');
+function navigate(page,param){
+  if(page==='inventory'){
+    showPages('inventory');showNav('inv');pushUrl(null);renderStats();renderTable();
+  }else if(page==='detail'){
+    const f=fabrics.find(x=>x.code===param);
+    if(!f){showToast('Fabric not found');navigate('inventory');return;}
+    currentFabric=f;
+    showPages('detail');showNav('det');
+    document.getElementById('nav-det-title').textContent=f.name||f.type||'';
+    document.getElementById('nav-det-code').textContent=f.code;
+    pushUrl(param);
+    renderDetail();
+  }else if(page==='add-fabric'){
+    showPages('add-fabric');showNav('sub');
+    document.getElementById('nav-sub-back').onclick=()=>history.back();
+    if(param==='__edit__'&&currentFabric){loadEditForm(currentFabric);document.getElementById('add-form-title').textContent='Edit Fabric';}
+    else{clearForm();document.getElementById('add-form-title').textContent='Add New Fabric';document.getElementById('edit-id').value='';editingPhoto=null;}
+  }else if(page==='log-usage'){
+    showPages('log-usage');showNav('sub');
+    document.getElementById('nav-sub-back').onclick=()=>navigate('inventory');
+    populateLogSelect();renderLogTable();setTodayDate('log-date');
+    if(param)setTimeout(()=>{document.getElementById('log-fabric').value=param;},50);
+  }else if(page==='scan'){
+    showPages('scan');showNav('sub');
+    document.getElementById('nav-sub-back').onclick=()=>navigate('inventory');
+    const inp=document.getElementById('scan-code-input');inp.value='';inp.classList.remove('has-value');
     document.getElementById('scan-clear-btn').classList.remove('visible');
-    document.getElementById('scan-result').innerHTML = '';
+    document.getElementById('scan-result').innerHTML='';
   }
 }
 
-function goBack() { showPage(prevPage || 'home'); }
-
-// ── RELOAD ────────────────────────────────────────────────────────────────
-async function reloadInventory() {
-  await loadData();
-  renderStats();
-  renderTable();
-  showToast('Refreshed from sheet');
-}
-
-// ── HOME ──────────────────────────────────────────────────────────────────
-function updateHomeBadge() {
-  document.getElementById('home-count-badge').textContent = fabrics.length + ' items';
-}
-
-// ── STATS ─────────────────────────────────────────────────────────────────
-// Stock column IS the current remaining quantity (sheet manages the math)
-function getRemaining(f) { return parseFloat(f.qty) || 0; }
-function getUsed(f)      { return parseFloat(f.used) || 0; }
-
-function renderStats() {
-  document.getElementById('stat-total').textContent = fabrics.length;
-  const val = fabrics.reduce((s, f) => s + (parseFloat(f.price)||0) * getRemaining(f), 0);
-  document.getElementById('stat-value').textContent = '€' + val.toFixed(2);
-  const low = fabrics.filter(f => getRemaining(f) <= LOW_STOCK_THRESHOLD).length;
-  document.getElementById('stat-low').textContent = low;
-}
-// ── TABLE ─────────────────────────────────────────────────────────────────
-const COLOR_MAP = {
-  white:'#f5f5f5', black:'#1a1a1a', grey:'#9e9e9e', gray:'#9e9e9e',
-  charcoal:'#4a4a4a', navy:'#1a2a4a', blue:'#2563eb', red:'#dc2626',
-  green:'#16a34a', brown:'#7c4b2a', beige:'#d4b896', cream:'#f5f0e8',
-  ivory:'#fffff0', ecru:'#c8b89a', burgundy:'#800020', wine:'#722f37',
-  camel:'#c19a6b', tan:'#d2b48c', khaki:'#c3b091', olive:'#6b7c45',
-  teal:'#0d9488', pink:'#ec4899', yellow:'#eab308', orange:'#f97316',
-  purple:'#7c3aed', lavender:'#9f7aea', coral:'#ff7f6e', mint:'#6ee7b7',
-  'midnight blue':'#191970','true blue':'#2563eb','dark blue':'#1e3a8a',
-  'dark beige':'#c9a87c','dark brown':'#3b1f0f','black & white':'#888',
-};
-
-function getColorHex(colorStr) {
-  if (!colorStr) return '#ccc';
-  const key = colorStr.toLowerCase().trim();
-  return COLOR_MAP[key] || '#ccc';
-}
-
-function getStatus(rem) {
-  if (rem <= 0)  return { label: 'Critical', cls: 'critical' };
-  if (rem <= LOW_STOCK_THRESHOLD) return { label: 'Low',      cls: 'low' };
-  return { label: 'Healthy', cls: 'healthy' };
-}
-
-function renderTable() {
-  const q    = document.getElementById('search-input').value.toLowerCase();
-  const unit = document.getElementById('filter-unit').value;
-
-  let rows = fabrics.filter(f => {
-    const match = !q || f.code.toLowerCase().includes(q)
-      || (f.name||'').toLowerCase().includes(q)
-      || (f.type||'').toLowerCase().includes(q)
-      || (f.color||'').toLowerCase().includes(q);
-    const unitMatch = !unit || f.unit === unit;
-    return match && unitMatch;
-  });
-
-  const tbody = document.getElementById('inventory-tbody');
-  const empty = document.getElementById('table-empty');
-
-  if (!rows.length) { tbody.innerHTML = ''; empty.style.display='block'; return; }
-  empty.style.display='none';
-
-  tbody.innerHTML = rows.map(f => {
-    const rem    = getRemaining(f);
-    const status = getStatus(rem);
-    const hex    = getColorHex(f.color);
-    const price  = parseFloat(f.price) || 0;
-    const photoHtml = f.photo
-      ? `<img class="fabric-thumb" src="${esc(f.photo)}" alt="${esc(f.name)}" loading="lazy">`
-      : `<div class="fabric-thumb-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg></div>`;
-
-    return `<tr>
-      <td>${photoHtml}</td>
-      <td>
-        <div class="fabric-name-cell">
-          <span class="fcode">${esc(f.code)}</span>
-          <span class="fcomp">${esc(f.composition||'—')}</span>
-        </div>
-      </td>
-      <td><span class="type-badge">${esc(f.type||'—')}</span></td>
-      <td>
-        <div class="color-cell">
-          <span class="color-dot" style="background:${hex}"></span>
-          ${esc(f.color||'—')}
-        </div>
-      </td>
-      <td style="text-align:right;font-weight:600" class="${status.cls === 'critical' ? 'remaining-low' : status.cls === 'low' ? 'remaining-low' : 'remaining-ok'}">${rem}</td>
-      <td>${esc(f.unit||'m')}</td>
-      <td style="text-align:right">${price > 0 ? '€' + price.toFixed(2) : '—'}</td>
-      <td>
-        <div class="actions-cell">
-          <button class="btn-icon" title="Edit" onclick="editFabric('${esc(f.code)}')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </button>
-          <button class="btn-icon danger" title="Delete" onclick="deleteFabric('${esc(f.code)}')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-          </button>
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
-}
-
-// ── ADD / EDIT FABRIC ─────────────────────────────────────────────────────
-function clearForm() {
-  ['f-code','f-name','f-type','f-color','f-pattern','f-composition','f-supplier','f-care','f-notes'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-  document.getElementById('f-qty').value = 0;
-  document.getElementById('f-weight').value = 0;
-  document.getElementById('f-width').value = 0;
-  document.getElementById('f-price').value = 0;
-  document.getElementById('f-unit').value = 'm';
-  document.getElementById('f-qr').value = '';
-  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
-  document.getElementById('photo-preview').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="32" height="32" style="color:var(--text-light)"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg>`;
-}
-
-function autoFillQR() {
-  const code = document.getElementById('f-code').value;
-  document.getElementById('f-qr').value = code;
-  document.getElementById('f-qr').readOnly = true;
-}
-
-function handlePhoto(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    editingPhoto = ev.target.result;
-    document.getElementById('photo-preview').innerHTML = `<img src="${ev.target.result}" alt="fabric photo">`;
-  };
-  reader.readAsDataURL(file);
-}
-
-async function saveFabric() {
-  const code = document.getElementById('f-code').value.trim();
-  const name = document.getElementById('f-name').value.trim();
-  const type = document.getElementById('f-type').value.trim();
-  const color = document.getElementById('f-color').value.trim();
-  if (!code || !name || !type || !color) { showToast('Please fill in required fields (*)'); return; }
-
-  const editId = document.getElementById('edit-id').value;
-  const existing = fabrics.find(f => f.code === editId || f.code === code);
-  const qty = parseFloat(document.getElementById('f-qty').value) || 0;
-
-  const fabric = {
-    code,
-    name,
-    type,
-    color,
-    pattern:     document.getElementById('f-pattern').value.trim(),
-    composition: document.getElementById('f-composition').value.trim(),
-    qty,
-    used:      existing ? existing.used : 0,
-    remaining: existing ? existing.remaining : qty,
-    unit:      document.getElementById('f-unit').value,
-    weight:    document.getElementById('f-weight').value,
-    width:     document.getElementById('f-width').value,
-    supplier:  document.getElementById('f-supplier').value.trim(),
-    date:      document.getElementById('f-date').value,
-    price:     document.getElementById('f-price').value,
-    care:      document.getElementById('f-care').value.trim(),
-    notes:     document.getElementById('f-notes').value.trim(),
-    photo:     editingPhoto || (existing ? existing.photo : ''),
-    photoBack: existing ? existing.photoBack : '',
-    qr:        document.getElementById('f-qr').value || code,
-    urlQR:     existing ? existing.urlQR : '',
-  };
-
-  // if adding new fabric, remaining = initial qty
-  if (!editId) {
-    if (fabrics.find(f => f.code === code)) { showToast('Fabric Code already exists'); return; }
-    fabric.remaining = qty;
-  }
-
-  const btn = document.querySelector('#page-add-fabric .btn-save');
-  btn.disabled = true; btn.textContent = 'Saving…';
-
-  try {
-    const res = await apiPost({ action: 'saveFabric', data: fabricToSheet(fabric) });
-    if (!res.success) { showToast('Save failed: ' + res.message); btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Fabric'; return; }
-    // update local cache
-    fabrics = fabrics.filter(f => f.code !== editId && f.code !== code);
-    fabrics.push(fabric);
-    showToast(editId ? 'Fabric updated ✓' : 'Fabric added ✓');
-    showPage('inventory');
-  } catch(e) {
-    showToast('Network error — try again');
-  }
-  btn.disabled=false;
-  btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Fabric';
-}
-
-function editFabric(code) {
-  const f = fabrics.find(x => x.code === code);
-  if (!f) return;
-  clearForm();
-  document.getElementById('edit-id').value = code;
-  document.getElementById('add-form-title').textContent = 'Edit Fabric';
-  document.getElementById('f-code').value = f.code;
-  document.getElementById('f-qr').value = f.qr || f.code;
-  document.getElementById('f-name').value = f.name || '';
-  document.getElementById('f-type').value = f.type || '';
-  document.getElementById('f-color').value = f.color || '';
-  document.getElementById('f-pattern').value = f.pattern || '';
-  document.getElementById('f-composition').value = f.composition || '';
-  document.getElementById('f-qty').value = f.qty || 0;
-  document.getElementById('f-unit').value = f.unit || 'm';
-  document.getElementById('f-weight').value = f.weight || 0;
-  document.getElementById('f-width').value = f.width || 0;
-  document.getElementById('f-supplier').value = f.supplier || '';
-  document.getElementById('f-date').value = f.date || '';
-  document.getElementById('f-price').value = f.price || 0;
-  document.getElementById('f-care').value = f.care || '';
-  document.getElementById('f-notes').value = f.notes || '';
-  if (f.photo) {
-    editingPhoto = f.photo;
-    document.getElementById('photo-preview').innerHTML = `<img src="${f.photo}" alt="fabric photo">`;
-  }
-  showPage('add-fabric');
-}
-
-// ── DELETE ────────────────────────────────────────────────────────────────
-function deleteFabric(code) {
-  deleteTarget = code;
-  document.getElementById('delete-modal').classList.add('open');
-}
-function closeModal() {
-  document.getElementById('delete-modal').classList.remove('open');
-  deleteTarget = null;
-}
-async function confirmDelete() {
-  if (!deleteTarget) return;
-  const btn = document.querySelector('#delete-modal .btn-save');
-  btn.disabled = true; btn.textContent = 'Deleting…';
-  try {
-    const res = await apiPost({ action: 'deleteFabric', code: deleteTarget });
-    if (!res.success) { showToast('Delete failed: ' + res.message); btn.disabled=false; btn.textContent='Delete'; return; }
-    fabrics = fabrics.filter(f => f.code !== deleteTarget);
-    closeModal();
-    showToast('Fabric deleted');
-    renderStats(); renderTable();
-  } catch(e) {
-    showToast('Network error — try again');
-  }
-  btn.disabled=false; btn.textContent='Delete';
-}
-
-// ── LOG USAGE ─────────────────────────────────────────────────────────────
-function populateLogSelect() {
-  const sel = document.getElementById('log-fabric');
-  sel.innerHTML = '<option value="">Select fabric...</option>' +
-    fabrics.map(f => `<option value="${esc(f.code)}">${esc(f.code)} – ${esc(f.name||'')}</option>`).join('');
-}
-
-async function logUsage() {
-  const code = document.getElementById('log-fabric').value;
-  const qty  = parseFloat(document.getElementById('log-qty').value);
-  if (!code || !qty || qty <= 0) { showToast('Select a fabric and enter a valid quantity'); return; }
-  const fabric = fabrics.find(f => f.code === code);
-  if (!fabric) return;
-  const before = getRemaining(fabric);
-  if (qty > before) { showToast('Not enough stock (remaining: ' + before + ' ' + fabric.unit + ')'); return; }
-
-  const after = parseFloat((before - qty).toFixed(3));
-  const entry = {
-    id:         '',  // auto-generated by sheet
-    fabricCode: code,
-    date:       document.getElementById('log-date').value || new Date().toISOString().split('T')[0],
-    project:    document.getElementById('log-project').value.trim() || '--',
-    before,
-    qty,
-    after,
-    unit:       fabric.unit,
-    purpose:    '',
-    notes:      document.getElementById('log-notes').value.trim(),
-  };
-
-  const btn = document.querySelector('#page-log-usage .btn-save');
-  btn.disabled = true; btn.textContent = 'Saving…';
-
-  try {
-    // 1. log the usage entry
-    const logRes = await apiPost({ action: 'logFabricUsage', data: usageToSheet(entry) });
-    if (!logRes.success) { showToast('Log failed: ' + logRes.message); btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Log Usage'; return; }
-
-    // 2. update fabric stock in sheet
-    const updatedFabric = { ...fabric, qty: after };
-    await apiPost({ action: 'saveFabric', data: fabricToSheet(updatedFabric) });
-
-    // update local cache
-    entry.id = logRes.usageId || entry.id;
-    usageLog.unshift(entry);
-    fabric.qty = after;
-
-    showToast('Usage logged ✓');
-    document.getElementById('log-qty').value = '';
-    document.getElementById('log-project').value = '';
-    document.getElementById('log-notes').value = '';
-    renderLogTable();
-  } catch(e) {
-    showToast('Network error — try again');
-  }
-  btn.disabled=false;
-  btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Log Usage';
-}
-
-function renderLogTable() {
-  const tbody = document.getElementById('log-tbody');
-  const empty = document.getElementById('log-empty');
-  if (!usageLog.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
-  empty.style.display='none';
-  tbody.innerHTML = usageLog.map(u => `<tr>
-    <td style="font-size:12px;font-family:monospace">${esc(u.id)}</td>
-    <td><span class="fabric-code">${esc(u.fabricCode)}</span></td>
-    <td>${esc(u.date||'')}</td>
-    <td>${esc(u.project||'--')}</td>
-    <td>${u.before}</td>
-    <td>${u.qty}</td>
-    <td>${u.after}</td>
-    <td>${esc(u.unit||'m')}</td>
-    <td style="color:var(--text-muted)">${esc(u.notes||'')}</td>
-  </tr>`).join('');
-}
-
-// ── SCAN ──────────────────────────────────────────────────────────────────
-function toggleScanClear(val) {
-  const btn = document.getElementById('scan-clear-btn');
-  const inp = document.getElementById('scan-code-input');
-  if (val) { btn.classList.add('visible'); inp.classList.add('has-value'); }
-  else { btn.classList.remove('visible'); inp.classList.remove('has-value'); }
-}
-
-function clearScanInput() {
-  const inp = document.getElementById('scan-code-input');
-  inp.value = '';
-  toggleScanClear('');
-  scanLookup('');
-  inp.focus();
-}
-
-function scanLookup(val) {
-  const v = val.trim().toLowerCase();
-  const res = document.getElementById('scan-result');
-  res.innerHTML = '';
-
-  if (!v) return;
-
-  const f = fabrics.find(x => x.code.toLowerCase()===v || (x.qr||'').toLowerCase()===v);
-  if (!f) {
-    res.innerHTML = `<div class="scan-result-card" style="padding:24px;text-align:center;color:var(--text-muted)">
-      No fabric found for code "<strong style="color:var(--text)">${esc(val.trim())}</strong>".
-    </div>`;
-    return;
-  }
-
-  // build usage history rows for this fabric (chronological)
-  const history = usageLog.filter(u => u.fabricCode === f.code).slice().reverse();
-  const ROWS = 10;
-  let histRows = '';
-  for (let i = 0; i < ROWS; i++) {
-    const u = history[i];
-    if (u) {
-      const isInitial = u.project === 'Initial qty' || u.project === 'Initial qtty';
-      histRows += `<tr>
-        <td>${esc(u.date||'')}</td>
-        <td>${esc(u.project||'--')}</td>
-        <td class="right">${u.before}</td>
-        <td class="${isInitial?'green':''} right">${isInitial?'+'+u.qty:u.qty}</td>
-        <td class="right">${u.after}</td>
-      </tr>`;
-    } else {
-      histRows += `<tr class="scan-empty-rows"><td></td><td></td><td></td><td></td><td></td></tr>`;
-    }
-  }
-
-  const photoHtml = f.photo
-    ? `<img src="${f.photo}" alt="fabric photo">`
-    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg><span>Fabric photo</span>`;
-
-  // detail rows
-  const detailRows = [
-    ['color', f.color],
-    ['pattern', f.pattern],
-    ['composition', f.composition],
-    ['weight', f.weight ? f.weight + ' gsm' : null],
-    ['width', f.width ? f.width + ' cm' : null],
-    ['source', f.supplier],
-    ['notes', f.notes],
-  ].filter(([,v]) => v).map(([k,v]) =>
-    `<tr><td>${k}</td><td>${esc(v)}</td></tr>`
-  ).join('');
-
-  const today = new Date().toISOString().split('T')[0];
-
-  res.innerHTML = `<div class="scan-result-card">
-    <div class="scan-result-body">
-      <!-- LEFT -->
-      <div class="scan-result-left">
-        <div class="scan-media-row">
-          <div class="scan-photo-box">${photoHtml}</div>
-          <div class="scan-qr-box">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
-              <rect x="3" y="14" width="7" height="7" rx="1"/>
-              <rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/>
-              <rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/>
-            </svg>
-            <span>[QR Code]</span>
-          </div>
-        </div>
-        <div>
-          <div class="scan-fabric-type">${esc(f.type||'--')}</div>
-          <div class="scan-fabric-code-sub">${esc(f.code)}</div>
-        </div>
-        <table class="scan-details-table">
-          ${detailRows}
-        </table>
-      </div>
-      <!-- RIGHT -->
-      <div class="scan-result-right">
-        <h3>${esc(f.code)}</h3>
-        <table class="scan-history-table">
-          <thead>
-            <tr>
-              <th rowspan="2">date</th>
-              <th rowspan="2">project</th>
-              <th colspan="3" class="qty-header" style="text-align:center;padding-bottom:2px">quantity</th>
-            </tr>
-            <tr>
-              <th class="right">before</th>
-              <th class="right">use</th>
-              <th class="right">after</th>
-            </tr>
-          </thead>
-          <tbody>${histRows}</tbody>
-        </table>
-      </div>
-    </div>
-    <div class="scan-result-footer">
-      <button class="btn-secondary" onclick="clearScanInput()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
-        New scan
-      </button>
-      <span class="scan-date">${today}</span>
-      <div class="scan-actions">
-        <button class="btn-secondary" onclick="editFabric('${esc(f.code)}')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          Edit
-        </button>
-        <button class="btn-primary" onclick="goToLogUsage('${esc(f.code)}')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
-          Log Usage
-        </button>
-      </div>
-    </div>
-  </div>`;
-}
-
-function goToLogUsage(code) {
-  showPage('log-usage');
-  setTimeout(() => { document.getElementById('log-fabric').value = code; }, 50);
-}
-
-function openCamera() {
-  showToast('Camera access requires a native app or HTTPS with getUserMedia support');
-}
-
-// ── HELPERS ───────────────────────────────────────────────────────────────
-function esc(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function setTodayDate(id) {
-  document.getElementById(id).value = new Date().toISOString().split('T')[0];
-}
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.classList.remove('show'), 2800);
-}
-
-// close modal on overlay click
-document.getElementById('delete-modal').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
+window.addEventListener('popstate',function(e){
+  const code=e.state&&e.state.code;
+  if(code){const f=fabrics.find(x=>x.code===code);if(f){currentFabric=f;showPages('detail');showNav('det');document.getElementById('nav-det-title').textContent=f.name||f.type||'';document.getElementById('nav-det-code').textContent=f.code;renderDetail();}}
+  else navigate('inventory');
 });
 
-// ── INIT ──────────────────────────────────────────────────────────────────
-(async function() {
+function renderDetail(){
+  const f=currentFabric;
+  document.title=f.code+' \u2014 TailorTech Fabrics';
+  const box=document.getElementById('d-photo-box');
+  box.innerHTML=f.photo?'<img src="'+esc(f.photo)+'" alt="">':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg><span style="font-size:10px;text-transform:uppercase;letter-spacing:.06em">Fabric photo</span>';
+  const qrEl=document.getElementById('d-qr-canvas');qrEl.innerHTML='';
+  try{new QRCode(qrEl,{text:fabricUrl(f.code),width:86,height:86,colorDark:'#1a1916',colorLight:'#f0ede8',correctLevel:QRCode.CorrectLevel.M});}catch(e){qrEl.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="44" height="44"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>';}
+  document.getElementById('d-type').textContent=f.type||'\u2014';
+  document.getElementById('d-name').textContent=f.name||'';
+  document.getElementById('d-code').textContent=f.code;
+  document.getElementById('d-footer-date').textContent=new Date().toISOString().split('T')[0];
+  const qty=parseFloat(f.qty)||0,status=getStatus(qty);
+  document.getElementById('d-stock').textContent=qty;
+  document.getElementById('d-stock').className='val '+status.cls;
+  document.getElementById('d-unit-tag').textContent=f.unit||'m';
+  document.getElementById('d-price').textContent=f.price?'\u20ac'+parseFloat(f.price).toFixed(2):'\u2014';
+  const badge=document.getElementById('d-status');badge.textContent=status.label;badge.className='status-badge '+status.cls;
+  const rows=[['color',f.color],['pattern',f.pattern],['composition',f.composition],['weight',f.weight?f.weight+' gsm':null],['width',f.width?f.width+' cm':null],['care',f.care],['supplier',f.supplier?'<a href="'+(f.supplier.startsWith('http')?esc(f.supplier):'https://'+esc(f.supplier))+'" target="_blank">'+esc(f.supplier)+'</a>':null],['purchased',f.date],['notes',f.notes]].filter(([,v])=>v);
+  document.getElementById('d-details-table').innerHTML=rows.map(([k,v])=>'<tr><td>'+k+'</td><td>'+(typeof v==='string'&&v.startsWith('<')?v:esc(v))+'</td></tr>').join('');
+  const entries=usageLog.filter(u=>u.fabricCode===f.code);
+  document.getElementById('d-usage-count').textContent=entries.length+' entr'+(entries.length===1?'y':'ies');
+  const tbody=document.getElementById('d-usage-tbody');
+  tbody.innerHTML=entries.length?entries.map(u=>{const init=u.project==='Initial qty'||u.project==='Initial qtty';return'<tr><td>'+esc(u.date||'\u2014')+'</td><td><span class="ptag">'+esc(u.project||'\u2014')+'</span></td><td class="r">'+u.before+'</td><td class="r '+(init?'plus':'minus')+'">'+(init?'+':'\u2212')+u.qty+'</td><td class="r">'+u.after+'</td></tr>';}).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-light)">No usage recorded yet.</td></tr>';
+  document.getElementById('detail-loading').style.display='none';
+  document.getElementById('detail-wrap').style.display='block';
+}
+
+function copyFabricUrl(){if(!currentFabric)return;navigator.clipboard.writeText(fabricUrl(currentFabric.code)).then(()=>showToast('URL copied \u2713')).catch(()=>showToast(fabricUrl(currentFabric.code)));}
+
+function openLogModal(){document.getElementById('modal-log-date').value=new Date().toISOString().split('T')[0];document.getElementById('modal-log-qty').value='';document.getElementById('modal-log-project').value='';document.getElementById('modal-log-notes').value='';document.getElementById('log-modal').classList.add('open');}
+function closeLogModal(){document.getElementById('log-modal').classList.remove('open');}
+async function submitLogModal(){
+  const f=currentFabric,qty=parseFloat(document.getElementById('modal-log-qty').value);
+  if(!qty||qty<=0){showToast('Enter a valid quantity');return;}
+  const cur=parseFloat(f.qty)||0;
+  if(qty>cur){showToast('Only '+cur+' '+f.unit+' in stock');return;}
+  const after=parseFloat((cur-qty).toFixed(3));
+  const btn=document.getElementById('modal-log-save');btn.disabled=true;btn.textContent='Saving\u2026';
+  try{
+    const logRes=await apiPost({action:'logFabricUsage',data:usageToSheet({id:'',fabricCode:f.code,date:document.getElementById('modal-log-date').value,project:document.getElementById('modal-log-project').value.trim()||'--',before:cur,qty,after,unit:f.unit,purpose:'',notes:document.getElementById('modal-log-notes').value.trim()})});
+    if(!logRes.success){showToast('Error: '+logRes.message);btn.disabled=false;btn.textContent='Save';return;}
+    await apiPost({action:'saveFabric',data:fabricToSheet({...f,qty:after})});
+    f.qty=after;usageLog.unshift({id:logRes.usageId||'',fabricCode:f.code,date:document.getElementById('modal-log-date').value,project:document.getElementById('modal-log-project').value.trim()||'--',before:cur,qty,after,unit:f.unit,notes:document.getElementById('modal-log-notes').value.trim()});
+    closeLogModal();renderDetail();showToast('Usage logged \u2713');
+  }catch(e){showToast('Network error \u2014 try again');}
+  btn.disabled=false;btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save';
+}
+
+const COLOR_MAP={'white':'#f5f5f5','black':'#1a1a1a','grey':'#9e9e9e','gray':'#9e9e9e','charcoal':'#4a4a4a','chacoal':'#4a4a4a','navy':'#1a2a4a','blue':'#2563eb','red':'#dc2626','green':'#16a34a','brown':'#7c4b2a','beige':'#d4b896','cream':'#f5f0e8','ivory':'#fffff0','ecru':'#c8b89a','burgundy':'#800020','camel':'#c19a6b','tan':'#d2b48c','olive':'#6b7c45','teal':'#0d9488','pink':'#ec4899','yellow':'#eab308','orange':'#f97316','purple':'#7c3aed','coral':'#ff7f6e','mint':'#6ee7b7','midnight blue':'#191970','true blue':'#2563eb','dark blue':'#1e3a8a','dark beige':'#c9a87c','dark brown':'#3b1f0f','black & white':'#888'};
+function getColorHex(c){return COLOR_MAP[(c||'').toLowerCase().trim()]||'#ccc';}
+function getStatus(q){if(q<=0)return{label:'Critical',cls:'critical'};if(q<=LOW_STOCK)return{label:'Low',cls:'low'};return{label:'Healthy',cls:'healthy'};}
+
+function renderStats(){
+  document.getElementById('stat-total').textContent=fabrics.length;
+  const val=fabrics.reduce((s,f)=>s+(parseFloat(f.price)||0)*(parseFloat(f.qty)||0),0);
+  document.getElementById('stat-value').textContent='\u20ac'+val.toFixed(2);
+  document.getElementById('stat-low').textContent=fabrics.filter(f=>(parseFloat(f.qty)||0)<=LOW_STOCK).length;
+}
+function renderTable(){
+  const q=document.getElementById('search-input').value.toLowerCase(),unit=document.getElementById('filter-unit').value;
+  const rows=fabrics.filter(f=>{const m=!q||f.code.toLowerCase().includes(q)||(f.name||'').toLowerCase().includes(q)||(f.type||'').toLowerCase().includes(q)||(f.color||'').toLowerCase().includes(q);return m&&(!unit||f.unit===unit);});
+  const tbody=document.getElementById('inventory-tbody'),empty=document.getElementById('table-empty');
+  if(!rows.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML=rows.map(f=>{
+    const qty=parseFloat(f.qty)||0,status=getStatus(qty),hex=getColorHex(f.color),price=parseFloat(f.price)||0;
+    const photo=f.photo?'<img class="fabric-thumb" src="'+esc(f.photo)+'" loading="lazy" alt="">':'<div class="fabric-thumb-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg></div>';
+    return '<tr class="clickable" onclick="navigate(\'detail\',\''+esc(f.code)+'\')">'
+      +'<td>'+photo+'</td>'
+      +'<td><div class="fnc"><span class="fcode">'+esc(f.code)+'</span><span class="fcomp">'+esc(f.composition||'\u2014')+'</span></div></td>'
+      +'<td><span class="type-badge">'+esc(f.type||'\u2014')+'</span></td>'
+      +'<td><div class="color-cell"><span class="color-dot" style="background:'+hex+'"></span>'+esc(f.color||'\u2014')+'</div></td>'
+      +'<td style="text-align:right" class="'+(status.cls==='healthy'?'remaining-ok':'remaining-low')+'">'+qty+'</td>'
+      +'<td>'+esc(f.unit||'m')+'</td>'
+      +'<td style="text-align:right">'+(price>0?'\u20ac'+price.toFixed(2):'\u2014')+'</td>'
+      +'<td onclick="event.stopPropagation()"><div class="actions-cell">'
+      +'<button class="btn-icon" onclick="editFromTable(\''+esc(f.code)+'\')" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
+      +'<button class="btn-icon danger" onclick="deleteFabric(\''+esc(f.code)+'\')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>'
+      +'</div></td></tr>';
+  }).join('');
+}
+function editFromTable(code){const f=fabrics.find(x=>x.code===code);if(!f)return;currentFabric=f;navigate('add-fabric','__edit__');}
+
+function clearForm(){['f-code','f-name','f-type','f-color','f-pattern','f-composition','f-supplier','f-care','f-notes'].forEach(id=>document.getElementById(id).value='');['f-qty','f-weight','f-width','f-price'].forEach(id=>document.getElementById(id).value=0);document.getElementById('f-unit').value='m';document.getElementById('f-qr').value='';document.getElementById('f-date').value=new Date().toISOString().split('T')[0];document.getElementById('photo-preview').innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="32" height="32" style="color:var(--text-light)"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg>';editingPhoto=null;}
+function loadEditForm(f){document.getElementById('edit-id').value=f.code;document.getElementById('f-code').value=f.code;document.getElementById('f-qr').value=f.qr||f.code;document.getElementById('f-name').value=f.name||'';document.getElementById('f-type').value=f.type||'';document.getElementById('f-color').value=f.color||'';document.getElementById('f-pattern').value=f.pattern||'';document.getElementById('f-composition').value=f.composition||'';document.getElementById('f-qty').value=f.qty||0;document.getElementById('f-unit').value=f.unit||'m';document.getElementById('f-weight').value=f.weight||0;document.getElementById('f-width').value=f.width||0;document.getElementById('f-supplier').value=f.supplier||'';document.getElementById('f-date').value=f.date||'';document.getElementById('f-price').value=f.price||0;document.getElementById('f-care').value=f.care||'';document.getElementById('f-notes').value=f.notes||'';if(f.photo){editingPhoto=f.photo;document.getElementById('photo-preview').innerHTML='<img src="'+f.photo+'" alt="">';}}
+function autoFillQR(){document.getElementById('f-qr').value=document.getElementById('f-code').value;}
+function handlePhoto(e){const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=ev=>{editingPhoto=ev.target.result;document.getElementById('photo-preview').innerHTML='<img src="'+ev.target.result+'" alt="">';};r.readAsDataURL(file);}
+
+async function saveFabric(){
+  const code=document.getElementById('f-code').value.trim(),name=document.getElementById('f-name').value.trim(),type=document.getElementById('f-type').value.trim(),color=document.getElementById('f-color').value.trim();
+  if(!code||!name||!type||!color){showToast('Fill in required fields (*)');return;}
+  const editId=document.getElementById('edit-id').value;
+  if(!editId&&fabrics.find(f=>f.code===code)){showToast('Fabric Code already exists');return;}
+  const existing=fabrics.find(x=>x.code===(editId||code))||{};
+  const f={code,name,type,color,pattern:document.getElementById('f-pattern').value.trim(),composition:document.getElementById('f-composition').value.trim(),qty:parseFloat(document.getElementById('f-qty').value)||0,unit:document.getElementById('f-unit').value,weight:document.getElementById('f-weight').value,width:document.getElementById('f-width').value,supplier:document.getElementById('f-supplier').value.trim(),date:document.getElementById('f-date').value,price:document.getElementById('f-price').value,care:document.getElementById('f-care').value.trim(),notes:document.getElementById('f-notes').value.trim(),photo:editingPhoto||existing.photo||'',photoBack:existing.photoBack||'',qr:document.getElementById('f-qr').value||code,urlQR:existing.urlQR||'',purchasePrice:document.getElementById('f-price').value};
+  const btn=document.getElementById('save-fabric-btn');btn.disabled=true;btn.textContent='Saving\u2026';
+  try{
+    const res=await apiPost({action:'saveFabric',data:fabricToSheet(f)});
+    if(!res.success){showToast('Save failed: '+res.message);btn.disabled=false;btn.textContent='Save Fabric';return;}
+    fabrics=fabrics.filter(x=>x.code!==editId&&x.code!==code);fabrics.push(f);
+    if(editId&&currentFabric){currentFabric=f;showToast('Fabric updated \u2713');navigate('detail',f.code);}
+    else{showToast('Fabric added \u2713');navigate('inventory');}
+  }catch(e){showToast('Network error \u2014 try again');}
+  btn.disabled=false;btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Fabric';
+}
+
+function deleteFabric(code){deleteTarget=code;document.getElementById('delete-modal').classList.add('open');}
+function closeModal(){document.getElementById('delete-modal').classList.remove('open');deleteTarget=null;}
+async function confirmDelete(){
+  const btn=document.querySelector('#delete-modal .btn-save');btn.disabled=true;btn.textContent='Deleting\u2026';
+  try{const res=await apiPost({action:'deleteFabric',code:deleteTarget});if(!res.success){showToast('Delete failed: '+res.message);btn.disabled=false;btn.textContent='Delete';return;}fabrics=fabrics.filter(f=>f.code!==deleteTarget);closeModal();showToast('Fabric deleted');renderStats();renderTable();}
+  catch(e){showToast('Network error \u2014 try again');}
+  btn.disabled=false;btn.textContent='Delete';
+}
+
+function populateLogSelect(){document.getElementById('log-fabric').innerHTML='<option value="">Select fabric...</option>'+fabrics.map(f=>'<option value="'+esc(f.code)+'">'+esc(f.code)+' \u2013 '+esc(f.name||'')+'</option>').join('');}
+async function logUsage(){
+  const code=document.getElementById('log-fabric').value,qty=parseFloat(document.getElementById('log-qty').value);
+  if(!code||!qty||qty<=0){showToast('Select a fabric and enter a valid quantity');return;}
+  const fabric=fabrics.find(f=>f.code===code);if(!fabric)return;
+  const cur=parseFloat(fabric.qty)||0;if(qty>cur){showToast('Only '+cur+' '+fabric.unit+' in stock');return;}
+  const after=parseFloat((cur-qty).toFixed(3));
+  const btn=document.getElementById('log-usage-btn');btn.disabled=true;btn.textContent='Saving\u2026';
+  try{
+    const logRes=await apiPost({action:'logFabricUsage',data:usageToSheet({id:'',fabricCode:code,date:document.getElementById('log-date').value||new Date().toISOString().split('T')[0],project:document.getElementById('log-project').value.trim()||'--',before:cur,qty,after,unit:fabric.unit,purpose:'',notes:document.getElementById('log-notes').value.trim()})});
+    if(!logRes.success){showToast('Log failed: '+logRes.message);btn.disabled=false;btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Log Usage';return;}
+    await apiPost({action:'saveFabric',data:fabricToSheet({...fabric,qty:after})});
+    fabric.qty=after;usageLog.unshift({id:logRes.usageId||'',fabricCode:code,date:document.getElementById('log-date').value,project:document.getElementById('log-project').value.trim()||'--',before:cur,qty,after,unit:fabric.unit,notes:document.getElementById('log-notes').value.trim()});
+    showToast('Usage logged \u2713');document.getElementById('log-qty').value='';document.getElementById('log-project').value='';document.getElementById('log-notes').value='';renderLogTable();
+  }catch(e){showToast('Network error \u2014 try again');}
+  btn.disabled=false;btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Log Usage';
+}
+function renderLogTable(){const tbody=document.getElementById('log-tbody'),empty=document.getElementById('log-empty');if(!usageLog.length){tbody.innerHTML='';empty.style.display='block';return;}empty.style.display='none';tbody.innerHTML=usageLog.map(u=>'<tr><td style="font-size:12px;font-family:monospace">'+esc(u.id)+'</td><td><span class="fcode">'+esc(u.fabricCode)+'</span></td><td>'+esc(u.date||'')+'</td><td>'+esc(u.project||'--')+'</td><td>'+u.before+'</td><td>'+u.qty+'</td><td>'+u.after+'</td><td>'+esc(u.unit||'m')+'</td><td style="color:var(--text-muted)">'+esc(u.notes||'')+'</td></tr>').join('');}
+
+function toggleScanClear(val){document.getElementById('scan-clear-btn').classList.toggle('visible',!!val);document.getElementById('scan-code-input').classList.toggle('has-value',!!val);}
+function clearScanInput(){const i=document.getElementById('scan-code-input');i.value='';toggleScanClear('');scanLookup('');i.focus();}
+function scanLookup(val){
+  const v=val.trim().toLowerCase(),res=document.getElementById('scan-result');res.innerHTML='';if(!v)return;
+  const f=fabrics.find(x=>x.code.toLowerCase()===v||(x.qr||'').toLowerCase()===v);
+  if(!f){res.innerHTML='<div class="scan-result-card" style="padding:24px;text-align:center;color:var(--text-muted)">No fabric found for "<strong style="color:var(--text)">'+esc(val.trim())+'</strong>".</div>';return;}
+  const hist=usageLog.filter(u=>u.fabricCode===f.code).slice().reverse();
+  let histRows='';for(let i=0;i<10;i++){const u=hist[i];if(u){const init=u.project==='Initial qty'||u.project==='Initial qtty';histRows+='<tr><td>'+esc(u.date||'')+'</td><td>'+esc(u.project||'--')+'</td><td class="right">'+u.before+'</td><td class="'+(init?'green':'')+' right">'+(init?'+'+u.qty:u.qty)+'</td><td class="right">'+u.after+'</td></tr>';}else{histRows+='<tr class="scan-empty-rows"><td></td><td></td><td></td><td></td><td></td></tr>';}}
+  const photo=f.photo?'<img src="'+f.photo+'" alt="">':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg><span>Fabric photo</span>';
+  const drows=[['color',f.color],['pattern',f.pattern],['composition',f.composition],['weight',f.weight?f.weight+' gsm':null],['width',f.width?f.width+' cm':null],['source',f.supplier],['notes',f.notes]].filter(([,v])=>v).map(([k,v])=>'<tr><td>'+k+'</td><td>'+esc(v)+'</td></tr>').join('');
+  const today=new Date().toISOString().split('T')[0];
+  res.innerHTML='<div class="scan-result-card"><div class="scan-result-body"><div class="scan-result-left"><div class="scan-media-row"><div class="scan-photo-box">'+photo+'</div><div class="scan-qr-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg><span>[QR Code]</span></div></div><div><div class="scan-fabric-type">'+esc(f.type||'--')+'</div><div class="scan-fabric-code-sub">'+esc(f.code)+'</div></div><table class="scan-details-table">'+drows+'</table></div><div class="scan-result-right"><h3>'+esc(f.code)+'</h3><table class="scan-history-table"><thead><tr><th rowspan="2">date</th><th rowspan="2">project</th><th colspan="3" class="qty-header" style="text-align:center;padding-bottom:2px">quantity</th></tr><tr><th class="right">before</th><th class="right">use</th><th class="right">after</th></tr></thead><tbody>'+histRows+'</tbody></table></div></div><div class="scan-result-footer"><button class="btn-secondary" onclick="clearScanInput()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>New scan</button><span class="scan-date">'+today+'</span><div class="scan-actions"><button class="btn-secondary" onclick="editFromTable(\''+esc(f.code)+'\')">Edit</button><button class="btn-primary" onclick="navigate(\'detail\',\''+esc(f.code)+'\')">View Detail</button></div></div></div>';
+}
+function openCamera(){showToast('Camera requires HTTPS + getUserMedia');}
+async function reloadInventory(){await loadData();renderStats();renderTable();showToast('Refreshed \u2713');}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function setTodayDate(id){document.getElementById(id).value=new Date().toISOString().split('T')[0];}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2800);}
+
+document.getElementById('delete-modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+document.getElementById('log-modal').addEventListener('click',function(e){if(e.target===this)closeLogModal();});
+
+(async function(){
   await loadData();
-  showPage('inventory');
+  const code=getCodeFromPath();
+  if(code){const f=fabrics.find(x=>x.code===code);if(f){currentFabric=f;history.replaceState({code},'',(location.href));navigate('detail',code);return;}}
+  history.replaceState({code:null},'',location.href);
+  navigate('inventory');
 })();
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.4.1</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.0.0</div>
 </body>
 </html>
