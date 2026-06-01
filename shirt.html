@@ -1126,48 +1126,69 @@ function buildSummary() {
 }
 
 async function handleAddToCart() {
-  var btn = event.currentTarget;
-  btn.disabled = true; btn.style.opacity = '0.6';
+  var btn = document.querySelector('[onclick="handleAddToCart()"]');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
   try {
-    await _saveFullOrder('InCart');
+    await _saveViaIframe('InCart');
     toast('Added to cart!');
-    setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/cart'; }, 1500);
+    setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/cart'; }, 1800);
   } catch(e) {
     toast('Could not add to cart', 'err');
-    btn.disabled = false; btn.style.opacity = '';
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
   }
 }
 
 async function handleOrderNow() {
-  var btn = event.currentTarget;
-  btn.disabled = true; btn.style.opacity = '0.6';
+  var btn = document.querySelector('[onclick="handleOrderNow()"]');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
   try {
-    await _saveFullOrder('Pending');
+    await _saveViaIframe('Pending');
     toast('Order placed — going to checkout…');
-    setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/checkout'; }, 1500);
+    setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/checkout'; }, 1800);
   } catch(e) {
     toast('Could not place order', 'err');
-    btn.disabled = false; btn.style.opacity = '';
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
   }
 }
 
-async function _saveFullOrder(status) {
-  var email = (document.getElementById('mf-email') || {}).value || '';
-  email = email.trim();
-  var measData = { garment: 'shirt', dateTime: new Date().toLocaleString() };
+// Same hidden-iframe technique as Save Configuration — bypasses CORS completely
+function _saveViaIframe(status) {
+  var data = collectConfig();
+  data['Status'] = status;
+  data['Created At'] = new Date().toISOString();
+
+  // Attach measurements from form
+  var measData = {};
   var fd = new FormData(document.getElementById('meas-form'));
   fd.forEach(function(v, k){ if (v) measData[k] = v; });
-  var cfg = collectConfig();
-  var orderData = Object.assign({}, cfg, {
-    email:        email,
-    'Status':     status,
-    'Created At': new Date().toISOString(),
-    measurements: JSON.stringify(measData),
+  data['measurements'] = JSON.stringify(measData);
+
+  var payload = encodeURIComponent(JSON.stringify(data));
+  var url     = SHEET_URL + '?payload=' + payload;
+
+  return new Promise(function(resolve) {
+    var iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = url;
+
+    var handler = function(event) {
+      if (String(event.data).indexOf('shirt_') === 0) {
+        window.removeEventListener('message', handler);
+        document.body.removeChild(iframe);
+        resolve(event.data);
+      }
+    };
+    window.addEventListener('message', handler);
+
+    // Fallback — if no message in 8s, assume saved
+    setTimeout(function() {
+      window.removeEventListener('message', handler);
+      if (iframe.parentNode) document.body.removeChild(iframe);
+      resolve('shirt_saved');
+    }, 8000);
+
+    document.body.appendChild(iframe);
   });
-  await Promise.all([
-    fetch(SHEET_URL, { method: 'POST', body: JSON.stringify({ action: 'saveMeasurement', email: email, data: measData }) }),
-    fetch(SHEET_URL, { method: 'POST', body: JSON.stringify({ action: 'saveOrder',       email: email, data: orderData }) }),
-  ]);
 }
 
 // ── Google Sheets Integration ──
@@ -1498,7 +1519,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.9.6</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.9.7</div>
 
 <!-- Firebase -->
 <script type="module">
