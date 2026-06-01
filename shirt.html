@@ -1297,7 +1297,7 @@ function showFeedback(msg, color) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// MEASUREMENTS PANEL ENGINE
+// MEASUREMENTS PANEL ENGINE — fields loaded live from measurements-9.html
 // ═══════════════════════════════════════════════════════════
 (function() {
   'use strict';
@@ -1305,8 +1305,10 @@ function showFeedback(msg, color) {
   var SHEETS_API  = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
   var RAW_BASE    = 'https://raw.githubusercontent.com/toom-design/measurements/main/';
   var FRONT_IMG   = RAW_BASE + 'MEASUREMENTS_front.png';
+  var MEAS_URL    = 'https://tailortech.toom.design/measurements';
 
-  var FIELD_IMG = {
+  // Fallback field definitions (used if fetch fails)
+  var FALLBACK_FIELD_IMG = {
     'height':                  'MEASUREMENTS_Height.png',
     'bustGirth':               'MEASUREMENTS_Bust girth.png',
     'calfGirth':               'MEASUREMENTS_Calf girth.png',
@@ -1325,24 +1327,68 @@ function showFeedback(msg, color) {
     'upperArmLength':          'MEASUREMENTS_Upper arm length.png',
     'shirtLength':             'MEASUREMENTS_Shirt length.png',
   };
-
-  var SHIRT_VOL = [
-    ['bustGirth','Bust girth (cm)'],
-    ['waistGirth','Waist girth (cm)'],
-    ['hipGirth','Hip girth (cm)'],
-    ['upperBicepGirth','Upper bicep girth (cm)'],
-    ['wristGirth','Wrist girth (cm)'],
-    ['neckBaseGirth','Neck base girth (cm)'],
+  var FALLBACK_SHIRT_KEYS = new Set([
+    'neckBaseGirth','height','bustGirth','waistGirth','hipGirth','backNeckToWaist',
+    'acrossBackWidth','shoulderLength','outerArmLength','upperArmLength','shirtLength',
+    'acrossBackShoulderWidth','upperBicepGirth','wristGirth'
+  ]);
+  var FALLBACK_VOL = [
+    ['bustGirth','Bust girth (cm)'],['waistGirth','Waist girth (cm)'],['hipGirth','Hip girth (cm)'],
+    ['upperBicepGirth','Upper bicep girth (cm)'],['wristGirth','Wrist girth (cm)'],['neckBaseGirth','Neck base girth (cm)'],
   ];
-  var SHIRT_LIN = [
-    ['outerArmLength','Outer arm length (cm)'],
-    ['shoulderLength','Shoulder length (cm)'],
-    ['backNeckToWaist','Back neck point to waist (cm)'],
-    ['acrossBackShoulderWidth','Across back shoulder width (cm)'],
-    ['acrossBackWidth','Across back width (cm)'],
-    ['upperArmLength','Upper arm length (cm)'],
+  var FALLBACK_LIN = [
+    ['outerArmLength','Outer arm length (cm)'],['shoulderLength','Shoulder length (cm)'],
+    ['backNeckToWaist','Back neck point to waist (cm)'],['acrossBackShoulderWidth','Across back shoulder width (cm)'],
+    ['acrossBackWidth','Across back width (cm)'],['upperArmLength','Upper arm length (cm)'],
     ['shirtLength','Shirt length (cm)'],
   ];
+
+  // Active field definitions (replaced by fetched data if available)
+  var FIELD_IMG   = FALLBACK_FIELD_IMG;
+  var SHIRT_VOL   = FALLBACK_VOL;
+  var SHIRT_LIN   = FALLBACK_LIN;
+
+  // ── Fetch & parse field definitions from live measurements page ──
+  function loadFieldDefs() {
+    return fetch(MEAS_URL)
+      .then(function(r) { return r.text(); })
+      .then(function(html) {
+        // Extract FIELD_IMG object
+        var fiMatch = html.match(/var FIELD_IMG\s*=\s*(\{[\s\S]*?\});/);
+        if (fiMatch) {
+          try { FIELD_IMG = (new Function('return ' + fiMatch[1]))(); } catch(e) {}
+        }
+
+        // Extract VOL and LIN arrays
+        var volMatch = html.match(/const VOL\s*=\s*(\[[\s\S]*?\]);/);
+        var linMatch = html.match(/const LIN\s*=\s*(\[[\s\S]*?\]);/);
+
+        // Extract shirt GARMENT_SETS keys
+        var gsMatch = html.match(/shirt\s*:\s*new Set\(\[([\s\S]*?)\]\)/);
+        var shirtKeys = null;
+        if (gsMatch) {
+          try {
+            shirtKeys = new Set(gsMatch[1].replace(/['"]/g,'').split(',').map(function(s){ return s.trim(); }).filter(Boolean));
+          } catch(e) {}
+        }
+
+        if (volMatch && shirtKeys) {
+          try {
+            var allVol = (new Function('return ' + volMatch[1]))();
+            SHIRT_VOL = allVol.filter(function(f){ return shirtKeys.has(f[0]); });
+          } catch(e) {}
+        }
+        if (linMatch && shirtKeys) {
+          try {
+            var allLin = (new Function('return ' + linMatch[1]))();
+            SHIRT_LIN = allLin.filter(function(f){ return shirtKeys.has(f[0]); });
+          } catch(e) {}
+        }
+      })
+      .catch(function() {
+        // silently use fallbacks
+      });
+  }
 
   var _diagImg = null, _diagLabel = null, _diagActive = null;
 
@@ -1401,6 +1447,7 @@ function showFeedback(msg, color) {
     var gv = document.getElementById('meas-grid-vol');
     var gl = document.getElementById('meas-grid-lin');
     if (!gv || !gl) return;
+    gv.innerHTML = ''; gl.innerHTML = '';
     SHIRT_VOL.forEach(function(f){ gv.appendChild(makeField(f[0], f[1])); });
     SHIRT_LIN.forEach(function(f){ gl.appendChild(makeField(f[0], f[1])); });
     initMeasDiag();
@@ -1483,11 +1530,8 @@ function showFeedback(msg, color) {
     var email = document.getElementById('mf-email').value.trim();
     sheetsReq('saveMeasurement', { email: email, data: data })
       .then(function(res) {
-        if (res && res.success) {
-          toast('Measurements saved!');
-        } else {
-          toast('Could not save — check connection', 'err');
-        }
+        if (res && res.success) { toast('Measurements saved!'); }
+        else { toast('Could not save — check connection', 'err'); }
       })
       .catch(function(){ toast('Network error', 'err'); })
       .finally(function(){ btn.disabled = false; lbl.style.display = ''; sp.style.display = 'none'; });
@@ -1509,17 +1553,22 @@ function showFeedback(msg, color) {
     loadHistory(user.email);
   };
 
+  // Boot: fetch live field defs, then build fields
+  function boot() {
+    loadFieldDefs().then(function() { buildFields(); });
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', buildFields);
+    document.addEventListener('DOMContentLoaded', boot);
   } else {
-    buildFields();
+    boot();
   }
 
 })();
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.9.7</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.0.0</div>
 
 <!-- Firebase -->
 <script type="module">
