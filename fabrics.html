@@ -154,6 +154,10 @@ tbody td{padding:11px 14px;vertical-align:middle}
 .btn-save:hover{background:var(--accent-hover)}
 .btn-restock{display:flex;align-items:center;gap:6px;padding:9px 20px;background:var(--green);color:#fff;border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;transition:background .15s}
 .btn-restock:hover{background:#1f5038}
+.garment-filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.gf-btn{padding:5px 13px;border-radius:20px;border:1px solid var(--border);background:var(--surface);font-family:inherit;font-size:12px;font-weight:500;color:var(--text-muted);cursor:pointer;transition:all .15s;letter-spacing:.02em}
+.gf-btn:hover{background:var(--bg);color:var(--text)}
+.gf-btn.active{background:var(--text);color:#fff;border-color:var(--text)}
 .btn-restock svg{width:15px;height:15px}
 .btn-save svg{width:15px;height:15px}
 #page-scan{max-width:860px}
@@ -251,6 +255,17 @@ tbody td{padding:11px 14px;vertical-align:middle}
     <button class="btn-primary" onclick="navigate('add-fabric')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Fabric</button>
     <button class="nav-btn" onclick="reloadInventory()" title="Refresh" style="padding:7px 10px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg></button>
   </div>
+  <div class="garment-filters">
+    <button class="gf-btn active" data-garment="" onclick="setGarmentFilter(this,'')">All</button>
+    <button class="gf-btn" data-garment="suit" onclick="setGarmentFilter(this,'suit')">Suit</button>
+    <button class="gf-btn" data-garment="jacket" onclick="setGarmentFilter(this,'jacket')">Jacket</button>
+    <button class="gf-btn" data-garment="shirt" onclick="setGarmentFilter(this,'shirt')">Shirt</button>
+    <button class="gf-btn" data-garment="hoodie" onclick="setGarmentFilter(this,'hoodie')">Hoodie</button>
+    <button class="gf-btn" data-garment="trousers" onclick="setGarmentFilter(this,'trousers')">Trousers</button>
+    <button class="gf-btn" data-garment="sweatpants" onclick="setGarmentFilter(this,'sweatpants')">Sweatpants</button>
+    <button class="gf-btn" data-garment="denim trousers" onclick="setGarmentFilter(this,'denim trousers')">Denim Trousers</button>
+  </div>
+  <input type="hidden" id="filter-garment" value="">
   <div class="table-wrap">
     <table><thead><tr><th style="width:60px"></th><th>Fabric</th><th>Category</th><th>Color</th><th style="text-align:right">Stock</th><th>Unit</th><th style="text-align:right">Unit Price</th><th>Actions</th></tr></thead><tbody id="inventory-tbody"></tbody></table>
     <div id="table-empty" class="empty-state" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg><p>No fabrics found. <a href="#" onclick="navigate('add-fabric')" style="color:var(--accent)">Add one to get started.</a></p></div>
@@ -394,7 +409,7 @@ const LOW_STOCK = 2;
 
 let fabrics=[], usageLog=[], currentFabric=null, deleteTarget=null, editingPhoto=null;
 
-function sheetToFabric(r){return{code:r['FabricCode']||'',name:r['ProductName']||'',type:r['Type']||'',color:r['Color']||'',pattern:r['Pattern']||'',composition:r['Composition']||'',weight:r['Weight_gsm']||'',width:r['Width_cm']||'',care:r['CareSymbols']||'',supplier:r['Supplier']||'',date:r['PurchaseDate']||'',purchasePrice:r['PurchasePrice_EUR_perUnit']||'',price:r['UnitPrice']||r['PurchasePrice_EUR_perUnit']||'',unit:r['Unit']||'m',qty:parseFloat(r['Stock'])||0,notes:r['Notes']||'',qr:r['QR_Code']||'',photo:r['Photo FACE']||'',photoBack:r['photo BACK']||'',urlQR:r['URL_QR']||''};}
+function sheetToFabric(r){return{code:r['FabricCode']||'',name:r['ProductName']||'',type:r['Type']||'',color:r['Color']||'',pattern:r['Pattern']||'',composition:r['Composition']||'',weight:r['Weight_gsm']||'',width:r['Width_cm']||'',care:r['CareSymbols']||'',supplier:r['Supplier']||'',date:r['PurchaseDate']||'',purchasePrice:r['PurchasePrice_EUR_perUnit']||'',price:r['UnitPrice']||r['PurchasePrice_EUR_perUnit']||'',unit:r['Unit']||'m',qty:parseFloat(r['Stock'])||0,notes:r['Notes']||'',qr:r['QR_Code']||'',photo:r['Photo FACE']||'',photoBack:r['photo BACK']||'',urlQR:r['URL_QR']||'',garments:r['Garments']||''};}
 function fabricToSheet(f){return{'FabricCode':f.code||'','Photo FACE':f.photo||'','photo BACK':f.photoBack||'','QR_Code':f.qr||f.code||'','URL_QR':f.urlQR||'','URL_QR_pic':'','ProductName':f.name||'','Type':f.type||'','Color':f.color||'','Pattern':f.pattern||'','Composition':f.composition||'','Weight_gsm':f.weight||'','Width_cm':f.width||'','CareSymbols':f.care||'','Supplier':f.supplier||'','PurchaseDate':f.date||'','PurchasePrice_EUR_perUnit':f.purchasePrice||f.price||'','UnitPrice':f.price||'','Unit':f.unit||'m','Stock':f.qty||0,'Notes':f.notes||''};}
 function sheetToUsage(r){return{id:r['UsageID']||'',fabricCode:r['FabricCode']||'',date:r['Date']||'',project:r['Project']||'',before:parseFloat(r['Amount_Before'])||0,qty:parseFloat(r['Quantity'])||0,after:parseFloat(r['Amount_After'])||0,unit:r['Unit']||'m',purpose:r['Purpose']||'',notes:r['Notes']||''};}
 function usageToSheet(u){return{'UsageID':u.id||'','FabricCode':u.fabricCode||'','Date':u.date||'','Project':u.project||'','Amount_Before':u.before||0,'Quantity':u.qty||0,'Amount_After':u.after||0,'Unit':u.unit||'m','Purpose':u.purpose||'','Notes':u.notes||''};}
@@ -535,9 +550,10 @@ function renderStats(){
   document.getElementById('stat-value').textContent='\u20ac'+val.toFixed(2);
   document.getElementById('stat-low').textContent=fabrics.filter(f=>(parseFloat(f.qty)||0)<=LOW_STOCK).length;
 }
+function setGarmentFilter(btn,val){document.getElementById('filter-garment').value=val;document.querySelectorAll('.gf-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderTable();}
 function renderTable(){
   const q=document.getElementById('search-input').value.toLowerCase(),unit=document.getElementById('filter-unit').value;
-  const rows=fabrics.filter(f=>{const m=!q||f.code.toLowerCase().includes(q)||(f.name||'').toLowerCase().includes(q)||(f.type||'').toLowerCase().includes(q)||(f.color||'').toLowerCase().includes(q);return m&&(!unit||f.unit===unit);});
+  const garment=document.getElementById('filter-garment').value;const rows=fabrics.filter(f=>{const m=!q||f.code.toLowerCase().includes(q)||(f.name||'').toLowerCase().includes(q)||(f.type||'').toLowerCase().includes(q)||(f.color||'').toLowerCase().includes(q);const g=!garment||(f.garments||'').toLowerCase().split(/[,\n]+/).map(s=>s.trim()).some(s=>s===garment.toLowerCase());return m&&(!unit||f.unit===unit)&&g;});
   const tbody=document.getElementById('inventory-tbody'),empty=document.getElementById('table-empty');
   if(!rows.length){tbody.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
