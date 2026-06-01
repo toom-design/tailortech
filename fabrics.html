@@ -508,16 +508,20 @@ function closeLogModal(){document.getElementById('log-modal').classList.remove('
 async function submitLogModal(){
   const f=currentFabric,qty=parseFloat(document.getElementById('modal-log-qty').value);
   if(!qty||qty<=0){showToast('Enter a valid quantity');return;}
-  const cur=parseFloat(f.qty)||0;
+  // Mirror XLOOKUP: use Amount_After of most recent log entry for this fabric as Amount_Before
+  const prevEntry=usageLog.find(u=>u.fabricCode===f.code);
+  const cur=prevEntry!=null?parseFloat(prevEntry.after)||0:parseFloat(f.qty)||0;
   if(qty>cur){showToast('Only '+cur+' '+f.unit+' in stock');return;}
-  const after=parseFloat((cur-qty).toFixed(3));
-  const btn=document.getElementById('modal-log-save');btn.disabled=true;btn.textContent='Saving\u2026';
+  // Quantity stored negative (usage), Amount_After = Amount_Before + Quantity
+  const qtyNeg=parseFloat((-qty).toFixed(3));
+  const after=parseFloat((cur+qtyNeg).toFixed(3));
+  const btn=document.getElementById('modal-log-save');btn.disabled=true;btn.textContent='Saving…';
   try{
     const logRes=await apiPost({action:'logFabricUsage',data:usageToSheet({id:'',fabricCode:f.code,date:document.getElementById('modal-log-date').value,project:document.getElementById('modal-log-project').value.trim()||'--',before:cur,qty:qtyNeg,after,unit:f.unit,purpose:'',notes:document.getElementById('modal-log-notes').value.trim()})});
     if(!logRes.success){showToast('Error: '+logRes.message);btn.disabled=false;btn.textContent='Save';return;}
-    f.qty=after;usageLog.unshift({id:logRes.usageId||'',fabricCode:f.code,date:document.getElementById('modal-log-date').value,project:document.getElementById('modal-log-project').value.trim()||'--',before:cur,qty,after,unit:f.unit,notes:document.getElementById('modal-log-notes').value.trim()});
-    closeLogModal();renderDetail();showToast('Usage logged \u2713');
-  }catch(e){showToast('Network error \u2014 try again');}
+    f.qty=after;usageLog.unshift({id:logRes.usageId||'',fabricCode:f.code,date:document.getElementById('modal-log-date').value,project:document.getElementById('modal-log-project').value.trim()||'--',before:cur,qty:qtyNeg,after,unit:f.unit,notes:document.getElementById('modal-log-notes').value.trim()});
+    closeLogModal();renderDetail();showToast('Usage logged ✓');
+  }catch(e){showToast('Network error — try again');}
   btn.disabled=false;btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save';
 }
 
@@ -666,6 +670,6 @@ document.getElementById('log-modal').addEventListener('click',function(e){if(e.t
   navigate('inventory');
 })();
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.0.2</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.0.3</div>
 </body>
 </html>
