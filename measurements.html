@@ -108,6 +108,28 @@ button{cursor:pointer;font-family:inherit}
 .spin{width:13px;height:13px;border:1.5px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.65s linear infinite;display:none;flex-shrink:0;}
 @keyframes spin{to{transform:rotate(360deg)}}
 
+/* Loading measurements notif */
+#meas-loading-notif{
+  display:none;
+  align-items:center;gap:8px;
+  margin-top:10px;
+  padding:8px 12px;
+  border-radius:2px;
+  background:rgba(109,70,180,0.08);
+  border:1px solid rgba(109,70,180,0.22);
+  font-size:11px;font-weight:500;letter-spacing:0.06em;
+  color:#6d46b4;
+  transition:opacity 0.2s;
+}
+#meas-loading-notif.visible{display:flex}
+.meas-notif-dot{
+  width:7px;height:7px;border-radius:50%;
+  border:1.5px solid rgba(109,70,180,0.35);
+  border-top-color:#6d46b4;
+  animation:spin 0.75s linear infinite;
+  flex-shrink:0;
+}
+
 /* Toast */
 #toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--white);font-size:11px;font-weight:500;letter-spacing:0.06em;padding:11px 20px;border-radius:2px;opacity:0;transition:opacity 0.25s,transform 0.25s;pointer-events:none;z-index:9999;white-space:nowrap;}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -192,6 +214,12 @@ button{cursor:pointer;font-family:inherit}
             <label class="field-lbl">Person ID</label>
             <input type="text" id="f-personId" name="personId" placeholder="TT-0001" readonly style="opacity:0.65;cursor:not-allowed;">
           </div>
+        </div>
+
+        <!-- Loading measurements notification -->
+        <div id="meas-loading-notif">
+          <span class="meas-notif-dot"></span>
+          Loading measurements…
         </div>
 
         <div class="sec-gap"></div>
@@ -531,6 +559,8 @@ document.addEventListener('click',function(e){
     if (emailEl){ emailEl.value=decodedEmail; emailEl.readOnly=true; emailEl.style.opacity='0.6'; emailEl.style.cursor='not-allowed'; }
     var pidEl = document.getElementById('f-personId');
     if (pidEl&&decodedPid){ pidEl.value=decodedPid; pidEl.readOnly=true; pidEl.style.opacity='0.6'; pidEl.style.cursor='not-allowed'; }
+    var notif = document.getElementById('meas-loading-notif');
+    if (notif) notif.classList.add('visible');
     loadMeasurementHistory(decodedEmail);
   }
 })();
@@ -542,6 +572,7 @@ function loadMeasurementHistory(email){
   var loading=document.getElementById('meas-history-loading');
   if(section) section.style.display='block';
   sheetsReq('getMeasurements',{email:email}).then(function(res){
+    var notif=document.getElementById('meas-loading-notif'); if(notif) notif.classList.remove('visible');
     if(!res||!res.success||!res.records||res.records.length===0){ if(loading) loading.textContent='No measurement history yet.'; return; }
     if(loading) loading.style.display='none';
     var latest=res.records[0];
@@ -563,7 +594,7 @@ function loadMeasurementHistory(email){
         return '<div style="padding:16px 20px;background:var(--white);border:1px solid var(--border);border-radius:2px;margin-bottom:8px"><div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px">'+(i===0?'⬤ Latest — ':'Record '+(res.records.length-i)+' — ')+date+'</div>'+(chips||'<span style="font-size:12px;color:var(--ink-faint);font-style:italic">No key measurements recorded</span>')+'</div>';
       }).join('');
     }
-  }).catch(function(err){ if(loading) loading.textContent='Could not load history.'; console.error(err); });
+  }).catch(function(err){ var notif=document.getElementById('meas-loading-notif'); if(notif) notif.classList.remove('visible'); if(loading) loading.textContent='Could not load history.'; console.error(err); });
 }
 
 function prefillMeasurements(rec){
@@ -584,7 +615,7 @@ function prefillMeasurements(rec){
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.9.1</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.9.2</div>
 
 <!-- Firebase -->
 <script type="module">
