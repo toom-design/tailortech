@@ -152,6 +152,9 @@ tbody td{padding:11px 14px;vertical-align:middle}
 .btn-cancel:hover{background:var(--bg)}
 .btn-save{display:flex;align-items:center;gap:6px;padding:9px 20px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;transition:background .15s}
 .btn-save:hover{background:var(--accent-hover)}
+.btn-restock{display:flex;align-items:center;gap:6px;padding:9px 20px;background:var(--green);color:#fff;border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;transition:background .15s}
+.btn-restock:hover{background:#1f5038}
+.btn-restock svg{width:15px;height:15px}
 .btn-save svg{width:15px;height:15px}
 #page-scan{max-width:860px}
 .scan-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;gap:14px}
@@ -335,15 +338,15 @@ tbody td{padding:11px 14px;vertical-align:middle}
   <div class="back-title"><button class="back-btn" onclick="navigate('inventory')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button><h2>Usage Log</h2></div>
   <div class="form-card">
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Fabric Code <span>*</span></label><select class="form-select" id="log-fabric"><option value="">Select fabric...</option></select></div>
+      <div class="form-group"><label class="form-label">Fabric Code <span>*</span></label><div style="display:flex;gap:8px;align-items:stretch"><select class="form-select" id="log-fabric" style="flex:1;min-width:0" onchange="syncLogFabricInput(this.value)"><option value="">Select fabric...</option></select><input class="form-input" id="log-fabric-custom" placeholder="or type code…" style="flex:1;min-width:0" oninput="syncLogFabricSelect(this.value)" title="Type a fabric code manually"></div><div class="form-hint">Pick from list or enter a code manually</div></div>
       <div class="form-group"><label class="form-label">Project</label><input class="form-input" id="log-project" placeholder="e.g. Suit for John"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Quantity Used <span>*</span></label><input class="form-input" id="log-qty" type="number" step="0.1" min="0.1" placeholder="0.0"></div>
+      <div class="form-group"><label class="form-label" id="log-qty-label">Quantity Used <span>*</span></label><input class="form-input" id="log-qty" type="number" step="0.1" min="0.1" placeholder="0.0"></div>
       <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="log-date" type="date"></div>
     </div>
     <div class="form-row single"><div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="log-notes" placeholder="Optional notes..."></div></div>
-    <div class="form-actions"><button class="btn-save" id="log-usage-btn" onclick="logUsage()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Log Usage</button></div>
+    <div class="form-actions"><button class="btn-restock" id="log-restock-btn" onclick="logRestock()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7-7 7 7"/></svg>Restock</button><button class="btn-save" id="log-usage-btn" onclick="logUsage()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Log Usage</button></div>
   </div>
   <div class="log-table-wrap">
     <table><thead><tr><th>Usage ID</th><th>Fabric Code</th><th>Date</th><th>Project</th><th>Before</th><th>Used</th><th>After</th><th>Unit</th><th>Notes</th></tr></thead><tbody id="log-tbody"></tbody></table>
@@ -510,7 +513,7 @@ async function submitLogModal(){
   const after=parseFloat((cur-qty).toFixed(3));
   const btn=document.getElementById('modal-log-save');btn.disabled=true;btn.textContent='Saving\u2026';
   try{
-    const logRes=await apiPost({action:'logFabricUsage',data:usageToSheet({id:'',fabricCode:f.code,date:document.getElementById('modal-log-date').value,project:document.getElementById('modal-log-project').value.trim()||'--',before:cur,qty,after,unit:f.unit,purpose:'',notes:document.getElementById('modal-log-notes').value.trim()})});
+    const logRes=await apiPost({action:'logFabricUsage',data:usageToSheet({id:'',fabricCode:f.code,date:document.getElementById('modal-log-date').value,project:document.getElementById('modal-log-project').value.trim()||'--',before:cur,qty:qtyNeg,after,unit:f.unit,purpose:'',notes:document.getElementById('modal-log-notes').value.trim()})});
     if(!logRes.success){showToast('Error: '+logRes.message);btn.disabled=false;btn.textContent='Save';return;}
     await apiPost({action:'saveFabric',data:fabricToSheet({...f,qty:after})});
     f.qty=after;usageLog.unshift({id:logRes.usageId||'',fabricCode:f.code,date:document.getElementById('modal-log-date').value,project:document.getElementById('modal-log-project').value.trim()||'--',before:cur,qty,after,unit:f.unit,notes:document.getElementById('modal-log-notes').value.trim()});
@@ -588,20 +591,48 @@ async function confirmDelete(){
 
 function populateLogSelect(){document.getElementById('log-fabric').innerHTML='<option value="">Select fabric...</option>'+fabrics.map(f=>'<option value="'+esc(f.code)+'">'+esc(f.code)+' \u2013 '+esc(f.name||'')+'</option>').join('');}
 async function logUsage(){
-  const code=document.getElementById('log-fabric').value,qty=parseFloat(document.getElementById('log-qty').value);
+  const code=(document.getElementById('log-fabric-custom').value.trim()||document.getElementById('log-fabric').value).trim();
+  const qty=parseFloat(document.getElementById('log-qty').value);
   if(!code||!qty||qty<=0){showToast('Select a fabric and enter a valid quantity');return;}
-  const fabric=fabrics.find(f=>f.code===code);if(!fabric)return;
-  const cur=parseFloat(fabric.qty)||0;if(qty>cur){showToast('Only '+cur+' '+fabric.unit+' in stock');return;}
-  const after=parseFloat((cur-qty).toFixed(3));
+  const fabric=fabrics.find(f=>f.code===code);
+  if(!fabric){showToast('Fabric code "'+code+'" not found in inventory');return;}
+  // Mirror XLOOKUP(-1) formula: Amount_Before = Amount_After of the most recent previous row for this fabric
+  const prevEntry=usageLog.find(u=>u.fabricCode===code);
+  const cur=prevEntry!=null?parseFloat(prevEntry.after)||0:parseFloat(fabric.qty)||0;
+  if(qty>cur){showToast('Only '+cur+' '+fabric.unit+' in stock');return;}
+  // Sheet formula: Quantity stored negative, Amount_After = Amount_Before + Quantity (G=E+F)
+  const qtyNeg=parseFloat((-qty).toFixed(3));
+  const after=parseFloat((cur+qtyNeg).toFixed(3));
   const btn=document.getElementById('log-usage-btn');btn.disabled=true;btn.textContent='Saving\u2026';
   try{
     const logRes=await apiPost({action:'logFabricUsage',data:usageToSheet({id:'',fabricCode:code,date:document.getElementById('log-date').value||new Date().toISOString().split('T')[0],project:document.getElementById('log-project').value.trim()||'--',before:cur,qty,after,unit:fabric.unit,purpose:'',notes:document.getElementById('log-notes').value.trim()})});
     if(!logRes.success){showToast('Log failed: '+logRes.message);btn.disabled=false;btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Log Usage';return;}
     await apiPost({action:'saveFabric',data:fabricToSheet({...fabric,qty:after})});
-    fabric.qty=after;usageLog.unshift({id:logRes.usageId||'',fabricCode:code,date:document.getElementById('log-date').value,project:document.getElementById('log-project').value.trim()||'--',before:cur,qty,after,unit:fabric.unit,notes:document.getElementById('log-notes').value.trim()});
-    showToast('Usage logged \u2713');document.getElementById('log-qty').value='';document.getElementById('log-project').value='';document.getElementById('log-notes').value='';renderLogTable();
+    fabric.qty=after;usageLog.unshift({id:logRes.usageId||'',fabricCode:code,date:document.getElementById('log-date').value||new Date().toISOString().split('T')[0],project:document.getElementById('log-project').value.trim()||'--',before:cur,qty:qtyNeg,after,unit:fabric.unit,notes:document.getElementById('log-notes').value.trim()});
+    showToast('Usage logged \u2713');document.getElementById('log-qty').value='';document.getElementById('log-project').value='';document.getElementById('log-notes').value='';document.getElementById('log-fabric-custom').value='';document.getElementById('log-fabric').value='';renderLogTable();
   }catch(e){showToast('Network error \u2014 try again');}
   btn.disabled=false;btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Log Usage';
+}
+async function logRestock(){
+  const code=(document.getElementById('log-fabric-custom').value.trim()||document.getElementById('log-fabric').value).trim();
+  const qty=parseFloat(document.getElementById('log-qty').value);
+  if(!code||!qty||qty<=0){showToast('Select a fabric and enter a valid quantity');return;}
+  const fabric=fabrics.find(f=>f.code===code);
+  if(!fabric){showToast('Fabric code "'+code+'" not found in inventory');return;}
+  const prevEntry=usageLog.find(u=>u.fabricCode===code);
+  const cur=prevEntry!=null?parseFloat(prevEntry.after)||0:parseFloat(fabric.qty)||0;
+  // Restock: quantity is positive, Amount_After = Amount_Before + qty
+  const qtyPos=parseFloat(qty.toFixed(3));
+  const after=parseFloat((cur+qtyPos).toFixed(3));
+  const btn=document.getElementById('log-restock-btn');btn.disabled=true;btn.textContent='Saving…';
+  try{
+    const logRes=await apiPost({action:'logFabricUsage',data:usageToSheet({id:'',fabricCode:code,date:document.getElementById('log-date').value||new Date().toISOString().split('T')[0],project:document.getElementById('log-project').value.trim()||'Restock',before:cur,qty:qtyPos,after,unit:fabric.unit,purpose:'restock',notes:document.getElementById('log-notes').value.trim()})});
+    if(!logRes.success){showToast('Restock failed: '+logRes.message);btn.disabled=false;btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7-7 7 7"/></svg>Restock';return;}
+    await apiPost({action:'saveFabric',data:fabricToSheet({...fabric,qty:after})});
+    fabric.qty=after;usageLog.unshift({id:logRes.usageId||'',fabricCode:code,date:document.getElementById('log-date').value||new Date().toISOString().split('T')[0],project:document.getElementById('log-project').value.trim()||'Restock',before:cur,qty:qtyPos,after,unit:fabric.unit,notes:document.getElementById('log-notes').value.trim()});
+    showToast('Restock logged ✓');document.getElementById('log-qty').value='';document.getElementById('log-project').value='';document.getElementById('log-notes').value='';document.getElementById('log-fabric-custom').value='';document.getElementById('log-fabric').value='';renderLogTable();
+  }catch(e){showToast('Network error — try again');}
+  btn.disabled=false;btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7-7 7 7"/></svg>Restock';
 }
 function renderLogTable(){const tbody=document.getElementById('log-tbody'),empty=document.getElementById('log-empty');if(!usageLog.length){tbody.innerHTML='';empty.style.display='block';return;}empty.style.display='none';tbody.innerHTML=usageLog.map(u=>'<tr><td style="font-size:12px;font-family:monospace">'+esc(u.id)+'</td><td><span class="fcode">'+esc(u.fabricCode)+'</span></td><td>'+esc(u.date||'')+'</td><td>'+esc(u.project||'--')+'</td><td>'+u.before+'</td><td>'+u.qty+'</td><td>'+u.after+'</td><td>'+esc(u.unit||'m')+'</td><td style="color:var(--text-muted)">'+esc(u.notes||'')+'</td></tr>').join('');}
 
@@ -621,6 +652,8 @@ function scanLookup(val){
 function openCamera(){showToast('Camera requires HTTPS + getUserMedia');}
 async function reloadInventory(){await loadData();renderStats();renderTable();showToast('Refreshed \u2713');}
 
+function syncLogFabricInput(val){document.getElementById('log-fabric-custom').value=val?'':'';}
+function syncLogFabricSelect(val){const sel=document.getElementById('log-fabric');const match=fabrics.find(f=>f.code.toLowerCase()===val.toLowerCase());sel.value=match?match.code:'';}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function setTodayDate(id){document.getElementById(id).value=new Date().toISOString().split('T')[0];}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2800);}
@@ -636,6 +669,6 @@ document.getElementById('log-modal').addEventListener('click',function(e){if(e.t
   navigate('inventory');
 })();
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.0.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.0.1</div>
 </body>
 </html>
