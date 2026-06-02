@@ -77,9 +77,11 @@
   }
 
   function showApp(user) {
-    document.getElementById('auth-gate').style.display = 'none';
-    document.getElementById('auth-checking').style.display = 'none';
-    document.getElementById('auth-denied').style.display = 'none';
+    // Fully remove auth screens so they can never block interaction
+    ['auth-gate','auth-checking','auth-denied'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.remove();
+    });
     document.getElementById('app-root').style.display = 'block';
     // Populate user info in nav
     const avatar = document.getElementById('nav-user-avatar');
@@ -312,7 +314,8 @@ tbody td{padding:11px 14px;vertical-align:middle}
 @media(max-width:700px){.detail-body,.scan-result-body{grid-template-columns:1fr}.detail-left{border-right:none;border-bottom:1px solid var(--border)}.stats-row{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}.form-row.thirds{grid-template-columns:1fr 1fr}.toolbar{flex-wrap:wrap}}
 
 /* ── Auth Gate Screens ───────────────────────────────────────────────────── */
-.auth-screen{position:fixed;inset:0;background:var(--bg);z-index:1000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:0}
+.auth-screen{position:fixed;inset:0;background:var(--bg);z-index:1000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:0;pointer-events:none}
+.auth-screen[style*="flex"]{pointer-events:auto}
 .auth-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:48px 44px;width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center;gap:0;box-shadow:0 8px 40px rgba(0,0,0,.07)}
 .auth-logo{font-family:'Jost',sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:.14em;color:var(--text);margin-bottom:36px;display:flex;align-items:center;gap:0}
 .auth-logo-word{font-weight:700}
@@ -860,7 +863,7 @@ document.getElementById('log-modal').addEventListener('click',function(e){if(e.t
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.0.6</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.0.7</div>
 </div><!-- /#app-root -->
 </body>
 </html>
