@@ -50,7 +50,8 @@
 
   async function checkAllowlist(email) {
     try {
-      const API_URL = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
+      const API_URL = document.querySelector('script[data-api]')?.dataset.api
+        || window.__APP_API_URL;
       const res = await fetch(API_URL + '?action=checkAccess&email=' + encodeURIComponent(email));
       const data = await res.json();
       return data.allowed === true;
@@ -87,13 +88,8 @@
     const name   = document.getElementById('nav-user-name');
     if (avatar) avatar.src = user.photoURL || '';
     if (name)   name.textContent = user.displayName || user.email;
-    // Boot the app — retry until __appBoot is defined (race condition guard)
-    function tryBoot(attempts) {
-      if (window.__appBoot) { window.__appBoot(); return; }
-      if (attempts > 20) { console.error('__appBoot never defined'); return; }
-      setTimeout(() => tryBoot(attempts + 1), 100);
-    }
-    tryBoot(0);
+    // Boot the app
+    if (window.__appBoot) window.__appBoot();
   }
 
   function showAccessDenied(user) {
@@ -501,16 +497,20 @@ tbody td{padding:11px 14px;vertical-align:middle}
         <div class="photo-preview" id="photo-preview-face"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg></div>
         <div style="display:flex;gap:6px;margin-top:8px">
           <button class="btn-secondary" style="flex:1;font-size:12px" onclick="document.getElementById('photo-file-face').click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Choose</button>
+          <button class="btn-secondary" id="upload-face-btn" style="flex:1;font-size:12px;display:none" onclick="uploadPhotoToGitHub('face')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Upload</button>
         </div>
         <input type="file" id="photo-file-face" accept="image/*" style="display:none" onchange="handlePhoto(event,'face')">
+        <div id="photo-url-face" style="font-size:11px;color:var(--text-muted);margin-top:4px;word-break:break-all"></div>
       </div>
       <div class="form-group">
         <label class="form-label">Photo — Back</label>
         <div class="photo-preview" id="photo-preview-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg></div>
         <div style="display:flex;gap:6px;margin-top:8px">
           <button class="btn-secondary" style="flex:1;font-size:12px" onclick="document.getElementById('photo-file-back').click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Choose</button>
+          <button class="btn-secondary" id="upload-back-btn" style="flex:1;font-size:12px;display:none" onclick="uploadPhotoToGitHub('back')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Upload</button>
         </div>
         <input type="file" id="photo-file-back" accept="image/*" style="display:none" onchange="handlePhoto(event,'back')">
+        <div id="photo-url-back" style="font-size:11px;color:var(--text-muted);margin-top:4px;word-break:break-all"></div>
       </div>
     </div>
 
@@ -616,7 +616,7 @@ tbody td{padding:11px 14px;vertical-align:middle}
 <div class="toast" id="toast"></div>
 
 <script>
-const VERSION  = '2.1.3';
+const VERSION  = '2.0.0';
 const BASE_URL = 'https://tailortech.toom.design/fabrics.html';
 const API_URL  = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
 const LOW_STOCK = 2;
@@ -645,18 +645,17 @@ async function loadData(){
 function setLoading(on){document.getElementById('loading-indicator').style.display=on?'flex':'none';}
 
 function getCodeFromPath() {
-  return new URLSearchParams(location.search).get('code') || null;
-}
+  return location.hash ? decodeURIComponent(location.hash.slice(1)) : null;
 }
 function fabricUrl(code) {
-  return BASE_URL + '?code=' + encodeURIComponent(code);
+  return BASE_URL + '#' + encodeURIComponent(code);
 }
 function pushUrl(code) {
   history.pushState({ code: code || null }, '', code ? fabricUrl(code) : BASE_URL);
 }
   
   window.addEventListener('hashchange', function() {
-  const code = new URLSearchParams(location.search).get('code') || null;
+  const code = location.hash ? decodeURIComponent(location.hash.slice(1)) : null;
   if (code) {
     const f = fabrics.find(x => x.code === code);
     if (f) { currentFabric = f; showPages('detail'); showNav('det'); document.getElementById('nav-det-title').textContent = f.name||f.type||''; document.getElementById('nav-det-code').textContent = f.code; renderDetail(); }
@@ -794,9 +793,17 @@ function renderTable(){
 }
 function editFromTable(code){const f=fabrics.find(x=>x.code===code);if(!f)return;currentFabric=f;navigate('add-fabric','__edit__');}
 
+// ── GitHub image upload config ────────────────────────────────────────────────
+const GH_USER  = 'toom-design';
+const GH_REPO  = 'fabrics';
+const GH_BRANCH= 'main';
+const GH_PAT   = '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';
+const GH_FOLDER= 'photos';
 
-let editingPhotoFace = null;
+let editingPhotoFace = null; // base64 data URL
 let editingPhotoBack = null;
+let editingPhotoFaceUrl = ''; // final GitHub raw URL
+let editingPhotoBackUrl = '';
 
 function handlePhoto(e, side) {
   const file = e.target.files[0];
@@ -806,13 +813,69 @@ function handlePhoto(e, side) {
     const data = ev.target.result;
     if (side === 'face') {
       editingPhotoFace = data;
+      editingPhotoFaceUrl = ''; // reset URL until uploaded
       document.getElementById('photo-preview-face').innerHTML = '<img src="' + data + '" alt="">';
+      document.getElementById('upload-face-btn').style.display = '';
+      document.getElementById('photo-url-face').textContent = 'Not uploaded yet — click Upload';
     } else {
       editingPhotoBack = data;
+      editingPhotoBackUrl = '';
       document.getElementById('photo-preview-back').innerHTML = '<img src="' + data + '" alt="">';
+      document.getElementById('upload-back-btn').style.display = '';
+      document.getElementById('photo-url-back').textContent = 'Not uploaded yet — click Upload';
     }
   };
   r.readAsDataURL(file);
+}
+
+async function uploadPhotoToGitHub(side) {
+  const code = document.getElementById('f-code').value.trim();
+  if (!code) { showToast('Enter a Fabric Code first'); return; }
+  const data = side === 'face' ? editingPhotoFace : editingPhotoBack;
+  if (!data) { showToast('No photo selected'); return; }
+
+  const btn = document.getElementById('upload-' + side + '-btn');
+  btn.disabled = true; btn.textContent = 'Uploading…';
+
+  try {
+    // Strip base64 header
+    const base64 = data.split(',')[1];
+    const ext = data.split(';')[0].split('/')[1] || 'jpg';
+    const filename = GH_FOLDER + '/' + code + (side === 'back' ? '_back' : '_face') + '.' + ext;
+    const apiUrl = 'https://api.github.com/repos/' + GH_USER + '/' + GH_REPO + '/contents/' + filename;
+
+    // Check if file exists (need SHA to overwrite)
+    let sha = '';
+    try {
+      const check = await fetch(apiUrl, { headers: { Authorization: 'token ' + GH_PAT, Accept: 'application/vnd.github+json' }});
+      if (check.ok) { const j = await check.json(); sha = j.sha || ''; }
+    } catch(e) {}
+
+    const body = { message: 'Upload ' + filename, content: base64, branch: GH_BRANCH };
+    if (sha) body.sha = sha;
+
+    const res = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: { Authorization: 'token ' + GH_PAT, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!res.ok) { const err = await res.json(); throw new Error(err.message); }
+    const rawUrl = 'https://raw.githubusercontent.com/' + GH_USER + '/' + GH_REPO + '/' + GH_BRANCH + '/' + filename;
+
+    if (side === 'face') {
+      editingPhotoFaceUrl = rawUrl;
+      document.getElementById('photo-url-face').innerHTML = '✓ <a href="' + rawUrl + '" target="_blank" style="color:var(--accent)">View on GitHub</a>';
+    } else {
+      editingPhotoBackUrl = rawUrl;
+      document.getElementById('photo-url-back').innerHTML = '✓ <a href="' + rawUrl + '" target="_blank" style="color:var(--accent)">View on GitHub</a>';
+    }
+    showToast('Photo uploaded ✓');
+  } catch(err) {
+    showToast('Upload failed: ' + err.message);
+    console.error(err);
+  }
+  btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Upload';
 }
 
 function clearForm() {
@@ -824,7 +887,12 @@ function clearForm() {
   const ph = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="32" height="32" style="color:var(--text-light)"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg>';
   document.getElementById('photo-preview-face').innerHTML = ph;
   document.getElementById('photo-preview-back').innerHTML = ph;
+  document.getElementById('photo-url-face').textContent = '';
+  document.getElementById('photo-url-back').textContent = '';
+  document.getElementById('upload-face-btn').style.display = 'none';
+  document.getElementById('upload-back-btn').style.display = 'none';
   editingPhotoFace = null; editingPhotoBack = null;
+  editingPhotoFaceUrl = ''; editingPhotoBackUrl = '';
 }
 
 function loadEditForm(f) {
@@ -846,8 +914,18 @@ function loadEditForm(f) {
   document.getElementById('f-care').value = f.care || '';
   document.getElementById('f-garments').value = f.garments || '';
   document.getElementById('f-notes').value = f.notes || '';
-  if (f.photo) { document.getElementById('photo-preview-face').innerHTML = '<img src="' + f.photo + '" alt="">'; }
-  if (f.photoBack) { document.getElementById('photo-preview-back').innerHTML = '<img src="' + f.photoBack + '" alt="">'; }
+  // Face photo
+  if (f.photo) {
+    editingPhotoFaceUrl = f.photo;
+    document.getElementById('photo-preview-face').innerHTML = '<img src="' + f.photo + '" alt="">';
+    document.getElementById('photo-url-face').innerHTML = '<a href="' + f.photo + '" target="_blank" style="color:var(--accent)">Current photo</a>';
+  }
+  // Back photo
+  if (f.photoBack) {
+    editingPhotoBackUrl = f.photoBack;
+    document.getElementById('photo-preview-back').innerHTML = '<img src="' + f.photoBack + '" alt="">';
+    document.getElementById('photo-url-back').innerHTML = '<a href="' + f.photoBack + '" target="_blank" style="color:var(--accent)">Current photo</a>';
+  }
 }
 
 function autoFillQR() { document.getElementById('f-qr').value = document.getElementById('f-code').value; }
@@ -862,6 +940,9 @@ async function saveFabric() {
   if (!editId && fabrics.find(f => f.code === code)) { showToast('Fabric Code already exists'); return; }
   const existing = fabrics.find(x => x.code === (editId || code)) || {};
 
+  // Warn if photos chosen but not uploaded
+  if ((editingPhotoFace && !editingPhotoFaceUrl) || (editingPhotoBack && !editingPhotoBackUrl)) {
+    showToast('⚠ Upload photos to GitHub before saving'); return;
   }
 
   const f = {
@@ -878,8 +959,8 @@ async function saveFabric() {
     care:          document.getElementById('f-care').value.trim(),
     garments:      document.getElementById('f-garments').value.trim(),
     notes:         document.getElementById('f-notes').value.trim(),
-    photo:         editingPhotoFace || existing.photo || '',
-    photoBack:     editingPhotoBack || existing.photoBack || '',
+    photo:         editingPhotoFaceUrl || existing.photo || '',
+    photoBack:     editingPhotoBackUrl || existing.photoBack || '',
     qr:            document.getElementById('f-qr').value || code,
     urlQR:         existing.urlQR || '',
     qty:           existing.qty || 0,
@@ -986,7 +1067,7 @@ window.__appBoot = async function() {
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.1.3</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.0.0</div>
 </div><!-- /#app-root -->
 </body>
 </html>
