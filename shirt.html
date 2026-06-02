@@ -709,6 +709,14 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
         </div>
       </div>
 
+      <!-- CONTINUE -->
+      <div class="section" style="border-bottom:none;">
+        <button onclick="goToMeasurements()" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;width:100%;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
+          Continue to Measurements
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
+        </button>
+      </div>
+
     </div><!-- /panel-materials -->
 
     <!-- MEASUREMENTS PANEL -->
@@ -1006,6 +1014,12 @@ function setTechView(v) {
 function goToMaterials() {
   const tab = document.querySelector('.tab:nth-child(2)');
   switchTab(tab, 'panel-materials');
+  document.querySelector('.config-panel').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goToMeasurements() {
+  const tab = document.querySelector('.tab:nth-child(3)');
+  switchTab(tab, 'panel-measurements');
   document.querySelector('.config-panel').scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -1681,7 +1695,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.0.8</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.0.9</div>
 
 <!-- Firebase -->
 <script type="module">
