@@ -1173,11 +1173,19 @@ async function loadFabrics() {
   const res  = await fetch(url);
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const json = await res.json();
+  console.log('[Fabrics] Raw response:', json);
   const rows = Array.isArray(json) ? json : (json.data || json.rows || []);
+  console.log('[Fabrics] Total rows:', rows.length);
+  if (rows.length > 0) console.log('[Fabrics] First row keys:', Object.keys(rows[0]));
+  rows.forEach((r, i) => {
+    const g = r.Garments || r.garments || r.GARMENTS || '';
+    if (g) console.log(`[Fabrics] Row ${i} Garments="${g}"`);
+  });
   _fabricsCache = rows.filter(r => {
-    const g = (r.Garments || r.garments || '').toLowerCase();
+    const g = (r.Garments || r.garments || r.GARMENTS || '').toLowerCase();
     return g.includes('shirt');
   });
+  console.log('[Fabrics] Filtered shirt fabrics:', _fabricsCache.length);
   return _fabricsCache;
 }
 
@@ -1682,7 +1690,7 @@ function showFeedback(msg, color) {
 
 })();
 </script>
-  
+
 <!-- Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -1810,9 +1818,9 @@ function ddCopy(type) {
   if (navigator.clipboard) navigator.clipboard.writeText(val).then(function() { toast(type.toUpperCase() + ' copied'); });
 }
 </script>
-  
-<!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.0.4</div>
+
+  <!-- Version badge -->
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.0.5</div>
 
 </body>
 </html>
