@@ -616,7 +616,7 @@ tbody td{padding:11px 14px;vertical-align:middle}
 <div class="toast" id="toast"></div>
 
 <script>
-const VERSION  = '2.0.0';
+const VERSION  = '2.1.0';
 const BASE_URL = 'https://tailortech.toom.design/fabrics.html';
 const API_URL  = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
 const LOW_STOCK = 2;
@@ -1046,7 +1046,125 @@ function scanLookup(val){
   const today=new Date().toISOString().split('T')[0];
   res.innerHTML='<div class="scan-result-card"><div class="scan-result-body"><div class="scan-result-left"><div class="scan-media-row"><div class="scan-photo-box">'+photo+'</div><div class="scan-qr-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg><span>[QR Code]</span></div></div><div><div class="scan-fabric-type">'+esc(f.type||'--')+'</div><div class="scan-fabric-code-sub">'+esc(f.code)+'</div></div><table class="scan-details-table">'+drows+'</table></div><div class="scan-result-right"><h3>'+esc(f.code)+'</h3><table class="scan-history-table"><thead><tr><th rowspan="2">date</th><th rowspan="2">project</th><th colspan="3" class="qty-header" style="text-align:center;padding-bottom:2px">quantity</th></tr><tr><th class="right">before</th><th class="right">use</th><th class="right">after</th></tr></thead><tbody>'+histRows+'</tbody></table></div></div><div class="scan-result-footer"><button class="btn-secondary" onclick="clearScanInput()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>New scan</button><span class="scan-date">'+today+'</span><div class="scan-actions"><button class="btn-secondary" onclick="editFromTable(\''+esc(f.code)+'\')">Edit</button><button class="btn-primary" onclick="navigate(\'detail\',\''+esc(f.code)+'\')">View Detail</button></div></div></div>';
 }
-function openCamera(){showToast('Camera requires HTTPS + getUserMedia');}
+/* ─── CAMERA / QR SCANNER ────────────────────────────────────────────── */
+let _camStream = null, _camRaf = null, _camActive = false;
+
+function openCamera() {
+  if (_camActive) { closeCamera(); return; }
+  // Build overlay if it doesn't exist yet
+  if (!document.getElementById('cam-overlay')) {
+    const ov = document.createElement('div');
+    ov.id = 'cam-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px';
+    ov.innerHTML = `
+      <div style="position:relative;width:min(90vw,420px)">
+        <video id="cam-video" autoplay playsinline muted style="width:100%;border-radius:12px;display:block;background:#111"></video>
+        <canvas id="cam-canvas" style="display:none"></canvas>
+        <!-- corner finder frame -->
+        <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <rect x="8" y="8" width="84" height="84" fill="none" stroke="rgba(255,255,255,.15)" stroke-width=".8"/>
+          <polyline points="8,20 8,8 20,8" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+          <polyline points="80,8 92,8 92,20" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+          <polyline points="8,80 8,92 20,92" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+          <polyline points="80,92 92,92 92,80" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+        <div id="cam-scan-line" style="position:absolute;left:8%;right:8%;height:2px;background:linear-gradient(90deg,transparent,#4caf8a,transparent);border-radius:2px;animation:camScan 1.8s ease-in-out infinite;top:15%"></div>
+      </div>
+      <p id="cam-status" style="color:rgba(255,255,255,.75);font-size:13px;font-family:'Jost',sans-serif;letter-spacing:.03em;min-height:20px">Starting camera…</p>
+      <button onclick="closeCamera()" style="padding:9px 28px;border-radius:8px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;font-family:'Jost',sans-serif;font-size:13px;cursor:pointer;transition:background .15s" onmouseover="this.style.background='rgba(255,255,255,.18)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">Close Camera</button>`;
+    document.body.appendChild(ov);
+    // inject scan-line keyframes once
+    if (!document.getElementById('cam-style')) {
+      const st = document.createElement('style');
+      st.id = 'cam-style';
+      st.textContent = '@keyframes camScan{0%,100%{top:15%;opacity:.9}50%{top:78%;opacity:.6}}';
+      document.head.appendChild(st);
+    }
+  }
+  document.getElementById('cam-overlay').style.display = 'flex';
+  _camActive = true;
+  _startCamera();
+}
+
+function closeCamera() {
+  _camActive = false;
+  if (_camRaf) { cancelAnimationFrame(_camRaf); _camRaf = null; }
+  if (_camStream) { _camStream.getTracks().forEach(t => t.stop()); _camStream = null; }
+  const ov = document.getElementById('cam-overlay');
+  if (ov) ov.style.display = 'none';
+}
+
+async function _startCamera() {
+  const statusEl = document.getElementById('cam-status');
+  const video = document.getElementById('cam-video');
+  try {
+    _camStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+    });
+    video.srcObject = _camStream;
+    await video.play();
+    statusEl.textContent = 'Point at a fabric QR code…';
+    _loadJsQR(_scanLoop);
+  } catch (err) {
+    statusEl.textContent = 'Camera error: ' + (err.message || err);
+  }
+}
+
+function _loadJsQR(cb) {
+  if (window.jsQR) { cb(); return; }
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js';
+  s.onload = cb;
+  s.onerror = () => { document.getElementById('cam-status').textContent = 'Failed to load QR scanner library.'; };
+  document.head.appendChild(s);
+}
+
+function _scanLoop() {
+  if (!_camActive) return;
+  const video = document.getElementById('cam-video');
+  const canvas = document.getElementById('cam-canvas');
+  if (!video || !canvas || video.readyState < 2) { _camRaf = requestAnimationFrame(_scanLoop); return; }
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const qr = window.jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+  if (qr && qr.data) {
+    _onQRDetected(qr.data);
+    return; // stop loop — we found one
+  }
+  _camRaf = requestAnimationFrame(_scanLoop);
+}
+
+function _onQRDetected(raw) {
+  closeCamera();
+  // The QR value is expected to be a plain fabric code (e.g. "SUI-GYps-0015")
+  // Trim whitespace and look it up directly
+  const code = raw.trim();
+  const statusEl = document.getElementById('cam-status');
+
+  // Try to find by code or qr field
+  const f = fabrics.find(x =>
+    x.code.toLowerCase() === code.toLowerCase() ||
+    (x.qr || '').toLowerCase() === code.toLowerCase()
+  );
+
+  if (f) {
+    showToast('Fabric found: ' + f.code);
+    navigate('detail', f.code);
+  } else {
+    // Not found — show it in the scan input so user can see what was read
+    showPages('scan'); showNav('sub');
+    document.getElementById('nav-sub-back').onclick = () => navigate('inventory');
+    const inp = document.getElementById('scan-code-input');
+    inp.value = code;
+    toggleScanClear(code);
+    scanLookup(code);
+    showToast('QR read: "' + code + '" — not found in inventory');
+  }
+}
+/* ───────────────────────────────────────────────────────────────────────── */
 async function reloadInventory(){await loadData();renderStats();renderTable();showToast('Refreshed \u2713');}
 
 function syncLogFabricInput(val){document.getElementById('log-fabric-custom').value=val?'':'';}
@@ -1067,7 +1185,7 @@ window.__appBoot = async function() {
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.0.9</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.2.0</div>
 </div><!-- /#app-root -->
 </body>
 </html>
