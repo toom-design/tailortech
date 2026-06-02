@@ -6,6 +6,100 @@
 <title>TailorTech — Fabrics</title>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
+  // ─── 🔧 REPLACE WITH YOUR FIREBASE CONFIG ───────────────────────────────────
+  const firebaseConfig = {
+    apiKey:            "AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY",
+    authDomain:        "tailortech-accounts.firebaseapp.com",
+    projectId:         "tailortech-accounts",
+    storageBucket:     "tailortech-accounts.firebasestorage.app",
+    messagingSenderId: "137614433833",
+    appId:             "1:137614433833:web:c78ea40b0d04ba89f3c638"
+  };
+  // ────────────────────────────────────────────────────────────────────────────
+
+  const app      = initializeApp(firebaseConfig);
+  const auth     = getAuth(app);
+  const provider = new GoogleAuthProvider();
+
+  // Expose to global scope so non-module scripts can call them
+  window._firebaseAuth     = auth;
+  window._firebaseSignIn   = () => signInWithPopup(auth, provider);
+  window._firebaseSignOut  = () => signOut(auth);
+  window._firebaseReady    = true;
+
+  // Auth state listener — drives the whole gate logic
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      showAuthScreen();
+      return;
+    }
+    // User is signed in — check allowlist
+    showAuthChecking(user);
+    const allowed = await checkAllowlist(user.email);
+    if (allowed) {
+      showApp(user);
+    } else {
+      showAccessDenied(user);
+    }
+  });
+
+  async function checkAllowlist(email) {
+    try {
+      const API_URL = document.querySelector('script[data-api]')?.dataset.api
+        || window.__APP_API_URL;
+      const res = await fetch(API_URL + '?action=checkAccess&email=' + encodeURIComponent(email));
+      const data = await res.json();
+      return data.allowed === true;
+    } catch(e) {
+      console.error('Allowlist check failed', e);
+      return false;
+    }
+  }
+
+  function showAuthScreen() {
+    document.getElementById('auth-gate').style.display = 'flex';
+    document.getElementById('auth-checking').style.display = 'none';
+    document.getElementById('auth-denied').style.display = 'none';
+    document.getElementById('app-root').style.display = 'none';
+  }
+
+  function showAuthChecking(user) {
+    document.getElementById('auth-gate').style.display = 'none';
+    document.getElementById('auth-checking').style.display = 'flex';
+    document.getElementById('auth-checking-email').textContent = user.email;
+    document.getElementById('auth-denied').style.display = 'none';
+    document.getElementById('app-root').style.display = 'none';
+  }
+
+  function showApp(user) {
+    document.getElementById('auth-gate').style.display = 'none';
+    document.getElementById('auth-checking').style.display = 'none';
+    document.getElementById('auth-denied').style.display = 'none';
+    document.getElementById('app-root').style.display = 'block';
+    // Populate user info in nav
+    const avatar = document.getElementById('nav-user-avatar');
+    const name   = document.getElementById('nav-user-name');
+    if (avatar) avatar.src = user.photoURL || '';
+    if (name)   name.textContent = user.displayName || user.email;
+    // Boot the app
+    if (window.__appBoot) window.__appBoot();
+  }
+
+  function showAccessDenied(user) {
+    document.getElementById('auth-gate').style.display = 'none';
+    document.getElementById('auth-checking').style.display = 'none';
+    document.getElementById('auth-denied').style.display = 'flex';
+    document.getElementById('auth-denied-email').textContent = user.email;
+    document.getElementById('app-root').style.display = 'none';
+  }
+
+  window._showAuthScreen = showAuthScreen;
+</script>
 <style>
 :root{--bg:#f0ede8;--surface:#fff;--border:#e8e4de;--text:#1a1916;--text-muted:#8a8780;--text-light:#b8b5b0;--accent:#c1440e;--accent-hover:#a33a0c;--green:#2d6a4f;--sh:#e8f5ee;--sh-t:#2d6a4f;--sl:#fff3e0;--sl-t:#b45309;--sc:#fde8e8;--sc-t:#c1440e;--blue:#1e4d8c;--purple:#5c3d8f;--radius:10px;--radius-sm:6px}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -216,9 +310,77 @@ tbody td{padding:11px 14px;vertical-align:middle}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media(max-width:700px){.detail-body,.scan-result-body{grid-template-columns:1fr}.detail-left{border-right:none;border-bottom:1px solid var(--border)}.stats-row{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}.form-row.thirds{grid-template-columns:1fr 1fr}.toolbar{flex-wrap:wrap}}
+
+/* ── Auth Gate Screens ───────────────────────────────────────────────────── */
+.auth-screen{position:fixed;inset:0;background:var(--bg);z-index:1000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:0}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:48px 44px;width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center;gap:0;box-shadow:0 8px 40px rgba(0,0,0,.07)}
+.auth-logo{font-family:'Jost',sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:.14em;color:var(--text);margin-bottom:36px;display:flex;align-items:center;gap:0}
+.auth-logo-word{font-weight:700}
+.auth-logo-sub{font-weight:400;color:var(--text-muted);padding-left:6px;border-left:1px solid var(--border);margin-left:6px}
+.auth-title{font-size:22px;font-weight:600;letter-spacing:-.3px;text-align:center;margin-bottom:8px}
+.auth-subtitle{font-size:14px;color:var(--text-muted);text-align:center;margin-bottom:32px;line-height:1.5}
+.auth-google-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px 20px;background:#fff;border:1.5px solid var(--border);border-radius:8px;font-family:'Jost',sans-serif;font-size:14px;font-weight:500;color:var(--text);cursor:pointer;transition:all .15s;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.auth-google-btn:hover{border-color:#aaa;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.auth-google-btn svg{flex-shrink:0}
+.auth-note{font-size:12px;color:var(--text-light);text-align:center;margin-top:20px;line-height:1.5}
+.auth-spinner{width:32px;height:32px;border:2.5px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:20px}
+.auth-checking-email{font-size:13px;color:var(--text-muted);margin-top:8px;font-style:italic}
+.auth-denied-icon{width:48px;height:48px;background:#fde8e8;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.auth-denied-icon svg{width:22px;height:22px;color:var(--accent)}
+.auth-denied-email{font-size:13px;color:var(--text-muted);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 14px;margin:12px 0 20px;font-family:monospace}
+.auth-sign-out-btn{padding:9px 22px;border:1px solid var(--border);border-radius:7px;background:var(--surface);font-family:'Jost',sans-serif;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer;transition:all .15s}
+.auth-sign-out-btn:hover{background:var(--bg);color:var(--text)}
+/* Nav user pill */
+.nav-user{display:flex;align-items:center;gap:8px;margin-left:6px;padding:3px 10px 3px 4px;border:1px solid var(--border);border-radius:20px;background:var(--bg)}
+.nav-user-photo{width:24px;height:24px;border-radius:50%;object-fit:cover;background:var(--border)}
+.nav-user-photo-placeholder{width:24px;height:24px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:600;flex-shrink:0}
+#nav-user-name{font-size:12px;font-weight:500;color:var(--text);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav-sign-out{border:none;background:none;cursor:pointer;color:var(--text-light);padding:2px;display:flex;align-items:center;transition:color .15s;margin-left:2px}
+.nav-sign-out:hover{color:var(--accent)}
+.nav-sign-out svg{width:13px;height:13px}
 </style>
 </head>
 <body>
+
+<!-- ── AUTH: Login Screen ───────────────────────────────────────────────── -->
+<div class="auth-screen" id="auth-gate" style="display:flex">
+  <div class="auth-card">
+    <div class="auth-logo"><span class="auth-logo-word">TailorTech</span><span class="auth-logo-sub">Fabrics</span></div>
+    <div class="auth-title">Sign in to continue</div>
+    <div class="auth-subtitle">Access is restricted to approved accounts.<br>Sign in with your Google account to proceed.</div>
+    <button class="auth-google-btn" onclick="window._firebaseSignIn && window._firebaseSignIn().catch(e => console.error(e))">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Sign in with Google
+    </button>
+    <p class="auth-note">Only approved email addresses can access this app.<br>Contact your administrator if you need access.</p>
+  </div>
+</div>
+
+<!-- ── AUTH: Checking Access Screen ─────────────────────────────────────── -->
+<div class="auth-screen" id="auth-checking" style="display:none">
+  <div class="auth-card" style="gap:0;text-align:center">
+    <div class="auth-logo"><span class="auth-logo-word">TailorTech</span><span class="auth-logo-sub">Fabrics</span></div>
+    <div class="auth-spinner"></div>
+    <div class="auth-title" style="font-size:17px">Verifying access…</div>
+    <div id="auth-checking-email" class="auth-checking-email"></div>
+  </div>
+</div>
+
+<!-- ── AUTH: Access Denied Screen ───────────────────────────────────────── -->
+<div class="auth-screen" id="auth-denied" style="display:none">
+  <div class="auth-card" style="text-align:center">
+    <div class="auth-logo"><span class="auth-logo-word">TailorTech</span><span class="auth-logo-sub">Fabrics</span></div>
+    <div class="auth-denied-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div>
+    <div class="auth-title" style="font-size:18px">Access denied</div>
+    <p style="font-size:14px;color:var(--text-muted);margin-top:6px">This account is not on the approved list:</p>
+    <div id="auth-denied-email" class="auth-denied-email"></div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px">Contact your administrator to request access.</p>
+    <button class="auth-sign-out-btn" onclick="window._firebaseSignOut && window._firebaseSignOut()">Sign out &amp; try another account</button>
+  </div>
+</div>
+
+<!-- ── APP ROOT (hidden until auth passes) ───────────────────────────────── -->
+<div id="app-root" style="display:none">
 
 <nav>
   <a class="nav-logo" onclick="navigate('inventory')"><span class="nav-logo-word">TailorTech</span><span class="nav-logo-sub">Fabrics</span></a>
@@ -226,6 +388,12 @@ tbody td{padding:11px 14px;vertical-align:middle}
     <div class="nav-spacer"></div>
     <button class="nav-btn" onclick="navigate('log-usage')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>Log Usage</button>
     <button class="nav-btn" onclick="navigate('scan')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2m10 0h2a2 2 0 0 1 2 2v2M3 17v2a2 2 0 0 0 2 2h2m10 0h2a2 2 0 0 0 2-2v-2M7 12h10"/></svg>Scan Fabric</button>
+    <div class="nav-user" title="Signed in">
+      <img id="nav-user-avatar" class="nav-user-photo" src="" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="nav-user-photo-placeholder" style="display:none">U</div>
+      <span id="nav-user-name"></span>
+      <button class="nav-sign-out" title="Sign out" onclick="window._firebaseSignOut && window._firebaseSignOut()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+    </div>
   </div>
   <div id="nav-det" style="display:none;align-items:center;gap:6px;flex:1">
     <button class="nav-back" onclick="navigate('inventory')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>Inventory</button>
@@ -406,6 +574,12 @@ const VERSION  = '2.0.0';
 const BASE_URL = 'https://tailortech.toom.design/fabrics.html';
 const API_URL  = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
 const LOW_STOCK = 2;
+
+// Expose API_URL so the Firebase module can call checkAccess
+window.__APP_API_URL = API_URL;
+
+// App will only boot once auth confirms access
+window.__appBoot = async function() {
 
 let fabrics=[], usageLog=[], currentFabric=null, deleteTarget=null, editingPhoto=null;
 
@@ -678,14 +852,15 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 document.getElementById('delete-modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
 document.getElementById('log-modal').addEventListener('click',function(e){if(e.target===this)closeLogModal();});
 
-(async function(){
+// Wrapped in __appBoot — called by Firebase auth after access confirmed
   await loadData();
   const code=getCodeFromPath();
   if(code){const f=fabrics.find(x=>x.code===code);if(f){currentFabric=f;history.replaceState({code},'',(location.href));navigate('detail',code);return;}}
   history.replaceState({code:null},'',location.href);
   navigate('inventory');
-})();
+};
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.0.4</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.0.6</div>
+</div><!-- /#app-root -->
 </body>
 </html>
