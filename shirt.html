@@ -781,10 +781,10 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 
             </form>
 
-            <!-- Save Measurements -->
+            <!-- Save / Continue button — label switches based on whether fields have changed -->
             <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;padding-bottom:8px;">
-              <button type="submit" form="meas-form" onclick="measHandleSubmitAndContinue(event)" id="meas-save-btn" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:inline-flex;align-items:center;gap:10px;">
-                <span id="meas-save-lbl">Save Measurements &amp; Continue</span>
+              <button type="button" onclick="measPrimaryAction(event)" id="meas-save-btn" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:inline-flex;align-items:center;gap:10px;">
+                <span id="meas-save-lbl">Continue to Summary</span>
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
                 <div id="meas-save-spin" style="display:none;width:12px;height:12px;border:1.5px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.65s linear infinite;"></div>
               </button>
@@ -1217,26 +1217,81 @@ function buildSummary() {
   var rows = document.getElementById('summary-rows');
   if (!rows) return;
   var cfg = collectConfig();
-  var fields = [
-    ['Garment',      'Shirt'],
-    ['Fit',          cfg['FIT']],
-    ['Placket',      cfg['CLOSURE']],
-    ['Collar',       cfg['NECK']],
-    ['Cuff',         cfg['SLEEVE CUFF']],
-    ['Back',         cfg['BACK']],
-    ['Front Pocket', cfg['FRONT POCKETS']],
-    ['Hem',          cfg['HEM/FINISH']],
-    ['Main Fabric',  cfg['MAIN FABRIC'] + (cfg['CODE'] ? ' (' + cfg['CODE'] + ')' : '')],
-    ['Contrast',     cfg['CONTRAST FABRIC']],
-    ['Buttons',      cfg['STRUCTURE']],
-    ['Stitching',    cfg['LINING TYPE']],
+
+  // Helper: read a measurement input value
+  function mval(id) {
+    var el = document.getElementById('mf-' + id);
+    return (el && el.value && parseFloat(el.value) > 0) ? el.value + ' cm' : '';
+  }
+
+  var sections = [
+    {
+      label: 'Design',
+      rows: [
+        ['Garment',              'Shirt'],
+        ['Fit',                  cfg['FIT']],
+        ['Placket',              cfg['CLOSURE']],
+        ['Collar',               cfg['NECK']],
+        ['Collar Stays',         cfg['SLEEVE BUTTONS']],
+        ['Collar Interlining',   cfg['CONSTRUCTION']],
+        ['Cuff',                 cfg['SLEEVE CUFF']],
+        ['Back',                 cfg['BACK']],
+        ['Front Pocket',         cfg['FRONT POCKETS']],
+        ['Hem',                  cfg['HEM/FINISH']],
+      ]
+    },
+    {
+      label: 'Materials & Construction',
+      rows: [
+        ['Main Fabric',    cfg['MAIN FABRIC']],
+        ['Fabric Code',    cfg['CODE']],
+        ['Color',          cfg['color']],
+        ['Composition',    cfg['composition']],
+        ['Contrast Fabric',cfg['CONTRAST FABRIC']],
+        ['Buttons',        selText('.btn-material.selected .bm-name')],
+        ['Button Size',    selText('.btn-size.selected')],
+        ['Button Stitching', cfg['LINING TYPE']],
+      ]
+    },
+    {
+      label: 'Measurements',
+      rows: [
+        ['Height',                    mval('height')],
+        ['Bust Girth',                mval('bustGirth')],
+        ['Waist Girth',               mval('waistGirth')],
+        ['Hip Girth',                 mval('hipGirth')],
+        ['Neck Base Girth',           mval('neckBaseGirth')],
+        ['Upper Bicep Girth',         mval('upperBicepGirth')],
+        ['Wrist Girth',               mval('wristGirth')],
+        ['Shoulder Length',           mval('shoulderLength')],
+        ['Outer Arm Length',          mval('outerArmLength')],
+        ['Upper Arm Length',          mval('upperArmLength')],
+        ['Back Neck to Waist',        mval('backNeckToWaist')],
+        ['Across Back Shoulder',      mval('acrossBackShoulderWidth')],
+        ['Across Back Width',         mval('acrossBackWidth')],
+        ['Shirt Length',              mval('shirtLength')],
+      ]
+    }
   ];
-  rows.innerHTML = fields.filter(function(f){ return f[1] && f[1].trim(); }).map(function(f) {
-    return '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--border);">'
-      + '<span style="font-family:\'Jost\',sans-serif;font-size:11px;color:var(--ink-light);letter-spacing:0.04em;">' + f[0] + '</span>'
-      + '<span style="font-family:\'Jost\',sans-serif;font-size:12px;font-weight:500;color:var(--ink);text-align:right;max-width:55%;letter-spacing:0.02em;">' + f[1] + '</span>'
+
+  function selText(sel) {
+    var el = document.querySelector(sel);
+    return el ? el.textContent.trim() : '';
+  }
+
+  rows.innerHTML = sections.map(function(sec) {
+    var visibleRows = sec.rows.filter(function(r){ return r[1] && r[1].toString().trim(); });
+    if (!visibleRows.length) return '';
+    return '<div style="margin-bottom:4px;">'
+      + '<div style="font-size:9px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);padding:14px 0 6px;border-bottom:1px solid var(--border);">' + sec.label + '</div>'
+      + visibleRows.map(function(r) {
+          return '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--border);">'
+            + '<span style="font-family:\'Jost\',sans-serif;font-size:11px;color:var(--ink-light);letter-spacing:0.03em;flex-shrink:0;padding-right:12px;">' + r[0] + '</span>'
+            + '<span style="font-family:\'Jost\',sans-serif;font-size:11px;font-weight:500;color:var(--ink);text-align:right;letter-spacing:0.02em;">' + r[1] + '</span>'
+            + '</div>';
+        }).join('')
       + '</div>';
-  }).join('') + '<div style="height:12px;"></div>';
+  }).join('') + '<div style="height:16px;"></div>';
 }
 
 async function handleAddToCart() {
@@ -1568,6 +1623,7 @@ function showFeedback(msg, color) {
     SHIRT_VOL.forEach(function(f){ gv.appendChild(makeField(f[0], f[1])); });
     SHIRT_LIN.forEach(function(f){ gl.appendChild(makeField(f[0], f[1])); });
     initMeasDiag();
+    _attachMeasDirtyListeners();
   }
 
   function sheetsReq(action, payload) {
@@ -1599,6 +1655,9 @@ function showFeedback(msg, color) {
       var el = document.getElementById('mf-' + key);
       if (el && el.type === 'number') { var num = parseFloat(val); if (!isNaN(num) && num > 0) el.value = num; }
     });
+    // Prefilling from saved data is not a user change — reset dirty flag
+    _measDirty = false;
+    if (typeof updateMeasBtn === 'function') updateMeasBtn();
   }
 
   var _measRecords = [];
@@ -1669,8 +1728,38 @@ function showFeedback(msg, color) {
       .catch(function(){ toast('Network error', 'err'); })
       .finally(function(){
         btn.disabled = false; lbl.style.display = ''; sp.style.display = 'none';
+        _measDirty = false;
+        updateMeasBtn();
         if (typeof goToSummary === 'function') goToSummary();
       });
+  };
+
+  // ── Dirty tracking: watch all measurement inputs ──
+  var _measDirty = false;
+
+  function _attachMeasDirtyListeners() {
+    var form = document.getElementById('meas-form');
+    if (!form) return;
+    form.addEventListener('input', function() {
+      if (!_measDirty) {
+        _measDirty = true;
+        updateMeasBtn();
+      }
+    });
+  }
+
+  window.updateMeasBtn = function() {
+    var lbl = document.getElementById('meas-save-lbl');
+    if (!lbl) return;
+    lbl.innerHTML = _measDirty ? 'Save Measurements &amp; Continue' : 'Continue to Summary';
+  };
+
+  window.measPrimaryAction = function(e) {
+    if (_measDirty) {
+      window.measHandleSubmitAndContinue(e);
+    } else {
+      if (typeof goToSummary === 'function') goToSummary();
+    }
   };
 
   window.measResetForm = function() {
@@ -1706,7 +1795,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.2</div>
 
 <!-- Firebase -->
 <script type="module">
