@@ -511,7 +511,7 @@ function renderDetail(){
   const entries=usageLog.filter(u=>u.fabricCode===f.code);
   document.getElementById('d-usage-count').textContent=entries.length+' entr'+(entries.length===1?'y':'ies');
   const tbody=document.getElementById('d-usage-tbody');
-  tbody.innerHTML=entries.length?entries.map(u=>{const init=u.project==='Initial qty'||u.project==='Initial qtty';return'<tr><td>'+esc(u.date||'\u2014')+'</td><td><span class="ptag">'+esc(u.project||'\u2014')+'</span></td><td class="r">'+u.before+'</td><td class="r '+(init?'plus':'minus')+'">'+(init?'+':'\u2212')+u.qty+'</td><td class="r">'+u.after+'</td></tr>';}).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-light)">No usage recorded yet.</td></tr>';
+  tbody.innerHTML=entries.length?entries.map(u=>{const pos=parseFloat(u.qty)>=0;return'<tr><td>'+esc(u.date||'\u2014')+'</td><td><span class="ptag">'+esc(u.project||'\u2014')+'</span></td><td class="r">'+u.before+'</td><td class="r '+(pos?'plus':'minus')+'">'+(pos?'+':'\u2212')+Math.abs(u.qty)+'</td><td class="r">'+u.after+'</td></tr>';}).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-light)">No usage recorded yet.</td></tr>';
   document.getElementById('detail-loading').style.display='none';
   document.getElementById('detail-wrap').style.display='block';
 }
@@ -651,7 +651,7 @@ async function logRestock(){
   }catch(e){showToast('Network error — try again');}
   btn.disabled=false;btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7-7 7 7"/></svg>Restock';
 }
-function renderLogTable(){const tbody=document.getElementById('log-tbody'),empty=document.getElementById('log-empty');if(!usageLog.length){tbody.innerHTML='';empty.style.display='block';return;}empty.style.display='none';tbody.innerHTML=usageLog.map(u=>'<tr><td style="font-size:12px;font-family:monospace">'+esc(u.id)+'</td><td><span class="fcode">'+esc(u.fabricCode)+'</span></td><td>'+esc(u.date||'')+'</td><td>'+esc(u.project||'--')+'</td><td>'+u.before+'</td><td>'+u.qty+'</td><td>'+u.after+'</td><td>'+esc(u.unit||'m')+'</td><td style="color:var(--text-muted)">'+esc(u.notes||'')+'</td></tr>').join('');}
+function renderLogTable(){const tbody=document.getElementById('log-tbody'),empty=document.getElementById('log-empty');if(!usageLog.length){tbody.innerHTML='';empty.style.display='block';return;}empty.style.display='none';tbody.innerHTML=usageLog.map(u=>'<tr><td style="font-size:12px;font-family:monospace">'+esc(u.id)+'</td><td><span class="fcode">'+esc(u.fabricCode)+'</span></td><td>'+esc(u.date||'')+'</td><td>'+esc(u.project||'--')+'</td><td>'+u.before+'</td><td class="r '+(parseFloat(u.qty)>=0?'plus':'minus')+'">'+(parseFloat(u.qty)>=0?'+':'\u2212')+Math.abs(u.qty)+'</td><td>'+u.after+'</td><td>'+esc(u.unit||'m')+'</td><td style="color:var(--text-muted)">'+esc(u.notes||'')+'</td></tr>').join('');}
 
 function toggleScanClear(val){document.getElementById('scan-clear-btn').classList.toggle('visible',!!val);document.getElementById('scan-code-input').classList.toggle('has-value',!!val);}
 function clearScanInput(){const i=document.getElementById('scan-code-input');i.value='';toggleScanClear('');scanLookup('');i.focus();}
@@ -660,7 +660,7 @@ function scanLookup(val){
   const f=fabrics.find(x=>x.code.toLowerCase()===v||(x.qr||'').toLowerCase()===v);
   if(!f){res.innerHTML='<div class="scan-result-card" style="padding:24px;text-align:center;color:var(--text-muted)">No fabric found for "<strong style="color:var(--text)">'+esc(val.trim())+'</strong>".</div>';return;}
   const hist=usageLog.filter(u=>u.fabricCode===f.code).slice().reverse();
-  let histRows='';for(let i=0;i<10;i++){const u=hist[i];if(u){const init=u.project==='Initial qty'||u.project==='Initial qtty';histRows+='<tr><td>'+esc(u.date||'')+'</td><td>'+esc(u.project||'--')+'</td><td class="right">'+u.before+'</td><td class="'+(init?'green':'')+' right">'+(init?'+'+u.qty:u.qty)+'</td><td class="right">'+u.after+'</td></tr>';}else{histRows+='<tr class="scan-empty-rows"><td></td><td></td><td></td><td></td><td></td></tr>';}}
+  let histRows='';for(let i=0;i<10;i++){const u=hist[i];if(u){const pos=parseFloat(u.qty)>=0;histRows+='<tr><td>'+esc(u.date||'')+'</td><td>'+esc(u.project||'--')+'</td><td class="right">'+u.before+'</td><td class="'+(pos?'green':'')+' right">'+(pos?'+':'−')+Math.abs(u.qty)+'</td><td class="right">'+u.after+'</td></tr>';}else{histRows+='<tr class="scan-empty-rows"><td></td><td></td><td></td><td></td><td></td></tr>';}}
   const photo=f.photo?'<img src="'+f.photo+'" alt="">':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg><span>Fabric photo</span>';
   const drows=[['color',f.color],['pattern',f.pattern],['composition',f.composition],['weight',f.weight?f.weight+' gsm':null],['width',f.width?f.width+' cm':null],['source',f.supplier],['notes',f.notes]].filter(([,v])=>v).map(([k,v])=>'<tr><td>'+k+'</td><td>'+esc(v)+'</td></tr>').join('');
   const today=new Date().toISOString().split('T')[0];
@@ -686,6 +686,6 @@ document.getElementById('log-modal').addEventListener('click',function(e){if(e.t
   navigate('inventory');
 })();
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.0.3</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.0.4</div>
 </body>
 </html>
