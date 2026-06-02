@@ -473,6 +473,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
       <button class="tab active" onclick="switchTab(this,'panel-design')">Design</button>
       <button class="tab" onclick="switchTab(this,'panel-materials')">Materials &amp; Construction</button>
       <button class="tab" onclick="switchTab(this,'panel-measurements')">Measurements</button>
+      <button class="tab" onclick="switchTab(this,'panel-summary')">Summary</button>
     </div>
 
     <!-- DESIGN PANEL -->
@@ -780,57 +781,44 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 
             </form>
 
-            <!-- Save Measurements — scrolls with content -->
-            <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;padding-bottom:8px;">
-              <button type="button" onclick="measResetForm()" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;padding:10px 20px;background:transparent;border:1px solid var(--border-mid);border-radius:2px;color:var(--ink-mid);cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                Reset
-              </button>
-              <button type="submit" form="meas-form" onclick="measHandleSubmit(event)" id="meas-save-btn" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;padding:10px 24px;background:var(--ink);color:var(--white);border:none;border-radius:2px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;">
-                <span id="meas-save-lbl">Save Measurements</span>
+            <!-- Save Measurements -->
+            <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;padding-bottom:8px;">
+              <button type="submit" form="meas-form" onclick="measHandleSubmitAndContinue(event)" id="meas-save-btn" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:inline-flex;align-items:center;gap:10px;">
+                <span id="meas-save-lbl">Save Measurements &amp; Continue</span>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
                 <div id="meas-save-spin" style="display:none;width:12px;height:12px;border:1.5px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.65s linear infinite;"></div>
               </button>
             </div>
 
           </div><!-- /scroll -->
 
-          <!-- ── Sticky Summary bottom bar ── -->
-          <div style="flex-shrink:0;background:var(--white);border-top:1px solid var(--border);">
 
-            <!-- Collapsed toggle -->
-            <div id="summary-toggle" onclick="toggleSummary()" style="padding:12px 28px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;">
-              <div style="display:flex;align-items:center;gap:8px;">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
-                <span style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink);">Order Summary</span>
-              </div>
-              <div style="display:flex;align-items:center;gap:10px;">
-                <span style="font-family:'Jost',sans-serif;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-light);">Review &amp; Checkout</span>
-                <svg id="summary-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition:transform 0.25s;"><polyline points="18,15 12,9 6,15"/></svg>
-              </div>
-            </div>
-
-            <!-- Expandable summary -->
-            <div id="summary-body" style="display:none;border-top:1px solid var(--border);padding:16px 28px 0;max-height:260px;overflow-y:auto;">
-              <div id="summary-rows" style="display:flex;flex-direction:column;gap:0;"></div>
-            </div>
-
-            <!-- Action buttons — always visible -->
-            <div style="padding:12px 28px 14px;display:flex;gap:8px;">
-              <button onclick="handleAddToCart()" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;flex:1;padding:11px 16px;background:transparent;border:1px solid var(--border-mid);border-radius:2px;color:var(--ink-mid);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:all 0.15s;">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-                Add to Cart
-              </button>
-              <button onclick="handleOrderNow()" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;flex:2;padding:11px 16px;background:var(--ink);color:var(--white);border:none;border-radius:2px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:opacity 0.15s;">
-                Order Now
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="5,12 19,12"/><polyline points="13,6 19,12 13,18"/></svg>
-              </button>
-            </div>
-
-          </div><!-- /sticky summary bar -->
 
         </div>
 
     </div><!-- /panel-measurements -->
+
+    <!-- SUMMARY PANEL -->
+    <div class="config-body" id="panel-summary" style="display:none;">
+
+      <div class="section" style="border-bottom:none;">
+        <div class="section-label">Order Summary</div>
+        <div id="summary-rows" style="display:flex;flex-direction:column;gap:0;margin-bottom:28px;"></div>
+
+        <!-- Action buttons -->
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+          <button onclick="handleAddToCart()" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;width:100%;padding:13px 16px;background:transparent;border:1px solid var(--border-mid);border-radius:2px;color:var(--ink-mid);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:all 0.15s;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+            Add to Cart
+          </button>
+          <button onclick="handleOrderNow()" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;width:100%;padding:14px 16px;background:var(--ink);color:var(--white);border:none;border-radius:2px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:opacity 0.15s;">
+            Order Now
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="5,12 19,12"/><polyline points="13,6 19,12 13,18"/></svg>
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /panel-summary -->
 
   </div><!-- /config-panel -->
 </div><!-- /app -->
@@ -1023,10 +1011,17 @@ function goToMeasurements() {
   document.querySelector('.config-panel').scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+function goToSummary() {
+  const tab = document.querySelector('.tab:nth-child(4)');
+  switchTab(tab, 'panel-summary');
+  buildSummary();
+  document.querySelector('.config-panel').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function switchTab(el, panelId) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
-  ['panel-design','panel-materials','panel-measurements'].forEach(id => {
+  ['panel-design','panel-materials','panel-measurements','panel-summary'].forEach(id => {
     document.getElementById(id).style.display = id === panelId ? '' : 'none';
   });
 
@@ -1217,14 +1212,6 @@ applyTransform();
 preloadAll();
 
 // ── Order Summary panel ──────────────────────────────────────
-var _summaryOpen = false;
-
-function toggleSummary() {
-  _summaryOpen = !_summaryOpen;
-  document.getElementById('summary-body').style.display = _summaryOpen ? 'block' : 'none';
-  document.getElementById('summary-chevron').style.transform = _summaryOpen ? 'rotate(180deg)' : '';
-  if (_summaryOpen) buildSummary();
-}
 
 function buildSummary() {
   var rows = document.getElementById('summary-rows');
@@ -1662,6 +1649,30 @@ function showFeedback(msg, color) {
       .finally(function(){ btn.disabled = false; lbl.style.display = ''; sp.style.display = 'none'; });
   };
 
+  window.measHandleSubmitAndContinue = function(e) {
+    if (e) e.preventDefault();
+    var form = document.getElementById('meas-form');
+    if (!form) return;
+    var btn = document.getElementById('meas-save-btn');
+    var lbl = document.getElementById('meas-save-lbl');
+    var sp  = document.getElementById('meas-save-spin');
+    btn.disabled = true; lbl.style.display = 'none'; sp.style.display = 'block';
+    var data = { garment: 'shirt', dateTime: new Date().toLocaleString() };
+    var fd = new FormData(form);
+    fd.forEach(function(v, k){ if (v) data[k] = v; });
+    var email = document.getElementById('mf-email').value.trim();
+    sheetsReq('saveMeasurement', { email: email, data: data })
+      .then(function(res) {
+        if (res && res.success) { toast('Measurements saved!'); }
+        else { toast('Could not save — check connection', 'err'); }
+      })
+      .catch(function(){ toast('Network error', 'err'); })
+      .finally(function(){
+        btn.disabled = false; lbl.style.display = ''; sp.style.display = 'none';
+        if (typeof goToSummary === 'function') goToSummary();
+      });
+  };
+
   window.measResetForm = function() {
     var form = document.getElementById('meas-form');
     if (form) form.reset();
@@ -1695,7 +1706,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.0.9</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.0</div>
 
 <!-- Firebase -->
 <script type="module">
