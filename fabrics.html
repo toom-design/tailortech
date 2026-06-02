@@ -581,9 +581,6 @@ const LOW_STOCK = 2;
 // Expose API_URL so the Firebase module can call checkAccess
 window.__APP_API_URL = API_URL;
 
-// App will only boot once auth confirms access
-window.__appBoot = async function() {
-
 let fabrics=[], usageLog=[], currentFabric=null, deleteTarget=null, editingPhoto=null;
 
 function sheetToFabric(r){return{code:r['FabricCode']||'',name:r['ProductName']||'',type:r['Type']||'',color:r['Color']||'',pattern:r['Pattern']||'',composition:r['Composition']||'',weight:r['Weight_gsm']||'',width:r['Width_cm']||'',care:r['CareSymbols']||'',supplier:r['Supplier']||'',date:r['PurchaseDate']||'',purchasePrice:r['PurchasePrice_EUR_perUnit']||'',price:r['UnitPrice']||r['PurchasePrice_EUR_perUnit']||'',unit:r['Unit']||'m',qty:parseFloat(r['Stock'])||0,notes:r['Notes']||'',qr:r['QR_Code']||'',photo:r['Photo FACE']||'',photoBack:r['photo BACK']||'',urlQR:r['URL_QR']||'',garments:r['Garments']||''};}
@@ -855,7 +852,8 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 document.getElementById('delete-modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
 document.getElementById('log-modal').addEventListener('click',function(e){if(e.target===this)closeLogModal();});
 
-// Wrapped in __appBoot — called by Firebase auth after access confirmed
+// Called by Firebase auth after access is confirmed
+window.__appBoot = async function() {
   await loadData();
   const code=getCodeFromPath();
   if(code){const f=fabrics.find(x=>x.code===code);if(f){currentFabric=f;history.replaceState({code},'',(location.href));navigate('detail',code);return;}}
@@ -863,7 +861,7 @@ document.getElementById('log-modal').addEventListener('click',function(e){if(e.t
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.0.7</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.0.8</div>
 </div><!-- /#app-root -->
 </body>
 </html>
