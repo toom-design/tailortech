@@ -483,35 +483,78 @@ tbody td{padding:11px 14px;vertical-align:middle}
   <div class="back-title"><button class="back-btn" onclick="history.back()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button><h2 id="add-form-title">Add New Fabric</h2></div>
   <div class="form-card">
     <input type="hidden" id="edit-id">
+
+    <!-- Fabric Code + QR -->
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Fabric Code <span>*</span></label><input class="form-input" id="f-code" placeholder="e.g. FAB-001" oninput="autoFillQR()"></div>
-      <div class="form-group photo-area"><label class="form-label">Photo</label><div class="photo-preview" id="photo-preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg></div><button class="btn-secondary" onclick="document.getElementById('photo-file').click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Take / Choose photo</button><input type="file" id="photo-file" accept="image/*" style="display:none" onchange="handlePhoto(event)"></div>
+      <div class="form-group"><label class="form-label">Fabric Code <span>*</span></label><input class="form-input" id="f-code" placeholder="e.g. SUI-GYps-0015" oninput="autoFillQR()"></div>
+      <div class="form-group"><label class="form-label">QR Code</label><input class="form-input readonly" id="f-qr" placeholder="Auto-filled from Fabric Code" readonly><div class="form-hint">Matches Fabric Code by default.</div></div>
     </div>
-    <div class="form-row single"><div class="form-group"><label class="form-label">QR Code</label><input class="form-input readonly" id="f-qr" placeholder="Auto-filled from Fabric Code" readonly><div class="form-hint">Matches Fabric Code by default.</div></div></div>
-    <div class="form-row single"><div class="form-group"><label class="form-label">Product Name <span>*</span></label><input class="form-input" id="f-name" placeholder="e.g. Japanese Selvedge Denim"></div></div>
+
+    <!-- Photos -->
+    <div class="form-row" style="align-items:start">
+      <div class="form-group">
+        <label class="form-label">Photo — Face</label>
+        <div class="photo-preview" id="photo-preview-face"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg></div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="btn-secondary" style="flex:1;font-size:12px" onclick="document.getElementById('photo-file-face').click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Choose</button>
+          <button class="btn-secondary" id="upload-face-btn" style="flex:1;font-size:12px;display:none" onclick="uploadPhotoToGitHub('face')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Upload</button>
+        </div>
+        <input type="file" id="photo-file-face" accept="image/*" style="display:none" onchange="handlePhoto(event,'face')">
+        <div id="photo-url-face" style="font-size:11px;color:var(--text-muted);margin-top:4px;word-break:break-all"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Photo — Back</label>
+        <div class="photo-preview" id="photo-preview-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg></div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="btn-secondary" style="flex:1;font-size:12px" onclick="document.getElementById('photo-file-back').click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Choose</button>
+          <button class="btn-secondary" id="upload-back-btn" style="flex:1;font-size:12px;display:none" onclick="uploadPhotoToGitHub('back')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Upload</button>
+        </div>
+        <input type="file" id="photo-file-back" accept="image/*" style="display:none" onchange="handlePhoto(event,'back')">
+        <div id="photo-url-back" style="font-size:11px;color:var(--text-muted);margin-top:4px;word-break:break-all"></div>
+      </div>
+    </div>
+
+    <!-- Name -->
+    <div class="form-row single"><div class="form-group"><label class="form-label">Product Name <span>*</span></label><input class="form-input" id="f-name" placeholder="e.g. 100% fine Italian WOOL"></div></div>
+
+    <!-- Type + Color -->
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Type <span>*</span></label><input class="form-input" id="f-type" placeholder="e.g. Cotton, Linen, Silk"></div>
-      <div class="form-group"><label class="form-label">Color <span>*</span></label><input class="form-input" id="f-color" placeholder="e.g. Indigo"></div>
+      <div class="form-group"><label class="form-label">Type <span>*</span></label><input class="form-input" id="f-type" placeholder="e.g. Suiting Fabric, Pocketing"></div>
+      <div class="form-group"><label class="form-label">Color <span>*</span></label><input class="form-input" id="f-color" placeholder="e.g. charcoal, grey, navy"></div>
     </div>
+
+    <!-- Pattern + Composition -->
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Pattern</label><input class="form-input" id="f-pattern" placeholder="e.g. Stripes, Floral"></div>
-      <div class="form-group"><label class="form-label">Composition</label><input class="form-input" id="f-composition" placeholder="e.g. 100% Cotton"></div>
+      <div class="form-group"><label class="form-label">Pattern</label><input class="form-input" id="f-pattern" placeholder="e.g. Plain, Herringbone, Check"></div>
+      <div class="form-group"><label class="form-label">Composition</label><input class="form-input" id="f-composition" placeholder="e.g. 100% Wool, 70% PES 30% BA"></div>
     </div>
+
+    <!-- Weight + Width + Unit -->
     <div class="form-row thirds">
-      <div class="form-group"><label class="form-label">Stock <span>*</span></label><input class="form-input" id="f-qty" type="number" step="0.1" min="0" value="0"></div>
-      <div class="form-group"><label class="form-label">Unit <span>*</span></label><select class="form-select" id="f-unit"><option value="m">Meters</option><option value="yd">Yards</option><option value="pcs">Pieces</option></select></div>
-      <div class="form-group"><label class="form-label">Weight (GSM)</label><input class="form-input" id="f-weight" type="number" min="0" value="0"></div>
-      <div class="form-group"><label class="form-label">Width (cm)</label><input class="form-input" id="f-width" type="number" min="0" value="0"></div>
+      <div class="form-group"><label class="form-label">Weight (GSM)</label><input class="form-input" id="f-weight" type="number" min="0" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">Width (cm)</label><input class="form-input" id="f-width" type="number" min="0" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">Unit</label><select class="form-select" id="f-unit"><option value="m">Meters (m)</option><option value="yd">Yards (yd)</option><option value="pcs">Pieces (pcs)</option></select></div>
+      <div class="form-group"><label class="form-label">Care Symbols</label><input class="form-input" id="f-care" placeholder="e.g. Wash 30°C"></div>
     </div>
+
+    <!-- Supplier + Purchase Date -->
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Supplier</label><input class="form-input" id="f-supplier" placeholder="e.g. Kurabo Mills"></div>
+      <div class="form-group"><label class="form-label">Supplier</label><input class="form-input" id="f-supplier" placeholder="e.g. Loro Piana, Dormeuil"></div>
       <div class="form-group"><label class="form-label">Purchase Date</label><input class="form-input" id="f-date" type="date"></div>
     </div>
+
+    <!-- Purchase Price + Selling Price -->
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Unit Price (EUR)</label><input class="form-input" id="f-price" type="number" step="0.01" min="0" value="0"></div>
-      <div class="form-group"><label class="form-label">Care Symbols</label><input class="form-input" id="f-care" placeholder="e.g. Wash 30&#176;C"></div>
+      <div class="form-group"><label class="form-label">Purchase Price (EUR/unit)</label><input class="form-input" id="f-purchase-price" type="number" step="0.01" min="0" placeholder="0.00"></div>
+      <div class="form-group"><label class="form-label">Selling Price (EUR)</label><input class="form-input" id="f-price" type="number" step="0.01" min="0" placeholder="0.00"></div>
     </div>
+
+    <!-- Garments -->
+    <div class="form-row single"><div class="form-group"><label class="form-label">Garments</label><input class="form-input" id="f-garments" placeholder="e.g. Suit, Jacket, Shirt (comma separated)"><div class="form-hint">Used for filtering in inventory. Match filter button labels exactly.</div></div></div>
+
+    <!-- Notes -->
     <div class="form-row single"><div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="f-notes" placeholder="Any additional details..."></textarea></div></div>
+
     <div class="form-actions">
       <button class="btn-cancel" onclick="history.back()">Cancel</button>
       <button class="btn-save" id="save-fabric-btn" onclick="saveFabric()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Save Fabric</button>
@@ -584,7 +627,7 @@ window.__APP_API_URL = API_URL;
 let fabrics=[], usageLog=[], currentFabric=null, deleteTarget=null, editingPhoto=null;
 
 function sheetToFabric(r){return{code:r['FabricCode']||'',name:r['ProductName']||'',type:r['Type']||'',color:r['Color']||'',pattern:r['Pattern']||'',composition:r['Composition']||'',weight:r['Weight_gsm']||'',width:r['Width_cm']||'',care:r['CareSymbols']||'',supplier:r['Supplier']||'',date:r['PurchaseDate']||'',purchasePrice:r['PurchasePrice_EUR_perUnit']||'',price:r['UnitPrice']||r['PurchasePrice_EUR_perUnit']||'',unit:r['Unit']||'m',qty:parseFloat(r['Stock'])||0,notes:r['Notes']||'',qr:r['QR_Code']||'',photo:r['Photo FACE']||'',photoBack:r['photo BACK']||'',urlQR:r['URL_QR']||'',garments:r['Garments']||''};}
-function fabricToSheet(f){return{'FabricCode':f.code||'','Photo FACE':f.photo||'','photo BACK':f.photoBack||'','QR_Code':f.qr||f.code||'','URL_QR':f.urlQR||'','URL_QR_pic':'','ProductName':f.name||'','Type':f.type||'','Color':f.color||'','Pattern':f.pattern||'','Composition':f.composition||'','Weight_gsm':f.weight||'','Width_cm':f.width||'','CareSymbols':f.care||'','Supplier':f.supplier||'','PurchaseDate':f.date||'','PurchasePrice_EUR_perUnit':f.purchasePrice||f.price||'','UnitPrice':f.price||'','Unit':f.unit||'m','Stock':f.qty||0,'Notes':f.notes||''};}
+function fabricToSheet(f){return{'FabricCode':f.code||'','Photo FACE':f.photo||'','photo BACK':f.photoBack||'','QR_Code':f.qr||f.code||'','URL_QR':f.urlQR||'','URL_QR_pic':'','ProductName':f.name||'','Type':f.type||'','Color':f.color||'','Pattern':f.pattern||'','Composition':f.composition||'','Weight_gsm':f.weight||'','Width_cm':f.width||'','CareSymbols':f.care||'','Supplier':f.supplier||'','PurchaseDate':f.date||'','PurchasePrice_EUR_perUnit':f.purchasePrice||'','PRICE':f.price||'','Unit':f.unit||'m','Garments':f.garments||'','Notes':f.notes||''};}
 function sheetToUsage(r){return{id:r['UsageID']||'',fabricCode:r['FabricCode']||'',date:r['Date']||'',project:r['Project']||'',before:parseFloat(r['Amount_Before'])||0,qty:parseFloat(r['Quantity'])||0,after:parseFloat(r['Amount_After'])||0,unit:r['Unit']||'m',purpose:r['Purpose']||'',notes:r['Notes']||''};}
 function usageToSheet(u){return{'UsageID':u.id||'','FabricCode':u.fabricCode||'','Date':u.date||'','Project':u.project||'','Amount_Before':u.before||0,'Quantity':u.qty||0,'Amount_After':u.after||0,'Unit':u.unit||'m','Purpose':u.purpose||'','Notes':u.notes||''};}
 
@@ -750,27 +793,190 @@ function renderTable(){
 }
 function editFromTable(code){const f=fabrics.find(x=>x.code===code);if(!f)return;currentFabric=f;navigate('add-fabric','__edit__');}
 
-function clearForm(){['f-code','f-name','f-type','f-color','f-pattern','f-composition','f-supplier','f-care','f-notes'].forEach(id=>document.getElementById(id).value='');['f-qty','f-weight','f-width','f-price'].forEach(id=>document.getElementById(id).value=0);document.getElementById('f-unit').value='m';document.getElementById('f-qr').value='';document.getElementById('f-date').value=new Date().toISOString().split('T')[0];document.getElementById('photo-preview').innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="32" height="32" style="color:var(--text-light)"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg>';editingPhoto=null;}
-function loadEditForm(f){document.getElementById('edit-id').value=f.code;document.getElementById('f-code').value=f.code;document.getElementById('f-qr').value=f.qr||f.code;document.getElementById('f-name').value=f.name||'';document.getElementById('f-type').value=f.type||'';document.getElementById('f-color').value=f.color||'';document.getElementById('f-pattern').value=f.pattern||'';document.getElementById('f-composition').value=f.composition||'';document.getElementById('f-qty').value=f.qty||0;document.getElementById('f-unit').value=f.unit||'m';document.getElementById('f-weight').value=f.weight||0;document.getElementById('f-width').value=f.width||0;document.getElementById('f-supplier').value=f.supplier||'';document.getElementById('f-date').value=f.date||'';document.getElementById('f-price').value=f.price||0;document.getElementById('f-care').value=f.care||'';document.getElementById('f-notes').value=f.notes||'';if(f.photo){editingPhoto=f.photo;document.getElementById('photo-preview').innerHTML='<img src="'+f.photo+'" alt="">';}}
-function autoFillQR(){document.getElementById('f-qr').value=document.getElementById('f-code').value;}
-function handlePhoto(e){const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=ev=>{editingPhoto=ev.target.result;document.getElementById('photo-preview').innerHTML='<img src="'+ev.target.result+'" alt="">';};r.readAsDataURL(file);}
+// ── GitHub image upload config ────────────────────────────────────────────────
+const GH_USER  = 'toom-design';
+const GH_REPO  = 'fabrics';
+const GH_BRANCH= 'main';
+const GH_PAT   = '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';
+const GH_FOLDER= 'photos';
 
-async function saveFabric(){
-  const code=document.getElementById('f-code').value.trim(),name=document.getElementById('f-name').value.trim(),type=document.getElementById('f-type').value.trim(),color=document.getElementById('f-color').value.trim();
-  if(!code||!name||!type||!color){showToast('Fill in required fields (*)');return;}
-  const editId=document.getElementById('edit-id').value;
-  if(!editId&&fabrics.find(f=>f.code===code)){showToast('Fabric Code already exists');return;}
-  const existing=fabrics.find(x=>x.code===(editId||code))||{};
-  const f={code,name,type,color,pattern:document.getElementById('f-pattern').value.trim(),composition:document.getElementById('f-composition').value.trim(),qty:parseFloat(document.getElementById('f-qty').value)||0,unit:document.getElementById('f-unit').value,weight:document.getElementById('f-weight').value,width:document.getElementById('f-width').value,supplier:document.getElementById('f-supplier').value.trim(),date:document.getElementById('f-date').value,price:document.getElementById('f-price').value,care:document.getElementById('f-care').value.trim(),notes:document.getElementById('f-notes').value.trim(),photo:editingPhoto||existing.photo||'',photoBack:existing.photoBack||'',qr:document.getElementById('f-qr').value||code,urlQR:existing.urlQR||'',purchasePrice:document.getElementById('f-price').value};
-  const btn=document.getElementById('save-fabric-btn');btn.disabled=true;btn.textContent='Saving\u2026';
-  try{
-    const res=await apiPost({action:'saveFabric',data:fabricToSheet(f)});
-    if(!res.success){showToast('Save failed: '+res.message);btn.disabled=false;btn.textContent='Save Fabric';return;}
-    fabrics=fabrics.filter(x=>x.code!==editId&&x.code!==code);fabrics.push(f);
-    if(editId&&currentFabric){currentFabric=f;showToast('Fabric updated \u2713');navigate('detail',f.code);}
-    else{showToast('Fabric added \u2713');navigate('inventory');}
-  }catch(e){showToast('Network error \u2014 try again');}
-  btn.disabled=false;btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Fabric';
+let editingPhotoFace = null; // base64 data URL
+let editingPhotoBack = null;
+let editingPhotoFaceUrl = ''; // final GitHub raw URL
+let editingPhotoBackUrl = '';
+
+function handlePhoto(e, side) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    const data = ev.target.result;
+    if (side === 'face') {
+      editingPhotoFace = data;
+      editingPhotoFaceUrl = ''; // reset URL until uploaded
+      document.getElementById('photo-preview-face').innerHTML = '<img src="' + data + '" alt="">';
+      document.getElementById('upload-face-btn').style.display = '';
+      document.getElementById('photo-url-face').textContent = 'Not uploaded yet — click Upload';
+    } else {
+      editingPhotoBack = data;
+      editingPhotoBackUrl = '';
+      document.getElementById('photo-preview-back').innerHTML = '<img src="' + data + '" alt="">';
+      document.getElementById('upload-back-btn').style.display = '';
+      document.getElementById('photo-url-back').textContent = 'Not uploaded yet — click Upload';
+    }
+  };
+  r.readAsDataURL(file);
+}
+
+async function uploadPhotoToGitHub(side) {
+  const code = document.getElementById('f-code').value.trim();
+  if (!code) { showToast('Enter a Fabric Code first'); return; }
+  const data = side === 'face' ? editingPhotoFace : editingPhotoBack;
+  if (!data) { showToast('No photo selected'); return; }
+
+  const btn = document.getElementById('upload-' + side + '-btn');
+  btn.disabled = true; btn.textContent = 'Uploading…';
+
+  try {
+    // Strip base64 header
+    const base64 = data.split(',')[1];
+    const ext = data.split(';')[0].split('/')[1] || 'jpg';
+    const filename = GH_FOLDER + '/' + code + (side === 'back' ? '_back' : '_face') + '.' + ext;
+    const apiUrl = 'https://api.github.com/repos/' + GH_USER + '/' + GH_REPO + '/contents/' + filename;
+
+    // Check if file exists (need SHA to overwrite)
+    let sha = '';
+    try {
+      const check = await fetch(apiUrl, { headers: { Authorization: 'token ' + GH_PAT, Accept: 'application/vnd.github+json' }});
+      if (check.ok) { const j = await check.json(); sha = j.sha || ''; }
+    } catch(e) {}
+
+    const body = { message: 'Upload ' + filename, content: base64, branch: GH_BRANCH };
+    if (sha) body.sha = sha;
+
+    const res = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: { Authorization: 'token ' + GH_PAT, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!res.ok) { const err = await res.json(); throw new Error(err.message); }
+    const rawUrl = 'https://raw.githubusercontent.com/' + GH_USER + '/' + GH_REPO + '/' + GH_BRANCH + '/' + filename;
+
+    if (side === 'face') {
+      editingPhotoFaceUrl = rawUrl;
+      document.getElementById('photo-url-face').innerHTML = '✓ <a href="' + rawUrl + '" target="_blank" style="color:var(--accent)">View on GitHub</a>';
+    } else {
+      editingPhotoBackUrl = rawUrl;
+      document.getElementById('photo-url-back').innerHTML = '✓ <a href="' + rawUrl + '" target="_blank" style="color:var(--accent)">View on GitHub</a>';
+    }
+    showToast('Photo uploaded ✓');
+  } catch(err) {
+    showToast('Upload failed: ' + err.message);
+    console.error(err);
+  }
+  btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Upload';
+}
+
+function clearForm() {
+  ['f-code','f-name','f-type','f-color','f-pattern','f-composition','f-supplier','f-care','f-notes','f-garments'].forEach(id => document.getElementById(id).value = '');
+  ['f-weight','f-width','f-purchase-price','f-price'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-unit').value = 'm';
+  document.getElementById('f-qr').value = '';
+  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+  const ph = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="32" height="32" style="color:var(--text-light)"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg>';
+  document.getElementById('photo-preview-face').innerHTML = ph;
+  document.getElementById('photo-preview-back').innerHTML = ph;
+  document.getElementById('photo-url-face').textContent = '';
+  document.getElementById('photo-url-back').textContent = '';
+  document.getElementById('upload-face-btn').style.display = 'none';
+  document.getElementById('upload-back-btn').style.display = 'none';
+  editingPhotoFace = null; editingPhotoBack = null;
+  editingPhotoFaceUrl = ''; editingPhotoBackUrl = '';
+}
+
+function loadEditForm(f) {
+  document.getElementById('edit-id').value = f.code;
+  document.getElementById('f-code').value = f.code;
+  document.getElementById('f-qr').value = f.qr || f.code;
+  document.getElementById('f-name').value = f.name || '';
+  document.getElementById('f-type').value = f.type || '';
+  document.getElementById('f-color').value = f.color || '';
+  document.getElementById('f-pattern').value = f.pattern || '';
+  document.getElementById('f-composition').value = f.composition || '';
+  document.getElementById('f-unit').value = f.unit || 'm';
+  document.getElementById('f-weight').value = f.weight || '';
+  document.getElementById('f-width').value = f.width || '';
+  document.getElementById('f-supplier').value = f.supplier || '';
+  document.getElementById('f-date').value = f.date || '';
+  document.getElementById('f-purchase-price').value = f.purchasePrice || '';
+  document.getElementById('f-price').value = f.price || '';
+  document.getElementById('f-care').value = f.care || '';
+  document.getElementById('f-garments').value = f.garments || '';
+  document.getElementById('f-notes').value = f.notes || '';
+  // Face photo
+  if (f.photo) {
+    editingPhotoFaceUrl = f.photo;
+    document.getElementById('photo-preview-face').innerHTML = '<img src="' + f.photo + '" alt="">';
+    document.getElementById('photo-url-face').innerHTML = '<a href="' + f.photo + '" target="_blank" style="color:var(--accent)">Current photo</a>';
+  }
+  // Back photo
+  if (f.photoBack) {
+    editingPhotoBackUrl = f.photoBack;
+    document.getElementById('photo-preview-back').innerHTML = '<img src="' + f.photoBack + '" alt="">';
+    document.getElementById('photo-url-back').innerHTML = '<a href="' + f.photoBack + '" target="_blank" style="color:var(--accent)">Current photo</a>';
+  }
+}
+
+function autoFillQR() { document.getElementById('f-qr').value = document.getElementById('f-code').value; }
+
+async function saveFabric() {
+  const code = document.getElementById('f-code').value.trim();
+  const name = document.getElementById('f-name').value.trim();
+  const type = document.getElementById('f-type').value.trim();
+  const color = document.getElementById('f-color').value.trim();
+  if (!code || !name || !type || !color) { showToast('Fill in required fields (*)'); return; }
+  const editId = document.getElementById('edit-id').value;
+  if (!editId && fabrics.find(f => f.code === code)) { showToast('Fabric Code already exists'); return; }
+  const existing = fabrics.find(x => x.code === (editId || code)) || {};
+
+  // Warn if photos chosen but not uploaded
+  if ((editingPhotoFace && !editingPhotoFaceUrl) || (editingPhotoBack && !editingPhotoBackUrl)) {
+    showToast('⚠ Upload photos to GitHub before saving'); return;
+  }
+
+  const f = {
+    code, name, type, color,
+    pattern:       document.getElementById('f-pattern').value.trim(),
+    composition:   document.getElementById('f-composition').value.trim(),
+    unit:          document.getElementById('f-unit').value,
+    weight:        document.getElementById('f-weight').value,
+    width:         document.getElementById('f-width').value,
+    supplier:      document.getElementById('f-supplier').value.trim(),
+    date:          document.getElementById('f-date').value,
+    purchasePrice: document.getElementById('f-purchase-price').value,
+    price:         document.getElementById('f-price').value,
+    care:          document.getElementById('f-care').value.trim(),
+    garments:      document.getElementById('f-garments').value.trim(),
+    notes:         document.getElementById('f-notes').value.trim(),
+    photo:         editingPhotoFaceUrl || existing.photo || '',
+    photoBack:     editingPhotoBackUrl || existing.photoBack || '',
+    qr:            document.getElementById('f-qr').value || code,
+    urlQR:         existing.urlQR || '',
+    qty:           existing.qty || 0,
+  };
+
+  const btn = document.getElementById('save-fabric-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const res = await apiPost({ action: 'saveFabric', data: fabricToSheet(f) });
+    if (!res.success) { showToast('Save failed: ' + res.message); btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Fabric'; return; }
+    fabrics = fabrics.filter(x => x.code !== editId && x.code !== code);
+    fabrics.push(f);
+    if (editId && currentFabric) { currentFabric = f; showToast('Fabric updated ✓'); navigate('detail', f.code); }
+    else { showToast('Fabric added ✓'); navigate('inventory'); }
+  } catch(e) { showToast('Network error — try again'); }
+  btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Fabric';
 }
 
 function deleteFabric(code){deleteTarget=code;document.getElementById('delete-modal').classList.add('open');}
