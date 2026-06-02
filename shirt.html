@@ -1204,7 +1204,6 @@ async function renderFabricGrids() {
 initPreview();
 applyTransform();
 preloadAll();
-renderFabricGrids();
 
 // ── Order Summary panel ──────────────────────────────────────
 var _summaryOpen = false;
@@ -1310,6 +1309,9 @@ function _saveViaIframe(status) {
 
 // ── Google Sheets Integration ──
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
+
+// Load fabric grids now that SHEET_URL is defined
+renderFabricGrids();
 
 function collectConfig() {
   const selText = (selector) => document.querySelector(selector)?.textContent.trim() || '';
@@ -1680,8 +1682,7 @@ function showFeedback(msg, color) {
 
 })();
 </script>
-
-
+  
 <!-- Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -1811,7 +1812,7 @@ function ddCopy(type) {
 </script>
   
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.0.3</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.0.4</div>
 
 </body>
 </html>
