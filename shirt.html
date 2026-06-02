@@ -179,16 +179,78 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 }
 .fabric-search:focus { border-color: var(--ink); }
 
-.fabric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.fabric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 
+/* ── Rich fabric cards from Google Sheet ── */
 .fabric-card {
   border: 1px solid var(--border); border-radius: 6px; background: #fff;
-  padding: 10px 8px 8px; cursor: pointer; display: flex; flex-direction: column;
-  align-items: center; gap: 5px; transition: all 0.15s;
+  cursor: pointer; display: flex; flex-direction: column;
+  transition: all 0.15s; overflow: hidden; position: relative;
 }
 .fabric-card:hover { border-color: var(--ink-mid); }
 .fabric-card.selected { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
-.swatch { width: 48px; height: 40px; border-radius: 3px; flex-shrink: 0; }
+
+/* image strip: face + back side by side */
+.fabric-card .fc-images {
+  display: grid; grid-template-columns: 1fr 1fr;
+  height: 72px; overflow: hidden; flex-shrink: 0;
+}
+.fabric-card .fc-img {
+  width: 100%; height: 100%; object-fit: cover;
+  display: block; background: var(--cream-mid);
+}
+.fabric-card .fc-img-label {
+  position: absolute; top: 4px; font-size: 7px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: rgba(255,255,255,0.85); background: rgba(0,0,0,0.28);
+  padding: 1px 4px; border-radius: 2px; pointer-events: none;
+}
+.fabric-card .fc-img-label.face { left: 4px; }
+.fabric-card .fc-img-label.back { left: calc(50% + 4px); }
+
+/* text section */
+.fabric-card .fc-body { padding: 7px 8px 6px; display: flex; flex-direction: column; gap: 2px; }
+.fname { font-size: 10px; font-weight: 600; color: var(--ink); letter-spacing: 0.02em; line-height: 1.3; }
+.fcode { font-size: 9px; color: var(--ink-faint); letter-spacing: 0.06em; }
+.fcomp { font-size: 9px; color: var(--ink-light); letter-spacing: 0.01em; line-height: 1.3; margin-top: 1px; }
+
+/* details toggle */
+.fc-details-toggle {
+  font-family: 'Jost', sans-serif; font-size: 9px; font-weight: 600;
+  letter-spacing: 0.10em; text-transform: uppercase; color: var(--ink-mid);
+  background: none; border: none; padding: 0; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 3px; margin-top: 3px;
+  text-decoration: underline; text-decoration-color: var(--ink-faint);
+  text-underline-offset: 2px;
+}
+.fc-details-toggle:hover { color: var(--ink); }
+.fc-details-toggle svg { transition: transform 0.2s; }
+.fc-details-toggle.open svg { transform: rotate(180deg); }
+
+/* expandable details drawer */
+.fc-details-drawer {
+  display: none; border-top: 1px solid var(--border);
+  padding: 8px 8px 9px; background: var(--cream-mid);
+  grid-template-columns: 1fr 1fr; gap: 4px 8px;
+  pointer-events: none;
+}
+.fc-details-drawer.open { display: grid; pointer-events: auto; }
+.fc-detail-item { display: flex; flex-direction: column; gap: 1px; }
+.fc-detail-label { font-size: 8px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; color: var(--ink-light); }
+.fc-detail-val   { font-size: 10px; color: var(--ink); font-weight: 400; }
+
+/* loading / error states */
+.fabric-loading {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: 10px;
+  padding: 20px 0; color: var(--ink-light); font-size: 11px; letter-spacing: 0.06em;
+}
+.fabric-error {
+  grid-column: 1 / -1; padding: 14px 12px; font-size: 11px; color: #b04040;
+  background: #fdf2f2; border: 1px solid #e8c0c0; border-radius: 4px;
+}
+
+/* fallback swatch for when images fail */
+.swatch { width: 100%; height: 72px; border-radius: 0; flex-shrink: 0; }
 .fname { font-size: 10px; font-weight: 500; color: var(--ink); text-align: center; letter-spacing: 0.02em; line-height: 1.3; }
 .fcode { font-size: 9px; color: var(--ink-faint); letter-spacing: 0.06em; }
 
@@ -567,77 +629,21 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
     <!-- MATERIALS & CONSTRUCTION PANEL -->
     <div class="config-body" id="panel-materials" style="display:none;">
 
-      <!-- MAIN FABRIC -->
+      <!-- MAIN FABRIC — dynamically loaded from Google Sheet -->
       <div class="section">
         <div class="section-label">Main Fabric</div>
         <div class="fabric-search-row">
           <input class="fabric-search" type="text" placeholder="Search fabrics…" oninput="filterFabrics(this.value,'main')">
         </div>
         <div class="fabric-grid" id="fabric-main-grid">
-          <div class="fabric-card selected" onclick="selectFabric(this,'main','Oxford White')">
-            <div class="swatch" style="background:#f8f8f6;border:1px solid #e0ddd8;"></div>
-            <span class="fname">Oxford White</span>
-            <span class="fcode">OX-001</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'main','Oxford Blue')">
-            <div class="swatch" style="background:#c8d8e8;"></div>
-            <span class="fname">Oxford Blue</span>
-            <span class="fcode">OX-002</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'main','Poplin White')">
-            <div class="swatch" style="background:#fafaf8;border:1px solid #e8e5e0;"></div>
-            <span class="fname">Poplin White</span>
-            <span class="fcode">PO-001</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'main','Poplin Sky')">
-            <div class="swatch" style="background:#b8d4e8;"></div>
-            <span class="fname">Poplin Sky</span>
-            <span class="fcode">PO-002</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'main','Twill Navy')">
-            <div class="swatch" style="background:#2c3e5a;"></div>
-            <span class="fname">Twill Navy</span>
-            <span class="fcode">TW-001</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'main','Twill Ecru')">
-            <div class="swatch" style="background:#ede8de;"></div>
-            <span class="fname">Twill Ecru</span>
-            <span class="fcode">TW-002</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'main','Linen Natural')">
-            <div class="swatch" style="background:#d8cfc0;"></div>
-            <span class="fname">Linen Natural</span>
-            <span class="fcode">LI-001</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'main','Linen Slate')">
-            <div class="swatch" style="background:#9aa8b0;"></div>
-            <span class="fname">Linen Slate</span>
-            <span class="fcode">LI-002</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'main','Chambray Blue')">
-            <div class="swatch" style="background:#8aaec8;"></div>
-            <span class="fname">Chambray Blue</span>
-            <span class="fcode">CH-001</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'main','Herringbone Grey')">
-            <div class="swatch" style="background:#b0aaa4;background-image:repeating-linear-gradient(45deg,rgba(0,0,0,0.07) 0px,rgba(0,0,0,0.07) 1px,transparent 1px,transparent 4px);"></div>
-            <span class="fname">Herringbone Grey</span>
-            <span class="fcode">HB-001</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'main','Pinstripe White')">
-            <div class="swatch" style="background:#f0ede8;background-image:repeating-linear-gradient(90deg,rgba(0,0,0,0.12) 0px,rgba(0,0,0,0.12) 1px,transparent 1px,transparent 8px);"></div>
-            <span class="fname">Pinstripe White</span>
-            <span class="fcode">PS-001</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'main','Stripe Blue')">
-            <div class="swatch" style="background:#f0f4f8;background-image:repeating-linear-gradient(90deg,#7aaac8 0px,#7aaac8 3px,transparent 3px,transparent 12px);"></div>
-            <span class="fname">Stripe Blue</span>
-            <span class="fcode">ST-001</span>
+          <div class="fabric-loading">
+            <div class="spinner"></div>
+            <span>Loading fabrics…</span>
           </div>
         </div>
       </div>
 
-      <!-- COMPLEMENTARY FABRIC -->
+      <!-- COMPLEMENTARY FABRIC — dynamically loaded from Google Sheet -->
       <div class="section">
         <div class="section-label">Complementary Fabric</div>
         <div class="sub-label">Used for collar, cuffs &amp; placket lining</div>
@@ -646,45 +652,9 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
           <button class="pill" onclick="toggleComp(this,'custom')">Custom</button>
         </div>
         <div class="fabric-grid" id="fabric-comp-grid" style="opacity:0.35;pointer-events:none;">
-          <div class="fabric-card selected" onclick="selectFabric(this,'comp','Oxford White')">
-            <div class="swatch" style="background:#f8f8f6;border:1px solid #e0ddd8;"></div>
-            <span class="fname">Oxford White</span>
-            <span class="fcode">OX-001</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'comp','Oxford Blue')">
-            <div class="swatch" style="background:#c8d8e8;"></div>
-            <span class="fname">Oxford Blue</span>
-            <span class="fcode">OX-002</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'comp','Poplin White')">
-            <div class="swatch" style="background:#fafaf8;border:1px solid #e8e5e0;"></div>
-            <span class="fname">Poplin White</span>
-            <span class="fcode">PO-001</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'comp','Poplin Sky')">
-            <div class="swatch" style="background:#b8d4e8;"></div>
-            <span class="fname">Poplin Sky</span>
-            <span class="fcode">PO-002</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'comp','Twill Ecru')">
-            <div class="swatch" style="background:#ede8de;"></div>
-            <span class="fname">Twill Ecru</span>
-            <span class="fcode">TW-002</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'comp','Linen Natural')">
-            <div class="swatch" style="background:#d8cfc0;"></div>
-            <span class="fname">Linen Natural</span>
-            <span class="fcode">LI-001</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'comp','Stripe Blue')">
-            <div class="swatch" style="background:#f0f4f8;background-image:repeating-linear-gradient(90deg,#7aaac8 0px,#7aaac8 3px,transparent 3px,transparent 12px);"></div>
-            <span class="fname">Stripe Blue</span>
-            <span class="fcode">ST-001</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'comp','Pinstripe White')">
-            <div class="swatch" style="background:#f0ede8;background-image:repeating-linear-gradient(90deg,rgba(0,0,0,0.12) 0px,rgba(0,0,0,0.12) 1px,transparent 1px,transparent 8px);"></div>
-            <span class="fname">Pinstripe White</span>
-            <span class="fcode">PS-001</span>
+          <div class="fabric-loading">
+            <div class="spinner"></div>
+            <span>Loading fabrics…</span>
           </div>
         </div>
       </div>
@@ -1078,6 +1048,16 @@ function selectFabric(el, group, name) {
   el.classList.add('selected');
 }
 
+function toggleFabricDetails(btn, event) {
+  event.stopPropagation();
+  const card   = btn.closest('.fabric-card');
+  const drawer = card.querySelector('.fc-details-drawer');
+  const isOpen = drawer.classList.contains('open');
+  drawer.classList.toggle('open', !isOpen);
+  btn.classList.toggle('open', !isOpen);
+  btn.querySelector('span').textContent = isOpen ? 'Details' : 'Hide';
+}
+
 function toggleComp(el, mode) {
   el.closest('.comp-toggle').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
   el.classList.add('selected');
@@ -1106,15 +1086,125 @@ function selectBtnStitch(el, v) {
 
 function filterFabrics(q, group) {
   const grid = document.getElementById(`fabric-${group}-grid`);
+  const term = q.toLowerCase();
   grid.querySelectorAll('.fabric-card').forEach(card => {
-    const name = card.querySelector('.fname').textContent.toLowerCase();
-    card.style.display = name.includes(q.toLowerCase()) ? '' : 'none';
+    const name = (card.dataset.name || '').toLowerCase();
+    const code = (card.dataset.code || '').toLowerCase();
+    const comp = (card.dataset.comp || '').toLowerCase();
+    card.style.display = (name.includes(term) || code.includes(term) || comp.includes(term)) ? '' : 'none';
   });
+}
+
+// ── Build a rich fabric card from a row object ──
+function buildFabricCard(fabric, group, isFirst) {
+  const name  = fabric.ProductName   || '';
+  const code  = fabric.FabricCode    || '';
+  const comp  = fabric.Composition   || '';
+  const color = fabric.Color         || '—';
+  const pat   = fabric.Pattern       || '—';
+  const wt    = fabric.Weight_gsm    ? fabric.Weight_gsm + ' g/m²' : '—';
+  const wd    = fabric.Width_cm      ? fabric.Width_cm   + ' cm'   : '—';
+  const face  = fabric['Photo FACE'] || '';
+  const back  = fabric['photo BACK'] || '';
+
+  const card = document.createElement('div');
+  card.className = 'fabric-card' + (isFirst ? ' selected' : '');
+  card.dataset.name  = name;
+  card.dataset.code  = code;
+  card.dataset.comp  = comp;
+  card.dataset.color = color;
+  card.onclick = () => selectFabric(card, group, name);
+
+  // Image strip (face + back)
+  const imgWrap = document.createElement('div');
+  imgWrap.className = 'fc-images';
+  imgWrap.style.position = 'relative';
+
+  const faceImg = document.createElement('img');
+  faceImg.className = 'fc-img'; faceImg.alt = name + ' face'; faceImg.loading = 'lazy';
+  if (face) faceImg.src = face; else faceImg.style.background = 'var(--cream-dark)';
+
+  const backImg = document.createElement('img');
+  backImg.className = 'fc-img'; backImg.alt = name + ' back'; backImg.loading = 'lazy';
+  if (back) backImg.src = back; else backImg.style.background = 'var(--cream-mid)';
+
+  const lFace = document.createElement('span');
+  lFace.className = 'fc-img-label face'; lFace.textContent = 'Face';
+  const lBack = document.createElement('span');
+  lBack.className = 'fc-img-label back'; lBack.textContent = 'Back';
+
+  imgWrap.append(faceImg, backImg, lFace, lBack);
+
+  // Card body
+  const body = document.createElement('div');
+  body.className = 'fc-body';
+
+  const nameEl = document.createElement('span'); nameEl.className = 'fname'; nameEl.textContent = name;
+  const codeEl = document.createElement('span'); codeEl.className = 'fcode'; codeEl.textContent = code;
+  const compEl = document.createElement('span'); compEl.className = 'fcomp'; compEl.textContent = comp;
+
+  const detBtn = document.createElement('button');
+  detBtn.className = 'fc-details-toggle';
+  detBtn.innerHTML = `<span>Details</span><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>`;
+  detBtn.onclick = (e) => toggleFabricDetails(detBtn, e);
+
+  body.append(nameEl, codeEl, compEl, detBtn);
+
+  // Expandable details drawer
+  const drawer = document.createElement('div');
+  drawer.className = 'fc-details-drawer';
+  [['Color', color], ['Pattern', pat], ['Composition', comp], ['Weight', wt], ['Width', wd]].forEach(([lbl, val]) => {
+    const item = document.createElement('div'); item.className = 'fc-detail-item';
+    const l = document.createElement('span'); l.className = 'fc-detail-label'; l.textContent = lbl;
+    const v = document.createElement('span'); v.className = 'fc-detail-val';   v.textContent = val;
+    item.append(l, v); drawer.appendChild(item);
+  });
+
+  card.append(imgWrap, body, drawer);
+  return card;
+}
+
+// ── Load fabrics from Google Sheet ──
+let _fabricsCache = null;
+
+async function loadFabrics() {
+  if (_fabricsCache) return _fabricsCache;
+  const url = SHEET_URL + '?sheet=FABRICS';
+  const res  = await fetch(url);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const json = await res.json();
+  const rows = Array.isArray(json) ? json : (json.data || json.rows || []);
+  _fabricsCache = rows.filter(r => {
+    const g = (r.Garments || r.garments || '').toLowerCase();
+    return g.includes('shirt');
+  });
+  return _fabricsCache;
+}
+
+async function renderFabricGrids() {
+  const mainGrid = document.getElementById('fabric-main-grid');
+  const compGrid = document.getElementById('fabric-comp-grid');
+  try {
+    const fabrics = await loadFabrics();
+    if (!fabrics.length) {
+      const msg = '<div class="fabric-error">No shirt fabrics found. Check the Garments column in your sheet.</div>';
+      mainGrid.innerHTML = msg; compGrid.innerHTML = msg; return;
+    }
+    mainGrid.innerHTML = '';
+    fabrics.forEach((f, i) => mainGrid.appendChild(buildFabricCard(f, 'main', i === 0)));
+    compGrid.innerHTML = '';
+    fabrics.forEach((f, i) => compGrid.appendChild(buildFabricCard(f, 'comp', i === 0)));
+  } catch (err) {
+    console.error('Fabric load error:', err);
+    const errHtml = `<div class="fabric-error">Could not load fabrics (${err.message}).</div>`;
+    mainGrid.innerHTML = errHtml; compGrid.innerHTML = errHtml;
+  }
 }
 
 initPreview();
 applyTransform();
 preloadAll();
+renderFabricGrids();
 
 // ── Order Summary panel ──────────────────────────────────────
 var _summaryOpen = false;
@@ -1257,8 +1347,8 @@ function collectConfig() {
     'RISE':                '',
     'MAIN FABRIC':         selText('#fabric-main-grid .fabric-card.selected .fname'),
     'CODE':                selText('#fabric-main-grid .fabric-card.selected .fcode'),
-    'color':               '',
-    'composition':         '',
+    'color':               document.querySelector('#fabric-main-grid .fabric-card.selected')?.dataset.color || '',
+    'composition':         document.querySelector('#fabric-main-grid .fabric-card.selected')?.dataset.comp  || '',
     'CONTRAST FABRIC':     document.getElementById('fabric-comp-grid').style.pointerEvents === 'none'
                              ? 'Same as Main'
                              : selText('#fabric-comp-grid .fabric-card.selected .fname'),
@@ -1591,8 +1681,6 @@ function showFeedback(msg, color) {
 })();
 </script>
 
-<!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.0.2</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -1721,6 +1809,9 @@ function ddCopy(type) {
   if (navigator.clipboard) navigator.clipboard.writeText(val).then(function() { toast(type.toUpperCase() + ' copied'); });
 }
 </script>
+  
+<!-- Version badge -->
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.0.3</div>
 
 </body>
 </html>
