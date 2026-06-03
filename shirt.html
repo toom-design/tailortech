@@ -236,6 +236,29 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 /* fallback swatch for when images fail */
 .swatch { width: 100%; aspect-ratio: 1 / 1; border-radius: 2px; flex-shrink: 0; }
 
+/* ── Tuxedo Bib fabric section ── */
+#section-tuxedo-bib { display: none; }
+#section-tuxedo-bib.visible { display: block; }
+
+/* ── Complementary fabric parts toggle ── */
+.comp-parts-row {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.comp-part-btn {
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 100px;
+  background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s;
+}
+.comp-part-btn:hover { border-color: var(--ink); color: var(--ink); }
+.comp-part-btn.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
+
+/* Comp section hint */
+.comp-hint {
+  font-size: 11px; color: var(--ink-light); letter-spacing: 0.03em;
+  margin-bottom: 12px; line-height: 1.5;
+}
+
 /* Button material row */
 .btn-material-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
 .btn-material {
@@ -626,18 +649,46 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
         </div>
       </div>
 
-      <!-- COMPLEMENTARY FABRIC — dynamically loaded from Google Sheet -->
-      <div class="section">
-        <div class="section-label">Complementary Fabric</div>
-        <div class="sub-label">Used for collar, cuffs &amp; placket lining</div>
-        <div class="comp-toggle pill-group" style="margin-bottom:14px;">
-          <button class="pill selected" onclick="toggleComp(this,'same')">Same as Main</button>
-          <button class="pill" onclick="toggleComp(this,'custom')">Custom</button>
+      <!-- TUXEDO BIB FABRIC — shown only when tuxedo placket is selected -->
+      <div class="section" id="section-tuxedo-bib">
+        <div class="section-label">Tuxedo Bib Fabric</div>
+        <div class="sub-label" style="margin-bottom:12px;">Select the fabric for the tuxedo shirt bib front</div>
+        <div class="fabric-search-row">
+          <input class="fabric-search" type="text" placeholder="Search fabrics…" oninput="filterFabrics(this.value,'bib')">
         </div>
-        <div class="fabric-grid" id="fabric-comp-grid" style="opacity:0.35;pointer-events:none;">
+        <div class="fabric-grid" id="fabric-bib-grid">
           <div class="fabric-loading">
             <div class="spinner"></div>
             <span>Loading fabrics…</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMPLEMENTARY FABRIC — optional, collar & cuffs -->
+      <div class="section">
+        <div class="section-label">Complementary Fabric</div>
+        <p class="comp-hint">Optionally use a different fabric for selected parts. If none chosen, the whole shirt uses the main fabric.</p>
+        <div class="comp-toggle pill-group" style="margin-bottom:14px;">
+          <button class="pill selected" onclick="toggleComp(this,'same')">None — use main fabric</button>
+          <button class="pill" onclick="toggleComp(this,'custom')">Choose fabric</button>
+        </div>
+
+        <div id="comp-fabric-body" style="display:none;">
+          <!-- Part selector -->
+          <div style="font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:8px;">Apply to</div>
+          <div class="comp-parts-row">
+            <button class="comp-part-btn selected" id="comp-part-cuffs"  onclick="toggleCompPart(this,'cuffs')">Cuffs</button>
+            <button class="comp-part-btn selected" id="comp-part-collar" onclick="toggleCompPart(this,'collar')">Collar</button>
+          </div>
+
+          <div class="fabric-search-row">
+            <input class="fabric-search" type="text" placeholder="Search fabrics…" oninput="filterFabrics(this.value,'comp')">
+          </div>
+          <div class="fabric-grid" id="fabric-comp-grid">
+            <div class="fabric-loading">
+              <div class="spinner"></div>
+              <span>Loading fabrics…</span>
+            </div>
           </div>
         </div>
       </div>
@@ -908,6 +959,10 @@ function selectPlacket(el, v) {
   setImg('img-placket', urls.placket(v));
   setFrontBack('front');
   zoomToRegion(2.4, 0.5, 0.5);
+
+  // Show tuxedo bib fabric section only for tuxedo placket
+  const bibSection = document.getElementById('section-tuxedo-bib');
+  if (bibSection) bibSection.classList.toggle('visible', v === 'tuxedo');
 }
 
 function selectCollar(el, v) {
@@ -1052,12 +1107,12 @@ function toggleFabricDetails(btn, event) {
 function toggleComp(el, mode) {
   el.closest('.comp-toggle').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
   el.classList.add('selected');
-  const grid = document.getElementById('fabric-comp-grid');
-  if (mode === 'custom') {
-    grid.style.opacity = '1'; grid.style.pointerEvents = '';
-  } else {
-    grid.style.opacity = '0.35'; grid.style.pointerEvents = 'none';
-  }
+  const body = document.getElementById('comp-fabric-body');
+  if (body) body.style.display = mode === 'custom' ? '' : 'none';
+}
+
+function toggleCompPart(el, part) {
+  el.classList.toggle('selected');
 }
 
 function selectBtnMaterial(el) {
@@ -1147,36 +1202,55 @@ function buildFabricCard(fabric, group, isFirst) {
 }
 
 // ── Load fabrics from Google Sheet ──
-let _fabricsCache = null;
+let _fabricsRawCache = null;
 
-async function loadFabrics() {
-  if (_fabricsCache) return _fabricsCache;
+async function _loadAllFabrics() {
+  if (_fabricsRawCache) return _fabricsRawCache;
   const res  = await fetch(SHEET_URL + '?action=getFabrics');
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const json = await res.json();
   if (!json.success) throw new Error(json.message || 'API error');
-  _fabricsCache = (json.fabrics || []).filter(r =>
-    (r['Garments'] || '').trim().toLowerCase().includes('shirt')
-  );
-  return _fabricsCache;
+  _fabricsRawCache = json.fabrics || [];
+  return _fabricsRawCache;
 }
+
+async function loadFabrics() {
+  const all = await _loadAllFabrics();
+  return all.filter(r => (r['Garments'] || '').trim().toLowerCase().includes('shirt'));
+}
+
+async function loadBibFabrics() {
+  const all = await _loadAllFabrics();
+  return all.filter(r => (r['Garments'] || '').trim().toLowerCase().includes('tuxedo_bib'));
+}
+
 async function renderFabricGrids() {
   const mainGrid = document.getElementById('fabric-main-grid');
   const compGrid = document.getElementById('fabric-comp-grid');
+  const bibGrid  = document.getElementById('fabric-bib-grid');
   try {
-    const fabrics = await loadFabrics();
+    const [fabrics, bibFabrics] = await Promise.all([loadFabrics(), loadBibFabrics()]);
+
     if (!fabrics.length) {
       const msg = '<div class="fabric-error">No shirt fabrics found. Check the Garments column in your sheet.</div>';
-      mainGrid.innerHTML = msg; compGrid.innerHTML = msg; return;
+      mainGrid.innerHTML = msg; compGrid.innerHTML = msg;
+    } else {
+      mainGrid.innerHTML = '';
+      fabrics.forEach((f, i) => mainGrid.appendChild(buildFabricCard(f, 'main', i === 0)));
+      compGrid.innerHTML = '';
+      fabrics.forEach((f, i) => compGrid.appendChild(buildFabricCard(f, 'comp', false)));
     }
-    mainGrid.innerHTML = '';
-    fabrics.forEach((f, i) => mainGrid.appendChild(buildFabricCard(f, 'main', i === 0)));
-    compGrid.innerHTML = '';
-    fabrics.forEach((f, i) => compGrid.appendChild(buildFabricCard(f, 'comp', i === 0)));
+
+    bibGrid.innerHTML = '';
+    if (!bibFabrics.length) {
+      bibGrid.innerHTML = '<div class="fabric-error">No tuxedo bib fabrics found. Check the Garments column in your sheet.</div>';
+    } else {
+      bibFabrics.forEach((f, i) => bibGrid.appendChild(buildFabricCard(f, 'bib', i === 0)));
+    }
   } catch (err) {
     console.error('Fabric load error:', err);
     const errHtml = `<div class="fabric-error">Could not load fabrics (${err.message}).</div>`;
-    mainGrid.innerHTML = errHtml; compGrid.innerHTML = errHtml;
+    mainGrid.innerHTML = errHtml; compGrid.innerHTML = errHtml; bibGrid.innerHTML = errHtml;
   }
 }
 
@@ -1220,7 +1294,9 @@ function buildSummary() {
         ['Fabric Code',    cfg['CODE']],
         ['Color',          cfg['color']],
         ['Composition',    cfg['composition']],
-        ['Contrast Fabric',cfg['CONTRAST FABRIC']],
+        ['Tuxedo Bib',     cfg['TUXEDO BIB FABRIC']],
+        ['Contrast Fabric',cfg['CONTRAST FABRIC'] === 'None' ? '' : cfg['CONTRAST FABRIC']],
+        ['Contrast On',    cfg['CONTRAST PLACEMENT']],
         ['Buttons',        selText('.btn-material.selected .bm-name')],
         ['Button Size',    selText('.btn-size.selected')],
         ['Button Stitching', cfg['LINING TYPE']],
@@ -1377,10 +1453,22 @@ function collectConfig() {
     'CODE':                selText('#fabric-main-grid .fabric-card.selected .fcode'),
     'color':               document.querySelector('#fabric-main-grid .fabric-card.selected')?.dataset.color || '',
     'composition':         document.querySelector('#fabric-main-grid .fabric-card.selected')?.dataset.comp  || '',
-    'CONTRAST FABRIC':     document.getElementById('fabric-comp-grid').style.pointerEvents === 'none'
-                             ? 'Same as Main'
-                             : selText('#fabric-comp-grid .fabric-card.selected .fname'),
-    'CONTRAST PLACEMENT':  '',
+    'CONTRAST FABRIC':     (() => {
+                             const body = document.getElementById('comp-fabric-body');
+                             if (!body || body.style.display === 'none') return 'None';
+                             return selText('#fabric-comp-grid .fabric-card.selected .fname') || '';
+                           })(),
+    'CONTRAST PLACEMENT':  (() => {
+                             const body = document.getElementById('comp-fabric-body');
+                             if (!body || body.style.display === 'none') return '';
+                             const parts = [];
+                             if (document.getElementById('comp-part-cuffs')?.classList.contains('selected'))  parts.push('Cuffs');
+                             if (document.getElementById('comp-part-collar')?.classList.contains('selected')) parts.push('Collar');
+                             return parts.join(', ');
+                           })(),
+    'TUXEDO BIB FABRIC':   document.getElementById('section-tuxedo-bib')?.classList.contains('visible')
+                             ? selText('#fabric-bib-grid .fabric-card.selected .fname')
+                             : '',
     'STRUCTURE':           selText('.btn-material.selected .bm-name') + ' ' + selText('.btn-size.selected'),
     'LINING FABRIC':       '',
     'LINING TYPE':         selText('.btn-stitch-card.selected .cname'),
