@@ -190,26 +190,42 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 .fabric-card:hover { border-color: var(--ink-mid); }
 .fabric-card.selected { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
 
-/* square image with padding */
+/* image strip: face + back side by side */
 .fabric-card .fc-images {
-  display: flex; align-items: center; justify-content: center;
-  padding: 14px 14px 10px; flex-shrink: 0;
+  display: grid; grid-template-columns: 1fr 1fr;
+  height: 72px; overflow: hidden; flex-shrink: 0;
 }
 .fabric-card .fc-img {
-  width: 100%; aspect-ratio: 1 / 1; object-fit: cover;
-  display: block; background: var(--cream-mid); border-radius: 2px;
+  width: 100%; height: 100%; object-fit: cover;
+  display: block; background: var(--cream-mid);
 }
-.fabric-card .fc-img.fc-img-back { display: none; }
-.fabric-card .fc-img-label { display: none; }
+.fabric-card .fc-img-label {
+  position: absolute; top: 4px; font-size: 7px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: rgba(255,255,255,0.85); background: rgba(0,0,0,0.28);
+  padding: 1px 4px; border-radius: 2px; pointer-events: none;
+}
+.fabric-card .fc-img-label.face { left: 4px; }
+.fabric-card .fc-img-label.back { left: calc(50% + 4px); }
 
-/* text section — centred */
-.fabric-card .fc-body { padding: 0 10px 14px; display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; }
-.fname { font-size: 12px; font-weight: 600; color: var(--ink); letter-spacing: 0.02em; line-height: 1.3; }
-.fcode { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.06em; }
-.fcomp { font-size: 10px; color: var(--ink-light); letter-spacing: 0.01em; line-height: 1.4; margin-top: 1px; }
+/* text section */
+.fabric-card .fc-body { padding: 7px 8px 6px; display: flex; flex-direction: column; gap: 2px; }
+.fname { font-size: 10px; font-weight: 600; color: var(--ink); letter-spacing: 0.02em; line-height: 1.3; }
+.fcode { font-size: 9px; color: var(--ink-faint); letter-spacing: 0.06em; }
+.fcomp { font-size: 9px; color: var(--ink-light); letter-spacing: 0.01em; line-height: 1.3; margin-top: 1px; }
 
-/* details toggle — hidden for clean card look */
-.fc-details-toggle { display: none; }
+/* details toggle */
+.fc-details-toggle {
+  font-family: 'Jost', sans-serif; font-size: 9px; font-weight: 600;
+  letter-spacing: 0.10em; text-transform: uppercase; color: var(--ink-mid);
+  background: none; border: none; padding: 0; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 3px; margin-top: 3px;
+  text-decoration: underline; text-decoration-color: var(--ink-faint);
+  text-underline-offset: 2px;
+}
+.fc-details-toggle:hover { color: var(--ink); }
+.fc-details-toggle svg { transition: transform 0.2s; }
+.fc-details-toggle.open svg { transform: rotate(180deg); }
 
 /* expandable details drawer */
 .fc-details-drawer {
@@ -234,30 +250,9 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 }
 
 /* fallback swatch for when images fail */
-.swatch { width: 100%; aspect-ratio: 1 / 1; border-radius: 2px; flex-shrink: 0; }
-
-/* ── Tuxedo Bib fabric section ── */
-#section-tuxedo-bib { display: none; }
-#section-tuxedo-bib.visible { display: block; }
-
-/* ── Complementary fabric parts toggle ── */
-.comp-parts-row {
-  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;
-}
-.comp-part-btn {
-  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500;
-  letter-spacing: 0.08em; text-transform: uppercase;
-  padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 100px;
-  background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s;
-}
-.comp-part-btn:hover { border-color: var(--ink); color: var(--ink); }
-.comp-part-btn.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
-
-/* Comp section hint */
-.comp-hint {
-  font-size: 11px; color: var(--ink-light); letter-spacing: 0.03em;
-  margin-bottom: 12px; line-height: 1.5;
-}
+.swatch { width: 100%; height: 72px; border-radius: 0; flex-shrink: 0; }
+.fname { font-size: 10px; font-weight: 500; color: var(--ink); text-align: center; letter-spacing: 0.02em; line-height: 1.3; }
+.fcode { font-size: 9px; color: var(--ink-faint); letter-spacing: 0.06em; }
 
 /* Button material row */
 .btn-material-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
@@ -649,46 +644,18 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
         </div>
       </div>
 
-      <!-- TUXEDO BIB FABRIC — shown only when tuxedo placket is selected -->
-      <div class="section" id="section-tuxedo-bib">
-        <div class="section-label">Tuxedo Bib Fabric</div>
-        <div class="sub-label" style="margin-bottom:12px;">Select the fabric for the tuxedo shirt bib front</div>
-        <div class="fabric-search-row">
-          <input class="fabric-search" type="text" placeholder="Search fabrics…" oninput="filterFabrics(this.value,'bib')">
+      <!-- COMPLEMENTARY FABRIC — dynamically loaded from Google Sheet -->
+      <div class="section">
+        <div class="section-label">Complementary Fabric</div>
+        <div class="sub-label">Used for collar, cuffs &amp; placket lining</div>
+        <div class="comp-toggle pill-group" style="margin-bottom:14px;">
+          <button class="pill selected" onclick="toggleComp(this,'same')">Same as Main</button>
+          <button class="pill" onclick="toggleComp(this,'custom')">Custom</button>
         </div>
-        <div class="fabric-grid" id="fabric-bib-grid">
+        <div class="fabric-grid" id="fabric-comp-grid" style="opacity:0.35;pointer-events:none;">
           <div class="fabric-loading">
             <div class="spinner"></div>
             <span>Loading fabrics…</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- COMPLEMENTARY FABRIC — optional, collar & cuffs -->
-      <div class="section">
-        <div class="section-label">Complementary Fabric</div>
-        <p class="comp-hint">Optionally use a different fabric for selected parts. If none chosen, the whole shirt uses the main fabric.</p>
-        <div class="comp-toggle pill-group" style="margin-bottom:14px;">
-          <button class="pill selected" onclick="toggleComp(this,'same')">None — use main fabric</button>
-          <button class="pill" onclick="toggleComp(this,'custom')">Choose fabric</button>
-        </div>
-
-        <div id="comp-fabric-body" style="display:none;">
-          <!-- Part selector -->
-          <div style="font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:8px;">Apply to</div>
-          <div class="comp-parts-row">
-            <button class="comp-part-btn selected" id="comp-part-cuffs"  onclick="toggleCompPart(this,'cuffs')">Cuffs</button>
-            <button class="comp-part-btn selected" id="comp-part-collar" onclick="toggleCompPart(this,'collar')">Collar</button>
-          </div>
-
-          <div class="fabric-search-row">
-            <input class="fabric-search" type="text" placeholder="Search fabrics…" oninput="filterFabrics(this.value,'comp')">
-          </div>
-          <div class="fabric-grid" id="fabric-comp-grid">
-            <div class="fabric-loading">
-              <div class="spinner"></div>
-              <span>Loading fabrics…</span>
-            </div>
           </div>
         </div>
       </div>
@@ -814,10 +781,10 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 
             </form>
 
-            <!-- Save / Continue button — label switches based on whether fields have changed -->
+            <!-- Save Measurements -->
             <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;padding-bottom:8px;">
-              <button type="button" onclick="measPrimaryAction(event)" id="meas-save-btn" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:inline-flex;align-items:center;gap:10px;">
-                <span id="meas-save-lbl">Continue to Summary</span>
+              <button type="submit" form="meas-form" onclick="measHandleSubmitAndContinue(event)" id="meas-save-btn" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:inline-flex;align-items:center;gap:10px;">
+                <span id="meas-save-lbl">Save Measurements &amp; Continue</span>
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
                 <div id="meas-save-spin" style="display:none;width:12px;height:12px;border:1.5px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.65s linear infinite;"></div>
               </button>
@@ -959,10 +926,6 @@ function selectPlacket(el, v) {
   setImg('img-placket', urls.placket(v));
   setFrontBack('front');
   zoomToRegion(2.4, 0.5, 0.5);
-
-  // Show tuxedo bib fabric section only for tuxedo placket
-  const bibSection = document.getElementById('section-tuxedo-bib');
-  if (bibSection) bibSection.classList.toggle('visible', v === 'tuxedo');
 }
 
 function selectCollar(el, v) {
@@ -1107,12 +1070,12 @@ function toggleFabricDetails(btn, event) {
 function toggleComp(el, mode) {
   el.closest('.comp-toggle').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
   el.classList.add('selected');
-  const body = document.getElementById('comp-fabric-body');
-  if (body) body.style.display = mode === 'custom' ? '' : 'none';
-}
-
-function toggleCompPart(el, part) {
-  el.classList.toggle('selected');
+  const grid = document.getElementById('fabric-comp-grid');
+  if (mode === 'custom') {
+    grid.style.opacity = '1'; grid.style.pointerEvents = '';
+  } else {
+    grid.style.opacity = '0.35'; grid.style.pointerEvents = 'none';
+  }
 }
 
 function selectBtnMaterial(el) {
@@ -1170,7 +1133,16 @@ function buildFabricCard(fabric, group, isFirst) {
   faceImg.className = 'fc-img'; faceImg.alt = name + ' face'; faceImg.loading = 'lazy';
   if (face) faceImg.src = face; else faceImg.style.background = 'var(--cream-dark)';
 
-  imgWrap.append(faceImg);
+  const backImg = document.createElement('img');
+  backImg.className = 'fc-img'; backImg.alt = name + ' back'; backImg.loading = 'lazy';
+  if (back) backImg.src = back; else backImg.style.background = 'var(--cream-mid)';
+
+  const lFace = document.createElement('span');
+  lFace.className = 'fc-img-label face'; lFace.textContent = 'Face';
+  const lBack = document.createElement('span');
+  lBack.className = 'fc-img-label back'; lBack.textContent = 'Back';
+
+  imgWrap.append(faceImg, backImg, lFace, lBack);
 
   // Card body
   const body = document.createElement('div');
@@ -1202,55 +1174,36 @@ function buildFabricCard(fabric, group, isFirst) {
 }
 
 // ── Load fabrics from Google Sheet ──
-let _fabricsRawCache = null;
+let _fabricsCache = null;
 
-async function _loadAllFabrics() {
-  if (_fabricsRawCache) return _fabricsRawCache;
+async function loadFabrics() {
+  if (_fabricsCache) return _fabricsCache;
   const res  = await fetch(SHEET_URL + '?action=getFabrics');
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const json = await res.json();
   if (!json.success) throw new Error(json.message || 'API error');
-  _fabricsRawCache = json.fabrics || [];
-  return _fabricsRawCache;
+  _fabricsCache = (json.fabrics || []).filter(r =>
+    (r['Garments'] || '').trim().toLowerCase().includes('shirt')
+  );
+  return _fabricsCache;
 }
-
-async function loadFabrics() {
-  const all = await _loadAllFabrics();
-  return all.filter(r => (r['Garments'] || '').trim().toLowerCase().includes('shirt'));
-}
-
-async function loadBibFabrics() {
-  const all = await _loadAllFabrics();
-  return all.filter(r => (r['Garments'] || '').trim().toLowerCase().includes('tuxedo_bib'));
-}
-
 async function renderFabricGrids() {
   const mainGrid = document.getElementById('fabric-main-grid');
   const compGrid = document.getElementById('fabric-comp-grid');
-  const bibGrid  = document.getElementById('fabric-bib-grid');
   try {
-    const [fabrics, bibFabrics] = await Promise.all([loadFabrics(), loadBibFabrics()]);
-
+    const fabrics = await loadFabrics();
     if (!fabrics.length) {
       const msg = '<div class="fabric-error">No shirt fabrics found. Check the Garments column in your sheet.</div>';
-      mainGrid.innerHTML = msg; compGrid.innerHTML = msg;
-    } else {
-      mainGrid.innerHTML = '';
-      fabrics.forEach((f, i) => mainGrid.appendChild(buildFabricCard(f, 'main', i === 0)));
-      compGrid.innerHTML = '';
-      fabrics.forEach((f, i) => compGrid.appendChild(buildFabricCard(f, 'comp', false)));
+      mainGrid.innerHTML = msg; compGrid.innerHTML = msg; return;
     }
-
-    bibGrid.innerHTML = '';
-    if (!bibFabrics.length) {
-      bibGrid.innerHTML = '<div class="fabric-error">No tuxedo bib fabrics found. Check the Garments column in your sheet.</div>';
-    } else {
-      bibFabrics.forEach((f, i) => bibGrid.appendChild(buildFabricCard(f, 'bib', i === 0)));
-    }
+    mainGrid.innerHTML = '';
+    fabrics.forEach((f, i) => mainGrid.appendChild(buildFabricCard(f, 'main', i === 0)));
+    compGrid.innerHTML = '';
+    fabrics.forEach((f, i) => compGrid.appendChild(buildFabricCard(f, 'comp', i === 0)));
   } catch (err) {
     console.error('Fabric load error:', err);
     const errHtml = `<div class="fabric-error">Could not load fabrics (${err.message}).</div>`;
-    mainGrid.innerHTML = errHtml; compGrid.innerHTML = errHtml; bibGrid.innerHTML = errHtml;
+    mainGrid.innerHTML = errHtml; compGrid.innerHTML = errHtml;
   }
 }
 
@@ -1264,83 +1217,26 @@ function buildSummary() {
   var rows = document.getElementById('summary-rows');
   if (!rows) return;
   var cfg = collectConfig();
-
-  // Helper: read a measurement input value
-  function mval(id) {
-    var el = document.getElementById('mf-' + id);
-    return (el && el.value && parseFloat(el.value) > 0) ? el.value + ' cm' : '';
-  }
-
-  var sections = [
-    {
-      label: 'Design',
-      rows: [
-        ['Garment',              'Shirt'],
-        ['Fit',                  cfg['FIT']],
-        ['Placket',              cfg['CLOSURE']],
-        ['Collar',               cfg['NECK']],
-        ['Collar Stays',         cfg['SLEEVE BUTTONS']],
-        ['Collar Interlining',   cfg['CONSTRUCTION']],
-        ['Cuff',                 cfg['SLEEVE CUFF']],
-        ['Back',                 cfg['BACK']],
-        ['Front Pocket',         cfg['FRONT POCKETS']],
-        ['Hem',                  cfg['HEM/FINISH']],
-      ]
-    },
-    {
-      label: 'Materials & Construction',
-      rows: [
-        ['Main Fabric',    cfg['MAIN FABRIC']],
-        ['Fabric Code',    cfg['CODE']],
-        ['Color',          cfg['color']],
-        ['Composition',    cfg['composition']],
-        ['Tuxedo Bib',     cfg['TUXEDO BIB FABRIC']],
-        ['Contrast Fabric',cfg['CONTRAST FABRIC'] === 'None' ? '' : cfg['CONTRAST FABRIC']],
-        ['Contrast On',    cfg['CONTRAST PLACEMENT']],
-        ['Buttons',        selText('.btn-material.selected .bm-name')],
-        ['Button Size',    selText('.btn-size.selected')],
-        ['Button Stitching', cfg['LINING TYPE']],
-      ]
-    },
-    {
-      label: 'Measurements',
-      rows: [
-        ['Height',                    mval('height')],
-        ['Bust Girth',                mval('bustGirth')],
-        ['Waist Girth',               mval('waistGirth')],
-        ['Hip Girth',                 mval('hipGirth')],
-        ['Neck Base Girth',           mval('neckBaseGirth')],
-        ['Upper Bicep Girth',         mval('upperBicepGirth')],
-        ['Wrist Girth',               mval('wristGirth')],
-        ['Shoulder Length',           mval('shoulderLength')],
-        ['Outer Arm Length',          mval('outerArmLength')],
-        ['Upper Arm Length',          mval('upperArmLength')],
-        ['Back Neck to Waist',        mval('backNeckToWaist')],
-        ['Across Back Shoulder',      mval('acrossBackShoulderWidth')],
-        ['Across Back Width',         mval('acrossBackWidth')],
-        ['Shirt Length',              mval('shirtLength')],
-      ]
-    }
+  var fields = [
+    ['Garment',      'Shirt'],
+    ['Fit',          cfg['FIT']],
+    ['Placket',      cfg['CLOSURE']],
+    ['Collar',       cfg['NECK']],
+    ['Cuff',         cfg['SLEEVE CUFF']],
+    ['Back',         cfg['BACK']],
+    ['Front Pocket', cfg['FRONT POCKETS']],
+    ['Hem',          cfg['HEM/FINISH']],
+    ['Main Fabric',  cfg['MAIN FABRIC'] + (cfg['CODE'] ? ' (' + cfg['CODE'] + ')' : '')],
+    ['Contrast',     cfg['CONTRAST FABRIC']],
+    ['Buttons',      cfg['STRUCTURE']],
+    ['Stitching',    cfg['LINING TYPE']],
   ];
-
-  function selText(sel) {
-    var el = document.querySelector(sel);
-    return el ? el.textContent.trim() : '';
-  }
-
-  rows.innerHTML = sections.map(function(sec) {
-    var visibleRows = sec.rows.filter(function(r){ return r[1] && r[1].toString().trim(); });
-    if (!visibleRows.length) return '';
-    return '<div style="margin-bottom:4px;">'
-      + '<div style="font-size:9px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);padding:14px 0 6px;border-bottom:1px solid var(--border);">' + sec.label + '</div>'
-      + visibleRows.map(function(r) {
-          return '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--border);">'
-            + '<span style="font-family:\'Jost\',sans-serif;font-size:11px;color:var(--ink-light);letter-spacing:0.03em;flex-shrink:0;padding-right:12px;">' + r[0] + '</span>'
-            + '<span style="font-family:\'Jost\',sans-serif;font-size:11px;font-weight:500;color:var(--ink);text-align:right;letter-spacing:0.02em;">' + r[1] + '</span>'
-            + '</div>';
-        }).join('')
+  rows.innerHTML = fields.filter(function(f){ return f[1] && f[1].trim(); }).map(function(f) {
+    return '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--border);">'
+      + '<span style="font-family:\'Jost\',sans-serif;font-size:11px;color:var(--ink-light);letter-spacing:0.04em;">' + f[0] + '</span>'
+      + '<span style="font-family:\'Jost\',sans-serif;font-size:12px;font-weight:500;color:var(--ink);text-align:right;max-width:55%;letter-spacing:0.02em;">' + f[1] + '</span>'
       + '</div>';
-  }).join('') + '<div style="height:16px;"></div>';
+  }).join('') + '<div style="height:12px;"></div>';
 }
 
 async function handleAddToCart() {
@@ -1351,8 +1247,7 @@ async function handleAddToCart() {
     toast('Added to cart!');
     setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/cart'; }, 1800);
   } catch(e) {
-    console.error('handleAddToCart:', e);
-    toast('Could not add to cart: ' + e.message, 'err');
+    toast('Could not add to cart', 'err');
     if (btn) { btn.disabled = false; btn.style.opacity = ''; }
   }
 }
@@ -1365,99 +1260,49 @@ async function handleOrderNow() {
     toast('Order placed — going to checkout…');
     setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/checkout'; }, 1800);
   } catch(e) {
-    console.error('handleOrderNow:', e);
-    toast('Could not place order: ' + e.message, 'err');
+    toast('Could not place order', 'err');
     if (btn) { btn.disabled = false; btn.style.opacity = ''; }
   }
 }
 
-// ── On-screen debug panel ──
-function _debugLog(msg, isErr) {
-  var panel = document.getElementById('tt-debug');
-  if (!panel) {
-    panel = document.createElement('div');
-    panel.id = 'tt-debug';
-    panel.style.cssText = 'position:fixed;bottom:0;left:0;right:0;max-height:200px;overflow-y:auto;' +
-      'background:#111;color:#0f0;font:12px/1.6 monospace;padding:8px 12px 8px;z-index:99999;' +
-      'border-top:2px solid #0f0;';
-    var x = document.createElement('button');
-    x.textContent = 'close';
-    x.style.cssText = 'float:right;background:none;border:1px solid #0f0;color:#0f0;cursor:pointer;font:11px monospace;padding:1px 7px;margin-left:8px;';
-    x.onclick = function(){ panel.remove(); };
-    panel.appendChild(x);
-    document.body.appendChild(panel);
-  }
-  var line = document.createElement('div');
-  line.style.color = isErr ? '#f66' : '#0f0';
-  line.textContent = new Date().toISOString().slice(11,19) + '  ' + msg;
-  panel.appendChild(line);
-  panel.scrollTop = panel.scrollHeight;
-}
-
-// ── Core save — JSONP script tag gets real response AND bypasses CORS ──
-function _saveToSheet(data) {
-  _debugLog('saving… keys: ' + Object.keys(data).join(', '));
-  return new Promise(function(resolve, reject) {
-    var cbName = '__ttSave_' + Date.now();
-
-    // Sanitize: stringify first, then strip lone surrogates from the raw JSON string
-    var json;
-    try { json = JSON.stringify(data); }
-    catch(e) { json = '{}'; }
-    json = json.replace(/[\uD800-\uDFFF]/g, '');
-    var payload;
-    try {
-      payload = encodeURIComponent(json);
-    } catch(encErr) {
-      _debugLog('encode still failing, stripping to ASCII: ' + encErr.message, true);
-      payload = encodeURIComponent(json.replace(/[^\x00-\x7F]/g, '?'));
-    }
-    var url = SHEET_URL + '?payload=' + payload + '&callback=' + cbName;
-    _debugLog('URL length: ' + url.length + '  cb: ' + cbName);
-
-    var script = document.createElement('script');
-    var timer  = setTimeout(function() {
-      cleanup();
-      var m = 'TIMEOUT 12s — script never called back';
-      _debugLog(m, true);
-      reject(new Error(m));
-    }, 12000);
-
-    function cleanup() {
-      clearTimeout(timer);
-      delete window[cbName];
-      if (script.parentNode) document.body.removeChild(script);
-    }
-
-    window[cbName] = function(res) {
-      _debugLog('response: ' + JSON.stringify(res));
-      cleanup();
-      if (res && res.success) { _debugLog('OK — saved'); resolve(res); }
-      else {
-        var m = res && res.message ? res.message : 'success:false (no message)';
-        _debugLog('FAIL: ' + m, true);
-        reject(new Error(m));
-      }
-    };
-
-    script.onerror = function() {
-      cleanup();
-      var m = 'script.onerror — URL blocked or unreachable';
-      _debugLog(m, true);
-      reject(new Error(m));
-    };
-
-    document.body.appendChild(script);
-    script.src = url;
-    _debugLog('script tag injected, waiting…');
-  });
-}
-
+// Same hidden-iframe technique as Save Configuration — bypasses CORS completely
 function _saveViaIframe(status) {
   var data = collectConfig();
   data['Status'] = status;
   data['Created At'] = new Date().toISOString();
-  return _saveToSheet(data);
+
+  // Attach measurements from form
+  var measData = {};
+  var fd = new FormData(document.getElementById('meas-form'));
+  fd.forEach(function(v, k){ if (v) measData[k] = v; });
+  data['measurements'] = JSON.stringify(measData);
+
+  var payload = encodeURIComponent(JSON.stringify(data));
+  var url     = SHEET_URL + '?payload=' + payload;
+
+  return new Promise(function(resolve) {
+    var iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = url;
+
+    var handler = function(event) {
+      if (String(event.data).indexOf('shirt_') === 0) {
+        window.removeEventListener('message', handler);
+        document.body.removeChild(iframe);
+        resolve(event.data);
+      }
+    };
+    window.addEventListener('message', handler);
+
+    // Fallback — if no message in 8s, assume saved
+    setTimeout(function() {
+      window.removeEventListener('message', handler);
+      if (iframe.parentNode) document.body.removeChild(iframe);
+      resolve('shirt_saved');
+    }, 8000);
+
+    document.body.appendChild(iframe);
+  });
 }
 
 // ── Google Sheets Integration ──
@@ -1504,22 +1349,10 @@ function collectConfig() {
     'CODE':                selText('#fabric-main-grid .fabric-card.selected .fcode'),
     'color':               document.querySelector('#fabric-main-grid .fabric-card.selected')?.dataset.color || '',
     'composition':         document.querySelector('#fabric-main-grid .fabric-card.selected')?.dataset.comp  || '',
-    'CONTRAST FABRIC':     (() => {
-                             const body = document.getElementById('comp-fabric-body');
-                             if (!body || body.style.display === 'none') return 'None';
-                             return selText('#fabric-comp-grid .fabric-card.selected .fname') || '';
-                           })(),
-    'CONTRAST PLACEMENT':  (() => {
-                             const body = document.getElementById('comp-fabric-body');
-                             if (!body || body.style.display === 'none') return '';
-                             const parts = [];
-                             if (document.getElementById('comp-part-cuffs')?.classList.contains('selected'))  parts.push('Cuffs');
-                             if (document.getElementById('comp-part-collar')?.classList.contains('selected')) parts.push('Collar');
-                             return parts.join(', ');
-                           })(),
-    'TUXEDO BIB FABRIC':   document.getElementById('section-tuxedo-bib')?.classList.contains('visible')
-                             ? selText('#fabric-bib-grid .fabric-card.selected .fname')
-                             : '',
+    'CONTRAST FABRIC':     document.getElementById('fabric-comp-grid').style.pointerEvents === 'none'
+                             ? 'Same as Main'
+                             : selText('#fabric-comp-grid .fabric-card.selected .fname'),
+    'CONTRAST PLACEMENT':  '',
     'STRUCTURE':           selText('.btn-material.selected .bm-name') + ' ' + selText('.btn-size.selected'),
     'LINING FABRIC':       '',
     'LINING TYPE':         selText('.btn-stitch-card.selected .cname'),
@@ -1530,12 +1363,33 @@ window.collectConfig = collectConfig;
 async function submitOrder() {
   const btn   = document.getElementById('submit-btn');
   const label = document.getElementById('submit-label');
-  if (btn)   btn.disabled = true;
-  if (label) label.textContent = 'Saving…';
+  if (btn) { btn.disabled = true; }
+  if (label) { label.textContent = 'Saving…'; }
 
   try {
-    const data = collectConfig();
-    await _saveToSheet(data);
+    const data    = collectConfig();
+    const payload = encodeURIComponent(JSON.stringify(data));
+    const url     = SHEET_URL + '?payload=' + payload;
+
+    await new Promise(function(resolve) {
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = url;
+      const handler = function(event) {
+        if (String(event.data).indexOf('shirt_') === 0) {
+          window.removeEventListener('message', handler);
+          document.body.removeChild(iframe);
+          resolve(event.data);
+        }
+      };
+      window.addEventListener('message', handler);
+      setTimeout(function() {
+        window.removeEventListener('message', handler);
+        if (iframe.parentNode) document.body.removeChild(iframe);
+        resolve('shirt_saved');
+      }, 8000);
+      document.body.appendChild(iframe);
+    });
 
     if (label) label.textContent = 'Save Configuration';
     if (btn)   btn.disabled = false;
@@ -1545,9 +1399,7 @@ async function submitOrder() {
   } catch (err) {
     if (label) label.textContent = 'Save Configuration';
     if (btn)   btn.disabled = false;
-    // Show the real error so we can debug it
-    toast('Save failed: ' + err.message, 'err');
-    console.error('submitOrder error:', err);
+    toast('Could not save: ' + err.message, 'err');
   }
 }
 
@@ -1716,7 +1568,6 @@ function showFeedback(msg, color) {
     SHIRT_VOL.forEach(function(f){ gv.appendChild(makeField(f[0], f[1])); });
     SHIRT_LIN.forEach(function(f){ gl.appendChild(makeField(f[0], f[1])); });
     initMeasDiag();
-    _attachMeasDirtyListeners();
   }
 
   function sheetsReq(action, payload) {
@@ -1748,9 +1599,6 @@ function showFeedback(msg, color) {
       var el = document.getElementById('mf-' + key);
       if (el && el.type === 'number') { var num = parseFloat(val); if (!isNaN(num) && num > 0) el.value = num; }
     });
-    // Prefilling from saved data is not a user change — reset dirty flag
-    _measDirty = false;
-    if (typeof updateMeasBtn === 'function') updateMeasBtn();
   }
 
   var _measRecords = [];
@@ -1821,38 +1669,8 @@ function showFeedback(msg, color) {
       .catch(function(){ toast('Network error', 'err'); })
       .finally(function(){
         btn.disabled = false; lbl.style.display = ''; sp.style.display = 'none';
-        _measDirty = false;
-        updateMeasBtn();
         if (typeof goToSummary === 'function') goToSummary();
       });
-  };
-
-  // ── Dirty tracking: watch all measurement inputs ──
-  var _measDirty = false;
-
-  function _attachMeasDirtyListeners() {
-    var form = document.getElementById('meas-form');
-    if (!form) return;
-    form.addEventListener('input', function() {
-      if (!_measDirty) {
-        _measDirty = true;
-        updateMeasBtn();
-      }
-    });
-  }
-
-  window.updateMeasBtn = function() {
-    var lbl = document.getElementById('meas-save-lbl');
-    if (!lbl) return;
-    lbl.innerHTML = _measDirty ? 'Save Measurements &amp; Continue' : 'Continue to Summary';
-  };
-
-  window.measPrimaryAction = function(e) {
-    if (_measDirty) {
-      window.measHandleSubmitAndContinue(e);
-    } else {
-      if (typeof goToSummary === 'function') goToSummary();
-    }
   };
 
   window.measResetForm = function() {
@@ -1888,7 +1706,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.6</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.0</div>
 
 <!-- Firebase -->
 <script type="module">
