@@ -1400,11 +1400,15 @@ function _saveToSheet(data) {
   return new Promise(function(resolve, reject) {
     var cbName = '__ttSave_' + Date.now();
 
-// Sanitize: stringify first, then strip lone surrogates from the raw JSON string
+/// Sanitize: stringify first, then strip lone surrogates from the raw JSON string
 var json;
 try { json = JSON.stringify(data); }
 catch(e) { json = '{}'; }
 json = json.replace(/[\uD800-\uDFFF]/g, '');
+// Replace non-breaking spaces
+json = json.replace(/\u00A0/g, ' ');
+// Encode bare % signs so encodeURIComponent doesn't choke
+json = json.replace(/%(?![0-9A-Fa-f]{2})/g, '%25');
 // Normalize unicode to remove problem characters
 try { json = json.normalize('NFC'); } catch(e) {}
 var payload;
@@ -1418,6 +1422,7 @@ try {
     })
   );
 }
+    
 var url = SHEET_URL + '?payload=' + payload + '&callback=' + cbName;
 _debugLog('URL length: ' + url.length + '  cb: ' + cbName);
     
