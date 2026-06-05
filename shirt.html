@@ -1351,7 +1351,8 @@ async function handleAddToCart() {
     toast('Added to cart!');
     setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/cart'; }, 1800);
   } catch(e) {
-    toast('Could not add to cart', 'err');
+    console.error('handleAddToCart:', e);
+    toast('Could not add to cart: ' + e.message, 'err');
     if (btn) { btn.disabled = false; btn.style.opacity = ''; }
   }
 }
@@ -1364,22 +1365,50 @@ async function handleOrderNow() {
     toast('Order placed — going to checkout…');
     setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/checkout'; }, 1800);
   } catch(e) {
-    toast('Could not place order', 'err');
+    console.error('handleOrderNow:', e);
+    toast('Could not place order: ' + e.message, 'err');
     if (btn) { btn.disabled = false; btn.style.opacity = ''; }
   }
 }
 
+// ── On-screen debug panel ──
+function _debugLog(msg, isErr) {
+  var panel = document.getElementById('tt-debug');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'tt-debug';
+    panel.style.cssText = 'position:fixed;bottom:0;left:0;right:0;max-height:200px;overflow-y:auto;' +
+      'background:#111;color:#0f0;font:12px/1.6 monospace;padding:8px 12px 8px;z-index:99999;' +
+      'border-top:2px solid #0f0;';
+    var x = document.createElement('button');
+    x.textContent = 'close';
+    x.style.cssText = 'float:right;background:none;border:1px solid #0f0;color:#0f0;cursor:pointer;font:11px monospace;padding:1px 7px;margin-left:8px;';
+    x.onclick = function(){ panel.remove(); };
+    panel.appendChild(x);
+    document.body.appendChild(panel);
+  }
+  var line = document.createElement('div');
+  line.style.color = isErr ? '#f66' : '#0f0';
+  line.textContent = new Date().toISOString().slice(11,19) + '  ' + msg;
+  panel.appendChild(line);
+  panel.scrollTop = panel.scrollHeight;
+}
+
 // ── Core save — JSONP script tag gets real response AND bypasses CORS ──
 function _saveToSheet(data) {
+  _debugLog('saving… keys: ' + Object.keys(data).join(', '));
   return new Promise(function(resolve, reject) {
     var cbName  = '__ttSave_' + Date.now();
     var payload = encodeURIComponent(JSON.stringify(data));
     var url     = SHEET_URL + '?payload=' + payload + '&callback=' + cbName;
+    _debugLog('URL length: ' + url.length + '  cb: ' + cbName);
 
     var script = document.createElement('script');
     var timer  = setTimeout(function() {
       cleanup();
-      reject(new Error('Save timed out (12s) — check Apps Script deployment'));
+      var m = 'TIMEOUT 12s — script never called back';
+      _debugLog(m, true);
+      reject(new Error(m));
     }, 12000);
 
     function cleanup() {
@@ -1389,18 +1418,26 @@ function _saveToSheet(data) {
     }
 
     window[cbName] = function(res) {
+      _debugLog('response: ' + JSON.stringify(res));
       cleanup();
-      if (res && res.success) resolve(res);
-      else reject(new Error(res && res.message ? res.message : 'Apps Script returned success:false'));
+      if (res && res.success) { _debugLog('OK — saved'); resolve(res); }
+      else {
+        var m = res && res.message ? res.message : 'success:false (no message)';
+        _debugLog('FAIL: ' + m, true);
+        reject(new Error(m));
+      }
     };
 
     script.onerror = function() {
       cleanup();
-      reject(new Error('Could not reach Apps Script — check deployment URL'));
+      var m = 'script.onerror — URL blocked or unreachable';
+      _debugLog(m, true);
+      reject(new Error(m));
     };
 
     document.body.appendChild(script);
     script.src = url;
+    _debugLog('script tag injected, waiting…');
   });
 }
 
@@ -1848,7 +1885,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.3</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.4</div>
 
 <!-- Firebase -->
 <script type="module">
