@@ -1398,9 +1398,35 @@ function _debugLog(msg, isErr) {
 function _saveToSheet(data) {
   _debugLog('saving… keys: ' + Object.keys(data).join(', '));
   return new Promise(function(resolve, reject) {
-    var cbName  = '__ttSave_' + Date.now();
-    var payload = encodeURIComponent(JSON.stringify(data));
-    var url     = SHEET_URL + '?payload=' + payload + '&callback=' + cbName;
+    var cbName = '__ttSave_' + Date.now();
+
+    // Sanitize: strip invalid unicode (lone surrogates) from every string value
+    var clean = {};
+    Object.keys(data).forEach(function(k) {
+      var v = data[k];
+      if (typeof v === 'string') {
+        v = v.replace(/[\uD800-\uDFFF]/g, '');  // strip lone surrogates
+      }
+      clean[k] = v;
+    });
+
+    var json, payload;
+    try {
+      json    = JSON.stringify(clean);
+      payload = encodeURIComponent(json);
+    } catch(encErr) {
+      // Find which field is causing it
+      Object.keys(clean).forEach(function(k) {
+        try { encodeURIComponent(String(clean[k])); }
+        catch(e) { _debugLog('BAD FIELD: "' + k + '" = ' + JSON.stringify(String(clean[k])), true); }
+      });
+      _debugLog('encode error: ' + encErr.message + ' — retrying ASCII-only', true);
+      var safeJson = JSON.stringify(clean).replace(/[^\x00-\x7F]/g, '?');
+      payload = encodeURIComponent(safeJson);
+      _debugLog('retried with ASCII-only payload');
+    }
+
+    var url = SHEET_URL + '?payload=' + payload + '&callback=' + cbName;
     _debugLog('URL length: ' + url.length + '  cb: ' + cbName);
 
     var script = document.createElement('script');
@@ -1885,7 +1911,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.4</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.5</div>
 
 <!-- Firebase -->
 <script type="module">
