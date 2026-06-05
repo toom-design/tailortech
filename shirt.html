@@ -1400,20 +1400,27 @@ function _saveToSheet(data) {
   return new Promise(function(resolve, reject) {
     var cbName = '__ttSave_' + Date.now();
 
-    // Sanitize: stringify first, then strip lone surrogates from the raw JSON string
-    var json;
-    try { json = JSON.stringify(data); }
-    catch(e) { json = '{}'; }
-    json = json.replace(/[\uD800-\uDFFF]/g, '');
-    var payload;
-    try {
-      payload = encodeURIComponent(json);
-    } catch(encErr) {
-      _debugLog('encode still failing, stripping to ASCII: ' + encErr.message, true);
-      payload = encodeURIComponent(json.replace(/[^\x00-\x7F]/g, '?'));
-    }
-    var url = SHEET_URL + '?payload=' + payload + '&callback=' + cbName;
-    _debugLog('URL length: ' + url.length + '  cb: ' + cbName);
+// Sanitize: stringify first, then strip lone surrogates from the raw JSON string
+var json;
+try { json = JSON.stringify(data); }
+catch(e) { json = '{}'; }
+json = json.replace(/[\uD800-\uDFFF]/g, '');
+// Normalize unicode to remove problem characters
+try { json = json.normalize('NFC'); } catch(e) {}
+var payload;
+try {
+  payload = encodeURIComponent(json);
+} catch(encErr) {
+  _debugLog('encode still failing, using char-by-char fallback: ' + encErr.message, true);
+  payload = encodeURIComponent(
+    json.replace(/[^\x00-\x7F]/g, function(c) {
+      try { return encodeURIComponent(c) ? c : '?'; } catch(e) { return '?'; }
+    })
+  );
+}
+var url = SHEET_URL + '?payload=' + payload + '&callback=' + cbName;
+_debugLog('URL length: ' + url.length + '  cb: ' + cbName);
+    
 
     var script = document.createElement('script');
     var timer  = setTimeout(function() {
