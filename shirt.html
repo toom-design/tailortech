@@ -1369,44 +1369,55 @@ async function handleOrderNow() {
   }
 }
 
-// Same hidden-iframe technique as Save Configuration — bypasses CORS completely
+// ── Core save — JSONP script tag gets real response AND bypasses CORS ──
+function _saveToSheet(data) {
+  return new Promise(function(resolve, reject) {
+    var cbName  = '__ttSave_' + Date.now();
+    var payload = encodeURIComponent(JSON.stringify(data));
+    var url     = SHEET_URL + '?payload=' + payload + '&callback=' + cbName;
+
+    var script = document.createElement('script');
+    var timer  = setTimeout(function() {
+      cleanup();
+      reject(new Error('Save timed out (12s) — check Apps Script deployment'));
+    }, 12000);
+
+    function cleanup() {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (script.parentNode) document.body.removeChild(script);
+    }
+
+    window[cbName] = function(res) {
+      cleanup();
+      if (res && res.success) resolve(res);
+      else reject(new Error(res && res.message ? res.message : 'Apps Script returned success:false'));
+    };
+
+    script.onerror = function() {
+      cleanup();
+      reject(new Error('Could not reach Apps Script — check deployment URL'));
+    };
+
+    document.body.appendChild(script);
+    script.src = url;
+  });
+}
+
 function _saveViaIframe(status) {
   var data = collectConfig();
   data['Status'] = status;
   data['Created At'] = new Date().toISOString();
 
-  // Attach measurements from form
+  // Attach measurements
   var measData = {};
-  var fd = new FormData(document.getElementById('meas-form'));
-  fd.forEach(function(v, k){ if (v) measData[k] = v; });
+  try {
+    var fd = new FormData(document.getElementById('meas-form'));
+    fd.forEach(function(v, k){ if (v) measData[k] = v; });
+  } catch(e) {}
   data['measurements'] = JSON.stringify(measData);
 
-  var payload = encodeURIComponent(JSON.stringify(data));
-  var url     = SHEET_URL + '?payload=' + payload;
-
-  return new Promise(function(resolve) {
-    var iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-    iframe.src = url;
-
-    var handler = function(event) {
-      if (String(event.data).indexOf('shirt_') === 0) {
-        window.removeEventListener('message', handler);
-        document.body.removeChild(iframe);
-        resolve(event.data);
-      }
-    };
-    window.addEventListener('message', handler);
-
-    // Fallback — if no message in 8s, assume saved
-    setTimeout(function() {
-      window.removeEventListener('message', handler);
-      if (iframe.parentNode) document.body.removeChild(iframe);
-      resolve('shirt_saved');
-    }, 8000);
-
-    document.body.appendChild(iframe);
-  });
+  return _saveToSheet(data);
 }
 
 // ── Google Sheets Integration ──
@@ -1479,33 +1490,12 @@ window.collectConfig = collectConfig;
 async function submitOrder() {
   const btn   = document.getElementById('submit-btn');
   const label = document.getElementById('submit-label');
-  if (btn) { btn.disabled = true; }
-  if (label) { label.textContent = 'Saving…'; }
+  if (btn)   btn.disabled = true;
+  if (label) label.textContent = 'Saving…';
 
   try {
-    const data    = collectConfig();
-    const payload = encodeURIComponent(JSON.stringify(data));
-    const url     = SHEET_URL + '?payload=' + payload;
-
-    await new Promise(function(resolve) {
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = url;
-      const handler = function(event) {
-        if (String(event.data).indexOf('shirt_') === 0) {
-          window.removeEventListener('message', handler);
-          document.body.removeChild(iframe);
-          resolve(event.data);
-        }
-      };
-      window.addEventListener('message', handler);
-      setTimeout(function() {
-        window.removeEventListener('message', handler);
-        if (iframe.parentNode) document.body.removeChild(iframe);
-        resolve('shirt_saved');
-      }, 8000);
-      document.body.appendChild(iframe);
-    });
+    const data = collectConfig();
+    await _saveToSheet(data);
 
     if (label) label.textContent = 'Save Configuration';
     if (btn)   btn.disabled = false;
@@ -1515,7 +1505,9 @@ async function submitOrder() {
   } catch (err) {
     if (label) label.textContent = 'Save Configuration';
     if (btn)   btn.disabled = false;
-    toast('Could not save: ' + err.message, 'err');
+    // Show the real error so we can debug it
+    toast('Save failed: ' + err.message, 'err');
+    console.error('submitOrder error:', err);
   }
 }
 
@@ -1856,7 +1848,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.2</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.3</div>
 
 <!-- Firebase -->
 <script type="module">
