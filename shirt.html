@@ -1493,24 +1493,27 @@ function collectConfig() {
     'Created At':          new Date().toISOString(),
     'Terms Accepted':      '',
     'Marketing Consent':   '',
-    'GENDER':              state.gender || 'M',
+    'GENDER':              sectionPill('Gender'),
+    
     'FIT':                 sectionPill('Fit'),
-    'STYLE/SILHOUETTE':    '',
+    'STYLE/SILHOUETTE':    'N/A',
     'CLOSURE':             sectionPill('Closure — Placket'),
     'NECK':                selText('#collar-grid .option-card.selected .cname'),
     'FRONT POCKETS':       sectionPill('Front Pocket'),
     'EXTRA POCKETS':       'N/A',
     'HEM/FINISH':          sectionPill('Hem / Finish'),
     'BACK':                sectionPill('Back'),
+    
     'SLEEVE HEAD':         'N/A',
     'SLEEVE STYLE':        'N/A',
     'CONSTRUCTION':        'N/A',
     'SLEEVE BUTTONS':      'N/A',
     'SLEEVE CUFF':         selText('#cuffs-grid .option-card.selected .cname'),
     
-    'WAISTBAND STYLE':     '',
-    'WAIST ADJUSTMENT':    '',
-    'RISE':                '',
+    'WAISTBAND STYLE':     'N/A',
+    'WAIST ADJUSTMENT':    'N/A',
+    'RISE':                'N/A',
+    
     'MAIN FABRIC':         selText('#fabric-main-grid .fabric-card.selected .fname'),
     'CODE':                selText('#fabric-main-grid .fabric-card.selected .fcode'),
     'color':               document.querySelector('#fabric-main-grid .fabric-card.selected')?.dataset.color || '',
@@ -1529,9 +1532,10 @@ function collectConfig() {
                              return parts.join(', ');
                            })(),
     
-    'STRUCTURE':           selText('.btn-material.selected .bm-name') + ' ' + selText('.btn-size.selected'),
-    'LINING FABRIC':       '',
-    'LINING TYPE':         selText('.btn-stitch-card.selected .cname'),
+    'STRUCTURE':           'N/A',
+    'LINING FABRIC':       'N/A',
+    'LINING TYPE':         'N/A',
+    
     'TUXEDO BIB FABRIC':   (() => {
                              const sec = document.getElementById('section-tuxedo-bib');
                              if (!sec || !sec.classList.contains('visible')) return '';
