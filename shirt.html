@@ -1499,14 +1499,15 @@ function collectConfig() {
     'CLOSURE':             sectionPill('Closure — Placket'),
     'NECK':                selText('#collar-grid .option-card.selected .cname'),
     'FRONT POCKETS':       sectionPill('Front Pocket'),
-    'EXTRA POCKETS':       '',
+    'EXTRA POCKETS':       'N/A',
     'HEM/FINISH':          sectionPill('Hem / Finish'),
     'BACK':                sectionPill('Back'),
-    'SLEEVE HEAD':         '',
-    'SLEEVE STYLE':        '',
-    'CONSTRUCTION':        sectionPill('Collar Interlining'),
-    'SLEEVE BUTTONS':      sectionPill('Collar Stays'),
+    'SLEEVE HEAD':         'N/A',
+    'SLEEVE STYLE':        'N/A',
+    'CONSTRUCTION':        'N/A',
+    'SLEEVE BUTTONS':      'N/A',
     'SLEEVE CUFF':         selText('#cuffs-grid .option-card.selected .cname'),
+    
     'WAISTBAND STYLE':     '',
     'WAIST ADJUSTMENT':    '',
     'RISE':                '',
@@ -1527,6 +1528,10 @@ function collectConfig() {
                              if (document.getElementById('comp-part-collar')?.classList.contains('selected')) parts.push('Collar');
                              return parts.join(', ');
                            })(),
+    
+    'STRUCTURE':           selText('.btn-material.selected .bm-name') + ' ' + selText('.btn-size.selected'),
+    'LINING FABRIC':       '',
+    'LINING TYPE':         selText('.btn-stitch-card.selected .cname'),
     'TUXEDO BIB FABRIC':   (() => {
                              const sec = document.getElementById('section-tuxedo-bib');
                              if (!sec || !sec.classList.contains('visible')) return '';
@@ -1536,9 +1541,8 @@ function collectConfig() {
                              const code = card.querySelector('.fcode')?.textContent.trim();
                              return name || code || '';
                            })(),
-    'STRUCTURE':           selText('.btn-material.selected .bm-name') + ' ' + selText('.btn-size.selected'),
-    'LINING FABRIC':       '',
-    'LINING TYPE':         selText('.btn-stitch-card.selected .cname'),
+    'COLLAR INTERLINING':  sectionPill('Collar Interlining'),
+    'COLLAR STAYS':        sectionPill('Collar Stays'), 
   };
 }
 window.collectConfig = collectConfig;
