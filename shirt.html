@@ -484,6 +484,15 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
     <!-- DESIGN PANEL -->
     <div class="config-body" id="panel-design">
 
+      <!-- GENDER -->
+      <div class="section">
+        <div class="section-label">Gender</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectGender(this,'M')">Male</button>
+          <button class="pill"          onclick="selectGender(this,'F')">Female</button>
+        </div>
+      </div>
+
       <!-- FIT -->
       <div class="section">
         <div class="section-label">Fit</div>
@@ -854,6 +863,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 const BASE = 'https://raw.githubusercontent.com/toom-design/shirt_M/main/';
 
 const state = {
+  gender: 'M',
   fit: 'regular',
   placket: 'classic',
   collar: 'classic',
@@ -936,6 +946,12 @@ function preloadAll() {
   const finish = () => { if (++done >= all.length) document.getElementById('loading-overlay').classList.add('done'); };
   all.forEach(u => { const i = new Image(); i.onload = i.onerror = finish; i.src = u; });
   setTimeout(() => document.getElementById('loading-overlay').classList.add('done'), 5000);
+}
+
+function selectGender(el, v) {
+  el.closest('.pill-group').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  state.gender = v;
 }
 
 function selectFit(el, v) {
@@ -1474,7 +1490,7 @@ function collectConfig() {
     'Created At':          new Date().toISOString(),
     'Terms Accepted':      '',
     'Marketing Consent':   '',
-    'GENDER':              'M',
+    'GENDER':              state.gender || 'M',
     'FIT':                 sectionPill('Fit'),
     'STYLE/SILHOUETTE':    '',
     'CLOSURE':             sectionPill('Closure — Placket'),
@@ -1879,7 +1895,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.1.9</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.2.0</div>
 
 <!-- Firebase -->
 <script type="module">
