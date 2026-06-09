@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Suit Configurator — TailorTech</title>
+<title>Suit Configurator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -15,7 +15,14 @@
 }
 body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 .app { display: flex; width: 100%; flex: 1; overflow: hidden; min-height: 0; }
-.preview-panel { flex: 3; background: #ffffff; border-right: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+
+/* ── Measurements active — swap preview/config ratio ── */
+.app.measurements-active .preview-panel { flex: 2; background: var(--white); }
+.app.measurements-active .config-panel  { flex: 3; }
+.app.measurements-active #meas-avatar-panel { display: flex !important; }
+
+/* ── PREVIEW PANEL ── */
+.preview-panel { flex: 3; background: #ffffff; border-right: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; overflow: hidden; transition: flex 0.35s cubic-bezier(0.4,0,0.2,1); }
 .view-toggle { display: flex; padding: 16px 20px 0; justify-content: center; flex-shrink: 0; }
 .view-btn { font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; padding: 8px 28px; border: 1px solid var(--border-mid); background: transparent; color: var(--ink-light); cursor: pointer; transition: all 0.2s; }
 .view-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
@@ -32,46 +39,114 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 .view-bar-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
 .view-bar-btn:first-child { border-radius: 2px 0 0 2px; border-right: none; }
 .view-bar-btn:last-child  { border-radius: 0 2px 2px 0; }
-.config-panel { flex: 2; background: var(--white); overflow-y: auto; min-height: 0; position: relative; }
-.tabs { display: flex; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--white); z-index: 10; }
-.tab { flex: 1; padding: 14px 8px; font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; border: none; background: none; color: var(--ink-faint); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+
+/* ── CONFIG PANEL ── */
+.config-panel { flex: 2; background: var(--white); overflow-y: auto; min-height: 0; position: relative; display: flex; flex-direction: column; transition: flex 0.35s cubic-bezier(0.4,0,0.2,1); }
+.tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 28px; position: sticky; top: 0; background: var(--white); z-index: 20; }
+.tab { font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; padding: 18px 0; margin-right: 24px; border: none; background: none; color: var(--ink-faint); cursor: pointer; border-bottom: 1.5px solid transparent; margin-bottom: -1px; transition: color 0.2s, border-color 0.2s; white-space: nowrap; }
 .tab.active { color: var(--ink); border-bottom-color: var(--ink); }
 .config-body { padding: 28px 28px 48px; display: flex; flex-direction: column; }
+#panel-measurements { padding: 0 !important; flex: 1; min-height: 0; overflow: hidden; }
+
+/* Loading measurements notification */
+#meas-loading-notif {
+  display: none; align-items: center; gap: 8px; margin-bottom: 16px;
+  padding: 8px 12px; border-radius: 2px;
+  background: rgba(109,70,180,0.08); border: 1px solid rgba(109,70,180,0.22);
+  font-size: 11px; font-weight: 500; letter-spacing: 0.06em; color: #6d46b4;
+}
+#meas-loading-notif.visible { display: flex; }
+.meas-notif-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  border: 1.5px solid rgba(109,70,180,0.35); border-top-color: #6d46b4;
+  animation: spin 0.75s linear infinite; flex-shrink: 0;
+}
 .section { padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
 .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); margin-bottom: 14px; }
 .sub-label { font-size: 11px; color: var(--ink-light); margin-bottom: 10px; letter-spacing: 0.02em; }
+
+/* Pills */
 .pill-group { display: flex; flex-wrap: wrap; gap: 8px; }
 .pill { font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 500; padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 50px; background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s; }
 .pill:hover { border-color: var(--ink); color: var(--ink); }
 .pill.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
+
+/* ── Icon cards ── */
 .icon-card-group { display: flex; flex-wrap: wrap; gap: 10px; }
-.icon-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 14px 12px 12px; min-width: 88px; max-width: 110px; background: var(--white); border: 1.5px solid var(--border-mid); border-radius: 4px; cursor: pointer; transition: border-color 0.15s, background 0.15s; font-family: 'Jost', sans-serif; }
+.icon-card {
+  position: relative; display: flex; flex-direction: column; align-items: center;
+  gap: 10px; padding: 14px 12px 12px; min-width: 100px; max-width: 120px;
+  background: var(--white); border: 1.5px solid var(--border-mid); border-radius: 4px;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  font-family: 'Jost', sans-serif;
+}
 .icon-card:hover { background: var(--cream-mid); }
 .icon-card.selected { border-color: var(--ink); background: var(--white); }
-.icon-card.selected::after { content: '✓'; position: absolute; top: 7px; right: 8px; width: 18px; height: 18px; background: var(--ink); color: var(--white); border-radius: 50%; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; line-height: 18px; text-align: center; }
+.icon-card.selected::after {
+  content: '✓'; position: absolute; top: 7px; right: 8px;
+  width: 18px; height: 18px; background: var(--ink); color: var(--white);
+  border-radius: 50%; font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; line-height: 18px; text-align: center;
+}
+.icon-card img { width: 72px; height: 72px; object-fit: contain; }
 .icon-card-label { font-size: 10px; font-weight: 500; color: var(--ink); text-align: center; line-height: 1.4; letter-spacing: 0.02em; }
+.icon-card.disabled { opacity: 0.45; cursor: default; pointer-events: none; }
+.icon-card-soon { font-size: 9px; color: var(--ink-light); margin-top: -4px; }
+
+/* Fabric grid */
 .fabric-search-row { margin-bottom: 12px; }
-.fabric-search { width: 100%; padding: 8px 12px; font-family: 'Jost', sans-serif; font-size: 13px; border: 1px solid var(--border-mid); border-radius: 2px; background: var(--white); color: var(--ink); outline: none; }
-.fabric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.fabric-card { border: 1px solid var(--border); border-radius: 2px; padding: 8px 6px; text-align: center; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.fabric-search { width: 100%; padding: 8px 12px; font-family: 'Jost', sans-serif; font-size: 12px; border: 1px solid var(--border-mid); border-radius: 4px; background: var(--white); color: var(--ink); outline: none; transition: border-color 0.15s; }
+.fabric-search:focus { border-color: var(--ink); }
+.fabric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+
+/* Rich fabric cards */
+.fabric-card {
+  border: 1px solid var(--border); border-radius: 6px; background: #fff;
+  cursor: pointer; display: flex; flex-direction: column;
+  transition: all 0.15s; overflow: hidden; position: relative;
+}
 .fabric-card:hover { border-color: var(--ink-mid); }
-.fabric-card.selected { border-color: var(--ink); border-width: 2px; }
-.swatch { width: 40px; height: 40px; border-radius: 2px; }
-.fname { font-size: 10px; font-weight: 500; color: var(--ink-mid); letter-spacing: 0.02em; }
-.fcode { font-size: 9px; color: var(--ink-faint); letter-spacing: 0.04em; }
-.fabric-card.selected .fname { color: var(--ink); font-weight: 600; }
+.fabric-card.selected { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.fabric-card .fc-images {
+  display: flex; align-items: center; justify-content: center;
+  padding: 14px 14px 10px; flex-shrink: 0; position: relative;
+}
+.fabric-card .fc-img {
+  width: 100%; aspect-ratio: 1 / 1; object-fit: cover;
+  display: block; background: var(--cream-mid); border-radius: 2px;
+}
+.fabric-card .fc-body { padding: 0 10px 14px; display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; }
+.fname { font-size: 12px; font-weight: 600; color: var(--ink); letter-spacing: 0.02em; line-height: 1.3; }
+.fcode { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.06em; }
+.fcomp { font-size: 10px; color: var(--ink-light); letter-spacing: 0.01em; line-height: 1.4; margin-top: 1px; }
+.fc-details-toggle { display: none; }
+.fc-details-drawer {
+  display: none; border-top: 1px solid var(--border);
+  padding: 8px 8px 9px; background: var(--cream-mid);
+  grid-template-columns: 1fr 1fr; gap: 4px 8px; pointer-events: none;
+}
+.fc-details-drawer.open { display: grid; pointer-events: auto; }
+.fc-detail-item { display: flex; flex-direction: column; gap: 1px; }
+.fc-detail-label { font-size: 8px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; color: var(--ink-light); }
+.fc-detail-val   { font-size: 10px; color: var(--ink); font-weight: 400; }
+.fabric-loading {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: 10px;
+  padding: 20px 0; color: var(--ink-light); font-size: 11px; letter-spacing: 0.06em;
+}
+.fabric-error {
+  grid-column: 1 / -1; padding: 14px 12px; font-size: 11px; color: #b04040;
+  background: #fdf2f2; border: 1px solid #e8c0c0; border-radius: 4px;
+}
+.swatch { width: 100%; aspect-ratio: 1 / 1; border-radius: 2px; flex-shrink: 0; }
+
+/* Buttons material selector */
 .btn-material-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
 .btn-material { font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500; padding: 8px 14px; border: 1px solid var(--border-mid); border-radius: 2px; background: transparent; color: var(--ink-mid); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; transition: all 0.15s; }
 .btn-material.selected { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+.bm-name  { font-size: 11px; font-weight: 500; color: var(--ink); letter-spacing: 0.02em; }
 .bm-price { font-size: 9px; color: var(--ink-faint); }
-.measure-grid { display: flex; flex-direction: column; gap: 10px; }
-.measure-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.measure-row label { font-size: 12px; font-weight: 500; color: var(--ink-mid); min-width: 110px; letter-spacing: 0.02em; }
-.measure-input-wrap { display: flex; align-items: center; gap: 6px; }
-.measure-input { width: 80px; padding: 7px 10px; font-family: 'Jost', sans-serif; font-size: 13px; border: 1px solid var(--border-mid); border-radius: 2px; background: var(--white); color: var(--ink); text-align: right; outline: none; }
-.measure-unit { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.04em; width: 20px; }
-.submit-btn { width: 100%; padding: 14px 24px; font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; background: var(--ink); color: var(--white); border: none; border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; }
-.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Nav */
 .nav { height: 52px; background: var(--white); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 28px; gap: 16px; position: sticky; top: 0; z-index: 100; }
 .nav-brand { font-size: 12px; font-weight: 600; letter-spacing: 0.20em; text-transform: uppercase; color: var(--ink); margin-right: auto; text-decoration: none; }
 .nav-btn { font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.10em; text-transform: uppercase; padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 2px; background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
@@ -84,10 +159,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 <body>
 
 <nav class="nav" style="position:relative;">
-<a class="nav-brand" href="https://tailortech.toom.design/">
-    <img src="data:image/webp;base64,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" 
-         alt="TailorTech" height="24">
-  </a>
+  <a class="nav-brand" href="https://tailortech.toom.design/">TAILORTECH</a>
   <button class="nav-avatar" id="nav-av" type="button" onclick="toggleDropdown(event)" style="display:none"></button>
   <a class="nav-btn" id="nav-login" href="#" onclick="goToAuth(); return false;">Log In</a>
   <button class="nav-btn" id="nav-signout" onclick="doSignOut()" style="display:none">Sign out</button>
@@ -108,7 +180,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
   </div>
 </nav>
 
-<div class="app">
+<div class="app" id="main-app">
 
   <!-- PREVIEW PANEL -->
   <div class="preview-panel">
@@ -127,7 +199,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
           <div id="loading-overlay" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20;background:#fff;transition:opacity 0.5s;">
             <div style="width:22px;height:22px;border:2px solid #C0BDB8;border-top-color:#1A1916;border-radius:50%;animation:spin 0.7s linear infinite;"></div>
           </div>
-          <!-- Layer order: base → closure → lapel → front pocket → ticket pocket → inside pockets → sleeve buttons (back) → back vent (back) -->
+          <!-- Layer order: base → closure → lapel → front pocket → ticket pocket → chest pocket → inside pockets → sleeve buttons → back vent -->
           <div class="layer"><img id="img-base"          src="" alt=""></div>
           <div class="layer"><img id="img-closure"       src="" alt=""></div>
           <div class="layer"><img id="img-lapel"         src="" alt=""></div>
@@ -140,6 +212,15 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
         </div>
       </div>
     </div>
+
+    <!-- MEASUREMENT AVATAR — shown when Measurements tab is active -->
+    <div id="meas-avatar-panel" style="display:none;flex:1;min-height:0;flex-direction:column;background:var(--white);overflow:hidden;padding:2rem;">
+      <div style="flex:1;min-height:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:relative;">
+        <img id="meas-diag-img" src="" alt="" style="width:100%;height:100%;object-fit:contain;transition:opacity 0.25s,transform 0.25s;opacity:1;">
+      </div>
+      <div id="meas-diag-label" style="flex-shrink:0;margin-top:10px;font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);opacity:0;transition:opacity 0.25s;text-align:center;min-height:14px;"></div>
+    </div>
+
     <div class="view-bar">
       <button class="view-bar-btn active" onclick="setFrontBack('front',this)">Front</button>
       <button class="view-bar-btn" onclick="setFrontBack('back',this)">Back</button>
@@ -151,8 +232,9 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
   <div class="config-panel">
     <div class="tabs">
       <button class="tab active" onclick="switchTab(this,'panel-design')">Design</button>
-      <button class="tab" onclick="switchTab(this,'panel-materials')">Materials</button>
+      <button class="tab" onclick="switchTab(this,'panel-materials')">Materials &amp; Construction</button>
       <button class="tab" onclick="switchTab(this,'panel-measurements')">Measurements</button>
+      <button class="tab" onclick="switchTab(this,'panel-summary')">Summary</button>
     </div>
 
     <!-- DESIGN PANEL -->
@@ -174,7 +256,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
         </div>
       </div>
 
-      <!-- CLOSURE: single breasted uses SB_ prefix, double uses DB1/DB2/etc. -->
+      <!-- CLOSURE: single breasted SB_, double uses DB1/DB2 -->
       <div class="section">
         <div class="section-label">Buttons</div>
         <div class="sub-label">Single Breasted</div>
@@ -191,7 +273,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
         </div>
       </div>
 
-      <!-- LAPEL: depends on SB vs DB prefix -->
+      <!-- LAPEL -->
       <div class="section">
         <div class="section-label">Lapel</div>
         <div class="pill-group">
@@ -221,7 +303,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
         </div>
       </div>
 
-      <!-- CHEST POCKET — shown on front as part of lapel layer, just config -->
+      <!-- CHEST POCKET -->
       <div class="section">
         <div class="section-label">Chest Pocket</div>
         <div class="pill-group">
@@ -272,59 +354,16 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
     <!-- MATERIALS PANEL -->
     <div class="config-body" id="panel-materials" style="display:none;">
 
+      <!-- MAIN FABRIC -->
       <div class="section">
         <div class="section-label">Main Fabric</div>
         <div class="fabric-search-row">
           <input class="fabric-search" type="text" placeholder="Search fabrics…" oninput="filterFabrics(this.value,'main')">
         </div>
         <div class="fabric-grid" id="fabric-main-grid">
-          <div class="fabric-card selected" onclick="selectFabric(this,'main','Wool Charcoal','WO-001','Charcoal','100% Wool')">
-            <div class="swatch" style="background:#5a5a5a;"></div>
-            <span class="fname">Wool Charcoal</span><span class="fcode">WO-001</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'main','Wool Navy','WO-002','Navy','100% Wool')">
-            <div class="swatch" style="background:#1e2d4a;"></div>
-            <span class="fname">Wool Navy</span><span class="fcode">WO-002</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'main','Wool Black','WO-003','Black','100% Wool')">
-            <div class="swatch" style="background:#1a1a1a;"></div>
-            <span class="fname">Wool Black</span><span class="fcode">WO-003</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'main','Wool Camel','WO-004','Camel','100% Wool')">
-            <div class="swatch" style="background:#c8a87a;"></div>
-            <span class="fname">Wool Camel</span><span class="fcode">WO-004</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'main','Tweed Grey','TW-001','Grey','70% Wool 30% Silk')">
-            <div class="swatch" style="background:#9a9690;background-image:repeating-linear-gradient(45deg,rgba(0,0,0,0.08) 0px,rgba(0,0,0,0.08) 1px,transparent 1px,transparent 4px);"></div>
-            <span class="fname">Tweed Grey</span><span class="fcode">TW-001</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'main','Tweed Brown','TW-002','Brown','70% Wool 30% Silk')">
-            <div class="swatch" style="background:#7a6858;background-image:repeating-linear-gradient(45deg,rgba(0,0,0,0.08) 0px,rgba(0,0,0,0.08) 1px,transparent 1px,transparent 4px);"></div>
-            <span class="fname">Tweed Brown</span><span class="fcode">TW-002</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'main','Pinstripe Navy','PS-001','Navy','100% Wool')">
-            <div class="swatch" style="background:#1e2d4a;background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.15) 0px,rgba(255,255,255,0.15) 1px,transparent 1px,transparent 8px);"></div>
-            <span class="fname">Pinstripe Navy</span><span class="fcode">PS-001</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'main','Herringbone','HB-001','Grey','100% Wool')">
-            <div class="swatch" style="background:#a0a0a0;background-image:repeating-linear-gradient(45deg,rgba(0,0,0,0.1) 0px,rgba(0,0,0,0.1) 1px,transparent 1px,transparent 4px);"></div>
-            <span class="fname">Herringbone</span><span class="fcode">HB-001</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'main','Flannel Grey','FL-001','Grey','100% Wool')">
-            <div class="swatch" style="background:#888080;"></div>
-            <span class="fname">Flannel Grey</span><span class="fcode">FL-001</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'main','Linen Beige','LI-001','Beige','100% Linen')">
-            <div class="swatch" style="background:#d8cfc0;"></div>
-            <span class="fname">Linen Beige</span><span class="fcode">LI-001</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'main','Linen Olive','LI-002','Olive','100% Linen')">
-            <div class="swatch" style="background:#8a9070;"></div>
-            <span class="fname">Linen Olive</span><span class="fcode">LI-002</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'main','Velvet Black','VL-001','Black','100% Silk Velvet')">
-            <div class="swatch" style="background:#0a0a0a;"></div>
-            <span class="fname">Velvet Black</span><span class="fcode">VL-001</span>
+          <div class="fabric-loading">
+            <div style="width:18px;height:18px;border:2px solid var(--ink-faint);border-top-color:var(--ink);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;"></div>
+            <span>Loading fabrics…</span>
           </div>
         </div>
       </div>
@@ -337,22 +376,13 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
           <button class="pill selected" onclick="toggleContrast(this,'same')">Same as Main</button>
           <button class="pill"          onclick="toggleContrast(this,'custom')">Custom</button>
         </div>
+        <div class="fabric-search-row" id="contrast-search-row" style="display:none;">
+          <input class="fabric-search" type="text" placeholder="Search fabrics…" oninput="filterFabrics(this.value,'contrast')">
+        </div>
         <div class="fabric-grid" id="fabric-contrast-grid" style="opacity:0.35;pointer-events:none;">
-          <div class="fabric-card selected" onclick="selectFabric(this,'contrast','Wool Charcoal','WO-001','Charcoal','100% Wool')">
-            <div class="swatch" style="background:#5a5a5a;"></div>
-            <span class="fname">Wool Charcoal</span><span class="fcode">WO-001</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'contrast','Wool Navy','WO-002','Navy','100% Wool')">
-            <div class="swatch" style="background:#1e2d4a;"></div>
-            <span class="fname">Wool Navy</span><span class="fcode">WO-002</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'contrast','Velvet Black','VL-001','Black','100% Silk Velvet')">
-            <div class="swatch" style="background:#0a0a0a;"></div>
-            <span class="fname">Velvet Black</span><span class="fcode">VL-001</span>
-          </div>
-          <div class="fabric-card" onclick="selectFabric(this,'contrast','Silk Ivory','SI-001','Ivory','100% Silk')">
-            <div class="swatch" style="background:#f5f0e8;border:1px solid #e0d8cc;"></div>
-            <span class="fname">Silk Ivory</span><span class="fcode">SI-001</span>
+          <div class="fabric-loading">
+            <div style="width:18px;height:18px;border:2px solid var(--ink-faint);border-top-color:var(--ink);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;"></div>
+            <span>Loading fabrics…</span>
           </div>
         </div>
       </div>
@@ -404,30 +434,77 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 
     <!-- MEASUREMENTS PANEL -->
     <div class="config-body" id="panel-measurements" style="display:none;">
-      <div class="section">
-        <div class="section-label">Body Measurements</div>
-        <div class="sub-label">All measurements in centimetres</div>
-        <div class="measure-grid">
-          <div class="measure-row"><label>Chest</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="80" max="140"><span class="measure-unit">cm</span></div></div>
-          <div class="measure-row"><label>Waist</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="60" max="130"><span class="measure-unit">cm</span></div></div>
-          <div class="measure-row"><label>Hips</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="80" max="140"><span class="measure-unit">cm</span></div></div>
-          <div class="measure-row"><label>Shoulder</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="35" max="60"><span class="measure-unit">cm</span></div></div>
-          <div class="measure-row"><label>Sleeve Length</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="55" max="75"><span class="measure-unit">cm</span></div></div>
-          <div class="measure-row"><label>Back Length</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="65" max="90"><span class="measure-unit">cm</span></div></div>
-          <div class="measure-row"><label>Neck</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="30" max="55"><span class="measure-unit">cm</span></div></div>
-          <div class="measure-row"><label>Wrist</label><div class="measure-input-wrap"><input type="number" class="measure-input" placeholder="—" min="14" max="26"><span class="measure-unit">cm</span></div></div>
+      <div style="display:flex;flex:1;min-height:0;overflow:hidden;">
+        <div style="flex:1;overflow-y:auto;padding:28px 28px 48px;display:flex;flex-direction:column;">
+
+          <!-- Saved version selector -->
+          <div id="meas-version-row" style="display:none;margin-bottom:20px;">
+            <div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:6px;">Saved Measurements</div>
+            <select id="meas-version-select" onchange="measLoadVersion(this.value)" style="width:100%;padding:8px 10px;font-family:'Jost',sans-serif;font-size:12px;border:1px solid var(--border-mid);border-radius:2px;color:var(--ink);background:var(--white);outline:none;cursor:pointer;"></select>
+          </div>
+
+          <form id="meas-form" onsubmit="return false;">
+            <input type="hidden" id="mf-email" name="email">
+            <input type="hidden" id="mf-personId" name="personId">
+
+            <div id="meas-loading-notif">
+              <span class="meas-notif-dot"></span>
+              Loading measurements…
+            </div>
+
+            <div style="margin-bottom:20px;">
+              <div style="display:flex;flex-direction:column;max-width:200px;">
+                <label style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:5px;">Height</label>
+                <div style="position:relative;">
+                  <input type="number" id="mf-height" name="height" step="0.1" min="100" max="250" placeholder="0.0" onfocus="measFocusField('Height','height')" style="width:100%;padding:8px 32px 8px 10px;background:var(--white);border:1px solid var(--border-mid);border-radius:2px;color:var(--ink);font-size:12px;font-family:'Jost',sans-serif;outline:none;">
+                  <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--ink-faint);pointer-events:none;">cm</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-light);padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px;display:flex;align-items:center;gap:7px;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4v10l-9 4-9-4V7z"/></svg>
+              Volumetric Measurements
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:20px;" id="meas-grid-vol"></div>
+
+            <div style="font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-light);padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px;display:flex;align-items:center;gap:7px;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20M2 7l2 5-2 5M22 7l-2 5 2 5"/></svg>
+              Linear Measurements
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;" id="meas-grid-lin"></div>
+          </form>
+
+          <!-- Save / Continue -->
+          <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;padding-bottom:8px;">
+            <button type="button" onclick="measPrimaryAction(event)" id="meas-save-btn" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:inline-flex;align-items:center;gap:10px;">
+              <span id="meas-save-lbl">Continue to Summary</span>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
+              <div id="meas-save-spin" style="display:none;width:12px;height:12px;border:1.5px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.65s linear infinite;"></div>
+            </button>
+          </div>
+
         </div>
       </div>
-
-      <div class="section" style="border-bottom:none;">
-        <button class="submit-btn" id="submit-btn" onclick="submitOrder()">
-          <span id="submit-label">Save Configuration</span>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
-        </button>
-        <div id="submit-feedback" style="display:none;margin-top:12px;padding:12px 14px;border-radius:4px;font-size:12px;letter-spacing:0.04em;text-align:center;"></div>
-      </div>
-
     </div><!-- /panel-measurements -->
+
+    <!-- SUMMARY PANEL -->
+    <div class="config-body" id="panel-summary" style="display:none;">
+      <div class="section" style="border-bottom:none;">
+        <div class="section-label">Order Summary</div>
+        <div id="summary-rows" style="display:flex;flex-direction:column;gap:0;margin-bottom:28px;"></div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+          <button onclick="handleAddToCart()" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;width:100%;padding:13px 16px;background:transparent;border:1px solid var(--border-mid);border-radius:2px;color:var(--ink-mid);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:all 0.15s;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+            Add to Cart
+          </button>
+          <button onclick="handleOrderNow()" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;width:100%;padding:14px 16px;background:var(--ink);color:var(--white);border:none;border-radius:2px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;">
+            Order Now
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="5,12 19,12"/><polyline points="13,6 19,12 13,18"/></svg>
+          </button>
+        </div>
+      </div>
+    </div><!-- /panel-summary -->
 
   </div><!-- /config-panel -->
 </div><!-- /app -->
@@ -438,72 +515,49 @@ const SHEET_URL = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHw
 const BASE      = 'https://raw.githubusercontent.com/toom-design/tailortech-suit_m/main/';
 
 // ── State ─────────────────────────────────────────────────────────
-// closureType: 'SB' or 'DB'
-// closureBtn:  '1 button' | '2 buttons' | '2X1' | '4X1' | '6X1' | '6X2'
-// lapel:       'notch lapel' | 'peak lapel' | 'shawl lapel'
-// frontpocket: 'FRONT FLAP POCKET' | 'FRONT JETTED POCKET' | 'FRONT PATCH POCKET'
-// ticketpocket:'none' | 'TICKET FLAP POCKET' | 'TICKET JETTED POCKET'
-// chestpocket: true | false
-// insidepocket:'none' | 'single' | 'double'
-// vent:        'none vent' | 'single vent' | 'double vent'
-// sleevebtn:   '3' | '4' | '5'
-// view:        'f' | 'b'
 const state = {
-  closureType: 'SB', closureBtn: '1 button',
-  lapel: 'notch lapel',
-  frontpocket: 'FRONT FLAP POCKET',
+  closureType:  'SB',
+  closureBtn:   '1 button',
+  lapel:        'notch lapel',
+  frontpocket:  'FRONT FLAP POCKET',
   ticketpocket: 'none',
-  chestpocket: true,
+  chestpocket:  true,
   insidepocket: 'none',
-  vent: 'none vent',
-  sleevebtn: '3',
-  view: 'f',
+  vent:         'none vent',
+  sleevebtn:    '3',
+  view:         'f',
 };
 
-// ── URL builders — derived from exact GitHub filenames ────────────
+// ── URL builders ──────────────────────────────────────────────────
 function enc(s) { return encodeURIComponent(s); }
-
 const urls = {
-  // Base: suit_m_live_SINGLE.png (SB) or suit_m_live_DOUBLE_2X1.png (DB)
   base: function() {
     if (state.closureType === 'SB') return BASE + enc('suit_m_live_SINGLE.png');
     return BASE + enc('suit_m_live_DOUBLE_' + state.closureBtn + '.png');
   },
-  // Closure buttons layer (SB only — 1 or 2 buttons)
   closure: function() {
     if (state.closureType === 'DB') return '';
-    // SB_1 button.png or SB_2 buttons.png
     return BASE + enc('suit_m_live_SB_' + state.closureBtn + '.png');
   },
-  // Lapel: suit_m_live_SB_notch lapel.png / DB1_notch lapel.png etc.
   lapel: function() {
-    if (state.closureType === 'SB') {
-      return BASE + enc('suit_m_live_SB_' + state.lapel + '.png');
-    }
-    // DB prefix: DB1 for 2X1, DB2 for 4X1/6X1/6X2
+    if (state.closureType === 'SB') return BASE + enc('suit_m_live_SB_' + state.lapel + '.png');
     var dbPfx = state.closureBtn === '6X2' ? 'DB2' : 'DB1';
     return BASE + enc('suit_m_live_' + dbPfx + '_' + state.lapel + '.png');
   },
-  // Chest pocket: suit_m_live_SB_chest pocket.png / DB1_chest pocket.png
   chestpocket: function() {
     if (!state.chestpocket) return '';
     if (state.closureType === 'SB') return BASE + enc('suit_m_live_SB_chest pocket.png');
     var dbPfx = state.closureBtn === '6X2' ? 'DB2' : 'DB1';
     return BASE + enc('suit_m_live_' + dbPfx + '_chest pocket.png');
   },
-  // Front pocket: suit_m_live_FRONT FLAP POCKET.png etc.
-  frontpocket: function() { return BASE + enc('suit_m_live_' + state.frontpocket + '.png'); },
-  // Ticket pocket
+  frontpocket:  function() { return BASE + enc('suit_m_live_' + state.frontpocket + '.png'); },
   ticketpocket: function() {
     if (state.ticketpocket === 'none') return '';
     return BASE + enc('suit_m_live_' + state.ticketpocket + '.png');
   },
-  // Inside pockets: suit_m_live_inside pockets none/single/double.png
   insidepocket: function() { return BASE + enc('suit_m_live_inside pockets ' + state.insidepocket + '.png'); },
-  // Sleeve buttons (back view only): suit_m_live_sleeve buttons 3_b.png
-  sleevebtn: function() { return BASE + enc('suit_m_live_sleeve buttons ' + state.sleevebtn + '_b.png'); },
-  // Back vent: suit_m_live_BACK none vent.png / single vent / double vent
-  vent: function() { return BASE + enc('suit_m_live_BACK ' + state.vent + '.png'); },
+  sleevebtn:    function() { return BASE + enc('suit_m_live_sleeve buttons ' + state.sleevebtn + '_b.png'); },
+  vent:         function() { return BASE + enc('suit_m_live_BACK ' + state.vent + '.png'); },
 };
 
 // ── Image helper ──────────────────────────────────────────────────
@@ -518,7 +572,6 @@ function setImg(id, url) {
 // ── Update all layers ─────────────────────────────────────────────
 function updatePreview() {
   if (state.view === 'i') {
-    // Inside view: inside pocket layer only — no base, no front, no back
     setImg('img-base',         '');
     setImg('img-closure',      '');
     setImg('img-lapel',        '');
@@ -539,7 +592,6 @@ function updatePreview() {
     setImg('img-sleevebtn',    '');
     setImg('img-vent',         '');
   } else {
-    // Back view: vent + sleeve buttons
     setImg('img-base',         urls.vent());
     setImg('img-closure',      '');
     setImg('img-lapel',        '');
@@ -558,7 +610,8 @@ function hideLoading() {
 }
 
 // ── Zoom ──────────────────────────────────────────────────────────
-var _z = { zoom: 2.5, panX: 0, panY: 0 };
+var DEFAULT_ZOOM = 2.5;
+var _z = { zoom: DEFAULT_ZOOM, panX: 0, panY: 0 };
 function applyTransform() {
   var el = document.getElementById('layer-stack');
   if (el) el.style.transform = 'translate('+_z.panX+'px,'+_z.panY+'px) scale('+_z.zoom+')';
@@ -571,19 +624,45 @@ function zoomToRegion(scale, cx, cy) {
   _z.panY = -pointY * scale;
   applyTransform();
 }
-function resetZoom() { _z.zoom = 2.5; _z.panX = 0; _z.panY = 0; applyTransform(); }
+function resetZoom() { _z.zoom = DEFAULT_ZOOM; _z.panX = 0; _z.panY = 0; applyTransform(); }
 function manualZoom(d) { _z.zoom = Math.min(4, Math.max(0.5, _z.zoom + d)); applyTransform(); }
 
 // ── Tabs ──────────────────────────────────────────────────────────
 function switchTab(btn, panelId) {
   document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
   btn.classList.add('active');
-  document.querySelectorAll('.config-body').forEach(function(p){ p.style.display='none'; });
-  document.getElementById(panelId).style.display = 'flex';
+  ['panel-design','panel-materials','panel-measurements','panel-summary'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = id === panelId ? '' : 'none';
+  });
+
+  var isMeas = (panelId === 'panel-measurements');
+  document.getElementById('main-app').classList.toggle('measurements-active', isMeas);
+
+  var stageWrap   = document.getElementById('stage-viewport');
+  var viewToggle  = document.querySelector('.view-toggle');
+  var viewBar     = document.querySelector('.view-bar');
+  var measAvatar  = document.getElementById('meas-avatar-panel');
+
+  if (stageWrap)  stageWrap.style.display  = isMeas ? 'none' : '';
+  if (viewToggle) viewToggle.style.display  = isMeas ? 'none' : '';
+  if (viewBar)    viewBar.style.display     = isMeas ? 'none' : '';
+  if (measAvatar) measAvatar.style.display  = isMeas ? 'flex'  : 'none';
+
+  if (isMeas) {
+    var di = document.getElementById('meas-diag-img');
+    if (di && !di.getAttribute('data-inited')) {
+      di.setAttribute('data-inited','1');
+      if (window.measFocusField) window.measFocusField('', null);
+    }
+  }
+
+  if (panelId === 'panel-summary') buildSummary();
   document.querySelector('.config-panel').scrollTo({ top:0, behavior:'smooth' });
 }
 function goToMaterials()    { switchTab(document.querySelectorAll('.tab')[1], 'panel-materials'); }
 function goToMeasurements() { switchTab(document.querySelectorAll('.tab')[2], 'panel-measurements'); }
+function goToSummary()      { switchTab(document.querySelectorAll('.tab')[3], 'panel-summary'); }
 
 // ── View toggles ──────────────────────────────────────────────────
 function setView(v, btn) {
@@ -628,24 +707,10 @@ function sectionPill(label) {
   }
   return '';
 }
-function inputVal(label) {
-  var rows = document.querySelectorAll('.measure-row');
-  for (var i=0; i<rows.length; i++) {
-    var lbl = rows[i].querySelector('label');
-    if (lbl && lbl.textContent.trim() === label)
-      return rows[i].querySelector('.measure-input').value || '';
-  }
-  return '';
-}
 
 // ── Design selection handlers ─────────────────────────────────────
-function selectFit(btn) {
-  selectPillInGroup(btn);
-  goFront(); updatePreview();
-}
-
+function selectFit(btn) { selectPillInGroup(btn); goFront(); updatePreview(); }
 function selectClosure(btn, type, btnVal) {
-  // Deselect both SB and DB pill groups
   document.querySelectorAll('#closure-sb .pill, #closure-db .pill').forEach(function(p){ p.classList.remove('selected'); });
   btn.classList.add('selected');
   state.closureType = type;
@@ -653,39 +718,31 @@ function selectClosure(btn, type, btnVal) {
   goFront(); updatePreview(); resetZoom();
 }
 function selectLapel(btn, val) {
-  selectPillInGroup(btn);
-  state.lapel = val;
+  selectPillInGroup(btn); state.lapel = val;
   goFront(); updatePreview(); zoomToRegion(3.0, 0.5, 0.5);
 }
 function selectFrontPocket(btn, val) {
-  selectPillInGroup(btn);
-  state.frontpocket = val;
+  selectPillInGroup(btn); state.frontpocket = val;
   goFront(); updatePreview(); zoomToRegion(3.0, 0.5, 0.55);
 }
 function selectTicketPocket(btn, val) {
-  selectPillInGroup(btn);
-  state.ticketpocket = val;
+  selectPillInGroup(btn); state.ticketpocket = val;
   goFront(); updatePreview(); zoomToRegion(3.0, 0.35, 0.55);
 }
 function selectChestPocket(btn, show) {
-  selectPillInGroup(btn);
-  state.chestpocket = show;
+  selectPillInGroup(btn); state.chestpocket = show;
   goFront(); updatePreview(); zoomToRegion(3.0, 0.65, 0.45);
 }
 function selectInsidePocket(btn, val) {
-  selectPillInGroup(btn);
-  state.insidepocket = val;
-  goInside();
-  updatePreview(); zoomToRegion(2.5, 0.5, 0.5);
+  selectPillInGroup(btn); state.insidepocket = val;
+  goInside(); updatePreview(); zoomToRegion(2.5, 0.5, 0.5);
 }
 function selectVent(btn, val) {
-  selectPillInGroup(btn);
-  state.vent = val;
+  selectPillInGroup(btn); state.vent = val;
   goBack(); updatePreview(); zoomToRegion(2.5, 0.5, 0.5);
 }
 function selectSleeveButtons(btn, val) {
-  selectPillInGroup(btn);
-  state.sleevebtn = val;
+  selectPillInGroup(btn); state.sleevebtn = val;
   goBack(); updatePreview(); zoomToRegion(3.0, 0.5, 0.65);
 }
 
@@ -695,29 +752,136 @@ function selectIconCard(btn) {
   btn.classList.add('selected');
 }
 
-// ── Fabric ────────────────────────────────────────────────────────
-function selectFabric(card, group, name, code, color, composition) {
-  card.closest('.fabric-grid').querySelectorAll('.fabric-card').forEach(function(c){ c.classList.remove('selected'); });
-  card.classList.add('selected');
-  card.dataset.color       = color       || '';
-  card.dataset.composition = composition || '';
-  card.dataset.code        = code        || '';
+// ── Fabric — sheet-backed ─────────────────────────────────────────
+function selectFabric(el, group) {
+  var grid = el.closest('.fabric-grid');
+  grid.querySelectorAll('.fabric-card').forEach(function(c){ c.classList.remove('selected'); });
+  el.classList.add('selected');
 }
+
+function toggleFabricDetails(btn, event) {
+  event.stopPropagation();
+  var card   = btn.closest('.fabric-card');
+  var drawer = card.querySelector('.fc-details-drawer');
+  var isOpen = drawer.classList.contains('open');
+  drawer.classList.toggle('open', !isOpen);
+  btn.classList.toggle('open', !isOpen);
+  btn.querySelector('span').textContent = isOpen ? 'Details' : 'Hide';
+}
+
 function filterFabrics(query, group) {
-  document.getElementById('fabric-'+group+'-grid').querySelectorAll('.fabric-card').forEach(function(c) {
-    c.style.display = c.querySelector('.fname').textContent.toLowerCase().includes(query.toLowerCase()) ? '' : 'none';
+  var grid = document.getElementById('fabric-' + group + '-grid');
+  var term = query.toLowerCase();
+  grid.querySelectorAll('.fabric-card').forEach(function(card) {
+    var name = (card.dataset.name || '').toLowerCase();
+    var code = (card.dataset.code || '').toLowerCase();
+    var comp = (card.dataset.comp || '').toLowerCase();
+    card.style.display = (name.includes(term) || code.includes(term) || comp.includes(term)) ? '' : 'none';
   });
 }
+
 function toggleContrast(btn, mode) {
   btn.closest('.comp-toggle').querySelectorAll('.pill').forEach(function(b){ b.classList.remove('selected'); });
   btn.classList.add('selected');
-  var grid = document.getElementById('fabric-contrast-grid');
-  grid.style.opacity      = mode === 'custom' ? '1'    : '0.35';
-  grid.style.pointerEvents = mode === 'custom' ? ''     : 'none';
+  var grid       = document.getElementById('fabric-contrast-grid');
+  var searchRow  = document.getElementById('contrast-search-row');
+  var isCustom   = mode === 'custom';
+  grid.style.opacity      = isCustom ? '1'    : '0.35';
+  grid.style.pointerEvents = isCustom ? ''     : 'none';
+  if (searchRow) searchRow.style.display = isCustom ? '' : 'none';
 }
+
 function selectBtnMaterial(btn) {
   btn.closest('.btn-material-row').querySelectorAll('.btn-material').forEach(function(b){ b.classList.remove('selected'); });
   btn.classList.add('selected');
+}
+
+function buildFabricCard(fabric, group, isFirst) {
+  var name  = fabric.ProductName   || '';
+  var code  = fabric.FabricCode    || '';
+  var comp  = fabric.Composition   || '';
+  var color = fabric.Color         || '—';
+  var pat   = fabric.Pattern       || '—';
+  var wt    = fabric.Weight_gsm    ? fabric.Weight_gsm + ' g/m²' : '—';
+  var wd    = fabric.Width_cm      ? fabric.Width_cm   + ' cm'   : '—';
+  var face  = fabric['Photo FACE'] || '';
+
+  var card = document.createElement('div');
+  card.className = 'fabric-card' + (isFirst ? ' selected' : '');
+  card.dataset.name  = name;
+  card.dataset.code  = code;
+  card.dataset.comp  = comp;
+  card.dataset.color = color;
+  card.onclick = function(){ selectFabric(card, group); };
+
+  var imgWrap = document.createElement('div');
+  imgWrap.className = 'fc-images';
+  var faceImg = document.createElement('img');
+  faceImg.className = 'fc-img'; faceImg.alt = name; faceImg.loading = 'lazy';
+  if (face) faceImg.src = face; else faceImg.style.background = 'var(--cream-dark)';
+  imgWrap.appendChild(faceImg);
+
+  var body = document.createElement('div');
+  body.className = 'fc-body';
+  var nameEl = document.createElement('span'); nameEl.className = 'fname'; nameEl.textContent = name;
+  var codeEl = document.createElement('span'); codeEl.className = 'fcode'; codeEl.textContent = code;
+  var compEl = document.createElement('span'); compEl.className = 'fcomp'; compEl.textContent = comp;
+  var detBtn = document.createElement('button');
+  detBtn.className = 'fc-details-toggle';
+  detBtn.innerHTML = '<span>Details</span><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>';
+  detBtn.onclick = function(e){ toggleFabricDetails(detBtn, e); };
+  body.appendChild(nameEl); body.appendChild(codeEl); body.appendChild(compEl); body.appendChild(detBtn);
+
+  var drawer = document.createElement('div');
+  drawer.className = 'fc-details-drawer';
+  [['Color', color], ['Pattern', pat], ['Composition', comp], ['Weight', wt], ['Width', wd]].forEach(function(pair) {
+    var item = document.createElement('div'); item.className = 'fc-detail-item';
+    var l = document.createElement('span'); l.className = 'fc-detail-label'; l.textContent = pair[0];
+    var v = document.createElement('span'); v.className = 'fc-detail-val';   v.textContent = pair[1];
+    item.appendChild(l); item.appendChild(v); drawer.appendChild(item);
+  });
+
+  card.appendChild(imgWrap); card.appendChild(body); card.appendChild(drawer);
+  return card;
+}
+
+var _fabricsRawCache = null;
+
+async function _loadAllFabrics() {
+  if (_fabricsRawCache) return _fabricsRawCache;
+  var res = await fetch(SHEET_URL + '?action=getFabrics');
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  var json = await res.json();
+  if (!json.success) throw new Error(json.message || 'API error');
+  _fabricsRawCache = json.fabrics || [];
+  return _fabricsRawCache;
+}
+
+async function renderFabricGrids() {
+  var mainGrid     = document.getElementById('fabric-main-grid');
+  var contrastGrid = document.getElementById('fabric-contrast-grid');
+  try {
+    var all = await _loadAllFabrics();
+    var suitFabrics     = all.filter(function(r){ return (r['Garments'] || '').trim().toLowerCase().includes('suit'); });
+    var contrastFabrics = all.filter(function(r){ return (r['Garments'] || '').trim().toLowerCase().includes('contrast'); });
+    // Fallback: if no dedicated contrast tag, reuse suit fabrics for contrast
+    if (!contrastFabrics.length) contrastFabrics = suitFabrics;
+
+    if (!suitFabrics.length) {
+      mainGrid.innerHTML = '<div class="fabric-error">No suit fabrics found. Check the Garments column in your sheet.</div>';
+    } else {
+      mainGrid.innerHTML = '';
+      suitFabrics.forEach(function(f, i){ mainGrid.appendChild(buildFabricCard(f, 'main', i === 0)); });
+    }
+
+    contrastGrid.innerHTML = '';
+    contrastFabrics.forEach(function(f, i){ contrastGrid.appendChild(buildFabricCard(f, 'contrast', i === 0)); });
+
+  } catch(err) {
+    console.error('Fabric load error:', err);
+    mainGrid.innerHTML = '<div class="fabric-error">Could not load fabrics (' + err.message + ').</div>';
+    contrastGrid.innerHTML = '';
+  }
 }
 
 // ── collectConfig ─────────────────────────────────────────────────
@@ -727,10 +891,14 @@ function collectConfig() {
   var contrastSame = contrastGrid.style.pointerEvents === 'none';
   var contrastCard = contrastGrid.querySelector('.fabric-card.selected');
 
-  // Build full closure label for sheet
   var closureLabel = state.closureType === 'SB'
     ? 'Single Breasted ' + state.closureBtn
     : 'Double Breasted ' + state.closureBtn;
+
+  function mval(id) {
+    var el = document.getElementById('mf-' + id);
+    return (el && el.value && parseFloat(el.value) > 0) ? el.value + ' cm' : '';
+  }
 
   return {
     'Order Number':      '',
@@ -745,7 +913,7 @@ function collectConfig() {
     'CLOSURE':           closureLabel,
     'NECK':              sectionPill('Lapel'),
     'FRONT POCKETS':     sectionPill('Front Pockets'),
-    'EXTRA POCKETS':     sectionPill('Ticket Pocket') + ' | Chest: ' + sectionPill('Chest Pocket') + ' | Inside: ' + sectionPill('Inside Pockets'),
+    'EXTRA POCKETS':     'Ticket: ' + sectionPill('Ticket Pocket') + ' | Chest: ' + sectionPill('Chest Pocket') + ' | Inside: ' + sectionPill('Inside Pockets'),
     'HEM/FINISH':        'N/A',
     'BACK':              sectionPill('Back Vent'),
 
@@ -759,99 +927,425 @@ function collectConfig() {
     'WAIST ADJUSTMENT':  'N/A',
     'RISE':              'N/A',
 
-    'MAIN FABRIC':       mainCard ? mainCard.querySelector('.fname').textContent.trim() : '',
-    'CODE':              mainCard ? (mainCard.dataset.code || mainCard.querySelector('.fcode').textContent.trim()) : '',
+    'MAIN FABRIC':       mainCard ? (mainCard.dataset.name || '') : '',
+    'CODE':              mainCard ? (mainCard.dataset.code || '') : '',
     'color':             mainCard ? (mainCard.dataset.color || '') : '',
-    'composition':       mainCard ? (mainCard.dataset.composition || '') : '',
-    'CONTRAST FABRIC':   contrastSame ? 'Same as Main' : (contrastCard ? contrastCard.querySelector('.fname').textContent.trim() : ''),
+    'composition':       mainCard ? (mainCard.dataset.comp  || '') : '',
+    'CONTRAST FABRIC':   contrastSame ? 'Same as Main' : (contrastCard ? (contrastCard.dataset.name || '') : ''),
     'CONTRAST PLACEMENT':'lapels',
     'STRUCTURE':         sectionPill('Construction'),
     'LINING FABRIC':     'N/A',
     'LINING TYPE':       sectionPill('Lining'),
 
-    // Measurements
-    'Chest (cm)':        inputVal('Chest'),
-    'Waist (cm)':        inputVal('Waist'),
-    'Hips (cm)':         inputVal('Hips'),
-    'Shoulder (cm)':     inputVal('Shoulder'),
-    'Sleeve Length (cm)':inputVal('Sleeve Length'),
-    'Back Length (cm)':  inputVal('Back Length'),
-    'Neck (cm)':         inputVal('Neck'),
-    'Wrist (cm)':        inputVal('Wrist'),
+    // Measurements (populated by the measurements engine)
+    'height':            mval('height'),
+    'chestGirth':        mval('chestGirth'),
+    'waistGirth':        mval('waistGirth'),
+    'hipGirth':          mval('hipGirth'),
+    'shoulderWidth':     mval('shoulderWidth'),
+    'sleeveLength':      mval('sleeveLength'),
+    'backLength':        mval('backLength'),
+    'neckGirth':         mval('neckGirth'),
+    'wristGirth':        mval('wristGirth'),
+    'bicepGirth':        mval('bicepGirth'),
   };
 }
+window.collectConfig = collectConfig;
 
-// ── submitOrder — hidden form POST to hidden iframe ───────────────
-function submitOrder() {
-  var btn   = document.getElementById('submit-btn');
-  var label = document.getElementById('submit-label');
-  btn.disabled = true;
-  label.textContent = 'Saving...';
-
-  try {
-    var cfg = collectConfig();
-    cfg['action'] = 'saveSuits';
-
-    var iframeName = 'tt_submit_' + Date.now();
-    var iframe = document.createElement('iframe');
-    iframe.name = iframeName;
-    iframe.style.display = 'none';
-    document.body.appendChild(iframe);
-
-    var form = document.createElement('form');
-    form.method = 'POST';
-    form.action = SHEET_URL;
-    form.target = iframeName;
-    form.style.display = 'none';
-
-    var input = document.createElement('input');
-    input.type  = 'hidden';
-    input.name  = 'payload';
-    input.value = JSON.stringify(cfg);
-    form.appendChild(input);
-
-    document.body.appendChild(form);
-    form.submit();
-
-    setTimeout(function() {
-      if (form.parentNode)   document.body.removeChild(form);
-      if (iframe.parentNode) document.body.removeChild(iframe);
-      btn.disabled = false;
-      label.textContent = 'Save Configuration';
-      showFeedback('Configuration saved', '#4a8a5a');
-      setTimeout(function() {
-        window.location.href = 'https://tailortech.toom.design/dashboard';
-      }, 2000);
-    }, 4000);
-
-  } catch(err) {
-    btn.disabled = false;
-    label.textContent = 'Save Configuration';
-    showFeedback('Could not save: ' + err.message, '#a05050');
-  }
+// ── Toast ─────────────────────────────────────────────────────────
+function toast(msg, type) {
+  var t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);'
+    + 'background:' + (type === 'err' ? '#7a2c2c' : '#1A1916') + ';color:#FAFAF8;'
+    + 'font-family:Jost,sans-serif;font-size:11px;font-weight:500;letter-spacing:0.08em;'
+    + 'padding:10px 20px;border-radius:2px;z-index:99999;pointer-events:none;text-transform:uppercase;';
+  document.body.appendChild(t);
+  setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 2200);
 }
 
 function showFeedback(msg, color) {
   var el = document.getElementById('submit-feedback');
-  el.textContent = msg;
-  el.style.display = 'block';
-  el.style.background = color + '18';
-  el.style.color = color;
-  el.style.border = '1px solid ' + color + '40';
+  if (!el) return;
+  el.textContent = msg; el.style.display = 'block';
+  el.style.background = color + '18'; el.style.color = color; el.style.border = '1px solid ' + color + '40';
   setTimeout(function(){ el.style.display = 'none'; }, 5000);
 }
 
+// ── Save infrastructure ───────────────────────────────────────────
+function _saveToSheet(data) {
+  return new Promise(function(resolve, reject) {
+    var cbName = '__ttSave_' + Date.now();
+    var json;
+    try { json = JSON.stringify(data); } catch(e) { json = '{}'; }
+    json = json.replace(/[\uD800-\uDFFF]/g, '').replace(/\u00A0/g, ' ').replace(/%(?![0-9A-Fa-f]{2})/g, '%25');
+    try { json = json.normalize('NFC'); } catch(e) {}
+    var payload;
+    try { payload = encodeURIComponent(json); }
+    catch(encErr) { payload = encodeURIComponent(json.replace(/[^\x00-\x7F]/g, '?')); }
+    var url = SHEET_URL + '?payload=' + payload + '&callback=' + cbName;
+    var script = document.createElement('script');
+    var timer = setTimeout(function() { cleanup(); reject(new Error('TIMEOUT 12s')); }, 12000);
+    function cleanup() { clearTimeout(timer); delete window[cbName]; if (script.parentNode) document.body.removeChild(script); }
+    window[cbName] = function(res) { cleanup(); if (res && res.success) { resolve(res); } else { reject(new Error(res && res.message ? res.message : 'success:false')); } };
+    script.onerror = function() { cleanup(); reject(new Error('script load failed')); };
+    document.body.appendChild(script);
+    script.src = url;
+  });
+}
+
+function _saveViaIframe(status) {
+  var data = collectConfig();
+  data['Status']     = status;
+  data['garment']    = 'suit';
+  data['action']     = 'saveSuits';
+  data['Created At'] = new Date().toISOString();
+  return _saveToSheet(data);
+}
+
+async function handleAddToCart() {
+  var btn = document.querySelector('[onclick="handleAddToCart()"]');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  try {
+    await _saveViaIframe('InCart');
+    toast('Added to cart!');
+    setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/cart'; }, 1800);
+  } catch(e) {
+    toast('Could not add to cart: ' + e.message, 'err');
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+  }
+}
+
+async function handleOrderNow() {
+  var btn = document.querySelector('[onclick="handleOrderNow()"]');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  try {
+    await _saveViaIframe('Pending');
+    toast('Order placed — going to checkout…');
+    setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/checkout'; }, 1800);
+  } catch(e) {
+    toast('Could not place order: ' + e.message, 'err');
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+  }
+}
+
+// ── Summary ───────────────────────────────────────────────────────
+function buildSummary() {
+  var rows = document.getElementById('summary-rows');
+  if (!rows) return;
+  var cfg = collectConfig();
+
+  function mrow(label, key) { return [label, cfg[key] || '']; }
+
+  var sections = [
+    {
+      label: 'Design',
+      rows: [
+        ['Garment',        'Suit Jacket'],
+        ['Gender',         cfg['GENDER']],
+        ['Fit',            cfg['FIT']],
+        ['Closure',        cfg['CLOSURE']],
+        ['Lapel',          cfg['NECK']],
+        ['Front Pockets',  cfg['FRONT POCKETS']],
+        ['Ticket Pocket',  sectionPill('Ticket Pocket')],
+        ['Chest Pocket',   sectionPill('Chest Pocket')],
+        ['Inside Pockets', sectionPill('Inside Pockets')],
+        ['Back Vent',      cfg['BACK']],
+        ['Sleeve Buttons', cfg['SLEEVE BUTTONS']],
+      ]
+    },
+    {
+      label: 'Materials & Construction',
+      rows: [
+        ['Main Fabric',    cfg['MAIN FABRIC']],
+        ['Fabric Code',    cfg['CODE']],
+        ['Color',          cfg['color']],
+        ['Composition',    cfg['composition']],
+        ['Contrast Fabric',cfg['CONTRAST FABRIC']],
+        ['Construction',   cfg['CONSTRUCTION']],
+        ['Lining',         cfg['LINING TYPE']],
+        ['Buttons',        (function(){
+          var el = document.querySelector('#panel-materials .btn-material.selected .bm-name');
+          return el ? el.textContent.trim() : '';
+        })()],
+      ]
+    },
+    {
+      label: 'Measurements',
+      rows: [
+        mrow('Height',       'height'),
+        mrow('Chest Girth',  'chestGirth'),
+        mrow('Waist Girth',  'waistGirth'),
+        mrow('Hip Girth',    'hipGirth'),
+        mrow('Shoulder',     'shoulderWidth'),
+        mrow('Sleeve Length','sleeveLength'),
+        mrow('Back Length',  'backLength'),
+        mrow('Neck Girth',   'neckGirth'),
+        mrow('Wrist Girth',  'wristGirth'),
+        mrow('Bicep Girth',  'bicepGirth'),
+      ]
+    }
+  ];
+
+  rows.innerHTML = sections.map(function(sec) {
+    var visibleRows = sec.rows.filter(function(r){ return r[1] && r[1].toString().trim(); });
+    if (!visibleRows.length) return '';
+    return '<div style="margin-bottom:4px;">'
+      + '<div style="font-size:9px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);padding:14px 0 6px;border-bottom:1px solid var(--border);">' + sec.label + '</div>'
+      + visibleRows.map(function(r) {
+          return '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--border);">'
+            + '<span style="font-size:11px;color:var(--ink-light);letter-spacing:0.03em;flex-shrink:0;padding-right:12px;">' + r[0] + '</span>'
+            + '<span style="font-size:11px;font-weight:500;color:var(--ink);text-align:right;letter-spacing:0.02em;">' + r[1] + '</span>'
+            + '</div>';
+        }).join('')
+      + '</div>';
+  }).join('') + '<div style="height:16px;"></div>';
+}
+
+// ═══════════════════════════════════════════════════════════
+// MEASUREMENTS ENGINE — suit-specific fields
+// ═══════════════════════════════════════════════════════════
+(function() {
+  'use strict';
+
+  var SHEETS_API  = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
+  var RAW_BASE    = 'https://raw.githubusercontent.com/toom-design/measurements/main/';
+  var FRONT_IMG   = RAW_BASE + 'MEASUREMENTS_front.png';
+  var MEAS_URL    = 'https://tailortech.toom.design/measurements';
+
+  var FIELD_IMG = {
+    'height':       'MEASUREMENTS_Height.png',
+    'chestGirth':   'MEASUREMENTS_Chest girth.png',
+    'waistGirth':   'MEASUREMENTS_Waist girth.png',
+    'hipGirth':     'MEASUREMENTS_Hip girth.png',
+    'shoulderWidth':'MEASUREMENTS_Shoulder width.png',
+    'sleeveLength': 'MEASUREMENTS_Sleeve length.png',
+    'backLength':   'MEASUREMENTS_Back length.png',
+    'neckGirth':    'MEASUREMENTS_Neck girth.png',
+    'wristGirth':   'MEASUREMENTS_Wrist girth.png',
+    'bicepGirth':   'MEASUREMENTS_Bicep girth.png',
+  };
+
+  var SUIT_VOL = [
+    ['chestGirth',   'Chest girth (cm)'],
+    ['waistGirth',   'Waist girth (cm)'],
+    ['hipGirth',     'Hip girth (cm)'],
+    ['neckGirth',    'Neck girth (cm)'],
+    ['bicepGirth',   'Bicep girth (cm)'],
+    ['wristGirth',   'Wrist girth (cm)'],
+  ];
+  var SUIT_LIN = [
+    ['shoulderWidth','Shoulder width (cm)'],
+    ['sleeveLength', 'Sleeve length (cm)'],
+    ['backLength',   'Back length (cm)'],
+  ];
+
+  // Try to pull live field definitions from measurements page
+  function loadFieldDefs() {
+    return fetch(MEAS_URL)
+      .then(function(r){ return r.text(); })
+      .then(function(html) {
+        var fiMatch = html.match(/var FIELD_IMG\s*=\s*(\{[\s\S]*?\});/);
+        if (fiMatch) { try { FIELD_IMG = (new Function('return ' + fiMatch[1]))(); } catch(e) {} }
+        var gsMatch = html.match(/suit\s*:\s*new Set\(\[([\s\S]*?)\]\)/);
+        if (gsMatch) {
+          try {
+            var suitKeys = new Set(gsMatch[1].replace(/['"]/g,'').split(',').map(function(s){ return s.trim(); }).filter(Boolean));
+            var volMatch = html.match(/const VOL\s*=\s*(\[[\s\S]*?\]);/);
+            var linMatch = html.match(/const LIN\s*=\s*(\[[\s\S]*?\]);/);
+            if (volMatch) { var av = (new Function('return ' + volMatch[1]))(); var fv = av.filter(function(f){ return suitKeys.has(f[0]); }); if (fv.length) SUIT_VOL = fv; }
+            if (linMatch) { var al = (new Function('return ' + linMatch[1]))(); var fl = al.filter(function(f){ return suitKeys.has(f[0]); }); if (fl.length) SUIT_LIN = fl; }
+          } catch(e) {}
+        }
+      })
+      .catch(function(){});
+  }
+
+  var _diagImg = null, _diagLabel = null, _diagActive = null;
+
+  function initMeasDiag() {
+    _diagImg   = document.getElementById('meas-diag-img');
+    _diagLabel = document.getElementById('meas-diag-label');
+    if (!_diagImg) return;
+    _diagImg.onload = function() { _diagImg.style.opacity = '1'; _diagLabel.style.opacity = '0'; };
+    _diagImg.src = FRONT_IMG;
+    _diagActive  = FRONT_IMG;
+  }
+
+  function showMeasDiagImage(url, labelText) {
+    if (!_diagImg || url === _diagActive) return;
+    _diagActive = url;
+    _diagImg.style.opacity = '0'; _diagImg.style.transform = 'scale(0.97)';
+    setTimeout(function() {
+      _diagImg.onload = function() { _diagImg.style.opacity = '1'; _diagImg.style.transform = ''; _diagLabel.textContent = labelText || ''; _diagLabel.style.opacity = labelText ? '1' : '0'; };
+      _diagImg.onerror = function() { _diagImg.src = FRONT_IMG; _diagLabel.style.opacity = '0'; _diagActive = FRONT_IMG; };
+      _diagImg.src = url;
+    }, 200);
+  }
+
+  window.measFocusField = function(label, key) {
+    if (!_diagImg) initMeasDiag();
+    if (key && FIELD_IMG[key]) showMeasDiagImage(RAW_BASE + encodeURIComponent(FIELD_IMG[key]), label);
+    else showMeasDiagImage(FRONT_IMG, '');
+  };
+
+  function makeField(key, label) {
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;';
+    var lbl = document.createElement('label');
+    lbl.style.cssText = 'font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:5px;';
+    lbl.textContent = label;
+    wrap.appendChild(lbl);
+    var inp = document.createElement('input');
+    inp.type='number'; inp.id='mf-'+key; inp.name=key;
+    inp.step='0.1'; inp.min='0'; inp.max='999'; inp.placeholder='0.0';
+    inp.style.cssText = 'padding:8px 10px;background:var(--white);border:1px solid var(--border-mid);border-radius:2px;color:var(--ink);font-size:12px;font-family:\'Jost\',sans-serif;outline:none;width:100%;';
+    inp.addEventListener('focus', function(){ window.measFocusField(label, key); });
+    wrap.appendChild(inp);
+    return wrap;
+  }
+
+  function buildFields() {
+    var gv = document.getElementById('meas-grid-vol');
+    var gl = document.getElementById('meas-grid-lin');
+    if (!gv || !gl) return;
+    gv.innerHTML = ''; gl.innerHTML = '';
+    SUIT_VOL.forEach(function(f){ gv.appendChild(makeField(f[0], f[1])); });
+    SUIT_LIN.forEach(function(f){ gl.appendChild(makeField(f[0], f[1])); });
+    initMeasDiag();
+    _attachMeasDirtyListeners();
+  }
+
+  function sheetsReq(action, payload) {
+    payload = payload || {};
+    if (action === 'getMeasurements') {
+      return new Promise(function(resolve, reject) {
+        var cbName = '__ttMeas_' + Date.now();
+        var encoded = encodeURIComponent(JSON.stringify(Object.assign({action:action}, payload)));
+        var url = SHEETS_API + '?action=' + action + '&payload=' + encoded + '&callback=' + cbName;
+        var script = document.createElement('script');
+        var timer = setTimeout(function(){ cleanup(); resolve({success:false,records:[],message:'timeout'}); }, 10000);
+        function cleanup(){ clearTimeout(timer); delete window[cbName]; if(script.parentNode) document.body.removeChild(script); }
+        window[cbName] = function(res){ cleanup(); resolve(res); };
+        script.onerror = function(){ cleanup(); reject(new Error('Script load failed')); };
+        script.src = url; document.body.appendChild(script);
+      });
+    }
+    return fetch(SHEETS_API, {method:'POST', body:JSON.stringify(Object.assign({action:action}, payload))}).then(function(r){ return r.json(); });
+  }
+
+  function prefillMeasurements(rec) {
+    if (!rec) return;
+    var hEl = document.getElementById('mf-height');
+    var hVal = rec['Height [CM]'] || rec['height'] || '';
+    if (hEl && hVal && hVal !== '0') hEl.value = parseFloat(hVal);
+    Object.keys(rec).forEach(function(key) {
+      var val = rec[key];
+      if (!val || val === '0' || val === '0.0' || val === '') return;
+      var el = document.getElementById('mf-' + key);
+      if (el && el.type === 'number') { var num = parseFloat(val); if (!isNaN(num) && num > 0) el.value = num; }
+    });
+    _measDirty = false;
+    if (typeof updateMeasBtn === 'function') updateMeasBtn();
+  }
+
+  var _measRecords = [];
+
+  function loadHistory(email) {
+    if (!email) return;
+    var notif = document.getElementById('meas-loading-notif');
+    sheetsReq('getMeasurements', {email: email}).then(function(res) {
+      if (notif) notif.classList.remove('visible');
+      if (!res || !res.success || !res.records || res.records.length === 0) return;
+      _measRecords = res.records;
+      var sel = document.getElementById('meas-version-select');
+      var row = document.getElementById('meas-version-row');
+      if (!sel || !row) return;
+      sel.innerHTML = res.records.map(function(rec, i) {
+        var date = rec['Created At'] || rec['Updated At'] || rec['dateTime'] || ('Version ' + (res.records.length - i));
+        return '<option value="' + i + '">' + (i === 0 ? '⬤ Latest — ' : 'Version ' + (res.records.length - i) + ' — ') + date + '</option>';
+      }).join('');
+      sel.value = '0';
+      row.style.display = 'block';
+      prefillMeasurements(res.records[0]);
+    }).catch(function() { if (notif) notif.classList.remove('visible'); });
+  }
+
+  window.measLoadVersion = function(idx) {
+    var rec = _measRecords[parseInt(idx, 10)];
+    if (rec) prefillMeasurements(rec);
+  };
+
+  var _measDirty = false;
+  function _attachMeasDirtyListeners() {
+    var form = document.getElementById('meas-form');
+    if (!form) return;
+    form.addEventListener('input', function() { if (!_measDirty) { _measDirty = true; updateMeasBtn(); } });
+  }
+
+  window.updateMeasBtn = function() {
+    var lbl = document.getElementById('meas-save-lbl');
+    if (!lbl) return;
+    lbl.innerHTML = _measDirty ? 'Save Measurements &amp; Continue' : 'Continue to Summary';
+  };
+
+  window.measPrimaryAction = function(e) {
+    if (_measDirty) { _doSaveMeasurements(e, true); }
+    else { if (typeof goToSummary === 'function') goToSummary(); }
+  };
+
+  function _doSaveMeasurements(e, andContinue) {
+    if (e) e.preventDefault();
+    var form = document.getElementById('meas-form');
+    if (!form) return;
+    var btn = document.getElementById('meas-save-btn');
+    var lbl = document.getElementById('meas-save-lbl');
+    var sp  = document.getElementById('meas-save-spin');
+    btn.disabled = true; lbl.style.display = 'none'; sp.style.display = 'block';
+    var data = { garment: 'suit', dateTime: new Date().toLocaleString() };
+    var fd = new FormData(form);
+    fd.forEach(function(v, k){ if (v) data[k] = v; });
+    var email = document.getElementById('mf-email').value.trim();
+    sheetsReq('saveMeasurement', { email: email, data: data })
+      .then(function(res) {
+        if (res && res.success) { if (typeof toast === 'function') toast('Measurements saved!'); }
+        else { if (typeof toast === 'function') toast('Could not save — check connection', 'err'); }
+      })
+      .catch(function(){ if (typeof toast === 'function') toast('Network error', 'err'); })
+      .finally(function(){
+        btn.disabled = false; lbl.style.display = ''; sp.style.display = 'none';
+        _measDirty = false; updateMeasBtn();
+        if (andContinue && typeof goToSummary === 'function') goToSummary();
+      });
+  }
+
+  window._measPanelReady = false;
+  window._measInitForUser = function(user, personId) {
+    if (window._measPanelReady) return;
+    window._measPanelReady = true;
+    var emailEl = document.getElementById('mf-email');
+    var pidEl   = document.getElementById('mf-personId');
+    if (emailEl && user.email) { emailEl.value = user.email; emailEl.readOnly = true; emailEl.style.opacity = '0.65'; emailEl.style.cursor = 'not-allowed'; }
+    if (pidEl && personId) { pidEl.value = personId; }
+    var notif = document.getElementById('meas-loading-notif');
+    if (notif) notif.classList.add('visible');
+    loadHistory(user.email);
+  };
+
+  function boot() {
+    loadFieldDefs().then(function() { buildFields(); });
+  }
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', boot); }
+  else { boot(); }
+
+})();
+
 // ── Init ──────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
-  var defaultCard = document.querySelector('#fabric-main-grid .fabric-card.selected');
-  if (defaultCard) {
-    defaultCard.dataset.color       = 'Charcoal';
-    defaultCard.dataset.composition = '100% Wool';
-    defaultCard.dataset.code        = 'WO-001';
-  }
   updatePreview();
   applyTransform();
   document.getElementById('img-base').addEventListener('load', hideLoading);
+  renderFabricGrids();
 });
 </script>
 
@@ -860,9 +1354,9 @@ document.addEventListener('DOMContentLoaded', function() {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 const _app = initializeApp({
-  apiKey:"AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY",authDomain:"tailortech-accounts.firebaseapp.com",
-  projectId:"tailortech-accounts",storageBucket:"tailortech-accounts.firebasestorage.app",
-  messagingSenderId:"137614433833",appId:"1:137614433833:web:c78ea40b0d04ba89f3c638"
+  apiKey:"AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY", authDomain:"tailortech-accounts.firebaseapp.com",
+  projectId:"tailortech-accounts", storageBucket:"tailortech-accounts.firebasestorage.app",
+  messagingSenderId:"137614433833", appId:"1:137614433833:web:c78ea40b0d04ba89f3c638"
 });
 const _auth = getAuth(_app);
 window._fb = { auth: _auth, signOut };
@@ -878,8 +1372,13 @@ onAuthStateChanged(_auth, function(user) {
           window._currentPersonId = res.client['Person ID'];
           var el = document.getElementById('dd-pid');
           if (el) el.textContent = window._currentPersonId;
+          if (window._measInitForUser) window._measInitForUser(user, window._currentPersonId);
+        } else {
+          if (window._measInitForUser) window._measInitForUser(user, '');
         }
       });
+    } else {
+      if (window._measInitForUser) window._measInitForUser(user, window._currentPersonId);
     }
   } else {
     var av = document.getElementById('nav-av');
@@ -939,12 +1438,11 @@ function getClientJSONP(email, uid, callback) {
   function cleanup(){clearTimeout(timer);delete window[cbName];if(script.parentNode)document.body.removeChild(script);}
   window[cbName]=function(res){cleanup();callback(res);};
   script.onerror=function(){cleanup();callback(null);};
-  script.src=url;
-  document.body.appendChild(script);
+  script.src=url; document.body.appendChild(script);
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.1.6</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.2.0</div>
 
 </body>
 </html>
