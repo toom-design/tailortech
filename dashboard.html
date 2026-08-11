@@ -869,7 +869,6 @@ function saveProfile() {
     'City':         document.getElementById('ef-city').value.trim(),
     'Postal Code':  document.getElementById('ef-postal').value.trim(),
     'Country':      document.getElementById('ef-country').value.trim(),
-    '_forceUpdate': true,
   };
 
   var btn = document.getElementById('btn-save-p');
@@ -877,12 +876,14 @@ function saveProfile() {
   var sp  = document.getElementById('save-spin');
   btn.disabled = true; lbl.style.display = 'none'; sp.style.display = 'block';
 
-  // Pass uid AND email at top level — Apps Script uses both to find the row
-  saveClientJSONP(Object.assign({}, data, {
+  // uid/email stay top-level (used to locate the row); the editable fields
+  // must be nested under "data" — that's what saveClient() on the server reads.
+  saveClientJSONP({
     uid:    user.uid,
     email:  user.email,
     action: 'saveClient',
-  }), function(res) {
+    data:   Object.assign({}, data, { '_forceUpdate': true }),
+  }, function(res) {
     btn.disabled = false; lbl.style.display = ''; sp.style.display = 'none';
     if (res && res.success) {
       toast(res.action === 'created' ? 'Profile created!' : 'Profile saved!');
@@ -895,11 +896,7 @@ function saveProfile() {
       prefill(data);
       document.getElementById('edit-form').style.display = 'none';
     } else {
-      // Even if response unclear, show success — data likely saved
-      toast('Profile saved!');
-      renderProfile(data);
-      prefill(data);
-      document.getElementById('edit-form').style.display = 'none';
+      toast('Could not save changes — please try again.', 'err');
     }
   });
 }
@@ -952,6 +949,6 @@ function ddCopy(type){copyVal(type);}
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v20.8.2</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v2.8.3</div>
 </body>
 </html>
