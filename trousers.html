@@ -1027,12 +1027,13 @@ function _saveToSheet(data) {
   });
 }
 
-function _saveViaIframe(status) {
+function _saveViaIframe(status, extra) {
   var data = collectConfig();
   data['Status']     = status;
   data['garment']    = 'trousers';
   data['action']     = 'saveTrousers';
   data['Created At'] = new Date().toISOString();
+  if (extra) { for (var k in extra) data[k] = extra[k]; }
   return _saveToSheet(data);
 }
 
@@ -1057,7 +1058,8 @@ async function handleOrderNow() {
   if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
   try {
     await ensurePersonId();
-    var res = await _saveViaIframe('Pending');
+    var techPackUrl = await getOrCaptureSilhouette(); // '' on failure — never blocks the order
+    var res = await _saveViaIframe('Pending', { 'tech pack': techPackUrl });
     toast('Order placed — #' + (res && res.orderNumber ? res.orderNumber : '') + ' — going to checkout…');
     setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/checkout'; }, 1800);
   } catch(e) {
@@ -1608,6 +1610,77 @@ function setAccountPopover(user) {
 // ── Auth gate: unauthenticated visitors are sent to sign in/sign up.
 // Their in-progress configuration is stashed so it saves automatically
 // the moment they're back and authenticated — nothing is lost.
+// ── Silhouette cache: reuses an already-generated tech-pack image when the
+// same option combination has been rendered before, rather than re-capturing
+// and re-uploading every single order.
+function buildSilhouetteKey() {
+  var s = state;
+  return 'TR_fit-' + s.fit + '_rise-' + s.rise + '_waistband-' + s.waistband +
+    '_style-' + s.style + '_pocket-' + s.pocket + '_hem-' + s.hem +
+    '_adjust-' + s.adjust + '_watch-' + (s.watch ? '1' : '0') +
+    '_backpocket-' + s.backpocket;
+}
+
+function captureTechPackImage() {
+  return new Promise(function(resolve, reject) {
+    var layerIds = ['img-base','img-waistband','img-adjust','img-style',
+                     'img-pocket','img-hem','img-watch','img-backpocket','img-backpocket2'];
+    var W = 760, H = 1160;
+    var canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    var ctx = canvas.getContext('2d');
+
+    var toDraw = layerIds
+      .map(function(id){ return document.getElementById(id); })
+      .filter(function(el){ return el && el.src && el.style.opacity !== '0'; });
+
+    if (toDraw.length === 0) { resolve(canvas.toDataURL('image/png')); return; }
+
+    var loaded = 0, failed = false;
+    toDraw.forEach(function(el) {
+      var img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function() {
+        if (failed) return;
+        ctx.drawImage(img, 0, 0, W, H);
+        loaded++;
+        if (loaded === toDraw.length) resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = function(){ failed = true; reject(new Error('Failed to load layer: ' + el.id)); };
+      img.src = el.src;
+    });
+  });
+}
+
+// Checks the cache first; only captures + uploads on a miss. Returns the
+// Drive URL either way, or '' if anything along the way fails (never blocks
+// the actual order from saving over a silhouette-image hiccup).
+function getOrCaptureSilhouette() {
+  var key = buildSilhouetteKey();
+  return fetch(SHEET_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'checkSilhouetteCache', key: key })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(res) {
+    if (res && res.success && res.cached) return res.url;
+    return captureTechPackImage().then(function(dataUrl) {
+      return fetch(SHEET_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'saveSilhouetteCache', key: key, imageBase64: dataUrl })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(saveRes){ return (saveRes && saveRes.success) ? saveRes.url : ''; });
+    });
+  })
+  .catch(function(err) {
+    console.error('Silhouette cache/capture failed:', err);
+    return '';
+  });
+}
+
 function isLoggedIn() {
   return !!(window._fb && window._fb.auth && window._fb.auth.currentUser);
 }
@@ -1711,7 +1784,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.2.7</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.3.0</div>
 
 </body>
 </html>
