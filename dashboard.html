@@ -361,7 +361,7 @@ button { cursor: pointer; font-family: inherit; }
 }
 .order-row:last-child { border-bottom: none; }
 .order-row:hover { background: var(--cream-mid); }
-.order-row-top { display: flex; align-items: center; gap: 16px; }
+.order-row-top { display: flex; align-items: flex-start; gap: 16px; }
 .order-swatch { width: 224px; height: 224px; border-radius: 3px; flex-shrink: 0; object-fit: contain; background: transparent; }
 .order-swatch.has-img { cursor: pointer; transition: opacity 0.15s; }
 .order-swatch.has-img:hover { opacity: 0.85; }
@@ -373,7 +373,7 @@ button { cursor: pointer; font-family: inherit; }
 
 /* Fabric swatches row — larger, labeled, only rendered for fabrics that
    actually exist on the order (never padded with empty slots). */
-.order-fabrics-row { display: flex; gap: 18px; padding-left: 8px; }
+.order-fabrics-row { display: flex; gap: 18px; margin-top: 14px; }
 .fabric-swatch-item { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
 .fabric-swatch-img {
   width: 96px; height: 96px; border-radius: 3px; object-fit: cover;
@@ -1007,11 +1007,11 @@ function loadOrders() {
             '<div class="order-num">' + (o['Order Number'] || '—') + '</div>' +
             '<div class="order-garment">' + garment + '</div>' +
             priceHtml +
+            fabricsRowHtml +
           '</div>' +
           '<div class="order-date">' + fmtDate(o['Created At'] || o['Created at'] || '') + '</div>' +
           '<span class="status ' + cls + '">' + st + '</span>' +
-        '</div>' +
-        fabricsRowHtml;
+        '</div>';
       list.appendChild(row);
 
       // Fetch and swap in the real image after the row is already visible —
@@ -1458,6 +1458,6 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeI
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v4.0.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v4.0.1</div>
 </body>
 </html>
