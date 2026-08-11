@@ -1682,7 +1682,7 @@ function getOrCaptureSilhouette() {
   })
   .then(function(r){ return r.json(); })
   .then(function(res) {
-    if (res && res.success && res.cached) return res.url;
+    if (res && res.success && res.cached) return key; // already cached — reuse as-is
     return captureTechPackImage().then(function(dataUrl) {
       return fetch(SHEET_URL, {
         method: 'POST',
@@ -1690,7 +1690,7 @@ function getOrCaptureSilhouette() {
         body: JSON.stringify({ action: 'saveSilhouetteCache', key: key, imageBase64: dataUrl })
       })
       .then(function(r){ return r.json(); })
-      .then(function(saveRes){ return (saveRes && saveRes.success) ? saveRes.url : ''; });
+      .then(function(saveRes){ return (saveRes && saveRes.success) ? key : ''; });
     });
   })
   .catch(function(err) {
@@ -1802,7 +1802,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.3.1</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.3.2</div>
 
 </body>
 </html>
