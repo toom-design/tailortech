@@ -313,7 +313,14 @@ button { cursor: pointer; font-family: inherit; }
   transition: background 0.15s; cursor: pointer;
 }
 .hero-cta:hover { background: #c9a35e; }
-.hero-art { flex-shrink: 0; opacity: 0.85; }
+.hero-art {
+  flex-shrink: 0; width: 180px; height: 180px; border-radius: 3px;
+  border: 1px dashed rgba(250,248,248,0.28); background: rgba(250,248,248,0.04);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  color: rgba(250,248,248,0.4); overflow: hidden;
+}
+.hero-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.hero-art span { font-size: 9px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
 @media(max-width:760px){ .hero-art { display: none; } .hero { padding: 32px 24px; } .hero-title { font-size: 30px; } }
 
 /* ── Profile card ── */
@@ -326,6 +333,14 @@ button { cursor: pointer; font-family: inherit; }
 .profile-name { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 500; color: var(--ink); }
 .profile-meta { font-size: 11px; color: var(--ink-light); display: flex; gap: 18px; flex-wrap: wrap; margin-top: 4px; }
 .profile-meta strong { color: var(--ink); font-weight: 600; }
+
+/* ── Profile contact row (replaces the old field grid) ── */
+.profile-contact-row { display: flex; gap: 36px; flex-wrap: wrap; padding-top: 18px; }
+.pc-item { display: flex; align-items: flex-start; gap: 10px; }
+.pc-icon { color: var(--gold); flex-shrink: 0; margin-top: 1px; }
+.pc-lbl { font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 4px; }
+.pc-val { font-size: 13px; color: var(--ink); }
+.pc-val.empty { color: var(--ink-faint); font-style: italic; }
 
 /* ── Split layout ── */
 .split { display: grid; grid-template-columns: 1.6fr 1fr; gap: 24px; margin-bottom: 32px; align-items: start; }
@@ -352,7 +367,14 @@ button { cursor: pointer; font-family: inherit; }
 
 /* ── Measurements panel ── */
 .meas-panel { background: var(--white); border: 1px solid var(--border); border-radius: 3px; padding: 22px 20px; display: flex; gap: 18px; align-items: flex-start; }
-.meas-figure { flex-shrink: 0; color: var(--ink-faint); }
+.meas-figure {
+  flex-shrink: 0; width: 68px; height: 140px; border-radius: 2px;
+  border: 1px dashed var(--border-mid); background: var(--cream-mid);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  color: var(--ink-faint); overflow: hidden;
+}
+.meas-figure img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.meas-figure span { font-size: 8px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; text-align: center; padding: 0 4px; }
 .meas-list { flex: 1; display: flex; flex-direction: column; gap: 1px; background: var(--border); border-radius: 2px; overflow: hidden; }
 .meas-list .meas-chip { display: flex; align-items: baseline; justify-content: space-between; padding: 10px 12px; }
 .meas-list .meas-lbl { margin-bottom: 0; }
@@ -438,16 +460,14 @@ button { cursor: pointer; font-family: inherit; }
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </button>
       </div>
-      <svg class="hero-art" width="180" height="180" viewBox="0 0 180 180" fill="none">
-        <g stroke="rgba(250,248,248,0.55)" stroke-width="1">
-          <path d="M60 20 L60 150 M120 20 L120 150" stroke-dasharray="2 4"/>
-          <path d="M45 30 Q60 15 75 30 L75 60 Q60 70 45 60 Z" />
-          <path d="M105 30 Q120 15 135 30 L135 60 Q120 70 105 60 Z" />
-          <path d="M50 75 L130 75 M50 95 L130 95 M50 115 L130 115" stroke-dasharray="1 5" stroke-width="0.75"/>
-          <circle cx="90" cy="45" r="3" fill="none"/>
-          <path d="M30 150 Q90 165 150 150" stroke-width="0.75"/>
-        </g>
-      </svg>
+      <!-- Drop a real photo in here: replace this div's contents with
+           <img src="your-image.jpg" alt="..."> and the placeholder styling
+           (dashed border, icon, label) falls away automatically since it's
+           only applied via the empty-state icon/span below. -->
+      <div class="hero-art">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        <span>Add Photo</span>
+      </div>
     </div>
 
     <!-- Profile card -->
@@ -457,6 +477,7 @@ button { cursor: pointer; font-family: inherit; }
           <div class="profile-name" id="profile-name">—</div>
           <div class="profile-meta">
             <span>Client ID <strong id="st-id">—</strong></span>
+            <span id="profile-uid"></span>
             <span id="st-since">member since —</span>
           </div>
         </div>
@@ -465,7 +486,7 @@ button { cursor: pointer; font-family: inherit; }
           Edit Profile
         </button>
       </div>
-      <div class="profile-grid" id="profile-display"></div>
+      <div class="profile-contact-row" id="profile-display"></div>
       <div class="edit-form" id="edit-form">
         <div class="edit-grid">
           <div class="ef"><label>Email</label><input type="email" id="ef-email" readonly></div>
@@ -519,10 +540,12 @@ button { cursor: pointer; font-family: inherit; }
           </button>
         </div>
         <div class="meas-panel">
-          <svg class="meas-figure" width="44" height="140" viewBox="0 0 44 140" fill="none" stroke="currentColor" stroke-width="1">
-            <circle cx="22" cy="14" r="10"/>
-            <path d="M22 24 L22 80 M8 40 L22 34 L36 40 M8 40 L6 70 M36 40 L38 70 M22 80 L10 136 M22 80 L34 136"/>
-          </svg>
+          <!-- Drop a real fit photo/silhouette here: replace this div's
+               contents with <img src="your-image.jpg" alt="..."> -->
+          <div class="meas-figure">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            <span>Add Photo</span>
+          </div>
           <div id="meas-loading" style="padding:8px;text-align:center;flex:1"><div class="loader" style="margin:0 auto"></div></div>
           <div id="meas-chips" class="meas-list" style="display:none"></div>
           <div id="meas-empty" class="empty" style="display:none;flex:1;padding:8px">
@@ -823,13 +846,11 @@ function loadProfile(user) {
   });
 }
 
-var PFIELDS = [
-  {l:'UID',k:'UID'},
-  {l:'First Name',k:'First Name'},{l:'Last Name',k:'Last Name'},
-  {l:'Email',k:'Email'},{l:'Phone',k:'Phone Number'},
-  {l:'Instagram',k:'IG'},{l:'Address',k:'Street Address'},
-  {l:'City',k:'City'},{l:'Postal Code',k:'Postal Code'},{l:'Country',k:'Country'},
-];
+var PC_ICONS = {
+  address: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 21s-7-6.1-7-11a7 7 0 0114 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+  phone:   '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.8 19.8 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.68 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.9.32 1.85.55 2.81.68A2 2 0 0122 16.92z"/></svg>',
+  email:   '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z"/><path d="M22 6l-10 7L2 6"/></svg>',
+};
 function renderProfile(c) {
   var user  = window._d && window._d.currentUser;
   var parts = user && user.displayName ? user.displayName.split(' ') : [];
@@ -846,18 +867,29 @@ function renderProfile(c) {
     'Postal Code':    c && c['Postal Code']    || '',
     'Country':        c && c['Country']        || '',
   };
-  var g = document.getElementById('profile-display');
-  g.innerHTML = '';
   var nameEl = document.getElementById('profile-name');
   if (nameEl) {
     var fullName = (merged['First Name'] + ' ' + merged['Last Name']).trim();
     nameEl.textContent = fullName || merged['Email'] || '—';
   }
-  PFIELDS.forEach(function(f) {
-    var v   = merged[f.k] || '';
+  var uidEl = document.getElementById('profile-uid');
+  if (uidEl) uidEl.textContent = merged['UID'] ? ('UID ' + merged['UID']) : '';
+
+  var address = [merged['Street Address'], merged['City'], merged['Country']].filter(Boolean).join(', ');
+
+  var items = [
+    { icon: PC_ICONS.address, label: 'Address', value: address },
+    { icon: PC_ICONS.phone,   label: 'Phone',   value: merged['Phone Number'] },
+    { icon: PC_ICONS.email,   label: 'Email',   value: merged['Email'] },
+  ];
+  var g = document.getElementById('profile-display');
+  g.innerHTML = '';
+  items.forEach(function(it) {
     var div = document.createElement('div');
-    div.className = 'pf';
-    div.innerHTML = '<div class="pf-lbl">' + f.l + '</div><div class="pf-val' + (v?'':' empty') + '">' + (v || 'Not set') + '</div>';
+    div.className = 'pc-item';
+    div.innerHTML = '<div class="pc-icon">' + it.icon + '</div>' +
+      '<div><div class="pc-lbl">' + it.label + '</div>' +
+      '<div class="pc-val' + (it.value ? '' : ' empty') + '">' + (it.value || 'Not set') + '</div></div>';
     g.appendChild(div);
   });
 }
@@ -1035,6 +1067,6 @@ function ddCopy(type){copyVal(type);}
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v3.0.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v3.0.2</div>
 </body>
 </html>
