@@ -1357,9 +1357,11 @@ function buildSummary() {
 }
 
 async function handleAddToCart() {
+  if (!isLoggedIn()) { redirectToAuthWithPendingOrder('InCart', 'cart'); return; }
   var btn = document.querySelector('[onclick="handleAddToCart()"]');
   if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
   try {
+    await ensurePersonId();
     await _saveViaIframe('InCart');
     toast('Added to cart!');
     setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/cart'; }, 1800);
@@ -1371,11 +1373,13 @@ async function handleAddToCart() {
 }
 
 async function handleOrderNow() {
+  if (!isLoggedIn()) { redirectToAuthWithPendingOrder('Pending', 'order'); return; }
   var btn = document.querySelector('[onclick="handleOrderNow()"]');
   if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
   try {
-    await _saveViaIframe('Pending');
-    toast('Order placed — going to checkout…');
+    await ensurePersonId();
+    var res = await _saveViaIframe('Pending');
+    toast('Order placed — #' + (res && res.orderNumber ? res.orderNumber : '') + ' — going to checkout…');
     setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/checkout'; }, 1800);
   } catch(e) {
     console.error('handleOrderNow:', e);
@@ -1473,6 +1477,8 @@ function _saveViaIframe(status) {
   var data = collectConfig();
   data['Status'] = status;
   data['Created At'] = new Date().toISOString();
+  data['action'] = 'saveShirt';
+  data['garment'] = 'shirts';
   return _saveToSheet(data);
 }
 
@@ -1495,6 +1501,9 @@ function collectConfig() {
 
   return {
     'Order Number':        '',
+    'Person ID':           window._currentPersonId || '',
+    'Email':               (window._fb && window._fb.auth && window._fb.auth.currentUser
+                              ? (window._fb.auth.currentUser.email || '') : ''),
     'Status':              'New',
     'Created At':          new Date().toISOString(),
     'Terms Accepted':      '',
@@ -1558,13 +1567,17 @@ function collectConfig() {
 window.collectConfig = collectConfig;
 
 async function submitOrder() {
+  if (!isLoggedIn()) { redirectToAuthWithPendingOrder('New', 'save'); return; }
   const btn   = document.getElementById('submit-btn');
   const label = document.getElementById('submit-label');
   if (btn)   btn.disabled = true;
   if (label) label.textContent = 'Saving…';
 
   try {
+    await ensurePersonId();
     const data = collectConfig();
+    data['action'] = 'saveShirt';
+    data['garment'] = 'shirts';
     await _saveToSheet(data);
 
     if (label) label.textContent = 'Save Configuration';
@@ -1918,7 +1931,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.2.3</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.3.0</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -1952,9 +1965,11 @@ onAuthStateChanged(_auth, function(user) {
         } else {
           if (window._measInitForUser) window._measInitForUser(user, '');
         }
+        if (window.resumePendingOrderIfAny) window.resumePendingOrderIfAny(user);
       });
     } else {
       if (window._measInitForUser) window._measInitForUser(user, window._currentPersonId);
+      if (window.resumePendingOrderIfAny) window.resumePendingOrderIfAny(user);
     }
   } else {
     var av = document.getElementById('nav-av');
@@ -1985,6 +2000,69 @@ document.addEventListener('click', function(e) {
 function goToAuth() {
   try { sessionStorage.setItem('tt_return_url', window.location.href); } catch(e) {}
   window.location.href = 'https://tailortech.toom.design/auth';
+}
+
+function isLoggedIn() {
+  return !!(window._fb && window._fb.auth && window._fb.auth.currentUser);
+}
+function redirectToAuthWithPendingOrder(status, intent) {
+  try {
+    var data = collectConfig();
+    data['Status']     = status;
+    data['garment']    = 'shirts';
+    data['action']     = 'saveShirt';
+    data['Created At'] = new Date().toISOString();
+    sessionStorage.setItem('tt_pending_order', JSON.stringify({ data: data, intent: intent }));
+    sessionStorage.setItem('tt_return_url', window.location.href);
+  } catch(e) {}
+  toast('Please sign in to continue — your configuration is saved');
+  setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/auth.html'; }, 900);
+}
+function resumePendingOrderIfAny(user) {
+  var raw;
+  try { raw = sessionStorage.getItem('tt_pending_order'); } catch(e) { raw = null; }
+  if (!raw) return;
+  try { sessionStorage.removeItem('tt_pending_order'); } catch(e) {}
+
+  var pending;
+  try { pending = JSON.parse(raw); } catch(e) { return; }
+  if (!pending || !pending.data) return;
+
+  pending.data['Person ID'] = window._currentPersonId || '';
+  pending.data['Email']     = user.email || pending.data['Email'] || '';
+
+  _saveToSheet(pending.data).then(function(res) {
+    if (pending.intent === 'cart') {
+      toast('Added to cart!');
+      setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/cart'; }, 1500);
+    } else if (pending.intent === 'order') {
+      toast('Order placed — #' + (res && res.orderNumber ? res.orderNumber : ''));
+      setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/checkout'; }, 1500);
+    } else {
+      toast('Configuration saved!');
+      setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/dashboard'; }, 1500);
+    }
+  }).catch(function(err) {
+    toast('Signed in, but could not save your order: ' + err.message, 'err');
+  });
+}
+function ensurePersonId() {
+  return new Promise(function(resolve) {
+    if (window._currentPersonId) { resolve(); return; }
+    var user = window._fb && window._fb.auth && window._fb.auth.currentUser;
+    if (!user) { resolve(); return; }
+    var settled = false;
+    var timer = setTimeout(function(){ if (!settled) { settled = true; resolve(); } }, 6000);
+    getClientJSONP(user.email, user.uid, function(res) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (res && res.success && res.client && res.client['Person ID']) {
+        window._currentPersonId = res.client['Person ID'];
+      }
+      resolve();
+    });
+  });
 }
 
 function doSignOut() {
