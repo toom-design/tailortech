@@ -879,19 +879,17 @@ function loadOrders() {
     document.getElementById('st-orders').textContent = orders.length;
     var list = document.getElementById('orders-list');
     list.innerHTML = '';
-    orders.slice(0, 6).forEach(function(o) {
+    orders.slice(0, 6).forEach(function(o, idx) {
       var st  = (o['Status'] || o['status'] || 'New').trim();
       var cls = {'New':'s-new','InCart':'s-new','Pending':'s-prog','In Progress':'s-prog','Complete':'s-done','Completed':'s-done','Cancelled':'s-cancel','Canceled':'s-cancel'}[st] || 's-new';
       var garment = o['garment'] || o['GARMENT'] || 'Order';
       garment = garment.charAt(0).toUpperCase() + garment.slice(1);
-      var techPack = o['tech pack'] || '';
-      var swatchHtml = techPack
-        ? '<img class="order-swatch has-img" src="' + techPack + '" alt="" data-full="' + techPack + '" onclick="openImagePreview(this.dataset.full)" onerror="this.onerror=null;this.removeAttribute(\'src\');this.classList.remove(\'has-img\');this.style.background=\'' + swatchColor(o['Order Number']) + '\';">'
-        : '<div class="order-swatch" style="background:' + swatchColor(o['Order Number']) + '"></div>';
+      var techPackKey = o['tech pack'] || '';
+      var swatchId = 'order-swatch-' + idx;
       var row = document.createElement('div');
       row.className = 'order-row';
       row.innerHTML =
-        swatchHtml +
+        '<div class="order-swatch" id="' + swatchId + '" style="background:' + swatchColor(o['Order Number']) + '"></div>' +
         '<div class="order-main">' +
           '<div class="order-num">' + (o['Order Number'] || '—') + '</div>' +
           '<div class="order-garment">' + garment + '</div>' +
@@ -899,6 +897,25 @@ function loadOrders() {
         '<div class="order-date">' + fmtDate(o['Created At'] || o['Created at'] || '') + '</div>' +
         '<span class="status ' + cls + '">' + st + '</span>';
       list.appendChild(row);
+
+      // Fetch and swap in the real image after the row is already visible —
+      // the image travels as base64 in a normal JSON response (Apps Script
+      // can't serve raw image bytes directly), so this is a real async
+      // fetch per thumbnail rather than a plain <img src>.
+      if (techPackKey) {
+        window._d.req('getSilhouetteImageBase64', { key: techPackKey }).then(function(imgRes) {
+          if (!imgRes || !imgRes.success || !imgRes.base64) return;
+          var dataUri = 'data:image/png;base64,' + imgRes.base64;
+          var el = document.getElementById(swatchId);
+          if (!el) return;
+          var img = document.createElement('img');
+          img.className = 'order-swatch has-img';
+          img.alt = '';
+          img.src = dataUri;
+          img.onclick = function(){ openImagePreview(dataUri); };
+          el.replaceWith(img);
+        }).catch(function(){ /* leave the color swatch as-is on failure */ });
+      }
     });
     list.style.display = '';
   }).catch(function(){ document.getElementById('orders-loading').style.display='none'; document.getElementById('orders-empty').style.display='block'; });
@@ -1309,6 +1326,6 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeI
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v3.5.1</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v3.6.0</div>
 </body>
 </html>
