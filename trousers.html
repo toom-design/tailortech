@@ -915,6 +915,10 @@ function collectConfig() {
   return {
     // ── Meta ──────────────────────────────────────────────────────
     'Order Number':      '',
+    'Person ID':         window._currentPersonId || '',
+    'Email':             (window._fb && window._fb.auth && window._fb.auth.currentUser
+                            ? (window._fb.auth.currentUser.email || '')
+                            : (window._guestInfo ? window._guestInfo.email : '')),
     'Status':            'New',
     'Created At':        new Date().toISOString(),
     'Terms Accepted':    'FALSE',
@@ -1035,9 +1039,15 @@ function _saveViaIframe(status) {
 
 async function handleAddToCart() {
   var btn = document.querySelector('[onclick="handleAddToCart()"]');
+  try {
+    await requireIdentity();
+  } catch(e) {
+    toast('Could not add to cart: ' + e.message, 'err');
+    return;
+  }
   if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
   try {
-    await _saveViaIframe('InCart');
+    var res = await _saveViaIframe('InCart');
     toast('Added to cart!');
     setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/cart'; }, 1800);
   } catch(e) {
@@ -1048,10 +1058,16 @@ async function handleAddToCart() {
 
 async function handleOrderNow() {
   var btn = document.querySelector('[onclick="handleOrderNow()"]');
+  try {
+    await requireIdentity();
+  } catch(e) {
+    toast('Could not place order: ' + e.message, 'err');
+    return;
+  }
   if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
   try {
-    await _saveViaIframe('Pending');
-    toast('Order placed — going to checkout…');
+    var res = await _saveViaIframe('Pending');
+    toast('Order placed — #' + (res && res.orderNumber ? res.orderNumber : '') + ' — going to checkout…');
     setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/checkout'; }, 1800);
   } catch(e) {
     toast('Could not place order: ' + e.message, 'err');
@@ -1132,21 +1148,22 @@ function buildSummary() {
 function submitOrder() {
   var btn   = document.getElementById('submit-btn');
   var label = document.getElementById('submit-label');
-  if (btn) btn.disabled = true;
-  if (label) label.textContent = 'Saving...';
 
-  _saveViaIframe('New')
-    .then(function() {
-      if (label) label.textContent = 'Save Configuration';
-      if (btn) btn.disabled = false;
-      toast('Configuration saved!');
-      setTimeout(function() { window.location.href = 'https://tailortech.toom.design/dashboard'; }, 2000);
-    })
-    .catch(function(err) {
-      if (label) label.textContent = 'Save Configuration';
-      if (btn) btn.disabled = false;
-      showFeedback('Could not save: ' + err.message, '#a05050');
-    });
+  requireIdentity().then(function() {
+    if (btn) btn.disabled = true;
+    if (label) label.textContent = 'Saving...';
+
+    return _saveViaIframe('New');
+  }).then(function() {
+    if (label) label.textContent = 'Save Configuration';
+    if (btn) btn.disabled = false;
+    toast('Configuration saved!');
+    setTimeout(function() { window.location.href = 'https://tailortech.toom.design/dashboard'; }, 2000);
+  }).catch(function(err) {
+    if (label) label.textContent = 'Save Configuration';
+    if (btn) btn.disabled = false;
+    showFeedback('Could not save: ' + err.message, '#a05050');
+  });
 }
 
 function toast(msg, type) {
@@ -1593,6 +1610,87 @@ function setAccountPopover(user) {
   el = document.getElementById('dd-email-sub'); if (el) el.textContent = user.email || '';
   el = document.getElementById('dd-pid');       if (el) el.textContent = window._currentPersonId || '—';
 }
+// ── Guest identity: if not logged in, collect name+email and register
+// them as a lightweight client so every order still has a real Person ID.
+function requireIdentity() {
+  return new Promise(function(resolve, reject) {
+    var user = window._fb && window._fb.auth && window._fb.auth.currentUser;
+    if (user) { resolve(); return; }                          // logged in — Person ID already resolved on auth
+    if (window._guestInfo && window._guestInfo.email) { resolve(); return; } // already asked this session
+
+    openGuestInfoModal(function(info) {
+      if (!info) { reject(new Error('Details are required to continue')); return; }
+      var parts = info.name.trim().split(/\s+/);
+      saveClientJSONP({
+        email: info.email,
+        data: {
+          'First Name': parts[0] || '',
+          'Last Name':  parts.slice(1).join(' ') || '',
+          'Email':      info.email
+        }
+      }, function(res) {
+        if (res && res.success) {
+          window._currentPersonId = res.personId || '';
+          window._guestInfo = { name: info.name, email: info.email };
+          resolve();
+        } else {
+          reject(new Error('Could not save your details — please try again'));
+        }
+      });
+    });
+  });
+}
+
+function openGuestInfoModal(callback) {
+  if (document.getElementById('tt-guest-modal')) return;
+  var wrap = document.createElement('div');
+  wrap.id = 'tt-guest-modal';
+  wrap.style.cssText = 'position:fixed;inset:0;background:rgba(26,25,22,0.45);z-index:100000;display:flex;align-items:center;justify-content:center;font-family:\'Jost\',sans-serif;';
+  wrap.innerHTML =
+      '<div style="background:#FAFAF8;border-radius:4px;padding:28px;width:320px;max-width:88vw;">'
+    + '  <div style="font-size:12px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;margin-bottom:14px;">Your Details</div>'
+    + '  <div style="font-size:11px;color:var(--ink-light);line-height:1.5;margin-bottom:16px;">We need a name and email so we know who placed this order.</div>'
+    + '  <input id="tt-guest-name"  placeholder="Full Name" style="width:100%;padding:10px 12px;margin-bottom:10px;border:1px solid var(--border-mid);border-radius:2px;font-family:\'Jost\',sans-serif;font-size:12px;outline:none;background:#fff;color:var(--ink);">'
+    + '  <input id="tt-guest-email" placeholder="Email" type="email" style="width:100%;padding:10px 12px;margin-bottom:8px;border:1px solid var(--border-mid);border-radius:2px;font-family:\'Jost\',sans-serif;font-size:12px;outline:none;background:#fff;color:var(--ink);">'
+    + '  <div id="tt-guest-err" style="display:none;font-size:10px;color:#a05050;margin-bottom:8px;"></div>'
+    + '  <button id="tt-guest-submit" style="width:100%;padding:12px;margin-top:6px;background:var(--ink);color:var(--white);border:none;border-radius:2px;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;cursor:pointer;">Continue</button>'
+    + '  <button id="tt-guest-cancel" style="width:100%;padding:8px;margin-top:6px;background:none;border:none;color:var(--ink-light);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;">Cancel</button>'
+    + '</div>';
+  document.body.appendChild(wrap);
+
+  function close() { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }
+
+  document.getElementById('tt-guest-submit').onclick = function() {
+    var name  = document.getElementById('tt-guest-name').value.trim();
+    var email = document.getElementById('tt-guest-email').value.trim();
+    var err   = document.getElementById('tt-guest-err');
+    if (!name || !email || email.indexOf('@') < 0) {
+      err.textContent = 'Please enter your name and a valid email.';
+      err.style.display = 'block';
+      return;
+    }
+    close();
+    callback({ name: name, email: email });
+  };
+  document.getElementById('tt-guest-cancel').onclick = function() {
+    close();
+    callback(null);
+  };
+}
+
+function saveClientJSONP(payload, callback) {
+  var cbName  = '__ttSaveClient_' + Date.now();
+  var encoded = encodeURIComponent(JSON.stringify(payload));
+  var url     = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec?action=saveClient&payload='+encoded+'&callback='+cbName;
+  var script  = document.createElement('script');
+  var timer   = setTimeout(function(){ cleanup(); callback(null); }, 10000);
+  function cleanup() { clearTimeout(timer); delete window[cbName]; if (script.parentNode) document.body.removeChild(script); }
+  window[cbName] = function(res){ cleanup(); callback(res); };
+  script.onerror = function(){ cleanup(); callback(null); };
+  script.src = url;
+  document.body.appendChild(script);
+}
+
 function getClientJSONP(email, uid, callback) {
   var cbName  = '__ttGetClient_' + Date.now();
   var payload = encodeURIComponent(JSON.stringify({ email: email, uid: uid || '' }));
@@ -1614,7 +1712,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.2.4</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.2.5</div>
 
 </body>
 </html>
