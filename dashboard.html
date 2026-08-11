@@ -361,27 +361,35 @@ button { cursor: pointer; font-family: inherit; }
 }
 .order-row:last-child { border-bottom: none; }
 .order-row:hover { background: var(--cream-mid); }
-.order-swatch { width: 30px; height: 30px; border-radius: 2px; flex-shrink: 0; }
+.order-swatch { width: 30px; height: 30px; border-radius: 2px; flex-shrink: 0; object-fit: cover; background: var(--cream-mid); border: 1px solid var(--border); }
 .order-main { flex: 1; min-width: 0; }
 .order-num { font-size: 12px; font-weight: 600; color: var(--ink); letter-spacing: 0.01em; }
 .order-garment { font-size: 11px; color: var(--ink-light); margin-top: 2px; }
 .order-date { font-size: 11px; color: var(--ink-faint); flex-shrink: 0; white-space: nowrap; }
 
 /* ── Measurements panel ── */
-.meas-panel { background: var(--white); border: 1px solid var(--border); border-radius: 3px; padding: 22px 20px; display: flex; gap: 18px; align-items: flex-start; }
+.meas-panel { background: var(--white); border: 1px solid var(--border); border-radius: 3px; padding: 22px 20px; display: flex; flex-direction: column; gap: 16px; }
+.meas-date-row { display: flex; align-items: center; gap: 8px; }
+.meas-date-row label { font-size: 9px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-light); }
+.meas-date-row select {
+  font-family: 'Jost', sans-serif; font-size: 12px; padding: 7px 10px;
+  background: var(--white); border: 1px solid var(--border-mid); border-radius: 2px;
+  color: var(--ink); outline: none; cursor: pointer;
+}
+.meas-body-row { display: flex; gap: 18px; align-items: flex-start; }
 .meas-figure {
-  flex-shrink: 0; width: 68px; height: 140px; border-radius: 2px;
+  flex: 1 1 50%; width: 50%; height: 340px; border-radius: 2px;
   border: 1px dashed var(--border-mid); background: var(--cream-mid);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
   color: var(--ink-faint); overflow: hidden;
 }
 .meas-figure img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .meas-figure span { font-size: 8px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; text-align: center; padding: 0 4px; }
-.meas-list { flex: 1; display: flex; flex-direction: column; gap: 1px; background: var(--border); border-radius: 2px; overflow-y: auto; max-height: 420px; }
+.meas-list { flex: 1 1 50%; display: flex; flex-direction: column; gap: 1px; background: var(--border); border-radius: 2px; overflow-y: auto; max-height: 340px; }
 .meas-list .meas-chip { display: flex; align-items: baseline; justify-content: space-between; padding: 10px 12px; }
 .meas-list .meas-lbl { margin-bottom: 0; }
 .meas-list .meas-val { font-size: 15px; }
-@media(max-width:420px){ .meas-panel { flex-direction: column; } }
+@media(max-width:420px){ .meas-body-row { flex-direction: column; } .meas-figure { width: 100%; height: 220px; } }
 
 /* ── Quick actions bar ── */
 .quickbar { background: var(--white); border: 1px solid var(--border); border-radius: 3px; display: flex; overflow: hidden; }
@@ -676,12 +684,18 @@ button { cursor: pointer; font-family: inherit; }
           </button>
         </div>
         <div class="meas-panel">
-          <div class="meas-figure">
-            <img src="images/MEASUREMENTS_front.webp" alt="">
+          <div class="meas-date-row" id="meas-date-row" style="display:none">
+            <label for="meas-date-select">Session</label>
+            <select id="meas-date-select" onchange="renderMeasurementSet(this.value)"></select>
           </div>
-          <div id="meas-loading" style="padding:8px;text-align:center;flex:1"><div class="loader" style="margin:0 auto"></div></div>
-          <div id="meas-chips" class="meas-list" style="display:none"></div>
-          <div id="meas-empty" class="empty" style="display:none;flex:1;padding:8px">
+          <div id="meas-loading" style="padding:8px;text-align:center"><div class="loader" style="margin:0 auto"></div></div>
+          <div class="meas-body-row" id="meas-body-row" style="display:none">
+            <div class="meas-figure">
+              <img src="images/MEASUREMENTS_front.webp" alt="">
+            </div>
+            <div id="meas-chips" class="meas-list"></div>
+          </div>
+          <div id="meas-empty" class="empty" style="display:none;padding:8px">
             <p>No measurements saved yet</p>
             <button class="btn-save" onclick="goMeasurements()">Add measurements</button>
           </div>
@@ -869,10 +883,14 @@ function loadOrders() {
       var cls = {'New':'s-new','InCart':'s-new','Pending':'s-prog','In Progress':'s-prog','Complete':'s-done','Completed':'s-done','Cancelled':'s-cancel','Canceled':'s-cancel'}[st] || 's-new';
       var garment = o['garment'] || o['GARMENT'] || 'Order';
       garment = garment.charAt(0).toUpperCase() + garment.slice(1);
+      var techPack = o['tech pack'] || '';
+      var swatchHtml = techPack
+        ? '<img class="order-swatch" src="' + techPack + '" alt="" onerror="this.onerror=null;this.removeAttribute(\'src\');this.style.background=\'' + swatchColor(o['Order Number']) + '\';">'
+        : '<div class="order-swatch" style="background:' + swatchColor(o['Order Number']) + '"></div>';
       var row = document.createElement('div');
       row.className = 'order-row';
       row.innerHTML =
-        '<div class="order-swatch" style="background:' + swatchColor(o['Order Number']) + '"></div>' +
+        swatchHtml +
         '<div class="order-main">' +
           '<div class="order-num">' + (o['Order Number'] || '—') + '</div>' +
           '<div class="order-garment">' + garment + '</div>' +
@@ -885,6 +903,8 @@ function loadOrders() {
   }).catch(function(){ document.getElementById('orders-loading').style.display='none'; document.getElementById('orders-empty').style.display='block'; });
 }
 
+var _measRecords = [];
+
 function loadMeasurements() {
   window._d.req('getMeasurements').then(function(res) {
     document.getElementById('meas-loading').style.display = 'none';
@@ -893,34 +913,59 @@ function loadMeasurements() {
       document.getElementById('st-meas').textContent = '0';
       return;
     }
-    document.getElementById('st-meas').textContent = res.records.length;
-    var latest = res.records[0];
-    var chips  = document.getElementById('meas-chips');
-    chips.innerHTML = '';
+    _measRecords = res.records; // already newest-first from the server
+    document.getElementById('st-meas').textContent = _measRecords.length;
 
-    // The server returns each record keyed by its raw sheet header (e.g.
-    // "Bust girth [CM]") alongside short camelCase aliases. The raw headers
-    // already carry both a readable label and a unit, and cover every
-    // measurement column that exists — not just a hand-picked subset — so
-    // showing all of them just means showing every key matching that shape.
-    var shown = 0;
-    Object.keys(latest).forEach(function(key) {
-      var m = key.match(/^(.*?)\s*\[(.+)\]$/);
-      if (!m) return;
-      var val = latest[key];
-      if (val === undefined || val === '' || val === '0') return;
-      var num = parseFloat(val);
-      if (isNaN(num)) return;
-      var label = m[1].trim();
-      var unit  = m[2].trim().toLowerCase();
-      var d = document.createElement('div');
-      d.className = 'meas-chip';
-      d.innerHTML = '<div class="meas-lbl">' + label + '</div><div class="meas-val">' + num.toFixed(1) + '<span class="meas-unit">' + unit + '</span></div>';
-      chips.appendChild(d); shown++;
-    });
-    if (shown === 0) { document.getElementById('meas-empty').style.display = 'block'; }
-    else { chips.style.display = 'flex'; }
+    var dateRow = document.getElementById('meas-date-row');
+    var select  = document.getElementById('meas-date-select');
+    select.innerHTML = '';
+    if (_measRecords.length > 1) {
+      _measRecords.forEach(function(rec, i) {
+        var opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = fmtDate(rec['Created At'] || rec['dateTime'] || '') || ('Session ' + (i + 1));
+        select.appendChild(opt);
+      });
+      dateRow.style.display = 'flex';
+    } else {
+      dateRow.style.display = 'none';
+    }
+
+    renderMeasurementSet(0);
   }).catch(function(){ document.getElementById('meas-loading').style.display='none'; document.getElementById('meas-empty').style.display='block'; });
+}
+
+// Renders one specific saved session (by index into _measRecords) into the
+// chip list — called on initial load and whenever the date dropdown changes.
+function renderMeasurementSet(index) {
+  var rec = _measRecords[parseInt(index, 10) || 0];
+  if (!rec) return;
+  var chips = document.getElementById('meas-chips');
+  chips.innerHTML = '';
+
+  // The server returns each record keyed by its raw sheet header (e.g.
+  // "Bust girth [CM]") alongside short camelCase aliases. The raw headers
+  // already carry both a readable label and a unit, and cover every
+  // measurement column that exists — not just a hand-picked subset — so
+  // showing all of them just means showing every key matching that shape.
+  var shown = 0;
+  Object.keys(rec).forEach(function(key) {
+    var m = key.match(/^(.*?)\s*\[(.+)\]$/);
+    if (!m) return;
+    var val = rec[key];
+    if (val === undefined || val === '' || val === '0') return;
+    var num = parseFloat(val);
+    if (isNaN(num)) return;
+    var label = m[1].trim();
+    var unit  = m[2].trim().toLowerCase();
+    var d = document.createElement('div');
+    d.className = 'meas-chip';
+    d.innerHTML = '<div class="meas-lbl">' + label + '</div><div class="meas-val">' + num.toFixed(1) + '<span class="meas-unit">' + unit + '</span></div>';
+    chips.appendChild(d); shown++;
+  });
+
+  document.getElementById('meas-empty').style.display = shown === 0 ? 'block' : 'none';
+  document.getElementById('meas-body-row').style.display = shown === 0 ? 'none' : 'flex';
 }
 
 function loadProfile(user) {
@@ -1240,6 +1285,6 @@ function ddCopy(type){copyVal(type);}
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v3.2.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v3.4.0</div>
 </body>
 </html>
