@@ -697,7 +697,7 @@ button { cursor: pointer; font-family: inherit; }
           <div id="meas-loading" style="padding:8px;text-align:center"><div class="loader" style="margin:0 auto"></div></div>
           <div class="meas-body-row" id="meas-body-row" style="display:none">
             <div class="meas-figure">
-              <img src="images/MEASUREMENTS_front.webp" alt="">
+              <img id="meas-figure-img" src="images/MEASUREMENTS_front.webp" alt="">
             </div>
             <div id="meas-chips" class="meas-list"></div>
           </div>
@@ -864,6 +864,47 @@ function boot(user) {
   loadProfile(user); // pass user so profile can save if missing
 }
 
+// Source PNGs (both the generated tech-pack silhouettes and the static
+// measurement figure) have real empty transparent margin baked into their
+// own pixel data — the drawing only occupies part of the file's canvas.
+// object-fit:contain correctly scales the *whole* file including that
+// margin, which is why the visible subject looks small inside its box.
+// This crops to just the non-transparent bounding box before display, so
+// the actual content — not the blank space around it — fills the frame.
+function trimTransparentPadding(imgSrc) {
+  return new Promise(function(resolve) {
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      var data;
+      try { data = ctx.getImageData(0, 0, canvas.width, canvas.height).data; }
+      catch(e) { resolve(imgSrc); return; } // tainted canvas — fall back to original, untrimmed
+      var minX = canvas.width, minY = canvas.height, maxX = 0, maxY = 0, found = false;
+      for (var y = 0; y < canvas.height; y++) {
+        for (var x = 0; x < canvas.width; x++) {
+          if (data[(y * canvas.width + x) * 4 + 3] > 10) {
+            found = true;
+            if (x < minX) minX = x; if (x > maxX) maxX = x;
+            if (y < minY) minY = y; if (y > maxY) maxY = y;
+          }
+        }
+      }
+      if (!found) { resolve(imgSrc); return; }
+      var w = maxX - minX + 1, h = maxY - minY + 1;
+      var out = document.createElement('canvas');
+      out.width = w; out.height = h;
+      out.getContext('2d').drawImage(canvas, minX, minY, w, h, 0, 0, w, h);
+      resolve(out.toDataURL('image/png'));
+    };
+    img.onerror = function(){ resolve(imgSrc); };
+    img.src = imgSrc;
+  });
+}
+
 function swatchColor(str) {
   str = String(str || 'x');
   var hash = 0;
@@ -946,15 +987,17 @@ function loadOrders() {
       if (techPackKey) {
         window._d.req('getSilhouetteImageBase64', { key: techPackKey }).then(function(imgRes) {
           if (!imgRes || !imgRes.success || !imgRes.base64) return;
-          var dataUri = 'data:image/png;base64,' + imgRes.base64;
-          var el = document.getElementById(swatchId);
-          if (!el) return;
-          var img = document.createElement('img');
-          img.className = 'order-swatch has-img';
-          img.alt = '';
-          img.src = dataUri;
-          img.onclick = function(){ openImagePreview(dataUri); };
-          el.replaceWith(img);
+          var rawUri = 'data:image/png;base64,' + imgRes.base64;
+          return trimTransparentPadding(rawUri).then(function(trimmedUri) {
+            var el = document.getElementById(swatchId);
+            if (!el) return;
+            var img = document.createElement('img');
+            img.className = 'order-swatch has-img';
+            img.alt = '';
+            img.src = trimmedUri;
+            img.onclick = function(){ openImagePreview(trimmedUri); };
+            el.replaceWith(img);
+          });
         }).catch(function(){ /* leave the color swatch as-is on failure */ });
       }
     });
@@ -1351,6 +1394,15 @@ function closeImagePreview() {
 }
 document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeImagePreview(); });
 
+// One-time trim for the static measurement figure — it's a fixed asset,
+// not per-order data, so this only needs to run once per page load rather
+// than on every renderMeasurementSet() call.
+(function(){
+  var figEl = document.getElementById('meas-figure-img');
+  if (!figEl) return;
+  trimTransparentPadding(figEl.src).then(function(trimmedUri){ figEl.src = trimmedUri; });
+})();
+
 </script>
 
 <!-- Image preview lightbox -->
@@ -1367,6 +1419,6 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeI
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v3.7.2</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v3.8.0</div>
 </body>
 </html>
