@@ -1621,6 +1621,24 @@ function buildSilhouetteKey() {
     '_backpocket-' + s.backpocket;
 }
 
+// Mirrors CSS object-fit:contain — scales the image to fit within the box
+// while preserving its own aspect ratio, rather than stretching to fill it.
+// Without this, a layer whose native dimensions don't exactly match the
+// canvas gets distorted (this was the cause of the deformed proportions).
+function drawImageContain(ctx, img, boxW, boxH) {
+  var imgRatio = img.naturalWidth / img.naturalHeight;
+  var boxRatio = boxW / boxH;
+  var drawW, drawH, offsetX, offsetY;
+  if (imgRatio > boxRatio) {
+    drawW = boxW; drawH = boxW / imgRatio;
+    offsetX = 0; offsetY = (boxH - drawH) / 2;
+  } else {
+    drawH = boxH; drawW = boxH * imgRatio;
+    offsetX = (boxW - drawW) / 2; offsetY = 0;
+  }
+  ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
+}
+
 function captureTechPackImage() {
   return new Promise(function(resolve, reject) {
     var layerIds = ['img-base','img-waistband','img-adjust','img-style',
@@ -1642,7 +1660,7 @@ function captureTechPackImage() {
       img.crossOrigin = 'anonymous';
       img.onload = function() {
         if (failed) return;
-        ctx.drawImage(img, 0, 0, W, H);
+        drawImageContain(ctx, img, W, H);
         loaded++;
         if (loaded === toDraw.length) resolve(canvas.toDataURL('image/png'));
       };
@@ -1784,7 +1802,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.3.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.3.1</div>
 
 </body>
 </html>
