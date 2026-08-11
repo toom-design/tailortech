@@ -356,23 +356,35 @@ button { cursor: pointer; font-family: inherit; }
 /* ── Order rows ── */
 .orders-panel { background: var(--white); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
 .order-row {
-  display: flex; align-items: center; gap: 16px; padding: 36px 18px;
+  display: flex; flex-direction: column; gap: 20px; padding: 36px 18px;
   border-bottom: 1px solid var(--border); transition: background 0.15s;
 }
 .order-row:last-child { border-bottom: none; }
 .order-row:hover { background: var(--cream-mid); }
+.order-row-top { display: flex; align-items: center; gap: 16px; }
 .order-swatch { width: 224px; height: 224px; border-radius: 3px; flex-shrink: 0; object-fit: contain; background: transparent; }
 .order-swatch.has-img { cursor: pointer; transition: opacity 0.15s; }
 .order-swatch.has-img:hover { opacity: 0.85; }
-.order-fabric {
-  width: 44px; height: 44px; border-radius: 3px; flex-shrink: 0;
-  object-fit: cover; border: 1px solid var(--border); background: var(--cream-mid);
-}
 .order-main { flex: 1; min-width: 0; }
 .order-num { font-size: 12px; font-weight: 600; color: var(--ink); letter-spacing: 0.01em; }
 .order-garment { font-size: 11px; color: var(--ink-light); margin-top: 2px; }
 .order-price { font-size: 13px; font-weight: 600; color: var(--gold); margin-top: 8px; }
 .order-date { font-size: 11px; color: var(--ink-faint); flex-shrink: 0; white-space: nowrap; }
+
+/* Fabric swatches row — larger, labeled, only rendered for fabrics that
+   actually exist on the order (never padded with empty slots). */
+.order-fabrics-row { display: flex; gap: 18px; padding-left: 8px; }
+.fabric-swatch-item { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.fabric-swatch-img {
+  width: 96px; height: 96px; border-radius: 3px; object-fit: cover;
+  border: 1px solid var(--border); background: var(--cream-mid); cursor: pointer;
+  transition: border-color 0.15s;
+}
+.fabric-swatch-img:hover { border-color: var(--ink-mid); }
+.fabric-swatch-label {
+  font-size: 9px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--ink-light);
+}
 
 /* ── Measurements panel ── */
 .meas-panel { background: var(--white); border: 1px solid var(--border); border-radius: 3px; padding: 22px 20px; display: flex; flex-direction: column; gap: 16px; }
@@ -953,14 +965,34 @@ function loadOrders() {
 
       // Fabric code may live under any of these header spellings depending
       // on the garment/sheet — matches whatever ORDERS actually has.
-      var fabricCode = (o['CODE'] || o['Code'] || o['code'] || '').trim();
+      var mainCode = (o['CODE'] || o['Code'] || o['code'] || '').trim();
       // Prefer the photo the server already resolved onto the order itself
       // (saveTrousers looks this up at order time and writes it into the
       // existing "material and trim" column) — fall back to matching by
       // code against the full FABRICS list only if that's not present.
-      var fabricPhoto = o['material and trim'] || (fabricCode ? fabricMap[fabricCode] : '');
-      var fabricHtml = fabricPhoto
-        ? '<img class="order-fabric" src="' + fabricPhoto + '" alt="" title="Fabric ' + fabricCode + '">'
+      var mainPhoto = o['material and trim'] || (mainCode ? fabricMap[mainCode] : '');
+
+      // Contrast/lining aren't a real selection in the trousers configurator
+      // yet (always sent as 'N/A') — these resolve to nothing until that's
+      // built, and simply won't render, per "only if those fabrics exist."
+      var contrastCode = (o['CONTRAST FABRIC'] || '').trim();
+      var contrastPhoto = (contrastCode && contrastCode.toUpperCase() !== 'N/A') ? fabricMap[contrastCode] : '';
+      var liningCode = (o['LINING FABRIC'] || '').trim();
+      var liningPhoto = (liningCode && liningCode.toUpperCase() !== 'N/A') ? fabricMap[liningCode] : '';
+
+      var fabricSlots = [
+        { label: 'Main',      photo: mainPhoto,      code: mainCode },
+        { label: 'Secondary', photo: contrastPhoto,  code: contrastCode },
+        { label: 'Lining',    photo: liningPhoto,    code: liningCode }
+      ].filter(function(s){ return s.photo; });
+
+      var fabricsRowHtml = fabricSlots.length
+        ? '<div class="order-fabrics-row">' + fabricSlots.map(function(s){
+            return '<div class="fabric-swatch-item">' +
+              '<img class="fabric-swatch-img" src="' + s.photo + '" alt="" title="' + s.code + '" onclick="openImagePreview(\'' + s.photo + '\')">' +
+              '<span class="fabric-swatch-label">' + s.label + '</span>' +
+            '</div>';
+          }).join('') + '</div>'
         : '';
 
       var price = (o['PRICE'] || '').toString().trim();
@@ -969,15 +1001,17 @@ function loadOrders() {
       var row = document.createElement('div');
       row.className = 'order-row';
       row.innerHTML =
-        '<div class="order-swatch" id="' + swatchId + '" style="background:' + swatchColor(o['Order Number']) + '"></div>' +
-        fabricHtml +
-        '<div class="order-main">' +
-          '<div class="order-num">' + (o['Order Number'] || '—') + '</div>' +
-          '<div class="order-garment">' + garment + '</div>' +
-          priceHtml +
+        '<div class="order-row-top">' +
+          '<div class="order-swatch" id="' + swatchId + '" style="background:' + swatchColor(o['Order Number']) + '"></div>' +
+          '<div class="order-main">' +
+            '<div class="order-num">' + (o['Order Number'] || '—') + '</div>' +
+            '<div class="order-garment">' + garment + '</div>' +
+            priceHtml +
+          '</div>' +
+          '<div class="order-date">' + fmtDate(o['Created At'] || o['Created at'] || '') + '</div>' +
+          '<span class="status ' + cls + '">' + st + '</span>' +
         '</div>' +
-        '<div class="order-date">' + fmtDate(o['Created At'] || o['Created at'] || '') + '</div>' +
-        '<span class="status ' + cls + '">' + st + '</span>';
+        fabricsRowHtml;
       list.appendChild(row);
 
       // Fetch and swap in the real image after the row is already visible —
@@ -1424,6 +1458,6 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeI
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v3.9.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v4.0.0</div>
 </body>
 </html>
