@@ -144,15 +144,19 @@ button { cursor: pointer; font-family: inherit; }
 .edit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; margin-bottom: 18px; }
 .ef { display: flex; flex-direction: column; }
 .ef label { font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 6px; }
-.ef input {
+.ef input, .ef select {
   font-family: 'Jost', sans-serif; font-size: 13px;
   padding: 9px 12px; background: var(--white);
   border: 1px solid var(--border-mid); border-radius: 2px;
   color: var(--ink); outline: none; transition: border-color 0.15s;
   -webkit-appearance: none;
 }
-.ef input:focus { border-color: var(--ink); }
+.ef input:focus, .ef select:focus { border-color: var(--ink); }
 .ef input::placeholder { color: var(--ink-faint); }
+.ef select { cursor: pointer; }
+.phone-row { display: flex; gap: 8px; }
+.phone-row select { flex: 0 0 118px; }
+.phone-row input { flex: 1; min-width: 0; }
 .edit-btns { display: flex; gap: 10px; }
 .btn-save {
   font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 600;
@@ -337,7 +341,7 @@ button { cursor: pointer; font-family: inherit; }
 .pc-item { display: flex; align-items: flex-start; gap: 10px; }
 .pc-icon { color: var(--gold); flex-shrink: 0; margin-top: 1px; }
 .pc-lbl { font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 4px; }
-.pc-val { font-size: 13px; color: var(--ink); }
+.pc-val { font-size: 13px; color: var(--ink); line-height: 1.5; }
 .pc-val.empty { color: var(--ink-faint); font-style: italic; }
 
 /* ── Split layout ── */
@@ -448,7 +452,7 @@ button { cursor: pointer; font-family: inherit; }
 
   <!-- Hero: full-bleed, sits flush below nav -->
   <div class="hero">
-    <img class="hero-bg" src="https://raw.githubusercontent.com/toom-design/tailortech/main/tailortech/images/dashboard_hero-02.webp" alt="">
+    <img class="hero-bg" src="https://raw.githubusercontent.com/toom-design/tailortech/main/images/dashboard_hero-02.webp" alt="">
     <div class="hero-overlay"></div>
     <div class="hero-inner">
       <div class="hero-eyebrow">Client Portal</div>
@@ -486,12 +490,151 @@ button { cursor: pointer; font-family: inherit; }
           <div class="ef"><label>Firebase UID</label><input type="text" id="ef-uid" readonly></div>
           <div class="ef"><label>First Name *</label><input type="text"  id="ef-fn"      placeholder="Jane"></div>
           <div class="ef"><label>Last Name</label>  <input type="text"  id="ef-ln"      placeholder="Doe"></div>
-          <div class="ef"><label>Phone</label>      <input type="tel"   id="ef-phone"   placeholder="+1 234 567 8900"></div>
+          <div class="ef"><label>Phone</label>
+            <div class="phone-row">
+              <select id="ef-phone-code">
+                <option value="">Code</option>
+                <option value="+1">+1 US/CA</option>
+                <option value="+7">+7 RU/KZ</option>
+                <option value="+20">+20 EG</option>
+                <option value="+27">+27 ZA</option>
+                <option value="+30">+30 GR</option>
+                <option value="+31">+31 NL</option>
+                <option value="+32">+32 BE</option>
+                <option value="+33">+33 FR</option>
+                <option value="+34">+34 ES</option>
+                <option value="+36">+36 HU</option>
+                <option value="+39">+39 IT</option>
+                <option value="+40">+40 RO</option>
+                <option value="+41">+41 CH</option>
+                <option value="+43">+43 AT</option>
+                <option value="+44">+44 UK</option>
+                <option value="+45">+45 DK</option>
+                <option value="+46">+46 SE</option>
+                <option value="+47">+47 NO</option>
+                <option value="+48">+48 PL</option>
+                <option value="+49">+49 DE</option>
+                <option value="+51">+51 PE</option>
+                <option value="+52">+52 MX</option>
+                <option value="+53">+53 CU</option>
+                <option value="+54">+54 AR</option>
+                <option value="+55">+55 BR</option>
+                <option value="+56">+56 CL</option>
+                <option value="+57">+57 CO</option>
+                <option value="+58">+58 VE</option>
+                <option value="+60">+60 MY</option>
+                <option value="+61">+61 AU</option>
+                <option value="+62">+62 ID</option>
+                <option value="+63">+63 PH</option>
+                <option value="+64">+64 NZ</option>
+                <option value="+65">+65 SG</option>
+                <option value="+66">+66 TH</option>
+                <option value="+81">+81 JP</option>
+                <option value="+82">+82 KR</option>
+                <option value="+84">+84 VN</option>
+                <option value="+86">+86 CN</option>
+                <option value="+90">+90 TR</option>
+                <option value="+91">+91 IN</option>
+                <option value="+92">+92 PK</option>
+                <option value="+94">+94 LK</option>
+                <option value="+95">+95 MM</option>
+                <option value="+98">+98 IR</option>
+                <option value="+212">+212 MA</option>
+                <option value="+213">+213 DZ</option>
+                <option value="+216">+216 TN</option>
+                <option value="+218">+218 LY</option>
+                <option value="+220">+220 GM</option>
+                <option value="+221">+221 SN</option>
+                <option value="+233">+233 GH</option>
+                <option value="+234">+234 NG</option>
+                <option value="+250">+250 RW</option>
+                <option value="+254">+254 KE</option>
+                <option value="+255">+255 TZ</option>
+                <option value="+256">+256 UG</option>
+                <option value="+263">+263 ZW</option>
+                <option value="+351">+351 PT</option>
+                <option value="+352">+352 LU</option>
+                <option value="+353">+353 IE</option>
+                <option value="+354">+354 IS</option>
+                <option value="+356">+356 MT</option>
+                <option value="+357">+357 CY</option>
+                <option value="+358">+358 FI</option>
+                <option value="+359">+359 BG</option>
+                <option value="+370">+370 LT</option>
+                <option value="+371">+371 LV</option>
+                <option value="+372">+372 EE</option>
+                <option value="+380">+380 UA</option>
+                <option value="+381">+381 RS</option>
+                <option value="+385">+385 HR</option>
+                <option value="+386">+386 SI</option>
+                <option value="+420">+420 CZ</option>
+                <option value="+421">+421 SK</option>
+                <option value="+423">+423 LI</option>
+                <option value="+852">+852 HK</option>
+                <option value="+853">+853 MO</option>
+                <option value="+855">+855 KH</option>
+                <option value="+856">+856 LA</option>
+                <option value="+880">+880 BD</option>
+                <option value="+886">+886 TW</option>
+                <option value="+960">+960 MV</option>
+                <option value="+961">+961 LB</option>
+                <option value="+962">+962 JO</option>
+                <option value="+963">+963 SY</option>
+                <option value="+964">+964 IQ</option>
+                <option value="+965">+965 KW</option>
+                <option value="+966">+966 SA</option>
+                <option value="+967">+967 YE</option>
+                <option value="+968">+968 OM</option>
+                <option value="+970">+970 PS</option>
+                <option value="+971">+971 AE</option>
+                <option value="+972">+972 IL</option>
+                <option value="+973">+973 BH</option>
+                <option value="+974">+974 QA</option>
+                <option value="+976">+976 MN</option>
+                <option value="+977">+977 NP</option>
+                <option value="+992">+992 TJ</option>
+                <option value="+993">+993 TM</option>
+                <option value="+994">+994 AZ</option>
+                <option value="+995">+995 GE</option>
+                <option value="+996">+996 KG</option>
+                <option value="+998">+998 UZ</option>
+              </select>
+              <input type="tel" id="ef-phone-num" placeholder="234 567 8900">
+            </div>
+          </div>
           <div class="ef"><label>Instagram</label>  <input type="text"  id="ef-ig"      placeholder="@username"></div>
           <div class="ef"><label>Street</label>     <input type="text"  id="ef-street"  placeholder="123 Main St"></div>
           <div class="ef"><label>City</label>       <input type="text"  id="ef-city"    placeholder="London"></div>
           <div class="ef"><label>Postal Code</label><input type="text"  id="ef-postal"  placeholder="SW1A 1AA"></div>
-          <div class="ef"><label>Country</label>    <input type="text"  id="ef-country" placeholder="United Kingdom"></div>
+          <div class="ef"><label>Country</label>
+            <select id="ef-country">
+              <option value="">Select country…</option>
+              <option>Afghanistan</option><option>Albania</option><option>Algeria</option><option>Andorra</option><option>Angola</option><option>Argentina</option><option>Armenia</option><option>Australia</option><option>Austria</option><option>Azerbaijan</option>
+              <option>Bahamas</option><option>Bahrain</option><option>Bangladesh</option><option>Barbados</option><option>Belarus</option><option>Belgium</option><option>Belize</option><option>Benin</option><option>Bhutan</option><option>Bolivia</option><option>Bosnia and Herzegovina</option><option>Botswana</option><option>Brazil</option><option>Brunei</option><option>Bulgaria</option><option>Burkina Faso</option><option>Burundi</option>
+              <option>Cambodia</option><option>Cameroon</option><option>Canada</option><option>Cape Verde</option><option>Central African Republic</option><option>Chad</option><option>Chile</option><option>China</option><option>Colombia</option><option>Comoros</option><option>Costa Rica</option><option>Croatia</option><option>Cuba</option><option>Cyprus</option><option>Czech Republic</option>
+              <option>Denmark</option><option>Djibouti</option><option>Dominica</option><option>Dominican Republic</option>
+              <option>Ecuador</option><option>Egypt</option><option>El Salvador</option><option>Equatorial Guinea</option><option>Eritrea</option><option>Estonia</option><option>Eswatini</option><option>Ethiopia</option>
+              <option>Fiji</option><option>Finland</option><option>France</option>
+              <option>Gabon</option><option>Gambia</option><option>Georgia</option><option>Germany</option><option>Ghana</option><option>Greece</option><option>Grenada</option><option>Guatemala</option><option>Guinea</option><option>Guinea-Bissau</option><option>Guyana</option>
+              <option>Haiti</option><option>Honduras</option><option>Hungary</option>
+              <option>Iceland</option><option>India</option><option>Indonesia</option><option>Iran</option><option>Iraq</option><option>Ireland</option><option>Israel</option><option>Italy</option><option>Ivory Coast</option>
+              <option>Jamaica</option><option>Japan</option><option>Jordan</option>
+              <option>Kazakhstan</option><option>Kenya</option><option>Kiribati</option><option>Kosovo</option><option>Kuwait</option><option>Kyrgyzstan</option>
+              <option>Laos</option><option>Latvia</option><option>Lebanon</option><option>Lesotho</option><option>Liberia</option><option>Libya</option><option>Liechtenstein</option><option>Lithuania</option><option>Luxembourg</option>
+              <option>Madagascar</option><option>Malawi</option><option>Malaysia</option><option>Maldives</option><option>Mali</option><option>Malta</option><option>Marshall Islands</option><option>Mauritania</option><option>Mauritius</option><option>Mexico</option><option>Micronesia</option><option>Moldova</option><option>Monaco</option><option>Mongolia</option><option>Montenegro</option><option>Morocco</option><option>Mozambique</option><option>Myanmar</option>
+              <option>Namibia</option><option>Nauru</option><option>Nepal</option><option>Netherlands</option><option>New Zealand</option><option>Nicaragua</option><option>Niger</option><option>Nigeria</option><option>North Korea</option><option>North Macedonia</option><option>Norway</option>
+              <option>Oman</option>
+              <option>Pakistan</option><option>Palau</option><option>Palestine</option><option>Panama</option><option>Papua New Guinea</option><option>Paraguay</option><option>Peru</option><option>Philippines</option><option>Poland</option><option>Portugal</option>
+              <option>Qatar</option>
+              <option>Romania</option><option>Russia</option><option>Rwanda</option>
+              <option>Saint Kitts and Nevis</option><option>Saint Lucia</option><option>Saint Vincent and the Grenadines</option><option>Samoa</option><option>San Marino</option><option>Sao Tome and Principe</option><option>Saudi Arabia</option><option>Senegal</option><option>Serbia</option><option>Seychelles</option><option>Sierra Leone</option><option>Singapore</option><option>Slovakia</option><option>Slovenia</option><option>Solomon Islands</option><option>Somalia</option><option>South Africa</option><option>South Korea</option><option>South Sudan</option><option>Spain</option><option>Sri Lanka</option><option>Sudan</option><option>Suriname</option><option>Sweden</option><option>Switzerland</option><option>Syria</option>
+              <option>Taiwan</option><option>Tajikistan</option><option>Tanzania</option><option>Thailand</option><option>Timor-Leste</option><option>Togo</option><option>Tonga</option><option>Trinidad and Tobago</option><option>Tunisia</option><option>Turkey</option><option>Turkmenistan</option><option>Tuvalu</option>
+              <option>Uganda</option><option>Ukraine</option><option>United Arab Emirates</option><option>United Kingdom</option><option>United States</option><option>Uruguay</option><option>Uzbekistan</option>
+              <option>Vanuatu</option><option>Vatican City</option><option>Venezuela</option><option>Vietnam</option>
+              <option>Yemen</option>
+              <option>Zambia</option><option>Zimbabwe</option>
+            </select>
+          </div>
         </div>
         <div class="edit-btns">
           <button class="btn-save" id="btn-save-p" onclick="saveProfile()">
@@ -868,7 +1011,12 @@ function renderProfile(c) {
   var uidEl = document.getElementById('profile-uid');
   if (uidEl) uidEl.textContent = merged['UID'] ? ('UID ' + merged['UID']) : '';
 
-  var address = [merged['Street Address'], merged['City'], merged['Country']].filter(Boolean).join(', ');
+  var addrLines = [];
+  if (merged['Street Address']) addrLines.push(merged['Street Address']);
+  var cityPostal = [merged['City'], merged['Postal Code']].filter(Boolean).join(', ');
+  if (cityPostal) addrLines.push(cityPostal);
+  if (merged['Country']) addrLines.push(merged['Country']);
+  var address = addrLines.join('<br>');
 
   var items = [
     { icon: PC_ICONS.address, label: 'Address', value: address },
@@ -904,7 +1052,7 @@ function prefill(c) {
   var m = {
     'ef-uid':'UID','ef-email':'Email',
     'ef-fn':'First Name','ef-ln':'Last Name',
-    'ef-phone':'Phone Number','ef-ig':'IG',
+    'ef-ig':'IG',
     'ef-street':'Street Address','ef-city':'City',
     'ef-postal':'Postal Code','ef-country':'Country'
   };
@@ -912,6 +1060,31 @@ function prefill(c) {
     var el = document.getElementById(id);
     if (el) el.value = merged[m[id]] || '';
   });
+
+  // Phone is split across two controls (code + number) but stored as one
+  // string, e.g. "+44 7911 123456" — parse it back apart for editing.
+  var codeSel = document.getElementById('ef-phone-code');
+  var numIn   = document.getElementById('ef-phone-num');
+  var raw     = (merged['Phone Number'] || '').trim();
+  if (codeSel && numIn) {
+    if (raw) {
+      var codes = Array.prototype.slice.call(codeSel.options)
+        .map(function(o){ return o.value; })
+        .filter(Boolean)
+        .sort(function(a,b){ return b.length - a.length; }); // longest first
+      var matched = codes.find(function(code){ return raw.indexOf(code) === 0; });
+      if (matched) {
+        codeSel.value = matched;
+        numIn.value   = raw.slice(matched.length).trim();
+      } else {
+        codeSel.value = '';
+        numIn.value   = raw;
+      }
+    } else {
+      codeSel.value = '';
+      numIn.value   = '';
+    }
+  }
 }
 
 function toggleEdit() {
@@ -974,7 +1147,11 @@ function saveProfile() {
     'Email':        user.email,
     'First Name':   fname,
     'Last Name':    document.getElementById('ef-ln').value.trim(),
-    'Phone Number': document.getElementById('ef-phone').value.trim(),
+    'Phone Number': (function(){
+      var code = document.getElementById('ef-phone-code').value.trim();
+      var num  = document.getElementById('ef-phone-num').value.trim();
+      return num ? (code ? code + ' ' + num : num) : '';
+    })(),
     'IG':           document.getElementById('ef-ig').value.trim(),
     'Street Address': document.getElementById('ef-street').value.trim(),
     'City':         document.getElementById('ef-city').value.trim(),
@@ -1060,6 +1237,6 @@ function ddCopy(type){copyVal(type);}
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v3.1.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v3.1.3</div>
 </body>
 </html>
