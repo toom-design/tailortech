@@ -917,8 +917,7 @@ function collectConfig() {
     'Order Number':      '',
     'Person ID':         window._currentPersonId || '',
     'Email':             (window._fb && window._fb.auth && window._fb.auth.currentUser
-                            ? (window._fb.auth.currentUser.email || '')
-                            : (window._guestInfo ? window._guestInfo.email : '')),
+                            ? (window._fb.auth.currentUser.email || '') : ''),
     'Status':            'New',
     'Created At':        new Date().toISOString(),
     'Terms Accepted':    'FALSE',
@@ -1038,15 +1037,11 @@ function _saveViaIframe(status) {
 }
 
 async function handleAddToCart() {
+  if (!isLoggedIn()) { redirectToAuthWithPendingOrder('InCart', 'cart'); return; }
   var btn = document.querySelector('[onclick="handleAddToCart()"]');
-  try {
-    await requireIdentity();
-  } catch(e) {
-    toast('Could not add to cart: ' + e.message, 'err');
-    return;
-  }
   if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
   try {
+    await ensurePersonId();
     var res = await _saveViaIframe('InCart');
     toast('Added to cart!');
     setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/cart'; }, 1800);
@@ -1057,15 +1052,11 @@ async function handleAddToCart() {
 }
 
 async function handleOrderNow() {
+  if (!isLoggedIn()) { redirectToAuthWithPendingOrder('Pending', 'order'); return; }
   var btn = document.querySelector('[onclick="handleOrderNow()"]');
-  try {
-    await requireIdentity();
-  } catch(e) {
-    toast('Could not place order: ' + e.message, 'err');
-    return;
-  }
   if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
   try {
+    await ensurePersonId();
     var res = await _saveViaIframe('Pending');
     toast('Order placed — #' + (res && res.orderNumber ? res.orderNumber : '') + ' — going to checkout…');
     setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/checkout'; }, 1800);
@@ -1149,10 +1140,12 @@ function submitOrder() {
   var btn   = document.getElementById('submit-btn');
   var label = document.getElementById('submit-label');
 
-  requireIdentity().then(function() {
-    if (btn) btn.disabled = true;
-    if (label) label.textContent = 'Saving...';
+  if (!isLoggedIn()) { redirectToAuthWithPendingOrder('New', 'save'); return; }
 
+  btn && (btn.disabled = true);
+  if (label) label.textContent = 'Saving...';
+
+  ensurePersonId().then(function() {
     return _saveViaIframe('New');
   }).then(function() {
     if (label) label.textContent = 'Save Configuration';
@@ -1555,9 +1548,11 @@ onAuthStateChanged(_auth, function(user) {
         } else {
           if (window._measInitForUser) window._measInitForUser(user, '');
         }
+        if (window.resumePendingOrderIfAny) window.resumePendingOrderIfAny(user);
       });
     } else {
       if (window._measInitForUser) window._measInitForUser(user, window._currentPersonId);
+      if (window.resumePendingOrderIfAny) window.resumePendingOrderIfAny(user);
     }
   } else {
     var av = document.getElementById('nav-av');
@@ -1610,85 +1605,89 @@ function setAccountPopover(user) {
   el = document.getElementById('dd-email-sub'); if (el) el.textContent = user.email || '';
   el = document.getElementById('dd-pid');       if (el) el.textContent = window._currentPersonId || '—';
 }
-// ── Guest identity: if not logged in, collect name+email and register
-// them as a lightweight client so every order still has a real Person ID.
-function requireIdentity() {
-  return new Promise(function(resolve, reject) {
-    var user = window._fb && window._fb.auth && window._fb.auth.currentUser;
-    if (user) { resolve(); return; }                          // logged in — Person ID already resolved on auth
-    if (window._guestInfo && window._guestInfo.email) { resolve(); return; } // already asked this session
+// ── Auth gate: unauthenticated visitors are sent to sign in/sign up.
+// Their in-progress configuration is stashed so it saves automatically
+// the moment they're back and authenticated — nothing is lost.
+function isLoggedIn() {
+  return !!(window._fb && window._fb.auth && window._fb.auth.currentUser);
+}
 
-    openGuestInfoModal(function(info) {
-      if (!info) { reject(new Error('Details are required to continue')); return; }
-      var parts = info.name.trim().split(/\s+/);
-      saveClientJSONP({
-        email: info.email,
-        data: {
-          'First Name': parts[0] || '',
-          'Last Name':  parts.slice(1).join(' ') || '',
-          'Email':      info.email
-        }
-      }, function(res) {
-        if (res && res.success) {
-          window._currentPersonId = res.personId || '';
-          window._guestInfo = { name: info.name, email: info.email };
-          resolve();
-        } else {
-          reject(new Error('Could not save your details — please try again'));
-        }
-      });
+// window._currentPersonId is set asynchronously (a real network round-trip
+// to Apps Script's getClient, kicked off from onAuthStateChanged). Email is
+// available instantly from Firebase's local session, but Person ID isn't —
+// so submitting immediately after sign-in can race ahead of it and send an
+// order with no Person ID. This waits for it (or fetches it fresh) before
+// any save proceeds.
+function ensurePersonId() {
+  return new Promise(function(resolve, reject) {
+    if (window._currentPersonId) { resolve(); return; }
+
+    var user = window._fb && window._fb.auth && window._fb.auth.currentUser;
+    if (!user) { resolve(); return; } // not logged in — nothing to wait for here
+
+    var settled = false;
+    var timer = setTimeout(function() {
+      if (settled) return;
+      settled = true;
+      resolve(); // proceed anyway rather than block the order indefinitely
+    }, 6000);
+
+    getClientJSONP(user.email, user.uid, function(res) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (res && res.success && res.client && res.client['Person ID']) {
+        window._currentPersonId = res.client['Person ID'];
+      }
+      resolve();
     });
   });
 }
 
-function openGuestInfoModal(callback) {
-  if (document.getElementById('tt-guest-modal')) return;
-  var wrap = document.createElement('div');
-  wrap.id = 'tt-guest-modal';
-  wrap.style.cssText = 'position:fixed;inset:0;background:rgba(26,25,22,0.45);z-index:100000;display:flex;align-items:center;justify-content:center;font-family:\'Jost\',sans-serif;';
-  wrap.innerHTML =
-      '<div style="background:#FAFAF8;border-radius:4px;padding:28px;width:320px;max-width:88vw;">'
-    + '  <div style="font-size:12px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;margin-bottom:14px;">Your Details</div>'
-    + '  <div style="font-size:11px;color:var(--ink-light);line-height:1.5;margin-bottom:16px;">We need a name and email so we know who placed this order.</div>'
-    + '  <input id="tt-guest-name"  placeholder="Full Name" style="width:100%;padding:10px 12px;margin-bottom:10px;border:1px solid var(--border-mid);border-radius:2px;font-family:\'Jost\',sans-serif;font-size:12px;outline:none;background:#fff;color:var(--ink);">'
-    + '  <input id="tt-guest-email" placeholder="Email" type="email" style="width:100%;padding:10px 12px;margin-bottom:8px;border:1px solid var(--border-mid);border-radius:2px;font-family:\'Jost\',sans-serif;font-size:12px;outline:none;background:#fff;color:var(--ink);">'
-    + '  <div id="tt-guest-err" style="display:none;font-size:10px;color:#a05050;margin-bottom:8px;"></div>'
-    + '  <button id="tt-guest-submit" style="width:100%;padding:12px;margin-top:6px;background:var(--ink);color:var(--white);border:none;border-radius:2px;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;cursor:pointer;">Continue</button>'
-    + '  <button id="tt-guest-cancel" style="width:100%;padding:8px;margin-top:6px;background:none;border:none;color:var(--ink-light);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;">Cancel</button>'
-    + '</div>';
-  document.body.appendChild(wrap);
-
-  function close() { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }
-
-  document.getElementById('tt-guest-submit').onclick = function() {
-    var name  = document.getElementById('tt-guest-name').value.trim();
-    var email = document.getElementById('tt-guest-email').value.trim();
-    var err   = document.getElementById('tt-guest-err');
-    if (!name || !email || email.indexOf('@') < 0) {
-      err.textContent = 'Please enter your name and a valid email.';
-      err.style.display = 'block';
-      return;
-    }
-    close();
-    callback({ name: name, email: email });
-  };
-  document.getElementById('tt-guest-cancel').onclick = function() {
-    close();
-    callback(null);
-  };
+function redirectToAuthWithPendingOrder(status, intent) {
+  try {
+    var data = collectConfig();
+    data['Status']     = status;
+    data['garment']    = 'trousers';
+    data['action']     = 'saveTrousers';
+    data['Created At'] = new Date().toISOString();
+    sessionStorage.setItem('tt_pending_order', JSON.stringify({ data: data, intent: intent }));
+    sessionStorage.setItem('tt_return_url', window.location.href);
+  } catch(e) {}
+  toast('Please sign in to continue — your configuration is saved');
+  setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/auth.html'; }, 900);
 }
 
-function saveClientJSONP(payload, callback) {
-  var cbName  = '__ttSaveClient_' + Date.now();
-  var encoded = encodeURIComponent(JSON.stringify(payload));
-  var url     = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec?action=saveClient&payload='+encoded+'&callback='+cbName;
-  var script  = document.createElement('script');
-  var timer   = setTimeout(function(){ cleanup(); callback(null); }, 10000);
-  function cleanup() { clearTimeout(timer); delete window[cbName]; if (script.parentNode) document.body.removeChild(script); }
-  window[cbName] = function(res){ cleanup(); callback(res); };
-  script.onerror = function(){ cleanup(); callback(null); };
-  script.src = url;
-  document.body.appendChild(script);
+// Called once a user is authenticated (fresh sign-in or already signed in)
+// and their Person ID has been resolved. Completes any order that was
+// interrupted by the auth redirect above.
+function resumePendingOrderIfAny(user) {
+  var raw;
+  try { raw = sessionStorage.getItem('tt_pending_order'); } catch(e) { raw = null; }
+  if (!raw) return;
+  try { sessionStorage.removeItem('tt_pending_order'); } catch(e) {}
+
+  var pending;
+  try { pending = JSON.parse(raw); } catch(e) { return; }
+  if (!pending || !pending.data) return;
+
+  pending.data['Person ID'] = window._currentPersonId || '';
+  pending.data['Email']     = user.email || pending.data['Email'] || '';
+
+  _saveToSheet(pending.data).then(function(res) {
+    if (pending.intent === 'cart') {
+      toast('Added to cart!');
+      setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/cart'; }, 1500);
+    } else if (pending.intent === 'order') {
+      toast('Order placed — #' + (res && res.orderNumber ? res.orderNumber : ''));
+      setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/checkout'; }, 1500);
+    } else {
+      toast('Configuration saved!');
+      setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/dashboard'; }, 1500);
+    }
+  }).catch(function(err) {
+    toast('Signed in, but could not save your order: ' + err.message, 'err');
+  });
 }
 
 function getClientJSONP(email, uid, callback) {
@@ -1712,7 +1711,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.2.5</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.2.7</div>
 
 </body>
 </html>
