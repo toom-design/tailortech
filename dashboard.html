@@ -943,8 +943,7 @@ function getFabricPhotoMap() {
 }
 
 function loadOrders() {
-  Promise.all([ window._d.req('getOrders'), getFabricPhotoMap() ]).then(function(results) {
-    var res = results[0], fabricMap = results[1];
+  window._d.req('getOrders').then(function(res) {
     document.getElementById('orders-loading').style.display = 'none';
     if (!res.success || !res.orders || res.orders.length === 0) {
       document.getElementById('orders-empty').style.display = 'block';
@@ -955,6 +954,13 @@ function loadOrders() {
     document.getElementById('st-orders').textContent = orders.length;
     var list = document.getElementById('orders-list');
     list.innerHTML = '';
+
+    // Anything that needs the full FABRICS sheet (contrast/lining, or a
+    // fallback if the server-resolved main photo is missing) gets queued
+    // here and filled in after the list is already on screen — it should
+    // not delay showing the orders themselves.
+    var pendingFabricLookups = [];
+
     orders.slice(0, 6).forEach(function(o, idx) {
       var st  = (o['Status'] || o['status'] || 'New').trim();
       var cls = {'New':'s-new','InCart':'s-new','Pending':'s-prog','In Progress':'s-prog','Complete':'s-done','Completed':'s-done','Cancelled':'s-cancel','Canceled':'s-cancel'}[st] || 's-new';
@@ -962,38 +968,34 @@ function loadOrders() {
       garment = garment.charAt(0).toUpperCase() + garment.slice(1);
       var techPackKey = o['tech pack'] || '';
       var swatchId = 'order-swatch-' + idx;
+      var fabricsRowId = 'order-fabrics-' + idx;
 
-      // Fabric code may live under any of these header spellings depending
-      // on the garment/sheet — matches whatever ORDERS actually has.
       var mainCode = (o['CODE'] || o['Code'] || o['code'] || '').trim();
-      // Prefer the photo the server already resolved onto the order itself
-      // (saveTrousers looks this up at order time and writes it into the
-      // existing "material and trim" column) — fall back to matching by
-      // code against the full FABRICS list only if that's not present.
-      var mainPhoto = o['material and trim'] || (mainCode ? fabricMap[mainCode] : '');
+      // The server already resolved this at order-save time (saveTrousers →
+      // getFabricPhotoByCode) and wrote it directly onto the order — free
+      // to use immediately, no extra request needed.
+      var mainPhoto = o['material and trim'] || '';
+
+      var fabricSlots = [];
+      if (mainPhoto) fabricSlots.push({ label: 'Main', photo: mainPhoto, code: mainCode });
+
+      var fabricsRowHtml = '<div class="order-fabrics-row" id="' + fabricsRowId + '">' +
+        fabricSlots.map(function(s){
+          return '<div class="fabric-swatch-item">' +
+            '<img class="fabric-swatch-img" src="' + s.photo + '" alt="" title="' + s.code + '" onclick="openImagePreview(\'' + s.photo + '\')">' +
+            '<span class="fabric-swatch-label">' + s.label + '</span>' +
+          '</div>';
+        }).join('') +
+      '</div>';
 
       // Contrast/lining aren't a real selection in the trousers configurator
-      // yet (always sent as 'N/A') — these resolve to nothing until that's
-      // built, and simply won't render, per "only if those fabrics exist."
+      // yet (always sent as 'N/A') — queued anyway so they're ready the
+      // moment that becomes real, but will simply resolve to nothing today.
+      if (!mainPhoto && mainCode) pendingFabricLookups.push({ rowId: fabricsRowId, code: mainCode, label: 'Main' });
       var contrastCode = (o['CONTRAST FABRIC'] || '').trim();
-      var contrastPhoto = (contrastCode && contrastCode.toUpperCase() !== 'N/A') ? fabricMap[contrastCode] : '';
+      if (contrastCode && contrastCode.toUpperCase() !== 'N/A') pendingFabricLookups.push({ rowId: fabricsRowId, code: contrastCode, label: 'Secondary' });
       var liningCode = (o['LINING FABRIC'] || '').trim();
-      var liningPhoto = (liningCode && liningCode.toUpperCase() !== 'N/A') ? fabricMap[liningCode] : '';
-
-      var fabricSlots = [
-        { label: 'Main',      photo: mainPhoto,      code: mainCode },
-        { label: 'Secondary', photo: contrastPhoto,  code: contrastCode },
-        { label: 'Lining',    photo: liningPhoto,    code: liningCode }
-      ].filter(function(s){ return s.photo; });
-
-      var fabricsRowHtml = fabricSlots.length
-        ? '<div class="order-fabrics-row">' + fabricSlots.map(function(s){
-            return '<div class="fabric-swatch-item">' +
-              '<img class="fabric-swatch-img" src="' + s.photo + '" alt="" title="' + s.code + '" onclick="openImagePreview(\'' + s.photo + '\')">' +
-              '<span class="fabric-swatch-label">' + s.label + '</span>' +
-            '</div>';
-          }).join('') + '</div>'
-        : '';
+      if (liningCode && liningCode.toUpperCase() !== 'N/A') pendingFabricLookups.push({ rowId: fabricsRowId, code: liningCode, label: 'Lining' });
 
       var price = (o['PRICE'] || '').toString().trim();
       var priceHtml = price ? '<div class="order-price">' + price + ' €</div>' : '';
@@ -1036,6 +1038,22 @@ function loadOrders() {
       }
     });
     list.style.display = '';
+
+    if (pendingFabricLookups.length) {
+      getFabricPhotoMap().then(function(fabricMap) {
+        pendingFabricLookups.forEach(function(item) {
+          var photo = fabricMap[item.code];
+          if (!photo) return;
+          var container = document.getElementById(item.rowId);
+          if (!container) return;
+          var div = document.createElement('div');
+          div.className = 'fabric-swatch-item';
+          div.innerHTML = '<img class="fabric-swatch-img" src="' + photo + '" alt="" title="' + item.code + '" onclick="openImagePreview(\'' + photo + '\')">' +
+            '<span class="fabric-swatch-label">' + item.label + '</span>';
+          container.appendChild(div);
+        });
+      }).catch(function(){ /* fabric fallback just doesn't appear — nothing else affected */ });
+    }
   }).catch(function(){ document.getElementById('orders-loading').style.display='none'; document.getElementById('orders-empty').style.display='block'; });
 }
 
@@ -1458,6 +1476,6 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeI
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v4.0.1</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v4.1.0</div>
 </body>
 </html>
