@@ -377,7 +377,7 @@ button { cursor: pointer; font-family: inherit; }
 }
 .meas-figure img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .meas-figure span { font-size: 8px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; text-align: center; padding: 0 4px; }
-.meas-list { flex: 1; display: flex; flex-direction: column; gap: 1px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.meas-list { flex: 1; display: flex; flex-direction: column; gap: 1px; background: var(--border); border-radius: 2px; overflow-y: auto; max-height: 420px; }
 .meas-list .meas-chip { display: flex; align-items: baseline; justify-content: space-between; padding: 10px 12px; }
 .meas-list .meas-lbl { margin-bottom: 0; }
 .meas-list .meas-val { font-size: 15px; }
@@ -676,11 +676,8 @@ button { cursor: pointer; font-family: inherit; }
           </button>
         </div>
         <div class="meas-panel">
-          <!-- Drop a real fit photo/silhouette here: replace this div's
-               contents with <img src="your-image.jpg" alt="..."> -->
           <div class="meas-figure">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-            <span>Add Photo</span>
+            <img src="images/MEASUREMENTS_front.webp" alt="">
           </div>
           <div id="meas-loading" style="padding:8px;text-align:center;flex:1"><div class="loader" style="margin:0 auto"></div></div>
           <div id="meas-chips" class="meas-list" style="display:none"></div>
@@ -900,23 +897,29 @@ function loadMeasurements() {
     var latest = res.records[0];
     var chips  = document.getElementById('meas-chips');
     chips.innerHTML = '';
-    var hl = [
-      {k:'height',label:'Height',u:'cm'},{k:'weight',label:'Weight',u:'kg'},
-      {k:'bustGirth',label:'Bust',u:'cm'},{k:'waistGirth',label:'Waist',u:'cm'},
-      {k:'hipGirth',label:'Hips',u:'cm'},{k:'shoulderLength',label:'Shoulder',u:'cm'},
-      {k:'outerArmLength',label:'Arm length',u:'cm'},{k:'outsideLegLength',label:'Leg',u:'cm'},
-    ];
+
+    // The server returns each record keyed by its raw sheet header (e.g.
+    // "Bust girth [CM]") alongside short camelCase aliases. The raw headers
+    // already carry both a readable label and a unit, and cover every
+    // measurement column that exists — not just a hand-picked subset — so
+    // showing all of them just means showing every key matching that shape.
     var shown = 0;
-    hl.forEach(function(h) {
-      if (latest[h.k] && latest[h.k] !== '0' && latest[h.k] !== '') {
-        var d = document.createElement('div');
-        d.className = 'meas-chip';
-        d.innerHTML = '<div class="meas-lbl">' + h.label + '</div><div class="meas-val">' + parseFloat(latest[h.k]).toFixed(1) + '<span class="meas-unit">' + h.u + '</span></div>';
-        chips.appendChild(d); shown++;
-      }
+    Object.keys(latest).forEach(function(key) {
+      var m = key.match(/^(.*?)\s*\[(.+)\]$/);
+      if (!m) return;
+      var val = latest[key];
+      if (val === undefined || val === '' || val === '0') return;
+      var num = parseFloat(val);
+      if (isNaN(num)) return;
+      var label = m[1].trim();
+      var unit  = m[2].trim().toLowerCase();
+      var d = document.createElement('div');
+      d.className = 'meas-chip';
+      d.innerHTML = '<div class="meas-lbl">' + label + '</div><div class="meas-val">' + num.toFixed(1) + '<span class="meas-unit">' + unit + '</span></div>';
+      chips.appendChild(d); shown++;
     });
     if (shown === 0) { document.getElementById('meas-empty').style.display = 'block'; }
-    else { chips.style.display = 'grid'; }
+    else { chips.style.display = 'flex'; }
   }).catch(function(){ document.getElementById('meas-loading').style.display='none'; document.getElementById('meas-empty').style.display='block'; });
 }
 
@@ -1237,6 +1240,6 @@ function ddCopy(type){copyVal(type);}
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v3.1.3</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v3.2.0</div>
 </body>
 </html>
