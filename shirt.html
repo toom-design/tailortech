@@ -1502,6 +1502,20 @@ function collectConfig() {
     return '';
   };
 
+  // Shirts have no lining of their own — when a tuxedo bib fabric is
+  // selected, it's surfaced through the LINING FABRIC/CODE slot instead,
+  // so it actually shows up in the dashboard rather than having no home.
+  const tuxedoBib = (() => {
+    const sec = document.getElementById('section-tuxedo-bib');
+    if (!sec || !sec.classList.contains('visible')) return { name: '', code: '' };
+    const card = document.querySelector('#fabric-bib-grid .fabric-card.selected');
+    if (!card) return { name: '', code: '' };
+    return {
+      name: card.querySelector('.fname')?.textContent.trim() || '',
+      code: card.querySelector('.fcode')?.textContent.trim() || ''
+    };
+  })();
+
   return {
     'Order Number':        '',
     'Person ID':           window._currentPersonId || '',
@@ -1556,18 +1570,11 @@ function collectConfig() {
                            })(),
     
     'STRUCTURE':           'N/A',
-    'LINING FABRIC':       'N/A',
+    'LINING FABRIC':       tuxedoBib.name || 'N/A',
+    'LINING CODE':         tuxedoBib.code,
     'LINING TYPE':         'N/A',
     
-    'TUXEDO BIB FABRIC':   (() => {
-                             const sec = document.getElementById('section-tuxedo-bib');
-                             if (!sec || !sec.classList.contains('visible')) return '';
-                             const card = document.querySelector('#fabric-bib-grid .fabric-card.selected');
-                             if (!card) return '';
-                             const name = card.querySelector('.fname')?.textContent.trim();
-                             const code = card.querySelector('.fcode')?.textContent.trim();
-                             return name || code || '';
-                           })(),
+    'TUXEDO BIB FABRIC':   tuxedoBib.name,
     'COLLAR INTERLINING':  sectionPill('Collar Interlining'),
     'COLLAR STAYS':        sectionPill('Collar Stays'), 
   };
@@ -1939,7 +1946,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.5.1</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.6.0</div>
 
 <!-- Firebase -->
 <script type="module">
