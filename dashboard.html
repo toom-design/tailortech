@@ -966,36 +966,41 @@ function loadOrders() {
       var cls = {'New':'s-new','InCart':'s-new','Pending':'s-prog','In Progress':'s-prog','Complete':'s-done','Completed':'s-done','Cancelled':'s-cancel','Canceled':'s-cancel'}[st] || 's-new';
       var garment = o['garment'] || o['GARMENT'] || 'Order';
       garment = garment.charAt(0).toUpperCase() + garment.slice(1);
-      var techPackKey = o['tech pack'] || '';
+      // Now a real Drive view link (not a bare key) — see getOrCaptureSilhouette().
+      var techPackUrl = o['tech pack'] || '';
       var swatchId = 'order-swatch-' + idx;
       var fabricsRowId = 'order-fabrics-' + idx;
 
-      var mainCode = (o['CODE'] || o['Code'] || o['code'] || '').trim();
-      // The server already resolved this at order-save time (saveTrousers →
-      // getFabricPhotoByCode) and wrote it directly onto the order — free
-      // to use immediately, no extra request needed.
-      var mainPhoto = o['material and trim'] || '';
+      // Server already resolved these at order-save time (attachFabricPhotos
+      // in saveTrousers/saveSuits/saveShirt) directly into MAIN/CONTRAST/
+      // LINING — free to use immediately, no extra request needed.
+      var mainPhoto     = o['MAIN'] || '';
+      var contrastPhoto = o['CONTRAST'] || '';
+      var liningPhoto   = o['LINING'] || '';
 
-      var fabricSlots = [];
-      if (mainPhoto) fabricSlots.push({ label: 'Main', photo: mainPhoto, code: mainCode });
+      var fabricSlots = [
+        { label: 'Main',      photo: mainPhoto },
+        { label: 'Secondary', photo: contrastPhoto },
+        { label: 'Lining',    photo: liningPhoto }
+      ].filter(function(s){ return s.photo; });
 
       var fabricsRowHtml = '<div class="order-fabrics-row" id="' + fabricsRowId + '">' +
         fabricSlots.map(function(s){
           return '<div class="fabric-swatch-item">' +
-            '<img class="fabric-swatch-img" src="' + s.photo + '" alt="" title="' + s.code + '" onclick="openImagePreview(\'' + s.photo + '\')">' +
+            '<img class="fabric-swatch-img" src="' + s.photo + '" alt="" title="' + s.label + '" onclick="openImagePreview(\'' + s.photo + '\')">' +
             '<span class="fabric-swatch-label">' + s.label + '</span>' +
           '</div>';
         }).join('') +
       '</div>';
 
-      // Contrast/lining aren't a real selection in the trousers configurator
-      // yet (always sent as 'N/A') — queued anyway so they're ready the
-      // moment that becomes real, but will simply resolve to nothing today.
+      // Fallback only for legacy orders saved before MAIN/CONTRAST/LINING
+      // existed as columns — matches by code against the full FABRICS list.
+      var mainCode = (o['CODE'] || o['Code'] || o['code'] || '').trim();
       if (!mainPhoto && mainCode) pendingFabricLookups.push({ rowId: fabricsRowId, code: mainCode, label: 'Main' });
       var contrastCode = (o['CONTRAST FABRIC'] || '').trim();
-      if (contrastCode && contrastCode.toUpperCase() !== 'N/A') pendingFabricLookups.push({ rowId: fabricsRowId, code: contrastCode, label: 'Secondary' });
+      if (!contrastPhoto && contrastCode && contrastCode.toUpperCase() !== 'N/A') pendingFabricLookups.push({ rowId: fabricsRowId, code: contrastCode, label: 'Secondary' });
       var liningCode = (o['LINING FABRIC'] || '').trim();
-      if (liningCode && liningCode.toUpperCase() !== 'N/A') pendingFabricLookups.push({ rowId: fabricsRowId, code: liningCode, label: 'Lining' });
+      if (!liningPhoto && liningCode && liningCode.toUpperCase() !== 'N/A') pendingFabricLookups.push({ rowId: fabricsRowId, code: liningCode, label: 'Lining' });
 
       var price = (o['PRICE'] || '').toString().trim();
       var priceHtml = price ? '<div class="order-price">' + price + ' €</div>' : '';
@@ -1020,8 +1025,8 @@ function loadOrders() {
       // the image travels as base64 in a normal JSON response (Apps Script
       // can't serve raw image bytes directly), so this is a real async
       // fetch per thumbnail rather than a plain <img src>.
-      if (techPackKey) {
-        window._d.req('getSilhouetteImageBase64', { key: techPackKey }).then(function(imgRes) {
+      if (techPackUrl) {
+        window._d.req('getSilhouetteImageBase64', { url: techPackUrl }).then(function(imgRes) {
           if (!imgRes || !imgRes.success || !imgRes.base64) return;
           var rawUri = 'data:image/png;base64,' + imgRes.base64;
           return trimTransparentPadding(rawUri).then(function(trimmed) {
@@ -1476,6 +1481,6 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeI
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v4.1.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v4.2.0</div>
 </body>
 </html>
