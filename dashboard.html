@@ -32,6 +32,9 @@ button { cursor: pointer; font-family: inherit; }
   border: 1.5px solid var(--border-mid); border-top-color: var(--ink);
   border-radius: 50%; animation: spin 0.7s linear infinite;
 }
+.loader-sm { width: 20px; height: 20px; }
+.loader-xs { width: 14px; height: 14px; border-width: 1.2px; }
+.fabric-swatch-pending { display: flex; align-items: center; justify-content: center; background: var(--cream-mid); border: 1px solid var(--border); cursor: default; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .load-text { font-size: 11px; letter-spacing: 0.10em; color: var(--ink-faint); text-transform: uppercase; }
 
@@ -365,6 +368,10 @@ button { cursor: pointer; font-family: inherit; }
 .order-swatch { width: 224px; height: 224px; border-radius: 3px; flex-shrink: 0; object-fit: contain; background: transparent; }
 .order-swatch.has-img { cursor: pointer; transition: opacity 0.15s; }
 .order-swatch.has-img:hover { opacity: 0.85; }
+.order-swatch.loading, .order-swatch.empty {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--cream-mid); border: 1px solid var(--border);
+}
 .order-main { flex: 1; min-width: 0; }
 .order-num { font-size: 12px; font-weight: 600; color: var(--ink); letter-spacing: 0.01em; }
 .order-garment { font-size: 11px; color: var(--ink-light); margin-top: 2px; }
@@ -883,6 +890,13 @@ function boot(user) {
 // margin, which is why the visible subject looks small inside its box.
 // This crops to just the non-transparent bounding box before display, so
 // the actual content — not the blank space around it — fills the frame.
+function fabricPendingChipHtml(id, label) {
+  return '<div class="fabric-swatch-item" id="' + id + '">' +
+    '<div class="fabric-swatch-img fabric-swatch-pending"><div class="loader loader-xs"></div></div>' +
+    '<span class="fabric-swatch-label">' + label + '</span>' +
+  '</div>';
+}
+
 function trimTransparentPadding(imgSrc) {
   return new Promise(function(resolve) {
     var img = new Image();
@@ -915,14 +929,6 @@ function trimTransparentPadding(imgSrc) {
     img.onerror = function(){ resolve({src: imgSrc, width: 0, height: 0}); };
     img.src = imgSrc;
   });
-}
-
-function swatchColor(str) {
-  str = String(str || 'x');
-  var hash = 0;
-  for (var i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  var hue = Math.abs(hash) % 360;
-  return 'hsl(' + hue + ', 26%, 40%)';
 }
 
 var _fabricPhotoByCode = null;
@@ -984,32 +990,48 @@ function loadOrders() {
         { label: 'Lining',    photo: liningPhoto }
       ].filter(function(s){ return s.photo; });
 
-      var fabricsRowHtml = '<div class="order-fabrics-row" id="' + fabricsRowId + '">' +
-        fabricSlots.map(function(s){
-          return '<div class="fabric-swatch-item">' +
-            '<img class="fabric-swatch-img" src="' + s.photo + '" alt="" title="' + s.label + '" onclick="openImagePreview(\'' + s.photo + '\')">' +
-            '<span class="fabric-swatch-label">' + s.label + '</span>' +
-          '</div>';
-        }).join('') +
-      '</div>';
+      var resolvedChipsHtml = fabricSlots.map(function(s){
+        return '<div class="fabric-swatch-item">' +
+          '<img class="fabric-swatch-img" src="' + s.photo + '" alt="" title="' + s.label + '" onclick="openImagePreview(\'' + s.photo + '\')">' +
+          '<span class="fabric-swatch-label">' + s.label + '</span>' +
+        '</div>';
+      }).join('');
 
       // Fallback only for legacy orders saved before MAIN/CONTRAST/LINING
       // existed as columns — matches by code against the full FABRICS list.
+      // Shows a spinner chip immediately rather than nothing while it waits.
+      var pendingChipsHtml = '';
       var mainCode = (o['CODE'] || o['Code'] || o['code'] || '').trim();
-      if (!mainPhoto && mainCode) pendingFabricLookups.push({ rowId: fabricsRowId, code: mainCode, label: 'Main' });
+      if (!mainPhoto && mainCode) {
+        var pid1 = fabricsRowId + '-pending-main';
+        pendingFabricLookups.push({ rowId: fabricsRowId, code: mainCode, label: 'Main', pendingId: pid1 });
+        pendingChipsHtml += fabricPendingChipHtml(pid1, 'Main');
+      }
       var contrastCode = (o['CONTRAST FABRIC'] || '').trim();
-      if (!contrastPhoto && contrastCode && contrastCode.toUpperCase() !== 'N/A') pendingFabricLookups.push({ rowId: fabricsRowId, code: contrastCode, label: 'Secondary' });
+      if (!contrastPhoto && contrastCode && contrastCode.toUpperCase() !== 'N/A') {
+        var pid2 = fabricsRowId + '-pending-secondary';
+        pendingFabricLookups.push({ rowId: fabricsRowId, code: contrastCode, label: 'Secondary', pendingId: pid2 });
+        pendingChipsHtml += fabricPendingChipHtml(pid2, 'Secondary');
+      }
       var liningCode = (o['LINING FABRIC'] || '').trim();
-      if (!liningPhoto && liningCode && liningCode.toUpperCase() !== 'N/A') pendingFabricLookups.push({ rowId: fabricsRowId, code: liningCode, label: 'Lining' });
+      if (!liningPhoto && liningCode && liningCode.toUpperCase() !== 'N/A') {
+        var pid3 = fabricsRowId + '-pending-lining';
+        pendingFabricLookups.push({ rowId: fabricsRowId, code: liningCode, label: 'Lining', pendingId: pid3 });
+        pendingChipsHtml += fabricPendingChipHtml(pid3, 'Lining');
+      }
+      var fabricsRowHtml = '<div class="order-fabrics-row" id="' + fabricsRowId + '">' + resolvedChipsHtml + pendingChipsHtml + '</div>';
 
       var price = (o['PRICE'] || '').toString().trim();
       var priceHtml = price ? '<div class="order-price">' + price + ' €</div>' : '';
 
       var row = document.createElement('div');
       row.className = 'order-row';
+      var swatchInitialHtml = techPackUrl
+        ? '<div class="order-swatch loading" id="' + swatchId + '"><div class="loader loader-sm"></div></div>'
+        : '<div class="order-swatch empty" id="' + swatchId + '"></div>';
       row.innerHTML =
         '<div class="order-row-top">' +
-          '<div class="order-swatch" id="' + swatchId + '" style="background:' + swatchColor(o['Order Number']) + '"></div>' +
+          swatchInitialHtml +
           '<div class="order-main">' +
             '<div class="order-num">' + (o['Order Number'] || '—') + '</div>' +
             '<div class="order-garment">' + garment + '</div>' +
@@ -1027,7 +1049,7 @@ function loadOrders() {
       // fetch per thumbnail rather than a plain <img src>.
       if (techPackUrl) {
         window._d.req('getSilhouetteImageBase64', { url: techPackUrl }).then(function(imgRes) {
-          if (!imgRes || !imgRes.success || !imgRes.base64) return;
+          if (!imgRes || !imgRes.success || !imgRes.base64) throw new Error('no image');
           var rawUri = 'data:image/png;base64,' + imgRes.base64;
           return trimTransparentPadding(rawUri).then(function(trimmed) {
             var el = document.getElementById(swatchId);
@@ -1039,7 +1061,13 @@ function loadOrders() {
             img.onclick = function(){ openImagePreview(trimmed.src); };
             el.replaceWith(img);
           });
-        }).catch(function(){ /* leave the color swatch as-is on failure */ });
+        }).catch(function(){
+          // Stop the spinner rather than leaving it spinning forever —
+          // swap to the same neutral empty state used when there was
+          // never anything to fetch in the first place.
+          var el = document.getElementById(swatchId);
+          if (el) { el.className = 'order-swatch empty'; el.innerHTML = ''; }
+        });
       }
     });
     list.style.display = '';
@@ -1047,17 +1075,29 @@ function loadOrders() {
     if (pendingFabricLookups.length) {
       getFabricPhotoMap().then(function(fabricMap) {
         pendingFabricLookups.forEach(function(item) {
+          var placeholder = document.getElementById(item.pendingId);
           var photo = fabricMap[item.code];
-          if (!photo) return;
-          var container = document.getElementById(item.rowId);
-          if (!container) return;
+          if (!photo) {
+            if (placeholder) placeholder.remove(); // nothing found — remove the spinner, don't leave it spinning
+            return;
+          }
           var div = document.createElement('div');
           div.className = 'fabric-swatch-item';
           div.innerHTML = '<img class="fabric-swatch-img" src="' + photo + '" alt="" title="' + item.code + '" onclick="openImagePreview(\'' + photo + '\')">' +
             '<span class="fabric-swatch-label">' + item.label + '</span>';
-          container.appendChild(div);
+          if (placeholder) placeholder.replaceWith(div);
+          else {
+            var container = document.getElementById(item.rowId);
+            if (container) container.appendChild(div);
+          }
         });
-      }).catch(function(){ /* fabric fallback just doesn't appear — nothing else affected */ });
+      }).catch(function(){
+        // Remove any still-spinning placeholders rather than leaving them stuck.
+        pendingFabricLookups.forEach(function(item) {
+          var placeholder = document.getElementById(item.pendingId);
+          if (placeholder) placeholder.remove();
+        });
+      });
     }
   }).catch(function(){ document.getElementById('orders-loading').style.display='none'; document.getElementById('orders-empty').style.display='block'; });
 }
@@ -1481,6 +1521,6 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeI
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v4.2.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v4.3.0</div>
 </body>
 </html>
