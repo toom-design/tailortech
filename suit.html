@@ -930,6 +930,13 @@ function collectConfig() {
     var card = document.querySelector('#fabric-comp-grid .fabric-card.selected');
     return card ? (card.querySelector('.fname') ? card.querySelector('.fname').textContent.trim() : '') : '';
   })();
+  var contrastCode = (function() {
+    var body = document.getElementById('comp-fabric-body');
+    if (!body || body.style.display === 'none') return '';
+    var card = document.querySelector('#fabric-comp-grid .fabric-card.selected');
+    return card ? (card.dataset.code || (card.querySelector('.fcode') ? card.querySelector('.fcode').textContent.trim() : '')) : '';
+  })();
+  var liningFromContrast = contrastPlacement.indexOf('Lining') !== -1;
 
   return {
     'Order Number':      '',
@@ -966,9 +973,11 @@ function collectConfig() {
     'color':             mainCard ? (mainCard.dataset.color || '') : '',
     'composition':       mainCard ? (mainCard.dataset.comp  || '') : '',
     'CONTRAST FABRIC':   contrastFabric,
+    'CONTRAST CODE':     contrastCode,
     'CONTRAST PLACEMENT':contrastPlacement,
     'STRUCTURE':         'N/A',
-    'LINING FABRIC':     'N/A',
+    'LINING FABRIC':     liningFromContrast ? contrastFabric : 'N/A',
+    'LINING CODE':       liningFromContrast ? contrastCode : '',
     'LINING TYPE':       sectionPill('Lining'),
     'COLLAR INTERLINING':'N/A',
     'COLLAR STAYS':      'N/A',
@@ -1627,7 +1636,7 @@ function getOrCaptureSilhouette() {
   })
   .then(function(r){ return r.json(); })
   .then(function(res) {
-    if (res && res.success && res.cached) return key;
+    if (res && res.success && res.cached) return res.url;
     return captureTechPackImage().then(function(dataUrl) {
       return fetch(SHEET_URL, {
         method: 'POST',
@@ -1635,7 +1644,7 @@ function getOrCaptureSilhouette() {
         body: JSON.stringify({ action: 'saveSilhouetteCache', key: key, imageBase64: dataUrl })
       })
       .then(function(r){ return r.json(); })
-      .then(function(saveRes){ return (saveRes && saveRes.success) ? key : ''; });
+      .then(function(saveRes){ return (saveRes && saveRes.success) ? saveRes.url : ''; });
     });
   })
   .catch(function(err) {
@@ -1739,7 +1748,7 @@ function getClientJSONP(email, uid, callback) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.4.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.6.0</div>
 
 </body>
 </html>
