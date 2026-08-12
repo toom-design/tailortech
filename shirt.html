@@ -1541,6 +1541,11 @@ function collectConfig() {
                              if (!body || body.style.display === 'none') return 'None';
                              return selText('#fabric-comp-grid .fabric-card.selected .fname') || '';
                            })(),
+    'CONTRAST CODE':       (() => {
+                             const body = document.getElementById('comp-fabric-body');
+                             if (!body || body.style.display === 'none') return '';
+                             return selText('#fabric-comp-grid .fabric-card.selected .fcode') || '';
+                           })(),
     'CONTRAST PLACEMENT':  (() => {
                              const body = document.getElementById('comp-fabric-body');
                              if (!body || body.style.display === 'none') return '';
@@ -1934,7 +1939,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.5.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.5.1</div>
 
 <!-- Firebase -->
 <script type="module">
