@@ -137,6 +137,11 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
   grid-column: 1 / -1; padding: 14px 12px; font-size: 11px; color: #b04040;
   background: #fdf2f2; border: 1px solid #e8c0c0; border-radius: 4px;
 }
+.comp-parts-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.comp-part-btn { font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 100px; background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s; }
+.comp-part-btn:hover { border-color: var(--ink); color: var(--ink); }
+.comp-part-btn.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.comp-hint { font-size: 11px; color: var(--ink-light); letter-spacing: 0.03em; margin-bottom: 12px; line-height: 1.5; }
 .swatch { width: 100%; aspect-ratio: 1 / 1; border-radius: 2px; flex-shrink: 0; }
 
 /* Measurements */
@@ -382,6 +387,26 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
           <div class="fabric-loading">
             <div style="width:18px;height:18px;border:2px solid var(--ink-faint);border-top-color:var(--ink);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;"></div>
             <span>Loading fabrics…</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Contrast / Lining Fabric</div>
+        <p class="comp-hint">Select parts to use a contrast fabric. Check "Lining" to also use it as the lining fabric. Leave unchecked to use the main fabric throughout.</p>
+        <div class="comp-parts-row">
+          <button class="comp-part-btn" id="comp-part-waistband" onclick="toggleCompPart(this,'waistband')">Waistband</button>
+          <button class="comp-part-btn" id="comp-part-lining"    onclick="toggleCompPart(this,'lining')">Lining</button>
+        </div>
+        <div id="comp-fabric-body" style="display:none;margin-top:16px;">
+          <div class="fabric-search-row">
+            <input class="fabric-search" type="text" placeholder="Search fabrics…" oninput="filterFabrics(this.value,'comp')">
+          </div>
+          <div class="fabric-grid" id="fabric-comp-grid">
+            <div class="fabric-loading">
+              <div style="width:18px;height:18px;border:2px solid var(--ink-faint);border-top-color:var(--ink);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;"></div>
+              <span>Loading fabrics…</span>
+            </div>
           </div>
         </div>
       </div>
@@ -789,6 +814,14 @@ function selectFabric(el, group) {
   el.classList.add('selected');
 }
 
+function toggleCompPart(el, part) {
+  el.classList.toggle('selected');
+  var waistband = document.getElementById('comp-part-waistband') && document.getElementById('comp-part-waistband').classList.contains('selected');
+  var lining    = document.getElementById('comp-part-lining')    && document.getElementById('comp-part-lining').classList.contains('selected');
+  var body      = document.getElementById('comp-fabric-body');
+  if (body) body.style.display = (waistband || lining) ? '' : 'none';
+}
+
 function toggleFabricDetails(btn, event) {
   event.stopPropagation();
   var card   = btn.closest('.fabric-card');
@@ -866,13 +899,17 @@ function buildFabricCard(fabric, group, isFirst) {
 // Cache shared with any other fabric loaders on the page
 var _fabricsRawCache = null;
 
+// Static catalog file — see exportFabricsCatalogJSON() in Apps Script for
+// how to generate/refresh this. Inventory counts (Quantity_*) are NOT in
+// here on purpose; those stay live in the sheet via logFabricUsage().
+var FABRICS_JSON_URL = 'https://raw.githubusercontent.com/toom-design/tailortech-trousers_m/main/fabrics.json';
+
 async function _loadAllFabrics() {
   if (_fabricsRawCache) return _fabricsRawCache;
-  var res = await fetch(SHEET_URL + '?action=getFabrics');
+  var res = await fetch(FABRICS_JSON_URL);
   if (!res.ok) throw new Error('HTTP ' + res.status);
   var json = await res.json();
-  if (!json.success) throw new Error(json.message || 'API error');
-  _fabricsRawCache = json.fabrics || [];
+  _fabricsRawCache = Array.isArray(json) ? json : [];
   return _fabricsRawCache;
 }
 
@@ -883,17 +920,26 @@ async function loadTrouserFabrics() {
 
 async function renderFabricGrids() {
   var mainGrid = document.getElementById('fabric-main-grid');
+  var compGrid = document.getElementById('fabric-comp-grid');
   try {
     var fabrics = await loadTrouserFabrics();
     if (!fabrics.length) {
-      mainGrid.innerHTML = '<div class="fabric-error">No trouser fabrics found. Check the Garments column in your sheet.</div>';
+      var msg = '<div class="fabric-error">No trouser fabrics found. Check the Garments column in your sheet.</div>';
+      mainGrid.innerHTML = msg;
+      if (compGrid) compGrid.innerHTML = msg;
     } else {
       mainGrid.innerHTML = '';
       fabrics.forEach(function(f, i){ mainGrid.appendChild(buildFabricCard(f, 'main', i === 0)); });
+      if (compGrid) {
+        compGrid.innerHTML = '';
+        fabrics.forEach(function(f, i){ compGrid.appendChild(buildFabricCard(f, 'comp', false)); });
+      }
     }
   } catch(err) {
     console.error('Fabric load error:', err);
-    mainGrid.innerHTML = '<div class="fabric-error">Could not load fabrics (' + err.message + ').</div>';
+    var errHtml = '<div class="fabric-error">Could not load fabrics (' + err.message + ').</div>';
+    mainGrid.innerHTML = errHtml;
+    if (compGrid) compGrid.innerHTML = errHtml;
   }
 }
 
@@ -906,6 +952,18 @@ function selectBtnMaterial(btn) {
 // ── collectConfig — keys match sheet headers exactly ─────────────
 function collectConfig() {
   var selCard = document.querySelector('#fabric-main-grid .fabric-card.selected');
+
+  // Contrast/lining fabric — same dual-purpose pattern as Suit: the
+  // "Lining" toggle means "also use this contrast fabric for the lining."
+  var compBody = document.getElementById('comp-fabric-body');
+  var compVisible = compBody && compBody.style.display !== 'none';
+  var compCard = compVisible ? document.querySelector('#fabric-comp-grid .fabric-card.selected') : null;
+  var contrastFabric = compCard ? (compCard.dataset.name || (compCard.querySelector('.fname') ? compCard.querySelector('.fname').textContent.trim() : '')) : 'None';
+  var contrastCode = compCard ? (compCard.dataset.code || '') : '';
+  var contrastParts = [];
+  if (document.getElementById('comp-part-waistband') && document.getElementById('comp-part-waistband').classList.contains('selected')) contrastParts.push('Waistband');
+  if (document.getElementById('comp-part-lining') && document.getElementById('comp-part-lining').classList.contains('selected')) contrastParts.push('Lining');
+  var liningFromContrast = contrastParts.indexOf('Lining') !== -1;
 
   function mval(id) {
     var el = document.getElementById('mf-' + id);
@@ -951,10 +1009,12 @@ function collectConfig() {
     'CODE':              selCard ? (selCard.dataset.code || '') : '',
     'color':             selCard ? (selCard.dataset.color || '') : '',
     'composition':       selCard ? (selCard.dataset.comp  || '') : '',
-    'CONTRAST FABRIC':   'N/A',
-    'CONTRAST PLACEMENT':'N/A',
+    'CONTRAST FABRIC':   contrastFabric,
+    'CONTRAST CODE':     contrastCode,
+    'CONTRAST PLACEMENT':contrastParts.join(', '),
     'STRUCTURE':         'N/A',
-    'LINING FABRIC':     'N/A',
+    'LINING FABRIC':     liningFromContrast ? contrastFabric : 'N/A',
+    'LINING CODE':       liningFromContrast ? contrastCode : '',
     'LINING TYPE':       sectionIconCard('Lining'),
 
     // ── Measurements ──────────────────────────────────────────────
@@ -1682,7 +1742,7 @@ function getOrCaptureSilhouette() {
   })
   .then(function(r){ return r.json(); })
   .then(function(res) {
-    if (res && res.success && res.cached) return key; // already cached — reuse as-is
+    if (res && res.success && res.cached) return res.url; // already cached — reuse as-is
     return captureTechPackImage().then(function(dataUrl) {
       return fetch(SHEET_URL, {
         method: 'POST',
@@ -1690,7 +1750,7 @@ function getOrCaptureSilhouette() {
         body: JSON.stringify({ action: 'saveSilhouetteCache', key: key, imageBase64: dataUrl })
       })
       .then(function(r){ return r.json(); })
-      .then(function(saveRes){ return (saveRes && saveRes.success) ? key : ''; });
+      .then(function(saveRes){ return (saveRes && saveRes.success) ? saveRes.url : ''; });
     });
   })
   .catch(function(err) {
@@ -1802,7 +1862,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.3.2</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.6.0</div>
 
 </body>
 </html>
