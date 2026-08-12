@@ -899,17 +899,13 @@ function buildFabricCard(fabric, group, isFirst) {
 // Cache shared with any other fabric loaders on the page
 var _fabricsRawCache = null;
 
-// Static catalog file — see exportFabricsCatalogJSON() in Apps Script for
-// how to generate/refresh this. Inventory counts (Quantity_*) are NOT in
-// here on purpose; those stay live in the sheet via logFabricUsage().
-var FABRICS_JSON_URL = 'https://raw.githubusercontent.com/toom-design/tailortech-trousers_m/main/fabrics.json';
-
 async function _loadAllFabrics() {
   if (_fabricsRawCache) return _fabricsRawCache;
-  var res = await fetch(FABRICS_JSON_URL);
+  var res = await fetch(SHEET_URL + '?action=getFabrics');
   if (!res.ok) throw new Error('HTTP ' + res.status);
   var json = await res.json();
-  _fabricsRawCache = Array.isArray(json) ? json : [];
+  if (!json.success) throw new Error(json.message || 'API error');
+  _fabricsRawCache = json.fabrics || [];
   return _fabricsRawCache;
 }
 
@@ -1862,7 +1858,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.6.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.7.0</div>
 
 </body>
 </html>
