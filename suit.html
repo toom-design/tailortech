@@ -1062,12 +1062,13 @@ function _saveToSheet(data) {
   });
 }
 
-function _saveViaIframe(status) {
+function _saveViaIframe(status, extra) {
   var data = collectConfig();
   data['Status'] = status;
   data['Created At'] = new Date().toISOString();
   data['action'] = 'saveSuits';
   data['garment'] = 'suits';
+  if (extra) { for (var k in extra) data[k] = extra[k]; }
   return _saveToSheet(data);
 }
 
@@ -1088,7 +1089,8 @@ async function handleAddToCart() {
   if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
   try {
     await ensurePersonId();
-    await _saveViaIframe('InCart');
+    var techPackUrl = await getOrCaptureSilhouette();
+    await _saveViaIframe('InCart', { 'tech pack': techPackUrl });
     toast('Added to cart!');
     setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/cart'; }, 1800);
   } catch(e) {
@@ -1104,7 +1106,8 @@ async function handleOrderNow() {
   if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
   try {
     await ensurePersonId();
-    var res = await _saveViaIframe('Pending');
+    var techPackUrl = await getOrCaptureSilhouette();
+    var res = await _saveViaIframe('Pending', { 'tech pack': techPackUrl });
     toast('Order placed — #' + (res && res.orderNumber ? res.orderNumber : '') + ' — going to checkout…');
     setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/checkout'; }, 1800);
   } catch(e) {
@@ -1557,6 +1560,90 @@ function goToAuth() {
   try { sessionStorage.setItem('tt_return_url', window.location.href); } catch(e) {}
   window.location.href = 'https://tailortech.toom.design/auth.html';
 }
+// ── Silhouette cache: same mechanism as Trousers, adapted to Suit's own
+// layer IDs and state fields.
+function slug(v) { return String(v == null ? '' : v).trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'x'; }
+
+function buildSilhouetteKey() {
+  var s = state;
+  return 'SJ_closure-' + slug(s.closureType) + '-' + slug(s.closureBtn) +
+    '_lapel-' + slug(s.lapel) + '_frontpocket-' + slug(s.frontpocket) +
+    '_ticketpocket-' + slug(s.ticketpocket) + '_chestpocket-' + (s.chestpocket ? '1' : '0') +
+    '_insidepocket-' + slug(s.insidepocket) + '_vent-' + slug(s.vent) +
+    '_sleevebtn-' + slug(s.sleevebtn);
+}
+
+function drawImageContain(ctx, img, boxW, boxH) {
+  var imgRatio = img.naturalWidth / img.naturalHeight;
+  var boxRatio = boxW / boxH;
+  var drawW, drawH, offsetX, offsetY;
+  if (imgRatio > boxRatio) {
+    drawW = boxW; drawH = boxW / imgRatio;
+    offsetX = 0; offsetY = (boxH - drawH) / 2;
+  } else {
+    drawH = boxH; drawW = boxH * imgRatio;
+    offsetX = (boxW - drawW) / 2; offsetY = 0;
+  }
+  ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
+}
+
+function captureTechPackImage() {
+  return new Promise(function(resolve, reject) {
+    var layerIds = ['img-base','img-closure','img-lapel','img-frontpocket','img-ticketpocket',
+                     'img-chestpocket','img-insidepocket','img-sleevebtn','img-vent'];
+    var W = 760, H = 1160;
+    var canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    var ctx = canvas.getContext('2d');
+
+    var toDraw = layerIds
+      .map(function(id){ return document.getElementById(id); })
+      .filter(function(el){ return el && el.src && el.style.opacity !== '0'; });
+
+    if (toDraw.length === 0) { resolve(canvas.toDataURL('image/png')); return; }
+
+    var loaded = 0, failed = false;
+    toDraw.forEach(function(el) {
+      var img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function() {
+        if (failed) return;
+        drawImageContain(ctx, img, W, H);
+        loaded++;
+        if (loaded === toDraw.length) resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = function(){ failed = true; reject(new Error('Failed to load layer: ' + el.id)); };
+      img.src = el.src;
+    });
+  });
+}
+
+function getOrCaptureSilhouette() {
+  var key = buildSilhouetteKey();
+  return fetch(SHEET_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'checkSilhouetteCache', key: key })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(res) {
+    if (res && res.success && res.cached) return key;
+    return captureTechPackImage().then(function(dataUrl) {
+      return fetch(SHEET_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'saveSilhouetteCache', key: key, imageBase64: dataUrl })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(saveRes){ return (saveRes && saveRes.success) ? key : ''; });
+    });
+  })
+  .catch(function(err) {
+    console.error('Silhouette cache/capture failed:', err);
+    return '';
+  });
+}
+
 function isLoggedIn() {
   return !!(window._fb && window._fb.auth && window._fb.auth.currentUser);
 }
@@ -1652,7 +1739,7 @@ function getClientJSONP(email, uid, callback) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.3.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.4.0</div>
 
 </body>
 </html>
