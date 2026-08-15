@@ -374,6 +374,7 @@ button { cursor: pointer; font-family: inherit; }
   background: var(--cream-mid); border: 1px solid var(--border);
 }
 .order-main { flex: 1; min-width: 0; }
+.order-header-line { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .order-num { font-size: 12px; font-weight: 600; color: var(--ink); letter-spacing: 0.01em; }
 .order-garment { font-size: 11px; color: var(--ink-light); margin-top: 2px; }
 .order-price { font-size: 13px; font-weight: 600; color: var(--ink); margin-top: 8px; }
@@ -1034,13 +1035,19 @@ function loadOrders() {
         '<div class="order-row-top">' +
           swatchInitialHtml +
           '<div class="order-main">' +
-            '<div class="order-num">' + (o['Order Number'] || '—') + '</div>' +
-            '<div class="order-garment">' + garment + '</div>' +
+            '<div class="order-header-line">' +
+              '<div>' +
+                '<div class="order-num">' + (o['Order Number'] || '—') + '</div>' +
+                '<div class="order-garment">' + garment + '</div>' +
+              '</div>' +
+              '<div style="display:flex;align-items:flex-start;gap:12px;flex-shrink:0;">' +
+                '<div class="order-date">' + fmtDate(o['Created At'] || o['Created at'] || '') + '</div>' +
+                '<span class="status ' + cls + '">' + st + '</span>' +
+              '</div>' +
+            '</div>' +
             priceHtml +
             fabricsRowHtml +
           '</div>' +
-          '<div class="order-date">' + fmtDate(o['Created At'] || o['Created at'] || '') + '</div>' +
-          '<span class="status ' + cls + '">' + st + '</span>' +
         '</div>';
       list.appendChild(row);
 
@@ -1522,6 +1529,6 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeI
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v4.4.2</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v4.5.0</div>
 </body>
 </html>
