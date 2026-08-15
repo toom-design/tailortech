@@ -204,12 +204,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
   </div>
 </nav>
 
-<div id="price-bar" style="position:fixed;bottom:0;left:0;right:0;z-index:500;background:#1A1916;color:#F0EDE6;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;font-family:'Jost',sans-serif;box-shadow:0 -2px 12px rgba(0,0,0,0.15);">
-  <span style="font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:rgba(240,237,230,0.55);">Estimated Price</span>
-  <span id="price-bar-amount" style="font-size:20px;font-weight:500;font-family:'Cormorant Garamond',serif;">—</span>
-</div>
-
-<div class="app" id="main-app" style="padding-bottom:64px;">
+<div class="app" id="main-app">
 
   <!-- ══ PREVIEW PANEL ══ -->
   <div class="preview-panel">
@@ -372,6 +367,9 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
       </div>
 
       <div class="section" style="border-bottom:none;">
+        <div class="price-display" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;width:100%;padding:14px 24px;background:transparent;color:var(--ink);border:1.5px solid var(--ink);border-radius:3px;cursor:default;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;">
+          Estimated Price <span class="price-display-amount">—</span>
+        </div>
         <button onclick="goToMaterials()" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;width:100%;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
           Continue to Materials
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
@@ -461,6 +459,9 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
       </div>
 
       <div class="section" style="border-bottom:none;">
+        <div class="price-display" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;width:100%;padding:14px 24px;background:transparent;color:var(--ink);border:1.5px solid var(--ink);border-radius:3px;cursor:default;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;">
+          Estimated Price <span class="price-display-amount">—</span>
+        </div>
         <button onclick="goToMeasurements()" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;width:100%;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
           Continue to Measurements
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
@@ -517,7 +518,10 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
           </form>
 
           <!-- Save / Continue button -->
-          <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;padding-bottom:8px;">
+          <div class="price-display" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;width:100%;padding:14px 24px;background:transparent;color:var(--ink);border:1.5px solid var(--ink);border-radius:3px;cursor:default;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:28px;">
+            Estimated Price <span class="price-display-amount">—</span>
+          </div>
+          <div style="margin-top:10px;padding-top:20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;padding-bottom:8px;">
             <button type="button" onclick="measPrimaryAction(event)" id="meas-save-btn" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:inline-flex;align-items:center;gap:10px;">
               <span id="meas-save-lbl">Continue to Summary</span>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
@@ -902,13 +906,16 @@ function buildFabricCard(fabric, group, isFirst) {
   var nameEl = document.createElement('span'); nameEl.className = 'fname'; nameEl.textContent = name;
   var codeEl = document.createElement('span'); codeEl.className = 'fcode'; codeEl.textContent = code;
   var compEl = document.createElement('span'); compEl.className = 'fcomp'; compEl.textContent = comp;
+  var priceEl = document.createElement('span'); priceEl.className = 'fprice';
+  priceEl.style.cssText = 'font-family:Jost,sans-serif;font-size:12px;font-weight:600;color:var(--ink);margin-top:2px;';
+  priceEl.textContent = (typeof _pricing !== 'undefined' && _pricing) ? '€' + (unitPrice * _pricing.fabricCoefficient).toFixed(2).replace(/\.00$/, '') : '';
 
   var detBtn = document.createElement('button');
   detBtn.className = 'fc-details-toggle';
   detBtn.innerHTML = '<span>Details</span><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>';
   detBtn.onclick = function(e){ toggleFabricDetails(detBtn, e); };
 
-  body.appendChild(nameEl); body.appendChild(codeEl); body.appendChild(compEl); body.appendChild(detBtn);
+  body.appendChild(nameEl); body.appendChild(codeEl); body.appendChild(compEl); body.appendChild(priceEl); body.appendChild(detBtn);
 
   var drawer = document.createElement('div');
   drawer.className = 'fc-details-drawer';
@@ -1692,20 +1699,23 @@ function calculateOptionsExtra() {
 }
 
 function updatePriceBar() {
-  var bar = document.getElementById('price-bar-amount');
-  if (!bar) return;
-  if (!_pricing) { bar.textContent = '—'; return; }
+  var amounts = document.querySelectorAll('.price-display-amount');
+  if (!amounts.length) return;
 
-  var base = _pricing.tailoring * (1 + _pricing.marginPercent / 100);
+  var text = '—';
+  if (_pricing) {
+    var base = _pricing.tailoring * (1 + _pricing.marginPercent / 100);
 
-  var fabricCard = document.querySelector('#fabric-main-grid .fabric-card.selected');
-  var fabricUnitPrice = fabricCard ? parseFloat(fabricCard.dataset.unitprice || '0') : 0;
-  var fabricCost = fabricUnitPrice * _pricing.fabricCoefficient;
+    var fabricCard = document.querySelector('#fabric-main-grid .fabric-card.selected');
+    var fabricUnitPrice = fabricCard ? parseFloat(fabricCard.dataset.unitprice || '0') : 0;
+    var fabricCost = fabricUnitPrice * _pricing.fabricCoefficient;
 
-  var extras = calculateOptionsExtra();
+    var extras = calculateOptionsExtra();
 
-  var total = base + fabricCost + extras;
-  bar.textContent = '€' + total.toFixed(2).replace(/\.00$/, '');
+    var total = base + fabricCost + extras;
+    text = '€' + total.toFixed(2).replace(/\.00$/, '');
+  }
+  amounts.forEach(function(el){ el.textContent = text; });
 }
 
 // Broad, simple, and robust: any click anywhere could be an option
@@ -1731,15 +1741,11 @@ document.addEventListener('DOMContentLoaded', function() {
   applyTransform();
   document.getElementById('img-base').addEventListener('load', hideLoading);
 
-  // Load fabrics from sheet
-  renderFabricGrids();
-
-  // Pricing: load once, badge whatever options have a known extra cost,
-  // then compute the initial total (fabric cost updates once
-  // renderFabricGrids' cheapest-first sort finishes selecting a card).
+  // Pricing loads first so fabric cards can show their price immediately
+  // when built, rather than appearing blank and needing a later patch.
   loadPricingData().then(function() {
     applyPriceBadges();
-    updatePriceBar();
+    renderFabricGrids().then(updatePriceBar);
   });
 });
 </script>
@@ -2028,7 +2034,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v4.0.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v4.1.0</div>
 
 </body>
 </html>
