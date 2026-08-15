@@ -934,6 +934,11 @@ async function loadTrouserFabrics() {
   return all.filter(function(r){ return (r['Garments'] || '').trim().toLowerCase().includes('trousers'); });
 }
 
+async function loadLiningFabrics() {
+  var all = await _loadAllFabrics();
+  return all.filter(function(r){ return (r['Garments'] || '').trim().toLowerCase().includes('lining'); });
+}
+
 async function renderFabricGrids() {
   var mainGrid = document.getElementById('fabric-main-grid');
   var compGrid = document.getElementById('fabric-comp-grid');
@@ -944,7 +949,6 @@ async function renderFabricGrids() {
       var msg = '<div class="fabric-error">No trouser fabrics found. Check the Garments column in your sheet.</div>';
       mainGrid.innerHTML = msg;
       if (compGrid) compGrid.innerHTML = msg;
-      if (liningGrid) liningGrid.innerHTML = msg;
     } else {
       mainGrid.innerHTML = '';
       fabrics.forEach(function(f, i){ mainGrid.appendChild(buildFabricCard(f, 'main', i === 0)); });
@@ -952,9 +956,14 @@ async function renderFabricGrids() {
         compGrid.innerHTML = '';
         fabrics.forEach(function(f, i){ compGrid.appendChild(buildFabricCard(f, 'comp', false)); });
       }
-      if (liningGrid) {
+    }
+    if (liningGrid) {
+      var liningFabrics = await loadLiningFabrics();
+      if (!liningFabrics.length) {
+        liningGrid.innerHTML = '<div class="fabric-error">No lining fabrics found. Check the Garments column in your sheet.</div>';
+      } else {
         liningGrid.innerHTML = '';
-        fabrics.forEach(function(f, i){ liningGrid.appendChild(buildFabricCard(f, 'lining', false)); });
+        liningFabrics.forEach(function(f, i){ liningGrid.appendChild(buildFabricCard(f, 'lining', false)); });
       }
     }
   } catch(err) {
@@ -1893,7 +1902,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.8.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.9.0</div>
 
 </body>
 </html>
