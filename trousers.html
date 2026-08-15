@@ -204,7 +204,12 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
   </div>
 </nav>
 
-<div class="app" id="main-app">
+<div id="price-bar" style="position:fixed;bottom:0;left:0;right:0;z-index:500;background:#1A1916;color:#F0EDE6;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;font-family:'Jost',sans-serif;box-shadow:0 -2px 12px rgba(0,0,0,0.15);">
+  <span style="font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:rgba(240,237,230,0.55);">Estimated Price</span>
+  <span id="price-bar-amount" style="font-size:20px;font-weight:500;font-family:'Cormorant Garamond',serif;">—</span>
+</div>
+
+<div class="app" id="main-app" style="padding-bottom:64px;">
 
   <!-- ══ PREVIEW PANEL ══ -->
   <div class="preview-panel">
@@ -872,6 +877,7 @@ function buildFabricCard(fabric, group, isFirst) {
   var wt    = fabric.Weight_gsm    ? fabric.Weight_gsm + ' g/m²' : '—';
   var wd    = fabric.Width_cm      ? fabric.Width_cm   + ' cm'   : '—';
   var face  = fabric['Photo FACE'] || '';
+  var unitPrice = parseFloat(String(fabric.UnitPrice || '0').replace(',', '.')) || 0;
 
   var card = document.createElement('div');
   card.className = 'fabric-card' + (isFirst ? ' selected' : '');
@@ -879,7 +885,8 @@ function buildFabricCard(fabric, group, isFirst) {
   card.dataset.code  = code;
   card.dataset.comp  = comp;
   card.dataset.color = color;
-  card.onclick = function(){ selectFabric(card, group); };
+  card.dataset.unitprice = unitPrice;
+  card.onclick = function(){ selectFabric(card, group); if (typeof updatePriceBar === 'function') updatePriceBar(); };
 
   var imgWrap = document.createElement('div');
   imgWrap.className = 'fc-images';
@@ -931,7 +938,13 @@ async function _loadAllFabrics() {
 
 async function loadTrouserFabrics() {
   var all = await _loadAllFabrics();
-  return all.filter(function(r){ return (r['Garments'] || '').trim().toLowerCase().includes('trousers'); });
+  var filtered = all.filter(function(r){ return (r['Garments'] || '').trim().toLowerCase().includes('trousers'); });
+  filtered.sort(function(a, b) {
+    var pa = parseFloat(String(a.UnitPrice || '0').replace(',', '.')) || 0;
+    var pb = parseFloat(String(b.UnitPrice || '0').replace(',', '.')) || 0;
+    return pa - pb;
+  });
+  return filtered;
 }
 
 async function loadLiningFabrics() {
@@ -1595,6 +1608,111 @@ function showFeedback(msg, color) {
 })();
 
 // ── Init ──────────────────────────────────────────────────────────
+// ── Pricing ───────────────────────────────────────────────────────
+// Maps this configurator's section labels to the PRICE MATRIX's
+// configuration names — these don't always match 1:1 (e.g. "Pleats" here
+// is "STYLE/SILHOUETTE" in the sheet), so this has to be explicit rather
+// than automatic. Extend this as more configuration categories get priced
+// in the sheet — any section left unmapped simply shows no price badges,
+// nothing breaks.
+var SECTION_CONFIG_MAP = {
+  'Gender': 'GENDER',
+  'Fit': 'FIT',
+  'Pleats': 'STYLE/SILHOUETTE'
+};
+
+var _pricing = null; // { fabricCoefficient, tailoring, marginPercent, configurations }
+
+function normalizeOptionText(s) {
+  return String(s || '').trim().toLowerCase().replace(/[-_]+/g, ' ').replace(/\s+/g, ' ');
+}
+
+async function loadPricingData() {
+  try {
+    var res = await fetch(SHEET_URL + '?action=getGarmentPricing&garment=TR');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    var json = await res.json();
+    if (!json.success) throw new Error(json.message || 'API error');
+    _pricing = json;
+  } catch(err) {
+    console.error('Pricing load failed:', err);
+    _pricing = null;
+  }
+}
+
+// Looks up the price for one option value within one PRICE MATRIX
+// configuration — used both to badge buttons and to total up the
+// currently-selected options.
+function lookupOptionPrice(configName, optionText) {
+  if (!_pricing || !_pricing.configurations || !_pricing.configurations[configName]) return 0;
+  var target = normalizeOptionText(optionText);
+  var match = _pricing.configurations[configName].find(function(opt){
+    return normalizeOptionText(opt.value) === target;
+  });
+  return match ? match.price : 0;
+}
+
+// Adds a "+€X" badge to any button whose section has a known mapping and
+// whose specific option carries a non-zero price.
+function applyPriceBadges() {
+  if (!_pricing) return;
+  document.querySelectorAll('.section').forEach(function(section) {
+    var lbl = section.querySelector('.section-label');
+    if (!lbl) return;
+    var configName = SECTION_CONFIG_MAP[lbl.textContent.trim()];
+    if (!configName) return;
+
+    section.querySelectorAll('.pill, .icon-card').forEach(function(btn) {
+      var textEl = btn.querySelector('.icon-card-label') || btn;
+      var label = textEl.textContent.replace(/\s*\(\+€[\d.,]+\)\s*$/, '').trim();
+      var price = lookupOptionPrice(configName, label);
+      if (price > 0) {
+        textEl.textContent = label + ' (+€' + price.toFixed(2).replace(/\.00$/, '') + ')';
+      }
+    });
+  });
+}
+
+// Sums the currently-selected option's price across every mapped section.
+function calculateOptionsExtra() {
+  var total = 0;
+  document.querySelectorAll('.section').forEach(function(section) {
+    var lbl = section.querySelector('.section-label');
+    if (!lbl) return;
+    var configName = SECTION_CONFIG_MAP[lbl.textContent.trim()];
+    if (!configName) return;
+
+    var selected = section.querySelector('.pill.selected, .icon-card.selected');
+    if (!selected) return;
+    var textEl = selected.querySelector('.icon-card-label') || selected;
+    var label = textEl.textContent.replace(/\s*\(\+€[\d.,]+\)\s*$/, '').trim();
+    total += lookupOptionPrice(configName, label);
+  });
+  return total;
+}
+
+function updatePriceBar() {
+  var bar = document.getElementById('price-bar-amount');
+  if (!bar) return;
+  if (!_pricing) { bar.textContent = '—'; return; }
+
+  var base = _pricing.tailoring * (1 + _pricing.marginPercent / 100);
+
+  var fabricCard = document.querySelector('#fabric-main-grid .fabric-card.selected');
+  var fabricUnitPrice = fabricCard ? parseFloat(fabricCard.dataset.unitprice || '0') : 0;
+  var fabricCost = fabricUnitPrice * _pricing.fabricCoefficient;
+
+  var extras = calculateOptionsExtra();
+
+  var total = base + fabricCost + extras;
+  bar.textContent = '€' + total.toFixed(2).replace(/\.00$/, '');
+}
+
+// Broad, simple, and robust: any click anywhere could be an option
+// changing — recompute after it, rather than wiring every individual
+// handler by hand. setTimeout(0) lets the click's own state-change run first.
+document.addEventListener('click', function(){ setTimeout(updatePriceBar, 0); });
+
 document.addEventListener('DOMContentLoaded', function() {
   // Wire up pills that affect state (Fit, Rise, Pockets, Waistband, Waist Adjustment, Hem)
   // These sections use selectPillInGroupWithState instead of selectPillInGroup
@@ -1615,6 +1733,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Load fabrics from sheet
   renderFabricGrids();
+
+  // Pricing: load once, badge whatever options have a known extra cost,
+  // then compute the initial total (fabric cost updates once
+  // renderFabricGrids' cheapest-first sort finishes selecting a card).
+  loadPricingData().then(function() {
+    applyPriceBadges();
+    updatePriceBar();
+  });
 });
 </script>
 
@@ -1902,7 +2028,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.9.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v4.0.0</div>
 
 </body>
 </html>
