@@ -915,7 +915,7 @@ function buildFabricCard(fabric, group, isFirst) {
   detBtn.innerHTML = '<span>Details</span><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>';
   detBtn.onclick = function(e){ toggleFabricDetails(detBtn, e); };
 
-  body.appendChild(nameEl); body.appendChild(codeEl); body.appendChild(compEl); body.appendChild(priceEl); body.appendChild(detBtn);
+  body.appendChild(nameEl); body.appendChild(priceEl); body.appendChild(codeEl); body.appendChild(compEl); body.appendChild(detBtn);
 
   var drawer = document.createElement('div');
   drawer.className = 'fc-details-drawer';
@@ -1616,19 +1616,8 @@ function showFeedback(msg, color) {
 
 // ── Init ──────────────────────────────────────────────────────────
 // ── Pricing ───────────────────────────────────────────────────────
-// Maps this configurator's section labels to the PRICE MATRIX's
-// configuration names — these don't always match 1:1 (e.g. "Pleats" here
-// is "STYLE/SILHOUETTE" in the sheet), so this has to be explicit rather
-// than automatic. Extend this as more configuration categories get priced
-// in the sheet — any section left unmapped simply shows no price badges,
-// nothing breaks.
-var SECTION_CONFIG_MAP = {
-  'Gender': 'GENDER',
-  'Fit': 'FIT',
-  'Pleats': 'STYLE/SILHOUETTE'
-};
-
-var _pricing = null; // { fabricCoefficient, tailoring, marginPercent, configurations }
+var _pricing = null;           // { fabricCoefficient, tailoring, marginPercent, configurations }
+var _sectionConfigMap = {};    // discovered automatically — see below
 
 function normalizeOptionText(s) {
   return String(s || '').trim().toLowerCase().replace(/[-_]+/g, ' ').replace(/\s+/g, ' ');
@@ -1641,10 +1630,57 @@ async function loadPricingData() {
     var json = await res.json();
     if (!json.success) throw new Error(json.message || 'API error');
     _pricing = json;
+    _sectionConfigMap = discoverSectionConfigMap();
   } catch(err) {
     console.error('Pricing load failed:', err);
     _pricing = null;
+    _sectionConfigMap = {};
   }
+}
+
+// Automatically matches each on-page section to a PRICE MATRIX
+// configuration by comparing OPTION VALUES, not names — the sheet's
+// category names don't reliably match this page's section labels (e.g.
+// "Pleats" here is "STYLE/SILHOUETTE" in the sheet), but the actual
+// option text ("Flat Front" / "flat-front") does line up once normalized.
+// A section only gets mapped if every one of its buttons is found in that
+// configuration's option list — a partial/coincidental overlap doesn't
+// count, so a wrong price can never get attributed to the wrong option.
+// New configuration categories in the sheet get picked up automatically,
+// with no code change needed here.
+function discoverSectionConfigMap() {
+  var map = {};
+  if (!_pricing || !_pricing.configurations) return map;
+
+  var configEntries = Object.keys(_pricing.configurations).map(function(name) {
+    return {
+      name: name,
+      values: _pricing.configurations[name].map(function(o){ return normalizeOptionText(o.value); })
+    };
+  });
+
+  document.querySelectorAll('.section').forEach(function(section) {
+    var lbl = section.querySelector('.section-label');
+    if (!lbl) return;
+
+    var buttonLabels = [];
+    section.querySelectorAll('.pill, .icon-card').forEach(function(btn) {
+      var textEl = btn.querySelector('.icon-card-label') || btn;
+      var raw = textEl.textContent.replace(/\s*\(\+€[\d.,]+\)\s*$/, '').trim();
+      if (raw) buttonLabels.push(normalizeOptionText(raw));
+    });
+    if (!buttonLabels.length) return;
+
+    var bestConfig = null;
+    for (var i = 0; i < configEntries.length; i++) {
+      var entry = configEntries[i];
+      var allMatch = buttonLabels.every(function(bl){ return entry.values.indexOf(bl) !== -1; });
+      if (allMatch) { bestConfig = entry.name; break; }
+    }
+    if (bestConfig) map[lbl.textContent.trim()] = bestConfig;
+  });
+
+  return map;
 }
 
 // Looks up the price for one option value within one PRICE MATRIX
@@ -1666,7 +1702,7 @@ function applyPriceBadges() {
   document.querySelectorAll('.section').forEach(function(section) {
     var lbl = section.querySelector('.section-label');
     if (!lbl) return;
-    var configName = SECTION_CONFIG_MAP[lbl.textContent.trim()];
+    var configName = _sectionConfigMap[lbl.textContent.trim()];
     if (!configName) return;
 
     section.querySelectorAll('.pill, .icon-card').forEach(function(btn) {
@@ -1686,7 +1722,7 @@ function calculateOptionsExtra() {
   document.querySelectorAll('.section').forEach(function(section) {
     var lbl = section.querySelector('.section-label');
     if (!lbl) return;
-    var configName = SECTION_CONFIG_MAP[lbl.textContent.trim()];
+    var configName = _sectionConfigMap[lbl.textContent.trim()];
     if (!configName) return;
 
     var selected = section.querySelector('.pill.selected, .icon-card.selected');
@@ -2034,7 +2070,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v4.1.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v4.2.1</div>
 
 </body>
 </html>
