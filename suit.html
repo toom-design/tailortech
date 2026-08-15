@@ -344,13 +344,13 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
         </div>
       </div>
 
-      <!-- CONTRAST / LINING FABRIC -->
+      <!-- CONTRAST FABRIC -->
       <div class="section">
         <div class="section-label">Contrast Fabric</div>
-        <p class="comp-hint">Select parts to use a contrast fabric for lapels or lining. Leave unchecked to use the main fabric throughout.</p>
+        <p class="comp-hint">Select parts to use a contrast fabric. Leave unchecked to use the main fabric throughout.</p>
         <div class="comp-parts-row" style="margin-bottom:0;">
           <button class="comp-part-btn" id="comp-part-lapels"  onclick="toggleCompPart(this,'lapels')">Lapels</button>
-          <button class="comp-part-btn" id="comp-part-lining"  onclick="toggleCompPart(this,'lining')">Lining</button>
+          <button class="comp-part-btn" id="comp-part-pockets" onclick="toggleCompPart(this,'pockets')">Pockets</button>
         </div>
         <div id="comp-fabric-body" style="display:none;margin-top:16px;">
           <div class="fabric-search-row">
@@ -371,7 +371,17 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
         <div class="pill-group">
           <button class="pill selected" onclick="selectPillInGroup(this)">Full Lining</button>
           <button class="pill"          onclick="selectPillInGroup(this)">Half Lining</button>
-          <button class="pill"          onclick="selectPillInGroup(this)">Quarter Lining</button>
+        </div>
+        <div style="margin-top:16px;">
+          <div class="fabric-search-row">
+            <input class="fabric-search" type="text" placeholder="Search fabrics…" oninput="filterFabrics(this.value,'lining')">
+          </div>
+          <div class="fabric-grid" id="fabric-lining-grid">
+            <div class="fabric-loading">
+              <div class="spinner"></div>
+              <span>Loading fabrics…</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -802,10 +812,10 @@ function filterFabrics(query, group) {
 }
 function toggleCompPart(el, part) {
   el.classList.toggle('selected');
-  var lapels = document.getElementById('comp-part-lapels') && document.getElementById('comp-part-lapels').classList.contains('selected');
-  var lining = document.getElementById('comp-part-lining') && document.getElementById('comp-part-lining').classList.contains('selected');
-  var body   = document.getElementById('comp-fabric-body');
-  if (body) body.style.display = (lapels || lining) ? '' : 'none';
+  var lapels  = document.getElementById('comp-part-lapels')  && document.getElementById('comp-part-lapels').classList.contains('selected');
+  var pockets = document.getElementById('comp-part-pockets') && document.getElementById('comp-part-pockets').classList.contains('selected');
+  var body    = document.getElementById('comp-fabric-body');
+  if (body) body.style.display = (lapels || pockets) ? '' : 'none';
 }
 function selectBtnMaterial(btn) {
   btn.closest('.btn-material-row').querySelectorAll('.btn-material').forEach(function(b){ b.classList.remove('selected'); });
@@ -878,9 +888,16 @@ function loadSuitFabrics() {
   });
 }
 
+function loadLiningFabrics() {
+  return _loadAllFabrics().then(function(all) {
+    return all.filter(function(r){ return (r['Garments'] || '').trim().toLowerCase().includes('lining'); });
+  });
+}
+
 function renderFabricGrids() {
   var mainGrid = document.getElementById('fabric-main-grid');
   var compGrid = document.getElementById('fabric-comp-grid');
+  var liningGrid = document.getElementById('fabric-lining-grid');
   loadSuitFabrics()
     .then(function(fabrics) {
       if (!fabrics.length) {
@@ -899,6 +916,21 @@ function renderFabricGrids() {
       var errHtml = '<div class="fabric-error">Could not load fabrics (' + err.message + ').</div>';
       mainGrid.innerHTML = errHtml; if (compGrid) compGrid.innerHTML = errHtml;
     });
+
+  if (liningGrid) {
+    loadLiningFabrics()
+      .then(function(fabrics) {
+        if (!fabrics.length) {
+          liningGrid.innerHTML = '<div class="fabric-error">No lining fabrics found. Check the Garments column in your sheet.</div>';
+        } else {
+          liningGrid.innerHTML = '';
+          fabrics.forEach(function(f){ liningGrid.appendChild(buildFabricCard(f, 'lining', false)); });
+        }
+      })
+      .catch(function(err) {
+        liningGrid.innerHTML = '<div class="fabric-error">Could not load fabrics (' + err.message + ').</div>';
+      });
+  }
 }
 
 // ── collectConfig ─────────────────────────────────────────────────
@@ -920,8 +952,8 @@ function collectConfig() {
     var body = document.getElementById('comp-fabric-body');
     if (!body || body.style.display === 'none') return '';
     var parts = [];
-    if (document.getElementById('comp-part-lapels') && document.getElementById('comp-part-lapels').classList.contains('selected')) parts.push('Lapels');
-    if (document.getElementById('comp-part-lining') && document.getElementById('comp-part-lining').classList.contains('selected')) parts.push('Lining');
+    if (document.getElementById('comp-part-lapels')  && document.getElementById('comp-part-lapels').classList.contains('selected'))  parts.push('Lapels');
+    if (document.getElementById('comp-part-pockets') && document.getElementById('comp-part-pockets').classList.contains('selected')) parts.push('Pockets');
     return parts.join(', ');
   })();
   var contrastFabric = (function() {
@@ -936,7 +968,13 @@ function collectConfig() {
     var card = document.querySelector('#fabric-comp-grid .fabric-card.selected');
     return card ? (card.dataset.code || (card.querySelector('.fcode') ? card.querySelector('.fcode').textContent.trim() : '')) : '';
   })();
-  var liningFromContrast = contrastPlacement.indexOf('Lining') !== -1;
+
+  // Lining fabric — independent of contrast now, always relevant since
+  // both remaining lining types (Full/Half) genuinely need one.
+  var liningCard = document.querySelector('#fabric-lining-grid .fabric-card.selected');
+  var liningFabricName = liningCard ? (liningCard.dataset.name || (liningCard.querySelector('.fname') ? liningCard.querySelector('.fname').textContent.trim() : '')) : '';
+  var liningFabricCode = liningCard ? (liningCard.dataset.code || '') : '';
+
 
   return {
     'Order Number':      '',
@@ -976,8 +1014,8 @@ function collectConfig() {
     'CONTRAST CODE':     contrastCode,
     'CONTRAST PLACEMENT':contrastPlacement,
     'STRUCTURE':         'N/A',
-    'LINING FABRIC':     liningFromContrast ? contrastFabric : 'N/A',
-    'LINING CODE':       liningFromContrast ? contrastCode : '',
+    'LINING FABRIC':     liningFabricName || 'N/A',
+    'LINING CODE':       liningFabricCode,
     'LINING TYPE':       sectionPill('Lining'),
     'COLLAR INTERLINING':'N/A',
     'COLLAR STAYS':      'N/A',
@@ -1748,7 +1786,7 @@ function getClientJSONP(email, uid, callback) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.6.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.7.0</div>
 
 </body>
 </html>
