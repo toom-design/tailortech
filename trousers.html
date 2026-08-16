@@ -945,9 +945,20 @@ async function _loadAllFabrics() {
   return _fabricsRawCache;
 }
 
+// Splits the Garments field into individual tags and checks for an EXACT
+// match — not a substring match. "denim_trousers" contains "trousers" as
+// a substring, so .includes('trousers') would wrongly match it too;
+// exact-matching each comma-separated tag avoids that entirely.
+function hasGarmentTag(garmentsField, tag) {
+  var target = tag.trim().toLowerCase();
+  return String(garmentsField || '')
+    .split(',')
+    .some(function(t){ return t.trim().toLowerCase() === target; });
+}
+
 async function loadTrouserFabrics() {
   var all = await _loadAllFabrics();
-  var filtered = all.filter(function(r){ return (r['Garments'] || '').trim().toLowerCase().includes('trousers'); });
+  var filtered = all.filter(function(r){ return hasGarmentTag(r['Garments'], 'trousers'); });
   filtered.sort(function(a, b) {
     var pa = parseFloat(String(a.UnitPrice || '0').replace(',', '.')) || 0;
     var pb = parseFloat(String(b.UnitPrice || '0').replace(',', '.')) || 0;
@@ -958,7 +969,7 @@ async function loadTrouserFabrics() {
 
 async function loadLiningFabrics() {
   var all = await _loadAllFabrics();
-  return all.filter(function(r){ return (r['Garments'] || '').trim().toLowerCase().includes('lining'); });
+  return all.filter(function(r){ return hasGarmentTag(r['Garments'], 'lining'); });
 }
 
 async function renderFabricGrids() {
@@ -2135,7 +2146,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v4.6.1</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v4.7.0</div>
 
 </body>
 </html>
