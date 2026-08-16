@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sweatpants Configurator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #F0EDE6; --cream-dark: #E5E1D8; --cream-mid: #EBE7DF;
+  --ink: #1A1916; --ink-mid: #4A4844; --ink-light: #8A8880; --ink-faint: #C0BDB8;
+  --white: #FAFAF8; --border: rgba(26,25,22,0.12); --border-mid: rgba(26,25,22,0.22);
+}
+body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+.app { display: flex; width: 100%; flex: 1; overflow: hidden; min-height: 0; }
+
+/* ── PREVIEW PANEL ── */
+.preview-panel { flex: 3; background: #ffffff; border-right: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; overflow: hidden; transition: flex 0.35s cubic-bezier(0.4,0,0.2,1); }
+.view-toggle { display: flex; padding: 16px 20px 0; justify-content: center; flex-shrink: 0; }
+.view-btn { font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; padding: 8px 28px; border: 1px solid var(--border-mid); background: transparent; color: var(--ink-light); cursor: pointer; transition: all 0.2s; }
+.view-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.view-btn:first-child { border-radius: 2px 0 0 2px; border-right: none; }
+.view-btn:last-child  { border-radius: 0 2px 2px 0; }
+.avatar-stage { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.layer-stack { position: relative; width: 380px; height: 580px; flex-shrink: 0; transform-origin: center center; transition: transform 0.6s cubic-bezier(0.4,0,0.2,1); }
+.layer-stack .layer { position: absolute; inset: 0; }
+.layer-stack .layer img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.zoom-btns { position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 4px; z-index: 50; }
+.zoom-btn { width: 28px; height: 28px; border: 1px solid var(--border-mid); background: var(--white); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; color: var(--ink-mid); }
+.view-bar { flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 12px 20px; gap: 0; border-top: 1px solid var(--border); }
+.view-bar-btn { font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; padding: 7px 28px; border: 1px solid var(--border-mid); background: transparent; color: var(--ink-light); cursor: pointer; transition: all 0.2s; }
+.view-bar-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.view-bar-btn:first-child { border-radius: 2px 0 0 2px; border-right: none; }
+.view-bar-btn:last-child  { border-radius: 0 2px 2px 0; }
+
+/* ── Measurements active — swap preview/config ratio ── */
+.app.measurements-active .preview-panel { flex: 2; background: var(--white); }
+.app.measurements-active .config-panel  { flex: 3; }
+.app.measurements-active #meas-avatar-panel { display: flex !important; }
+
+/* ── CONFIG PANEL ── */
+.config-panel { flex: 2; background: var(--white); overflow-y: auto; min-height: 0; position: relative; display: flex; flex-direction: column; transition: flex 0.35s cubic-bezier(0.4,0,0.2,1); }
+.tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 28px; position: sticky; top: 0; background: var(--white); z-index: 20; }
+.tab { font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; padding: 18px 0; margin-right: 24px; border: none; background: none; color: var(--ink-faint); cursor: pointer; border-bottom: 1.5px solid transparent; margin-bottom: -1px; transition: color 0.2s, border-color 0.2s; white-space: nowrap; }
+.tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+.config-body { padding: 28px 28px 110px; display: flex; flex-direction: column; }
+#panel-measurements { padding: 0 !important; flex: 1; min-height: 0; overflow: hidden; }
+
+/* Loading measurements notification */
+#meas-loading-notif {
+  display: none; align-items: center; gap: 8px; margin-bottom: 16px;
+  padding: 8px 12px; border-radius: 2px;
+  background: rgba(109,70,180,0.08); border: 1px solid rgba(109,70,180,0.22);
+  font-size: 11px; font-weight: 500; letter-spacing: 0.06em; color: #6d46b4;
+}
+#meas-loading-notif.visible { display: flex; }
+.meas-notif-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  border: 1.5px solid rgba(109,70,180,0.35); border-top-color: #6d46b4;
+  animation: spin 0.75s linear infinite; flex-shrink: 0;
+}
+.section { padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+.section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); margin-bottom: 14px; }
+.sub-label { font-size: 11px; color: var(--ink-light); margin-bottom: 10px; letter-spacing: 0.02em; }
+
+/* Pills */
+.pill-group { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ── Icon cards ── */
+.icon-card-group { display: flex; flex-wrap: wrap; gap: 10px; }
+.icon-card {
+  position: relative; display: flex; flex-direction: column; align-items: center;
+  gap: 10px; padding: 14px 12px 12px; min-width: 100px; max-width: 120px;
+  background: var(--white); border: 1.5px solid var(--border-mid); border-radius: 4px;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  font-family: 'Jost', sans-serif;
+}
+.icon-card:hover { background: var(--cream-mid); }
+.icon-card.selected { border-color: var(--ink); background: var(--white); }
+.icon-card.selected::after {
+  content: '✓'; position: absolute; top: 7px; right: 8px;
+  width: 18px; height: 18px; background: var(--ink); color: var(--white);
+  border-radius: 50%; font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; line-height: 18px; text-align: center;
+}
+.icon-card img { width: 72px; height: 72px; object-fit: contain; }
+.icon-card-label { font-size: 10px; font-weight: 500; color: var(--ink); text-align: center; line-height: 1.4; letter-spacing: 0.02em; }
+.icon-card.disabled { opacity: 0.45; cursor: default; pointer-events: none; }
+.icon-card-soon { font-size: 9px; color: var(--ink-light); margin-top: -4px; }
+.pill { font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 500; padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 50px; background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s; }
+.pill:hover { border-color: var(--ink); color: var(--ink); }
+.pill.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.pill-extra-price, .icon-card-extra-price { color: var(--ink-faint); font-weight: 500; margin-left: 6px; }
+.pill.selected .pill-extra-price, .icon-card.selected .icon-card-extra-price { color: rgba(250,250,248,0.6); }
+
+/* Fabric grid */
+.fabric-search-row { margin-bottom: 12px; }
+.fabric-search { width: 100%; padding: 8px 12px; font-family: 'Jost', sans-serif; font-size: 12px; border: 1px solid var(--border-mid); border-radius: 4px; background: var(--white); color: var(--ink); outline: none; transition: border-color 0.15s; }
+.fabric-search:focus { border-color: var(--ink); }
+.fabric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+
+/* Rich fabric cards */
+.fabric-card {
+  border: 1px solid var(--border); border-radius: 6px; background: #fff;
+  cursor: pointer; display: flex; flex-direction: column;
+  transition: all 0.15s; overflow: hidden; position: relative;
+}
+.fabric-card:hover { border-color: var(--ink-mid); }
+.fabric-card.selected { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.fabric-card .fc-images {
+  display: flex; align-items: center; justify-content: center;
+  padding: 14px 14px 10px; flex-shrink: 0; position: relative;
+}
+.fabric-card .fc-img {
+  width: 100%; aspect-ratio: 1 / 1; object-fit: cover;
+  display: block; background: var(--cream-mid); border-radius: 2px;
+}
+.fabric-card .fc-body { padding: 0 10px 14px; display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; }
+.fname { font-size: 12px; font-weight: 600; color: var(--ink); letter-spacing: 0.02em; line-height: 1.3; }
+.fcode { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.06em; }
+.fcomp { font-size: 10px; color: var(--ink-light); letter-spacing: 0.01em; line-height: 1.4; margin-top: 1px; }
+.fc-details-toggle { display: none; }
+.fc-details-drawer {
+  display: none; border-top: 1px solid var(--border);
+  padding: 8px 8px 9px; background: var(--cream-mid);
+  grid-template-columns: 1fr 1fr; gap: 4px 8px; pointer-events: none;
+}
+.fc-details-drawer.open { display: grid; pointer-events: auto; }
+.fc-detail-item { display: flex; flex-direction: column; gap: 1px; }
+.fc-detail-label { font-size: 8px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; color: var(--ink-light); }
+.fc-detail-val   { font-size: 10px; color: var(--ink); font-weight: 400; }
+.fabric-loading {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: 10px;
+  padding: 20px 0; color: var(--ink-light); font-size: 11px; letter-spacing: 0.06em;
+}
+.fabric-error {
+  grid-column: 1 / -1; padding: 14px 12px; font-size: 11px; color: #b04040;
+  background: #fdf2f2; border: 1px solid #e8c0c0; border-radius: 4px;
+}
+.comp-parts-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.comp-part-btn { font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 100px; background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s; }
+.comp-part-btn:hover { border-color: var(--ink); color: var(--ink); }
+.comp-part-btn.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.comp-hint { font-size: 11px; color: var(--ink-light); letter-spacing: 0.03em; margin-bottom: 12px; line-height: 1.5; }
+.swatch { width: 100%; aspect-ratio: 1 / 1; border-radius: 2px; flex-shrink: 0; }
+
+/* Measurements */
+.measure-grid { display: flex; flex-direction: column; gap: 10px; }
+.measure-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.measure-row label { font-size: 12px; font-weight: 500; color: var(--ink-mid); min-width: 110px; letter-spacing: 0.02em; }
+.measure-input-wrap { display: flex; align-items: center; gap: 6px; }
+.measure-input { width: 80px; padding: 7px 10px; font-family: 'Jost', sans-serif; font-size: 13px; border: 1px solid var(--border-mid); border-radius: 2px; background: var(--white); color: var(--ink); text-align: right; outline: none; }
+.measure-unit { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.04em; width: 20px; }
+
+/* Buttons material */
+.btn-material-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.btn-material { font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500; padding: 8px 14px; border: 1px solid var(--border-mid); border-radius: 2px; background: transparent; color: var(--ink-mid); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; transition: all 0.15s; }
+.btn-material.selected { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+.bm-name { font-size: 11px; font-weight: 500; color: var(--ink); letter-spacing: 0.02em; }
+.bm-price { font-size: 9px; color: var(--ink-faint); }
+
+/* Submit */
+.submit-btn { width: 100%; padding: 14px 24px; font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; background: var(--ink); color: var(--white); border: none; border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; }
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Nav ── */
+.nav { height: 52px; background: var(--white); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 28px; gap: 16px; position: sticky; top: 0; z-index: 100; }
+.nav-brand { font-size: 12px; font-weight: 600; letter-spacing: 0.20em; text-transform: uppercase; color: var(--ink); margin-right: auto; text-decoration: none; }
+.nav-btn { font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.10em; text-transform: uppercase; padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 2px; background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+.nav-btn:hover { background: var(--cream-mid); color: var(--ink); }
+.nav-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: var(--white); font-size: 11px; font-weight: 600; letter-spacing: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; border: none; padding: 0; cursor: pointer; -webkit-appearance: none; }
+.nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<nav class="nav" style="position:relative;">
+ <a class="nav-brand" href="https://tailortech.toom.design/">
+    <img src="data:image/webp;base64,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" 
+         alt="TailorTech" height="24">
+  </a>
+  <button class="nav-avatar" id="nav-av" type="button" onclick="toggleDropdown(event)" style="display:none"></button>
+  <a class="nav-btn" id="nav-login" href="#" onclick="goToAuth(); return false;">Log In</a>
+  <button class="nav-btn" id="nav-signout" onclick="doSignOut()" style="display:none">Sign out</button>
+
+  <div id="nav-dd" style="display:none;position:absolute;top:52px;right:0;width:260px;background:#FAFAF8;border:1px solid rgba(26,25,22,0.20);border-radius:2px;box-shadow:0 12px 40px rgba(26,25,22,0.16);padding:20px;z-index:9999;font-family:'Jost',sans-serif;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div id="dd-av" style="width:40px;height:40px;border-radius:50%;background:#1A1916;color:#FAFAF8;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"></div>
+      <div>
+        <div id="dd-name" style="font-size:13px;font-weight:600;color:#1A1916;margin-bottom:2px;">—</div>
+        <div id="dd-email-sub" style="font-size:11px;color:#8A8880;word-break:break-all;"></div>
+      </div>
+    </div>
+    <div style="height:1px;background:rgba(26,25,22,0.10);margin-bottom:14px;"></div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#8A8880;margin-bottom:5px;">Person ID</div>
+      <div id="dd-pid" style="font-size:15px;font-weight:600;color:#1A1916;letter-spacing:0.04em;">—</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid rgba(26,25,22,0.10);padding-top:14px;">
+      <a href="https://tailortech.toom.design/dashboard.html" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:none;background:#1A1916;color:#FAFAF8;border-radius:2px;cursor:pointer;text-decoration:none;display:block;text-align:center;">My Dashboard</a>
+      <button onclick="doSignOut()" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:1px solid rgba(138,48,48,0.30);background:transparent;color:#8a3030;border-radius:2px;cursor:pointer;width:100%;">Sign Out</button>
+    </div>
+  </div>
+</nav>
+
+<div class="app" id="main-app">
+
+  <!-- ══ PREVIEW PANEL ══ -->
+  <div class="preview-panel">
+    <div class="view-toggle">
+      <button class="view-btn active" onclick="setView('technical',this)">Technical</button>
+      <button class="view-btn" onclick="setView('3d',this)">3D</button>
+    </div>
+    <div class="avatar-stage">
+      <div class="zoom-btns">
+        <button class="zoom-btn" onclick="manualZoom(0.25)" title="Zoom in">+</button>
+        <button class="zoom-btn" onclick="manualZoom(-0.25)" title="Zoom out">−</button>
+        <button class="zoom-btn" onclick="resetZoom()" title="Reset">↻</button>
+      </div>
+      <div id="stage-viewport" style="position:relative;width:100%;height:100%;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+        <div class="layer-stack" id="layer-stack">
+          <div id="loading-overlay" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20;background:#fff;transition:opacity 0.5s;">
+            <div style="width:22px;height:22px;border:2px solid #C0BDB8;border-top-color:#1A1916;border-radius:50%;animation:spin 0.7s linear infinite;"></div>
+          </div>
+          <div class="layer"><img id="img-base"        src="" alt=""></div>
+          <div class="layer"><img id="img-waistband"   src="" alt=""></div>
+          <div class="layer"><img id="img-pocket"      src="" alt=""></div>
+          <div class="layer"><img id="img-cuff"        src="" alt=""></div>
+        </div>
+      </div>
+    </div>
+    <div class="view-bar">
+      <button class="view-bar-btn active" onclick="setFrontBack('front',this)">Front</button>
+      <button class="view-bar-btn" onclick="setFrontBack('back',this)">Back</button>
+    </div>
+
+    <!-- MEASUREMENT AVATAR — shown instead of trousers when Measurements tab is active -->
+    <div id="meas-avatar-panel" style="display:none;flex:1;min-height:0;flex-direction:column;background:var(--white);overflow:hidden;padding:2rem;">
+      <div style="flex:1;min-height:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:relative;">
+        <img id="meas-diag-img" src="" alt="" style="width:100%;height:100%;object-fit:contain;transition:opacity 0.25s,transform 0.25s;opacity:1;">
+      </div>
+      <div id="meas-diag-label" style="flex-shrink:0;margin-top:10px;font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);opacity:0;transition:opacity 0.25s;text-align:center;min-height:14px;"></div>
+    </div>
+
+  </div>
+
+  <!-- ══ CONFIG PANEL ══ -->
+  <div class="config-panel">
+    <div id="price-bar-fixed" style="position:fixed;bottom:0;z-index:20;font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:14px 24px;background:var(--white);color:var(--ink);border-top:1.5px solid var(--ink);display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 -4px 12px rgba(0,0,0,0.08);transition:opacity 0.15s,transform 0.15s;">
+      Estimated Price <span class="price-display-amount">—</span>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab(this,'panel-design')">Design</button>
+      <button class="tab" onclick="switchTab(this,'panel-materials')">Materials &amp; Construction</button>
+      <button class="tab" onclick="switchTab(this,'panel-measurements')">Measurements</button>
+      <button class="tab" onclick="switchTab(this,'panel-summary')">Summary</button>
+    </div>
+
+    <!-- DESIGN PANEL -->
+    <div class="config-body" id="panel-design">
+
+      <div class="section">
+        <div class="section-label">Gender</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPillInGroupWithState(this)">Male</button>
+          <button class="pill"          onclick="selectPillInGroupWithState(this)">Female</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Style</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPillInGroupWithState(this)">Cuffed</button>
+          <button class="pill"          onclick="selectPillInGroupWithState(this)">Open Hem</button>
+          <button class="pill"          onclick="selectPillInGroupWithState(this)">Flared</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Fit</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPillInGroupWithState(this)">Regular</button>
+          <button class="pill"          onclick="selectPillInGroupWithState(this)">Wide Leg</button>
+          <button class="pill"          onclick="selectPillInGroupWithState(this)">Baggy</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Front Pockets</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPillInGroupWithState(this)">Seam</button>
+          <button class="pill"          onclick="selectPillInGroupWithState(this)">Slanted</button>
+          <button class="pill"          onclick="selectPillInGroupWithState(this)">Welt</button>
+        </div>
+      </div>
+
+      <div class="section" id="section-cuff-type">
+        <div class="section-label">Cuff Type</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPillInGroupWithState(this)">Rib</button>
+          <button class="pill"          onclick="selectPillInGroupWithState(this)">Self Elastic</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Waistband</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPillInGroupWithState(this)">Self Elastic</button>
+          <button class="pill"          onclick="selectPillInGroupWithState(this)">Rib</button>
+        </div>
+      </div>
+
+      <div class="section" style="border-bottom:none;">
+        <button onclick="goToMaterials()" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;width:100%;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
+          Continue to Materials
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
+        </button>
+      </div>
+
+    </div><!-- /panel-design -->
+
+    <!-- MATERIALS PANEL -->
+    <div class="config-body" id="panel-materials" style="display:none;">
+
+      <div class="section">
+        <div class="section-label">Main Fabric</div>
+        <div class="fabric-search-row">
+          <input class="fabric-search" type="text" placeholder="Search fabrics…" oninput="filterFabrics(this.value,'main')">
+        </div>
+        <div class="fabric-grid" id="fabric-main-grid">
+          <div class="fabric-loading">
+            <div style="width:18px;height:18px;border:2px solid var(--ink-faint);border-top-color:var(--ink);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;"></div>
+            <span>Loading fabrics…</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" style="border-bottom:none;">
+        <div class="section-label">Contrast Fabric</div>
+        <p class="comp-hint">Select parts to use a contrast fabric. Leave unchecked to use the main fabric throughout.</p>
+        <div class="comp-parts-row">
+          <button class="comp-part-btn" id="comp-part-waistband" onclick="toggleCompPart(this,'waistband')">Waistband</button>
+          <button class="comp-part-btn" id="comp-part-pocket"    onclick="toggleCompPart(this,'pocket')">Pocket</button>
+        </div>
+        <div id="comp-fabric-body" style="display:none;margin-top:16px;">
+          <div class="fabric-search-row">
+            <input class="fabric-search" type="text" placeholder="Search fabrics…" oninput="filterFabrics(this.value,'comp')">
+          </div>
+          <div class="fabric-grid" id="fabric-comp-grid">
+            <div class="fabric-loading">
+              <div style="width:18px;height:18px;border:2px solid var(--ink-faint);border-top-color:var(--ink);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;"></div>
+              <span>Loading fabrics…</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" style="border-bottom:none;">
+        <button onclick="goToMeasurements()" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;width:100%;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
+          Continue to Measurements
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
+        </button>
+      </div>
+
+    </div><!-- /panel-materials -->
+
+    <!-- MEASUREMENTS PANEL -->
+    <div class="config-body" id="panel-measurements" style="display:none;">
+
+      <div style="display:flex;flex:1;min-height:0;overflow:hidden;">
+
+        <div style="flex:1;overflow-y:auto;padding:28px 28px 48px;display:flex;flex-direction:column;">
+
+          <!-- Version selector — shown only when saved records exist -->
+          <div id="meas-version-row" style="display:none;margin-bottom:20px;">
+            <div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:6px;">Saved Measurements</div>
+            <select id="meas-version-select" onchange="measLoadVersion(this.value)" style="width:100%;padding:8px 10px;font-family:'Jost',sans-serif;font-size:12px;border:1px solid var(--border-mid);border-radius:2px;color:var(--ink);background:var(--white);outline:none;cursor:pointer;"></select>
+          </div>
+
+          <form id="meas-form" onsubmit="return false;">
+            <input type="hidden" id="mf-email" name="email">
+            <input type="hidden" id="mf-personId" name="personId">
+
+            <!-- Loading measurements notification -->
+            <div id="meas-loading-notif">
+              <span class="meas-notif-dot"></span>
+              Loading measurements…
+            </div>
+
+            <div style="margin-bottom:20px;">
+              <div style="display:flex;flex-direction:column;max-width:200px;">
+                <label style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:5px;">Height</label>
+                <div style="position:relative;">
+                  <input type="number" id="mf-height" name="height" step="0.1" min="100" max="250" placeholder="0.0" onfocus="measFocusField('Height','height')" style="width:100%;padding:8px 32px 8px 10px;background:var(--white);border:1px solid var(--border-mid);border-radius:2px;color:var(--ink);font-size:12px;font-family:'Jost',sans-serif;outline:none;">
+                  <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--ink-faint);pointer-events:none;">cm</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-light);padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px;display:flex;align-items:center;gap:7px;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4v10l-9 4-9-4V7z"/></svg>
+              Volumetric Measurements
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:20px;" id="meas-grid-vol"></div>
+
+            <div style="font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-light);padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px;display:flex;align-items:center;gap:7px;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20M2 7l2 5-2 5M22 7l-2 5 2 5"/></svg>
+              Linear Measurements
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;" id="meas-grid-lin"></div>
+
+          </form>
+
+          <!-- Save / Continue button -->
+          <div style="margin-top:10px;padding-top:20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;padding-bottom:8px;">
+            <button type="button" onclick="measPrimaryAction(event)" id="meas-save-btn" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:inline-flex;align-items:center;gap:10px;">
+              <span id="meas-save-lbl">Continue to Summary</span>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
+              <div id="meas-save-spin" style="display:none;width:12px;height:12px;border:1.5px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.65s linear infinite;"></div>
+            </button>
+          </div>
+
+        </div><!-- /scroll -->
+
+      </div>
+
+    </div><!-- /panel-measurements -->
+
+    <!-- SUMMARY PANEL -->
+    <div class="config-body" id="panel-summary" style="display:none;">
+
+      <div class="section" style="border-bottom:none;">
+        <div class="section-label">Order Summary</div>
+        <div id="summary-rows" style="display:flex;flex-direction:column;gap:0;margin-bottom:28px;"></div>
+
+        <!-- Action buttons -->
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+          <button onclick="handleAddToCart()" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;width:100%;padding:13px 16px;background:transparent;border:1px solid var(--border-mid);border-radius:2px;color:var(--ink-mid);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:all 0.15s;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+            Add to Cart
+          </button>
+          <button onclick="handleOrderNow()" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;width:100%;padding:14px 16px;background:var(--ink);color:var(--white);border:none;border-radius:2px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:opacity 0.15s;">
+            Order Now
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="5,12 19,12"/><polyline points="13,6 19,12 13,18"/></svg>
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /panel-summary -->
+
+  </div><!-- /config-panel -->
+</div><!-- /app -->
+
+
+<script>
+// ─────────────────────────────────────────────────────────────────
+//  SINGLE SCRIPT BLOCK — no duplicate definitions
+// ─────────────────────────────────────────────────────────────────
+
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
+const BASE      = 'https://raw.githubusercontent.com/toom-design/tailortech-srweatpants/main/';
+
+// ── State ─────────────────────────────────────────────────────────
+const state = {
+  gender: 'male', style: 'cuffed', fit: 'regular',
+  pocket: 'seam', cuffType: 'rib', waistband: 'self-elastic', view: 'f',
+};
+
+// The base silhouette is one image per style×fit combination — confirmed
+// against the real filenames (SWEATPANTS_live_cuffed_regular_1.webp, etc).
+const BASE_COMBO = {
+  'cuffed_regular': 1, 'cuffed_wide-leg': 2, 'cuffed_baggy': 3,
+  'open-hem_regular': 4, 'open-hem_wide-leg': 5, 'open-hem_baggy': 6,
+  'flared_regular': 7, 'flared_wide-leg': 8, 'flared_baggy': 9
+};
+
+// The pocket layer's numbered variants (seam_147, seam_29, seam_36...)
+// don't correspond to any confirmed state combination — using one known-
+// existing file per type as a placeholder until that numbering scheme is
+// clarified. Pocket type still switches correctly; the specific numbered
+// variant does not yet vary with other selections.
+const POCKET_DEFAULT = { seam: '8', slanted: '8', welt: 'F' };
+
+// ── URL builders ──────────────────────────────────────────────────
+function enc(s) { return encodeURIComponent(s); }
+const urls = {
+  base:      function(style, fit) {
+    var n = BASE_COMBO[style + '_' + fit] || 1;
+    return BASE + enc('SWEATPANTS_live_' + style + '_' + fit + '_' + n + '.webp');
+  },
+  waistband: function(wbType) { return BASE + enc('SWEATPANTS_waistband_' + wbType + '.webp'); },
+  pocket:    function(pkType) { return BASE + enc('SWEATPANTS_live_pocket_' + pkType + '_' + (POCKET_DEFAULT[pkType] || '8') + '.webp'); },
+  cuff:      function(cuffType) { return BASE + enc('SWEATPANTS_cuffs_' + cuffType + '.webp'); },
+};
+
+// ── Image helper ──────────────────────────────────────────────────
+function setImg(id, url) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  if (!url) { el.style.opacity = '0'; return; }
+  el.style.opacity = '1';
+  if (el.src !== url) el.src = url;
+}
+
+// ── Update all layers ─────────────────────────────────────────────
+function updatePreview() {
+  setImg('img-base', urls.base(state.style, state.fit));
+  setImg('img-waistband', urls.waistband(state.waistband));
+  setImg('img-pocket', urls.pocket(state.pocket));
+  // Ankle cuff only exists as a real detail when the style is "cuffed" —
+  // for open-hem/flared it has no meaning, so no cuff overlay is shown.
+  setImg('img-cuff', state.style === 'cuffed' ? urls.cuff(state.cuffType) : '');
+}
+
+function hideLoading() {
+  var el = document.getElementById('loading-overlay');
+  if (el) { el.style.opacity='0'; setTimeout(function(){ el.style.display='none'; }, 500); }
+}
+
+// ── Zoom ──────────────────────────────────────────────────────────
+var _z = { zoom: 1.7, panX: 0, panY: 0 };
+var DEFAULT_ZOOM = 1.7;
+var STACK_W = 420, STACK_H = 620;
+
+function applyTransform() {
+  var el = document.getElementById('layer-stack');
+  if (el) el.style.transform = 'translate('+_z.panX+'px,'+_z.panY+'px) scale('+_z.zoom+')';
+}
+function zoomToRegion(scale, cx, cy) {
+  _z.zoom = scale;
+  var pointX = (cx - 0.5) * STACK_W;
+  var pointY = (cy - 0.5) * STACK_H;
+  _z.panX = -pointX * scale;
+  _z.panY = -pointY * scale;
+  applyTransform();
+}
+function resetZoom() { _z.zoom = DEFAULT_ZOOM; _z.panX = 0; _z.panY = 0; applyTransform(); }
+function manualZoom(d) { _z.zoom = Math.min(4, Math.max(0.5, _z.zoom + d)); applyTransform(); }
+
+// ── Tabs ──────────────────────────────────────────────────────────
+function switchTab(btn, panelId) {
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  btn.classList.add('active');
+  ['panel-design','panel-materials','panel-measurements','panel-summary'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = id === panelId ? '' : 'none';
+  });
+
+  var isMeas = (panelId === 'panel-measurements');
+  document.getElementById('main-app').classList.toggle('measurements-active', isMeas);
+
+  var viewToggle  = document.querySelector('.view-toggle');
+  var avatarStage = document.getElementById('stage-viewport') && document.getElementById('stage-viewport').closest('.avatar-stage');
+  var viewBar     = document.querySelector('.view-bar');
+  var measAvatar  = document.getElementById('meas-avatar-panel');
+
+  if (viewToggle)  viewToggle.style.display  = isMeas ? 'none' : '';
+  if (avatarStage) avatarStage.style.display  = isMeas ? 'none' : '';
+  if (viewBar)     viewBar.style.display      = isMeas ? 'none' : '';
+  if (measAvatar)  measAvatar.style.display   = isMeas ? 'flex'  : 'none';
+
+  if (isMeas) {
+    var di = document.getElementById('meas-diag-img');
+    if (di && !di.getAttribute('data-inited')) {
+      di.setAttribute('data-inited','1');
+      if (window.measFocusField) window.measFocusField('', null);
+    }
+  }
+
+  if (panelId === 'panel-summary') {
+    buildSummary();
+  }
+
+  document.querySelector('.config-panel').scrollTo({ top:0, behavior:'smooth' });
+}
+function goToMaterials()    { switchTab(document.querySelectorAll('.tab')[1], 'panel-materials'); }
+function goToMeasurements() { switchTab(document.querySelectorAll('.tab')[2], 'panel-measurements'); }
+function goToSummary()      { switchTab(document.querySelectorAll('.tab')[3], 'panel-summary'); }
+
+// ── View toggles ──────────────────────────────────────────────────
+function setView(v, btn) {
+  document.querySelectorAll('.view-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+}
+function setFrontBack(v, btn) {
+  document.querySelectorAll('.view-bar-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  state.view = (v === 'front') ? 'f' : 'b';
+  updatePreview();
+}
+
+// ── Pill helpers ──────────────────────────────────────────────────
+function selectPillInGroup(btn) {
+  btn.closest('.pill-group').querySelectorAll('.pill').forEach(function(p){ p.classList.remove('selected'); });
+  btn.classList.add('selected');
+}
+
+// Reads the selected pill text from a section by its label
+function sectionPill(label) {
+  var sections = document.querySelectorAll('.section');
+  for (var i=0; i<sections.length; i++) {
+    var lbl = sections[i].querySelector('.section-label');
+    if (lbl && lbl.textContent.trim() === label) {
+      var sel = sections[i].querySelector('.pill.selected');
+      return sel ? (sel.dataset.optionLabel || sel.textContent.trim()) : '';
+    }
+  }
+  return '';
+}
+
+// Reads an icon-card group by the section label text
+function sectionIconCard(label) {
+  var sections = document.querySelectorAll('.section');
+  for (var i=0; i<sections.length; i++) {
+    var lbl = sections[i].querySelector('.section-label');
+    if (lbl && lbl.textContent.trim() === label) {
+      var sel = sections[i].querySelector('.icon-card.selected .icon-card-label');
+      return sel ? (sel.dataset.optionLabel || sel.textContent.trim()) : '';
+    }
+  }
+  return '';
+}
+
+// Reads a measurement input by its label text — same pattern as shirt
+function inputVal(label) {
+  var rows = document.querySelectorAll('.measure-row');
+  for (var i=0; i<rows.length; i++) {
+    var lbl = rows[i].querySelector('label');
+    if (lbl && lbl.textContent.trim() === label)
+      return rows[i].querySelector('.measure-input').value || '';
+  }
+  return '';
+}
+
+// ── Design selections ─────────────────────────────────────────────
+function selectPleats(btn, val) {
+  selectPillInGroup(btn);
+  var m = { none:'flatfront', single:'singlepleat', double:'doublepleats' };
+  state.style = m[val] || 'flatfront';
+  goFront(); updatePreview(); resetZoom();
+}
+function selectBackPocket(btn, val) {
+  selectPillInGroup(btn);
+  state.backpocket = val;
+  if (val !== 'none') {
+    state.view = 'b';
+    document.querySelectorAll('.view-bar-btn').forEach(function(b){ b.classList.remove('active'); });
+    document.querySelector('.view-bar-btn:last-child').classList.add('active');
+    updatePreview(); zoomToRegion(2.6, 0.5, 0.4);
+  } else {
+    goFront(); updatePreview(); resetZoom();
+  }
+}
+function selectWatch(btn, show) {
+  selectPillInGroup(btn);
+  state.watch = show;
+  goFront(); updatePreview();
+  if (show) zoomToRegion(3.0, 0.4, 0.4);
+  else resetZoom();
+}
+
+// Shared pill handler that also updates state
+function selectPillInGroupWithState(btn) {
+  selectPillInGroup(btn);
+  var label = btn.closest('.section').querySelector('.section-label').textContent.trim();
+  var rawText = btn.dataset.optionLabel || btn.textContent.trim();
+  var val = rawText.toLowerCase().replace(/ /g,'-');
+
+  if (label === 'Gender') {
+    state.gender = val;
+  }
+  if (label === 'Style') {
+    var m1 = { 'cuffed':'cuffed', 'open-hem':'open-hem', 'flared':'flared' };
+    state.style = m1[val] || 'cuffed';
+    // Cuff Type only makes sense when the style is actually "cuffed" —
+    // hide it entirely otherwise, same reasoning as Trousers' lining picker.
+    var cuffSection = document.getElementById('section-cuff-type');
+    if (cuffSection) cuffSection.style.display = (state.style === 'cuffed') ? '' : 'none';
+    goFront(); updatePreview(); resetZoom();
+  }
+  if (label === 'Fit') {
+    var m2 = { 'regular':'regular', 'wide-leg':'wide-leg', 'baggy':'baggy' };
+    state.fit = m2[val] || 'regular';
+    goFront(); updatePreview(); resetZoom();
+  }
+  if (label === 'Front Pockets') {
+    var m3 = { 'seam':'seam', 'slanted':'slanted', 'welt':'welt' };
+    state.pocket = m3[val] || 'seam';
+    goFront(); updatePreview(); zoomToRegion(2.8, 0.5, 0.4);
+  }
+  if (label === 'Cuff Type') {
+    state.cuffType = val.includes('self') ? 'self-elastic' : 'rib';
+    goFront(); updatePreview(); zoomToRegion(2.6, 0.5, 0.8);
+  }
+  if (label === 'Waistband') {
+    state.waistband = val.includes('self') ? 'self-elastic' : 'rib';
+    goFront(); updatePreview(); zoomToRegion(2.6, 0.5, 0.4);
+  }
+}
+
+function goFront() {
+  state.view = 'f';
+  document.querySelectorAll('.view-bar-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelector('.view-bar-btn:first-child').classList.add('active');
+}
+
+// ── Icon cards ────────────────────────────────────────────────────
+function selectIconCard(btn) {
+  btn.closest('.icon-card-group').querySelectorAll('.icon-card').forEach(function(c){ c.classList.remove('selected'); });
+  btn.classList.add('selected');
+}
+
+// ── Fabric — sheet-backed ─────────────────────────────────────────
+function selectFabric(el, group) {
+  var grid = el.closest('.fabric-grid');
+  grid.querySelectorAll('.fabric-card').forEach(function(c){ c.classList.remove('selected'); });
+  el.classList.add('selected');
+}
+
+function toggleCompPart(el, part) {
+  el.classList.toggle('selected');
+  var waistband = document.getElementById('comp-part-waistband') && document.getElementById('comp-part-waistband').classList.contains('selected');
+  var pocket    = document.getElementById('comp-part-pocket')    && document.getElementById('comp-part-pocket').classList.contains('selected');
+  var body      = document.getElementById('comp-fabric-body');
+  if (body) body.style.display = (waistband || pocket) ? '' : 'none';
+}
+
+function toggleFabricDetails(btn, event) {
+  event.stopPropagation();
+  var card   = btn.closest('.fabric-card');
+  var drawer = card.querySelector('.fc-details-drawer');
+  var isOpen = drawer.classList.contains('open');
+  drawer.classList.toggle('open', !isOpen);
+  btn.classList.toggle('open', !isOpen);
+  btn.querySelector('span').textContent = isOpen ? 'Details' : 'Hide';
+}
+
+function filterFabrics(query, group) {
+  var grid = document.getElementById('fabric-' + group + '-grid');
+  var term = query.toLowerCase();
+  grid.querySelectorAll('.fabric-card').forEach(function(card) {
+    var name = (card.dataset.name || '').toLowerCase();
+    var code = (card.dataset.code || '').toLowerCase();
+    var comp = (card.dataset.comp || '').toLowerCase();
+    card.style.display = (name.includes(term) || code.includes(term) || comp.includes(term)) ? '' : 'none';
+  });
+}
+
+function buildFabricCard(fabric, group, isFirst) {
+  var name  = fabric.ProductName   || '';
+  var code  = fabric.FabricCode    || '';
+  var comp  = fabric.Composition   || '';
+  var color = fabric.Color         || '—';
+  var pat   = fabric.Pattern       || '—';
+  var wt    = fabric.Weight_gsm    ? fabric.Weight_gsm + ' g/m²' : '—';
+  var wd    = fabric.Width_cm      ? fabric.Width_cm   + ' cm'   : '—';
+  var face  = fabric['Photo FACE'] || '';
+  var unitPrice = parseFloat(String(fabric.UnitPrice || '0').replace(',', '.')) || 0;
+
+  var card = document.createElement('div');
+  card.className = 'fabric-card' + (isFirst ? ' selected' : '');
+  card.dataset.name  = name;
+  card.dataset.code  = code;
+  card.dataset.comp  = comp;
+  card.dataset.color = color;
+  card.dataset.unitprice = unitPrice;
+  card.onclick = function(){ selectFabric(card, group); if (typeof updatePriceBar === 'function') updatePriceBar(); };
+
+  var imgWrap = document.createElement('div');
+  imgWrap.className = 'fc-images';
+
+  var faceImg = document.createElement('img');
+  faceImg.className = 'fc-img'; faceImg.alt = name; faceImg.loading = 'lazy';
+  if (face) faceImg.src = face; else faceImg.style.background = 'var(--cream-dark)';
+  imgWrap.appendChild(faceImg);
+
+  var body = document.createElement('div');
+  body.className = 'fc-body';
+
+  var nameEl = document.createElement('span'); nameEl.className = 'fname'; nameEl.textContent = name;
+  var codeEl = document.createElement('span'); codeEl.className = 'fcode'; codeEl.textContent = code;
+  var compEl = document.createElement('span'); compEl.className = 'fcomp'; compEl.textContent = comp;
+  var priceEl = document.createElement('span'); priceEl.className = 'fprice';
+  priceEl.style.cssText = 'font-family:Jost,sans-serif;font-size:12px;font-weight:600;color:var(--ink);margin-top:2px;';
+  if (typeof _pricing !== 'undefined' && _pricing) {
+    var basePrice = _pricing.tailoring * (1 + _pricing.marginPercent / 100);
+    var fabricPrice = unitPrice * _pricing.fabricCoefficient;
+    var fmt = function(n){ return n.toFixed(2).replace(/\.00$/, ''); };
+    priceEl.textContent = '€' + fmt(basePrice + fabricPrice);
+  }
+
+  var detBtn = document.createElement('button');
+  detBtn.className = 'fc-details-toggle';
+  detBtn.innerHTML = '<span>Details</span><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>';
+  detBtn.onclick = function(e){ toggleFabricDetails(detBtn, e); };
+
+  body.appendChild(nameEl); body.appendChild(priceEl); body.appendChild(codeEl); body.appendChild(compEl); body.appendChild(detBtn);
+
+  var drawer = document.createElement('div');
+  drawer.className = 'fc-details-drawer';
+  [['Color', color], ['Pattern', pat], ['Composition', comp], ['Weight', wt], ['Width', wd]].forEach(function(pair) {
+    var item = document.createElement('div'); item.className = 'fc-detail-item';
+    var l = document.createElement('span'); l.className = 'fc-detail-label'; l.textContent = pair[0];
+    var v = document.createElement('span'); v.className = 'fc-detail-val';   v.textContent = pair[1];
+    item.appendChild(l); item.appendChild(v); drawer.appendChild(item);
+  });
+
+  card.appendChild(imgWrap); card.appendChild(body); card.appendChild(drawer);
+  return card;
+}
+
+// Cache shared with any other fabric loaders on the page
+var _fabricsRawCache = null;
+
+async function _loadAllFabrics() {
+  if (_fabricsRawCache) return _fabricsRawCache;
+  var res = await fetch(SHEET_URL + '?action=getFabrics');
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  var json = await res.json();
+  if (!json.success) throw new Error(json.message || 'API error');
+  _fabricsRawCache = json.fabrics || [];
+  return _fabricsRawCache;
+}
+
+// Splits the Garments field into individual tags and checks for an EXACT
+// match — not a substring match. "denim_trousers" contains "trousers" as
+// a substring, so .includes('trousers') would wrongly match it too;
+// exact-matching each tag avoids that. Tags in this sheet are actually
+// separated by NEWLINES within one cell (confirmed directly against the
+// real data — a cell can contain "suit\ntrousers\njacket" as three lines),
+// not commas — commas/semicolons are also handled as a fallback in case
+// that format is ever used instead.
+function hasGarmentTag(garmentsField, tag) {
+  var target = tag.trim().toLowerCase();
+  return String(garmentsField || '')
+    .split(/[\n\r,;]+/)
+    .some(function(t){ return t.trim().toLowerCase() === target; });
+}
+
+async function loadSweatpantsFabrics() {
+  var all = await _loadAllFabrics();
+  var filtered = all.filter(function(r){ return hasGarmentTag(r['Garments'], 'sweatpants'); });
+  filtered.sort(function(a, b) {
+    var pa = parseFloat(String(a.UnitPrice || '0').replace(',', '.')) || 0;
+    var pb = parseFloat(String(b.UnitPrice || '0').replace(',', '.')) || 0;
+    return pa - pb;
+  });
+  return filtered;
+}
+
+async function renderFabricGrids() {
+  var mainGrid = document.getElementById('fabric-main-grid');
+  var compGrid = document.getElementById('fabric-comp-grid');
+  try {
+    var fabrics = await loadSweatpantsFabrics();
+    if (!fabrics.length) {
+      var msg = '<div class="fabric-error">No sweatpants fabrics found. Check the Garments column in your sheet.</div>';
+      mainGrid.innerHTML = msg;
+      if (compGrid) compGrid.innerHTML = msg;
+    } else {
+      mainGrid.innerHTML = '';
+      fabrics.forEach(function(f, i){ mainGrid.appendChild(buildFabricCard(f, 'main', i === 0)); });
+      if (compGrid) {
+        compGrid.innerHTML = '';
+        fabrics.forEach(function(f, i){ compGrid.appendChild(buildFabricCard(f, 'comp', false)); });
+      }
+    }
+  } catch(err) {
+    console.error('Fabric load error:', err);
+    var errHtml = '<div class="fabric-error">Could not load fabrics (' + err.message + ').</div>';
+    mainGrid.innerHTML = errHtml;
+    if (compGrid) compGrid.innerHTML = errHtml;
+  }
+}
+
+// ── Buttons ───────────────────────────────────────────────────────
+function selectBtnMaterial(btn) {
+  btn.closest('.btn-material-row').querySelectorAll('.btn-material').forEach(function(b){ b.classList.remove('selected'); });
+  btn.classList.add('selected');
+}
+
+// ── collectConfig — keys match sheet headers exactly ─────────────
+function collectConfig() {
+  var selCard = document.querySelector('#fabric-main-grid .fabric-card.selected');
+
+  // Contrast fabric — Waistband / Pocket only.
+  var compBody = document.getElementById('comp-fabric-body');
+  var compVisible = compBody && compBody.style.display !== 'none';
+  var compCard = compVisible ? document.querySelector('#fabric-comp-grid .fabric-card.selected') : null;
+  var contrastFabric = compCard ? (compCard.dataset.name || (compCard.querySelector('.fname') ? compCard.querySelector('.fname').textContent.trim() : '')) : 'None';
+  var contrastCode = compCard ? (compCard.dataset.code || '') : '';
+  var contrastParts = [];
+  if (document.getElementById('comp-part-waistband') && document.getElementById('comp-part-waistband').classList.contains('selected')) contrastParts.push('Waistband');
+  if (document.getElementById('comp-part-pocket') && document.getElementById('comp-part-pocket').classList.contains('selected')) contrastParts.push('Pocket');
+
+  function mval(id) {
+    var el = document.getElementById('mf-' + id);
+    return (el && el.value && parseFloat(el.value) > 0) ? el.value + ' cm' : '';
+  }
+
+  return {
+    // ── Meta ──────────────────────────────────────────────────────
+    'Order Number':      '',
+    'Person ID':         window._currentPersonId || '',
+    'Email':             (window._fb && window._fb.auth && window._fb.auth.currentUser
+                            ? (window._fb.auth.currentUser.email || '') : ''),
+    'Status':            'New',
+    'Created At':        new Date().toISOString(),
+    'Terms Accepted':    'FALSE',
+    'Marketing Consent': 'FALSE',
+
+    // ── Design ────────────────────────────────────────────────────
+    'GENDER':            sectionPill('Gender'),
+    'FIT':               sectionPill('Fit'),
+    'STYLE/SILHOUETTE':  sectionPill('Style'),
+    'CLOSURE':           'N/A',
+    'NECK':              'N/A',
+    'FRONT POCKETS':     sectionPill('Front Pockets'),
+    'EXTRA POCKETS':     'N/A',
+    'HEM/FINISH':        sectionPill('Cuff Type'),
+    'BACK':              'N/A',
+
+    // ── Sleeves (N/A for sweatpants) ──────────────────────────────
+    'SLEEVE HEAD':       'N/A',
+    'SLEEVE STYLE':      'N/A',
+    'CONSTRUCTION':      'N/A',
+    'SLEEVE BUTTONS':    'N/A',
+    'SLEEVE CUFF':       'N/A',
+
+    // ── Waistband (no adjustment/rise for sweatpants) ──────────────
+    'WAISTBAND STYLE':   sectionPill('Waistband'),
+    'WAIST ADJUSTMENT':  'N/A',
+    'RISE':              'N/A',
+
+    // ── Materials ─────────────────────────────────────────────────
+    'MAIN FABRIC':       selCard ? (selCard.dataset.name || selCard.querySelector('.fname').textContent.trim()) : '',
+    'CODE':              selCard ? (selCard.dataset.code || '') : '',
+    'color':             selCard ? (selCard.dataset.color || '') : '',
+    'composition':       selCard ? (selCard.dataset.comp  || '') : '',
+    'CONTRAST FABRIC':   contrastFabric,
+    'CONTRAST CODE':     contrastCode,
+    'CONTRAST PLACEMENT':contrastParts.join(', '),
+    'STRUCTURE':         'N/A',
+    'LINING FABRIC':     'N/A',
+    'LINING CODE':       '',
+    'LINING TYPE':       'N/A',
+
+    // ── Measurements ──────────────────────────────────────────────
+    'height':            mval('height'),
+    'waistGirth':        mval('waistGirth'),
+    'hipGirth':          mval('hipGirth'),
+    'thighGirth':        mval('thighGirth'),
+    'kneeGirth':         mval('kneeGirth'),
+    'calfGirth':         mval('calfGirth'),
+    'pantWaist':         mval('pantWaist'),
+    'inseamLength':      mval('inseamLength'),
+    'outseamLength':     mval('outseamLength'),
+    'riseLength':        mval('riseLength'),
+  };
+}
+window.collectConfig = collectConfig;
+
+// ── On-screen debug panel ──
+function _debugLog(msg, isErr) {
+  var panel = document.getElementById('tt-debug');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'tt-debug';
+    panel.style.cssText = 'position:fixed;bottom:0;left:0;right:0;max-height:200px;overflow-y:auto;background:#111;color:#0f0;font:12px/1.6 monospace;padding:8px 12px;z-index:99999;border-top:2px solid #0f0;';
+    var x = document.createElement('button');
+    x.textContent = 'close';
+    x.style.cssText = 'float:right;background:none;border:1px solid #0f0;color:#0f0;cursor:pointer;font:11px monospace;padding:1px 7px;margin-left:8px;';
+    x.onclick = function(){ panel.remove(); };
+    panel.appendChild(x);
+    document.body.appendChild(panel);
+  }
+  var line = document.createElement('div');
+  line.style.color = isErr ? '#f66' : '#0f0';
+  line.textContent = new Date().toISOString().slice(11,19) + '  ' + msg;
+  panel.appendChild(line);
+  panel.scrollTop = panel.scrollHeight;
+}
+
+// ── Core save via JSONP ──
+function _saveToSheet(data) {
+  _debugLog('saving… keys: ' + Object.keys(data).join(', '));
+  return new Promise(function(resolve, reject) {
+    var cbName = '__ttSave_' + Date.now();
+    var json;
+    try { json = JSON.stringify(data); } catch(e) { json = '{}'; }
+    json = json.replace(/[\uD800-\uDFFF]/g, '');
+    json = json.replace(/\u00A0/g, ' ');
+    json = json.replace(/%(?![0-9A-Fa-f]{2})/g, '%25');
+    try { json = json.normalize('NFC'); } catch(e) {}
+    var payload;
+    try { payload = encodeURIComponent(json); }
+    catch(encErr) { payload = encodeURIComponent(json.replace(/[^\x00-\x7F]/g, '?')); }
+    var url = SHEET_URL + '?payload=' + payload + '&callback=' + cbName;
+    var script = document.createElement('script');
+    var timer = setTimeout(function() {
+      cleanup(); reject(new Error('TIMEOUT 12s'));
+    }, 12000);
+    function cleanup() {
+      clearTimeout(timer); delete window[cbName];
+      if (script.parentNode) document.body.removeChild(script);
+    }
+    window[cbName] = function(res) {
+      cleanup();
+      if (res && res.success) { resolve(res); }
+      else { reject(new Error(res && res.message ? res.message : 'success:false')); }
+    };
+    script.onerror = function() { cleanup(); reject(new Error('script load failed')); };
+    document.body.appendChild(script);
+    script.src = url;
+  });
+}
+
+function _saveViaIframe(status, extra) {
+  var data = collectConfig();
+  data['Status']     = status;
+  data['garment']    = 'sweatpants';
+  data['action']     = 'saveSweatpants';
+  data['Created At'] = new Date().toISOString();
+  if (extra) { for (var k in extra) data[k] = extra[k]; }
+  return _saveToSheet(data);
+}
+
+async function handleAddToCart() {
+  if (!isLoggedIn()) { redirectToAuthWithPendingOrder('InCart', 'cart'); return; }
+  var btn = document.querySelector('[onclick="handleAddToCart()"]');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  try {
+    await ensurePersonId();
+    var res = await _saveViaIframe('InCart');
+    toast('Added to cart!');
+    setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/cart'; }, 1800);
+  } catch(e) {
+    toast('Could not add to cart: ' + e.message, 'err');
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+  }
+}
+
+async function handleOrderNow() {
+  if (!isLoggedIn()) { redirectToAuthWithPendingOrder('Pending', 'order'); return; }
+  var btn = document.querySelector('[onclick="handleOrderNow()"]');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  try {
+    await ensurePersonId();
+    var techPackUrl = await getOrCaptureSilhouette(); // '' on failure — never blocks the order
+    var res = await _saveViaIframe('Pending', { 'tech pack': techPackUrl });
+    toast('Order placed — #' + (res && res.orderNumber ? res.orderNumber : '') + ' — going to checkout…');
+    setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/checkout'; }, 1800);
+  } catch(e) {
+    toast('Could not place order: ' + e.message, 'err');
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+  }
+}
+
+function buildSummary() {
+  var rows = document.getElementById('summary-rows');
+  if (!rows) return;
+  var cfg = collectConfig();
+
+  function mrow(label, key) { return [label, cfg[key] || '']; }
+
+  var sections = [
+    {
+      label: 'Design',
+      rows: [
+        ['Garment',          'Sweatpants'],
+        ['Gender',           cfg['GENDER']],
+        ['Style',             cfg['STYLE/SILHOUETTE']],
+        ['Fit',              cfg['FIT']],
+        ['Front Pockets',    cfg['FRONT POCKETS']],
+        ['Cuff Type',        cfg['HEM/FINISH']],
+        ['Waistband',        cfg['WAISTBAND STYLE']],
+      ]
+    },
+    {
+      label: 'Materials & Construction',
+      rows: [
+        ['Main Fabric',  cfg['MAIN FABRIC']],
+        ['Fabric Code',  cfg['CODE']],
+        ['Color',        cfg['color']],
+        ['Composition',  cfg['composition']],
+        ['Contrast Fabric', cfg['CONTRAST FABRIC'] === 'None' ? '' : cfg['CONTRAST FABRIC']],
+        ['Contrast On',     cfg['CONTRAST PLACEMENT']],
+      ]
+    },
+    {
+      label: 'Measurements',
+      rows: [
+        mrow('Height',      'height'),
+        mrow('Waist Girth', 'waistGirth'),
+        mrow('Hip Girth',   'hipGirth'),
+        mrow('Thigh Girth', 'thighGirth'),
+        mrow('Knee Girth',  'kneeGirth'),
+        mrow('Calf Girth',  'calfGirth'),
+        mrow('Pant Waist',  'pantWaist'),
+        mrow('Inseam',      'inseamLength'),
+        mrow('Outseam',     'outseamLength'),
+        mrow('Rise',        'riseLength'),
+      ]
+    }
+  ];
+
+  rows.innerHTML = sections.map(function(sec) {
+    var visibleRows = sec.rows.filter(function(r){ return r[1] && r[1].toString().trim(); });
+    if (!visibleRows.length) return '';
+    return '<div style="margin-bottom:4px;">'
+      + '<div style="font-size:9px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);padding:14px 0 6px;border-bottom:1px solid var(--border);">' + sec.label + '</div>'
+      + visibleRows.map(function(r) {
+          return '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--border);">'
+            + '<span style="font-family:\'Jost\',sans-serif;font-size:11px;color:var(--ink-light);letter-spacing:0.03em;flex-shrink:0;padding-right:12px;">' + r[0] + '</span>'
+            + '<span style="font-family:\'Jost\',sans-serif;font-size:11px;font-weight:500;color:var(--ink);text-align:right;letter-spacing:0.02em;">' + r[1] + '</span>'
+            + '</div>';
+        }).join('')
+      + '</div>';
+  }).join('') + '<div style="height:16px;"></div>';
+}
+
+function submitOrder() {
+  var btn   = document.getElementById('submit-btn');
+  var label = document.getElementById('submit-label');
+
+  if (!isLoggedIn()) { redirectToAuthWithPendingOrder('New', 'save'); return; }
+
+  btn && (btn.disabled = true);
+  if (label) label.textContent = 'Saving...';
+
+  ensurePersonId().then(function() {
+    return _saveViaIframe('New');
+  }).then(function() {
+    if (label) label.textContent = 'Save Configuration';
+    if (btn) btn.disabled = false;
+    toast('Configuration saved!');
+    setTimeout(function() { window.location.href = 'https://tailortech.toom.design/dashboard'; }, 2000);
+  }).catch(function(err) {
+    if (label) label.textContent = 'Save Configuration';
+    if (btn) btn.disabled = false;
+    showFeedback('Could not save: ' + err.message, '#a05050');
+  });
+}
+
+function toast(msg, type) {
+  var t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);'
+    + 'background:' + (type === 'err' ? '#7a2c2c' : '#1A1916') + ';color:#FAFAF8;'
+    + 'font-family:Jost,sans-serif;font-size:11px;font-weight:500;letter-spacing:0.08em;'
+    + 'padding:10px 20px;border-radius:2px;z-index:99999;pointer-events:none;text-transform:uppercase;';
+  document.body.appendChild(t);
+  setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 2200);
+}
+
+function showFeedback(msg, color) {
+  var el = document.getElementById('submit-feedback');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.background = color + '18';
+  el.style.color = color;
+  el.style.border = '1px solid ' + color + '40';
+  setTimeout(function(){ el.style.display = 'none'; }, 5000);
+}
+
+// ═══════════════════════════════════════════════════════════
+// MEASUREMENTS PANEL ENGINE — fields loaded live from measurements page
+// ═══════════════════════════════════════════════════════════
+(function() {
+  'use strict';
+
+  var SHEETS_API  = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
+  var RAW_BASE    = 'https://raw.githubusercontent.com/toom-design/measurements/main/';
+  var FRONT_IMG   = RAW_BASE + 'MEASUREMENTS_front.png';
+  var MEAS_URL    = 'https://tailortech.toom.design/measurements';
+
+  // Trouser-specific fallback field definitions
+  var FALLBACK_FIELD_IMG = {
+    'height':        'MEASUREMENTS_Height.png',
+    'waistGirth':    'MEASUREMENTS_Waist girth.png',
+    'hipGirth':      'MEASUREMENTS_Hip girth.png',
+    'thighGirth':    'MEASUREMENTS_Thigh girth.png',
+    'kneeGirth':     'MEASUREMENTS_Knee girth.png',
+    'calfGirth':     'MEASUREMENTS_Calf girth.png',
+    'pantWaist':     'MEASUREMENTS_Pant waist.png',
+    'inseamLength':  'MEASUREMENTS_Inseam length.png',
+    'outseamLength': 'MEASUREMENTS_Outseam length.png',
+    'riseLength':    'MEASUREMENTS_Rise.png',
+  };
+
+  // Trousers volumetric and linear fields
+  var FALLBACK_VOL = [
+    ['waistGirth',  'Waist girth (cm)'],
+    ['hipGirth',    'Hip girth (cm)'],
+    ['thighGirth',  'Thigh girth (cm)'],
+    ['kneeGirth',   'Knee girth (cm)'],
+    ['calfGirth',   'Calf girth (cm)'],
+    ['pantWaist',   'Pant waist (cm)'],
+  ];
+  var FALLBACK_LIN = [
+    ['inseamLength',  'Inseam length (cm)'],
+    ['outseamLength', 'Outseam length (cm)'],
+    ['riseLength',    'Rise length (cm)'],
+  ];
+
+  // Keys that belong to trousers
+  var TROUSER_KEYS = new Set([
+    'height','waistGirth','hipGirth','thighGirth','kneeGirth','calfGirth',
+    'pantWaist','inseamLength','outseamLength','riseLength'
+  ]);
+
+  var FIELD_IMG    = FALLBACK_FIELD_IMG;
+  var TROUSER_VOL  = FALLBACK_VOL;
+  var TROUSER_LIN  = FALLBACK_LIN;
+
+  // ── Fetch & parse field definitions from live measurements page ──
+  function loadFieldDefs() {
+    return fetch(MEAS_URL)
+      .then(function(r) { return r.text(); })
+      .then(function(html) {
+        var fiMatch = html.match(/var FIELD_IMG\s*=\s*(\{[\s\S]*?\});/);
+        if (fiMatch) {
+          try { FIELD_IMG = (new Function('return ' + fiMatch[1]))(); } catch(e) {}
+        }
+        var volMatch = html.match(/const VOL\s*=\s*(\[[\s\S]*?\]);/);
+        var linMatch = html.match(/const LIN\s*=\s*(\[[\s\S]*?\]);/);
+        // Look for trousers GARMENT_SETS keys on the measurements page
+        var gsMatch = html.match(/trousers\s*:\s*new Set\(\[([\s\S]*?)\]\)/);
+        var trouserKeys = null;
+        if (gsMatch) {
+          try {
+            trouserKeys = new Set(gsMatch[1].replace(/['"]/g,'').split(',').map(function(s){ return s.trim(); }).filter(Boolean));
+          } catch(e) {}
+        }
+        if (!trouserKeys) trouserKeys = TROUSER_KEYS;
+
+        if (volMatch && trouserKeys) {
+          try {
+            var allVol = (new Function('return ' + volMatch[1]))();
+            var filtered = allVol.filter(function(f){ return trouserKeys.has(f[0]); });
+            if (filtered.length) TROUSER_VOL = filtered;
+          } catch(e) {}
+        }
+        if (linMatch && trouserKeys) {
+          try {
+            var allLin = (new Function('return ' + linMatch[1]))();
+            var filteredLin = allLin.filter(function(f){ return trouserKeys.has(f[0]); });
+            if (filteredLin.length) TROUSER_LIN = filteredLin;
+          } catch(e) {}
+        }
+      })
+      .catch(function() { /* silently use fallbacks */ });
+  }
+
+  var _diagImg = null, _diagLabel = null, _diagActive = null;
+
+  function initMeasDiag() {
+    _diagImg   = document.getElementById('meas-diag-img');
+    _diagLabel = document.getElementById('meas-diag-label');
+    if (!_diagImg) return;
+    _diagImg.onload = function() { _diagImg.style.opacity = '1'; _diagLabel.style.opacity = '0'; };
+    _diagImg.src = FRONT_IMG;
+    _diagActive  = FRONT_IMG;
+  }
+
+  function showMeasDiagImage(url, labelText) {
+    if (!_diagImg) return;
+    if (url === _diagActive) return;
+    _diagActive = url;
+    _diagImg.style.opacity = '0';
+    _diagImg.style.transform = 'scale(0.97)';
+    setTimeout(function() {
+      _diagImg.onload = function() {
+        _diagImg.style.opacity = '1';
+        _diagImg.style.transform = '';
+        _diagLabel.textContent = labelText || '';
+        _diagLabel.style.opacity = labelText ? '1' : '0';
+      };
+      _diagImg.onerror = function() {
+        _diagImg.src = FRONT_IMG; _diagLabel.style.opacity = '0'; _diagActive = FRONT_IMG;
+      };
+      _diagImg.src = url;
+    }, 200);
+  }
+
+  window.measFocusField = function(label, key) {
+    if (!_diagImg) initMeasDiag();
+    if (key && FIELD_IMG[key]) showMeasDiagImage(RAW_BASE + encodeURIComponent(FIELD_IMG[key]), label);
+    else showMeasDiagImage(FRONT_IMG, '');
+  };
+
+  function makeField(key, label) {
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;';
+    var lbl = document.createElement('label');
+    lbl.style.cssText = 'font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:5px;';
+    lbl.textContent = label;
+    wrap.appendChild(lbl);
+    var inp = document.createElement('input');
+    inp.type='number'; inp.id='mf-'+key; inp.name=key;
+    inp.step='0.1'; inp.min='0'; inp.max='999'; inp.placeholder='0.0';
+    inp.style.cssText = 'padding:8px 10px;background:var(--white);border:1px solid var(--border-mid);border-radius:2px;color:var(--ink);font-size:12px;font-family:\'Jost\',sans-serif;outline:none;width:100%;';
+    inp.addEventListener('focus', function(){ window.measFocusField(label, key); });
+    wrap.appendChild(inp);
+    return wrap;
+  }
+
+  function buildFields() {
+    var gv = document.getElementById('meas-grid-vol');
+    var gl = document.getElementById('meas-grid-lin');
+    if (!gv || !gl) return;
+    gv.innerHTML = ''; gl.innerHTML = '';
+    TROUSER_VOL.forEach(function(f){ gv.appendChild(makeField(f[0], f[1])); });
+    TROUSER_LIN.forEach(function(f){ gl.appendChild(makeField(f[0], f[1])); });
+    initMeasDiag();
+    _attachMeasDirtyListeners();
+  }
+
+  function sheetsReq(action, payload) {
+    payload = payload || {};
+    if (action === 'getMeasurements') {
+      return new Promise(function(resolve, reject) {
+        var cbName = '__ttMeas_' + Date.now();
+        var encoded = encodeURIComponent(JSON.stringify(Object.assign({action:action}, payload)));
+        var url = SHEETS_API + '?action=' + action + '&payload=' + encoded + '&callback=' + cbName;
+        var script = document.createElement('script');
+        var timer = setTimeout(function(){ cleanup(); resolve({success:false,records:[],message:'timeout'}); }, 10000);
+        function cleanup(){ clearTimeout(timer); delete window[cbName]; if(script.parentNode) document.body.removeChild(script); }
+        window[cbName] = function(res){ cleanup(); resolve(res); };
+        script.onerror = function(){ cleanup(); reject(new Error('Script load failed')); };
+        script.src = url; document.body.appendChild(script);
+      });
+    }
+    return fetch(SHEETS_API, {method:'POST', body:JSON.stringify(Object.assign({action:action}, payload))}).then(function(r){ return r.json(); });
+  }
+
+  function prefillMeasurements(rec) {
+    if (!rec) return;
+    var hEl = document.getElementById('mf-height');
+    var hVal = rec['Height [CM]'] || rec['height'] || '';
+    if (hEl && hVal && hVal !== '0') hEl.value = parseFloat(hVal);
+    Object.keys(rec).forEach(function(key) {
+      var val = rec[key];
+      if (!val || val === '0' || val === '0.0' || val === '') return;
+      var el = document.getElementById('mf-' + key);
+      if (el && el.type === 'number') { var num = parseFloat(val); if (!isNaN(num) && num > 0) el.value = num; }
+    });
+    _measDirty = false;
+    if (typeof updateMeasBtn === 'function') updateMeasBtn();
+  }
+
+  var _measRecords = [];
+
+  function loadHistory(email) {
+    if (!email) return;
+    var notif = document.getElementById('meas-loading-notif');
+    sheetsReq('getMeasurements', {email: email}).then(function(res) {
+      if (notif) notif.classList.remove('visible');
+      if (!res || !res.success || !res.records || res.records.length === 0) return;
+      _measRecords = res.records;
+      var sel = document.getElementById('meas-version-select');
+      var row = document.getElementById('meas-version-row');
+      if (!sel || !row) return;
+      sel.innerHTML = res.records.map(function(rec, i) {
+        var date = rec['Created At'] || rec['Updated At'] || rec['dateTime'] || ('Version ' + (res.records.length - i));
+        return '<option value="' + i + '">' + (i === 0 ? '⬤ Latest — ' : 'Version ' + (res.records.length - i) + ' — ') + date + '</option>';
+      }).join('');
+      sel.value = '0';
+      row.style.display = 'block';
+      prefillMeasurements(res.records[0]);
+    }).catch(function() { if (notif) notif.classList.remove('visible'); });
+  }
+
+  window.measLoadVersion = function(idx) {
+    var rec = _measRecords[parseInt(idx, 10)];
+    if (rec) prefillMeasurements(rec);
+  };
+
+  window.measHandleSubmit = function(e) {
+    if (e) e.preventDefault();
+    var form = document.getElementById('meas-form');
+    if (!form) return;
+    var btn = document.getElementById('meas-save-btn');
+    var lbl = document.getElementById('meas-save-lbl');
+    var sp  = document.getElementById('meas-save-spin');
+    btn.disabled = true; lbl.style.display = 'none'; sp.style.display = 'block';
+    var data = { garment: 'sweatpants', dateTime: new Date().toLocaleString() };
+    var fd = new FormData(form);
+    fd.forEach(function(v, k){ if (v) data[k] = v; });
+    var email = document.getElementById('mf-email').value.trim();
+    sheetsReq('saveMeasurement', { email: email, data: data })
+      .then(function(res) {
+        if (res && res.success) { if (typeof toast === 'function') toast('Measurements saved!'); }
+        else { if (typeof toast === 'function') toast('Could not save — check connection', 'err'); }
+      })
+      .catch(function(){ if (typeof toast === 'function') toast('Network error', 'err'); })
+      .finally(function(){ btn.disabled = false; lbl.style.display = ''; sp.style.display = 'none'; });
+  };
+
+  window.measHandleSubmitAndContinue = function(e) {
+    if (e) e.preventDefault();
+    var form = document.getElementById('meas-form');
+    if (!form) return;
+    var btn = document.getElementById('meas-save-btn');
+    var lbl = document.getElementById('meas-save-lbl');
+    var sp  = document.getElementById('meas-save-spin');
+    btn.disabled = true; lbl.style.display = 'none'; sp.style.display = 'block';
+    var data = { garment: 'sweatpants', dateTime: new Date().toLocaleString() };
+    var fd = new FormData(form);
+    fd.forEach(function(v, k){ if (v) data[k] = v; });
+    var email = document.getElementById('mf-email').value.trim();
+    sheetsReq('saveMeasurement', { email: email, data: data })
+      .then(function(res) {
+        if (res && res.success) { if (typeof toast === 'function') toast('Measurements saved!'); }
+        else { if (typeof toast === 'function') toast('Could not save — check connection', 'err'); }
+      })
+      .catch(function(){ if (typeof toast === 'function') toast('Network error', 'err'); })
+      .finally(function(){
+        btn.disabled = false; lbl.style.display = ''; sp.style.display = 'none';
+        _measDirty = false;
+        updateMeasBtn();
+        if (typeof goToSummary === 'function') goToSummary();
+      });
+  };
+
+  // ── Dirty tracking ──
+  var _measDirty = false;
+
+  function _attachMeasDirtyListeners() {
+    var form = document.getElementById('meas-form');
+    if (!form) return;
+    form.addEventListener('input', function() {
+      if (!_measDirty) { _measDirty = true; updateMeasBtn(); }
+    });
+  }
+
+  window.updateMeasBtn = function() {
+    var lbl = document.getElementById('meas-save-lbl');
+    if (!lbl) return;
+    lbl.innerHTML = _measDirty ? 'Save Measurements &amp; Continue' : 'Continue to Summary';
+  };
+
+  window.measPrimaryAction = function(e) {
+    if (_measDirty) { window.measHandleSubmitAndContinue(e); }
+    else { if (typeof goToSummary === 'function') goToSummary(); }
+  };
+
+  window.measResetForm = function() {
+    var form = document.getElementById('meas-form');
+    if (form) form.reset();
+  };
+
+  window._measPanelReady = false;
+  window._measInitForUser = function(user, personId) {
+    if (window._measPanelReady) return;
+    window._measPanelReady = true;
+    var emailEl = document.getElementById('mf-email');
+    var pidEl   = document.getElementById('mf-personId');
+    if (emailEl && user.email) { emailEl.value = user.email; emailEl.readOnly = true; emailEl.style.opacity = '0.65'; emailEl.style.cursor = 'not-allowed'; }
+    if (pidEl && personId)     { pidEl.value = personId; }
+    var notif = document.getElementById('meas-loading-notif');
+    if (notif) notif.classList.add('visible');
+    loadHistory(user.email);
+  };
+
+  function boot() {
+    loadFieldDefs().then(function() { buildFields(); });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+
+})();
+
+// ── Init ──────────────────────────────────────────────────────────
+// ── Pricing ───────────────────────────────────────────────────────
+var _pricing = null;           // { fabricCoefficient, tailoring, marginPercent, configurations }
+var _sectionConfigMap = {};    // discovered automatically — see below
+
+function normalizeOptionText(s) {
+  return String(s || '').trim().toLowerCase().replace(/[-_]+/g, ' ').replace(/\s+/g, ' ');
+}
+
+async function loadPricingData() {
+  try {
+    var res = await fetch(SHEET_URL + '?action=getGarmentPricing&garment=SP');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    var json = await res.json();
+    if (!json.success) throw new Error(json.message || 'API error');
+    _pricing = json;
+    _sectionConfigMap = discoverSectionConfigMap();
+  } catch(err) {
+    console.error('Pricing load failed:', err);
+    _pricing = null;
+    _sectionConfigMap = {};
+  }
+}
+
+// Automatically matches each on-page section to a PRICE MATRIX
+// configuration by comparing OPTION VALUES, not names — the sheet's
+// category names don't reliably match this page's section labels (e.g.
+// "Pleats" here is "STYLE/SILHOUETTE" in the sheet), but the actual
+// option text ("Flat Front" / "flat-front") does line up once normalized.
+// A section only gets mapped if every one of its buttons is found in that
+// configuration's option list — a partial/coincidental overlap doesn't
+// count, so a wrong price can never get attributed to the wrong option.
+// New configuration categories in the sheet get picked up automatically,
+// with no code change needed here.
+function discoverSectionConfigMap() {
+  var map = {};
+  if (!_pricing || !_pricing.configurations) return map;
+
+  var configEntries = Object.keys(_pricing.configurations).map(function(name) {
+    return {
+      name: name,
+      values: _pricing.configurations[name].map(function(o){ return normalizeOptionText(o.value); })
+    };
+  });
+
+  document.querySelectorAll('.section').forEach(function(section) {
+    var lbl = section.querySelector('.section-label');
+    if (!lbl) return;
+
+    var buttonLabels = [];
+    section.querySelectorAll('.pill, .icon-card').forEach(function(btn) {
+      var textEl = btn.querySelector('.icon-card-label') || btn;
+      var raw = textEl.dataset.optionLabel || textEl.textContent.trim();
+      if (raw) buttonLabels.push(normalizeOptionText(raw));
+    });
+    if (!buttonLabels.length) return;
+
+    var bestConfig = null;
+    for (var i = 0; i < configEntries.length; i++) {
+      var entry = configEntries[i];
+      var allMatch = buttonLabels.every(function(bl){ return entry.values.indexOf(bl) !== -1; });
+      if (allMatch) { bestConfig = entry.name; break; }
+    }
+    if (bestConfig) map[lbl.textContent.trim()] = bestConfig;
+  });
+
+  return map;
+}
+
+// Looks up the price for one option value within one PRICE MATRIX
+// configuration — used both to badge buttons and to total up the
+// currently-selected options.
+function lookupOptionPrice(configName, optionText) {
+  if (!_pricing || !_pricing.configurations || !_pricing.configurations[configName]) return 0;
+  var target = normalizeOptionText(optionText);
+  var match = _pricing.configurations[configName].find(function(opt){
+    return normalizeOptionText(opt.value) === target;
+  });
+  return match ? match.price : 0;
+}
+
+// Adds a "+€X" badge to any button whose section has a known mapping and
+// whose specific option carries a non-zero price.
+function applyPriceBadges() {
+  if (!_pricing) return;
+  document.querySelectorAll('.section').forEach(function(section) {
+    var lbl = section.querySelector('.section-label');
+    if (!lbl) return;
+    var configName = _sectionConfigMap[lbl.textContent.trim()];
+    if (!configName) return;
+
+    section.querySelectorAll('.pill, .icon-card').forEach(function(btn) {
+      var textEl = btn.querySelector('.icon-card-label') || btn;
+      // Capture the original label once — if this runs again later, it
+      // must read the real label, not text already rebuilt with a badge.
+      if (!textEl.dataset.optionLabel) textEl.dataset.optionLabel = textEl.textContent.trim();
+      var label = textEl.dataset.optionLabel;
+      var price = lookupOptionPrice(configName, label);
+      if (price > 0) {
+        var priceClass = textEl.classList.contains('icon-card-label') ? 'icon-card-extra-price' : 'pill-extra-price';
+        textEl.innerHTML = '<span>' + label + '</span><span class="' + priceClass + '">+€' + price.toFixed(2).replace(/\.00$/, '') + '</span>';
+      }
+    });
+  });
+}
+
+// Sums the currently-selected option's price across every mapped section.
+function calculateOptionsExtra() {
+  var total = 0;
+  document.querySelectorAll('.section').forEach(function(section) {
+    var lbl = section.querySelector('.section-label');
+    if (!lbl) return;
+    var configName = _sectionConfigMap[lbl.textContent.trim()];
+    if (!configName) return;
+
+    var selected = section.querySelector('.pill.selected, .icon-card.selected');
+    if (!selected) return;
+    var textEl = selected.querySelector('.icon-card-label') || selected;
+    var label = textEl.dataset.optionLabel || textEl.textContent.trim();
+    total += lookupOptionPrice(configName, label);
+  });
+  return total;
+}
+
+function updatePriceBar() {
+  var amounts = document.querySelectorAll('.price-display-amount');
+  if (!amounts.length) return;
+
+  var text = '—';
+  if (_pricing) {
+    var base = _pricing.tailoring * (1 + _pricing.marginPercent / 100);
+
+    var fabricCard = document.querySelector('#fabric-main-grid .fabric-card.selected');
+    var fabricUnitPrice = fabricCard ? parseFloat(fabricCard.dataset.unitprice || '0') : 0;
+    var fabricCost = fabricUnitPrice * _pricing.fabricCoefficient;
+
+    var extras = calculateOptionsExtra();
+
+    var total = base + fabricCost + extras;
+    text = '€' + total.toFixed(2).replace(/\.00$/, '');
+  }
+  amounts.forEach(function(el){ el.textContent = text; });
+}
+
+// The fixed price bar stays visible the whole time — but right as the
+// real "Continue to..." button for whatever tab is active would naturally
+// scroll into view, it needs to get out of the way rather than sit on top
+// of it forever. Finds that button, checks its position against the
+// panel's own visible bottom edge, and fades the bar out once genuinely close.
+// Keeps the fixed bar aligned to config-panel's actual horizontal bounds
+// (not a hardcoded percentage — the panel's width is flex-based, not a
+// fixed split, so this reads its real position directly).
+function syncPriceBarWidth() {
+  var panel = document.querySelector('.config-panel');
+  var bar = document.getElementById('price-bar-fixed');
+  if (!panel || !bar) return;
+  var rect = panel.getBoundingClientRect();
+  bar.style.left = rect.left + 'px';
+  bar.style.width = rect.width + 'px';
+  bar.style.right = 'auto';
+}
+
+function updateFixedBarVisibility() {
+  var panel = document.querySelector('.config-panel');
+  var bar = document.getElementById('price-bar-fixed');
+  if (!panel || !bar) return;
+
+  var activeBody = null;
+  ['panel-design','panel-materials','panel-measurements'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && el.style.display !== 'none') activeBody = el;
+  });
+  if (!activeBody) { bar.style.opacity = '1'; bar.style.pointerEvents = ''; return; }
+
+  var realButton = activeBody.querySelector('button[onclick="goToMaterials()"], button[onclick="goToMeasurements()"], #meas-save-btn');
+  if (!realButton) { bar.style.opacity = '1'; bar.style.pointerEvents = ''; return; }
+
+  var btnRect = realButton.getBoundingClientRect();
+  var panelRect = panel.getBoundingClientRect();
+  var barHeight = bar.offsetHeight;
+
+  // "About to appear" = the real button's top edge has come within one
+  // bar-height (plus a little breathing room) of the panel's visible
+  // bottom edge — i.e. it would be the very next thing to show.
+  var distanceFromPanelBottom = panelRect.bottom - btnRect.top;
+  if (distanceFromPanelBottom > -20 && distanceFromPanelBottom < (barHeight + 40)) {
+    bar.style.opacity = '0';
+    bar.style.pointerEvents = 'none';
+    bar.style.transform = 'translateY(8px)';
+  } else {
+    bar.style.opacity = '1';
+    bar.style.pointerEvents = '';
+    bar.style.transform = 'translateY(0)';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  var panel = document.querySelector('.config-panel');
+  if (panel) panel.addEventListener('scroll', updateFixedBarVisibility);
+  syncPriceBarWidth();
+  window.addEventListener('resize', syncPriceBarWidth);
+});
+
+// Broad, simple, and robust: any click anywhere could be an option
+// changing — recompute after it, rather than wiring every individual
+// handler by hand. setTimeout(0) lets the click's own state-change run first.
+document.addEventListener('click', function(){ setTimeout(function(){ updatePriceBar(); updateFixedBarVisibility(); }, 0); });
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Wire up pills that affect state (Gender, Style, Fit, Front Pockets, Cuff Type, Waistband)
+  // These sections use selectPillInGroupWithState instead of selectPillInGroup —
+  // already set directly in the HTML; this just guarantees consistency.
+  var statefulLabels = ['Gender','Style','Fit','Front Pockets','Cuff Type','Waistband'];
+  document.querySelectorAll('.section').forEach(function(section) {
+    var lbl = section.querySelector('.section-label');
+    if (!lbl) return;
+    if (statefulLabels.indexOf(lbl.textContent.trim()) !== -1) {
+      section.querySelectorAll('.pill').forEach(function(pill) {
+        pill.setAttribute('onclick', 'selectPillInGroupWithState(this)');
+      });
+    }
+  });
+
+  updatePreview();
+  applyTransform();
+  document.getElementById('img-base').addEventListener('load', hideLoading);
+
+  // Pricing loads first so fabric cards can show their price immediately
+  // when built, rather than appearing blank and needing a later patch.
+  loadPricingData().then(function() {
+    applyPriceBadges();
+    renderFabricGrids().then(function(){ syncPriceBarWidth(); updatePriceBar(); updateFixedBarVisibility(); });
+  });
+});
+</script>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const _app = initializeApp({
+  apiKey:            "AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY",
+  authDomain:        "tailortech-accounts.firebaseapp.com",
+  projectId:         "tailortech-accounts",
+  storageBucket:     "tailortech-accounts.firebasestorage.app",
+  messagingSenderId: "137614433833",
+  appId:             "1:137614433833:web:c78ea40b0d04ba89f3c638"
+});
+const _auth = getAuth(_app);
+window._fb = { auth: _auth, signOut };
+
+onAuthStateChanged(_auth, function(user) {
+  if (user) {
+    setAccountPopover(user);
+    document.getElementById('nav-av').style.display      = '';
+    document.getElementById('nav-signout').style.display = '';
+    document.getElementById('nav-login').style.display   = 'none';
+    if (!window._currentPersonId) {
+      getClientJSONP(user.email, user.uid, function(res) {
+        if (res && res.success && res.client && res.client['Person ID']) {
+          window._currentPersonId = res.client['Person ID'];
+          var el = document.getElementById('dd-pid');
+          if (el) el.textContent = window._currentPersonId;
+          if (window._measInitForUser) window._measInitForUser(user, window._currentPersonId);
+        } else {
+          if (window._measInitForUser) window._measInitForUser(user, '');
+        }
+        if (window.resumePendingOrderIfAny) window.resumePendingOrderIfAny(user);
+      });
+    } else {
+      if (window._measInitForUser) window._measInitForUser(user, window._currentPersonId);
+      if (window.resumePendingOrderIfAny) window.resumePendingOrderIfAny(user);
+    }
+  } else {
+    var av = document.getElementById('nav-av');
+    if (av) { av.style.display = 'none'; av.innerHTML = ''; }
+    document.getElementById('nav-signout').style.display = 'none';
+    document.getElementById('nav-login').style.display   = '';
+    var dd = document.getElementById('nav-dd');
+    if (dd) dd.style.display = 'none';
+  }
+});
+</script>
+
+<script>
+function toggleDropdown(e) {
+  if (e) e.stopPropagation();
+  var d = document.getElementById('nav-dd');
+  if (!d) return;
+  d.style.display = (d.style.display === 'block') ? 'none' : 'block';
+}
+document.addEventListener('click', function(e) {
+  var d  = document.getElementById('nav-dd');
+  var av = document.getElementById('nav-av');
+  if (d && d.style.display === 'block' && !d.contains(e.target) && av && !av.contains(e.target))
+    d.style.display = 'none';
+});
+function goToAuth() {
+  try { sessionStorage.setItem('tt_return_url', window.location.href); } catch(e) {}
+  window.location.href = 'https://tailortech.toom.design/auth.html';
+}
+function doSignOut() {
+  var auth = window._fb && window._fb.auth;
+  var so   = window._fb && window._fb.signOut;
+  if (auth && so) so(auth);
+}
+function setAccountPopover(user) {
+  if (!user) return;
+  var fullname = user.displayName || user.email || '—';
+  var av = document.getElementById('nav-av');
+  if (av) {
+    if (user.photoURL) av.innerHTML = '<img src="'+user.photoURL+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">';
+    else av.textContent = fullname[0].toUpperCase();
+  }
+  var ddAv = document.getElementById('dd-av');
+  if (ddAv) {
+    if (user.photoURL) ddAv.innerHTML = '<img src="'+user.photoURL+'" style="width:100%;height:100%;object-fit:cover;" alt="">';
+    else ddAv.textContent = fullname[0].toUpperCase();
+  }
+  var el;
+  el = document.getElementById('dd-name');      if (el) el.textContent = fullname;
+  el = document.getElementById('dd-email-sub'); if (el) el.textContent = user.email || '';
+  el = document.getElementById('dd-pid');       if (el) el.textContent = window._currentPersonId || '—';
+}
+// ── Auth gate: unauthenticated visitors are sent to sign in/sign up.
+// Their in-progress configuration is stashed so it saves automatically
+// the moment they're back and authenticated — nothing is lost.
+// ── Silhouette cache: reuses an already-generated tech-pack image when the
+// same option combination has been rendered before, rather than re-capturing
+// and re-uploading every single order.
+function buildSilhouetteKey() {
+  var s = state;
+  return 'SP_gender-' + s.gender + '_style-' + s.style + '_fit-' + s.fit +
+    '_pocket-' + s.pocket + '_cuff-' + s.cuffType + '_waistband-' + s.waistband;
+}
+
+// Mirrors CSS object-fit:contain — scales the image to fit within the box
+// while preserving its own aspect ratio, rather than stretching to fill it.
+// Without this, a layer whose native dimensions don't exactly match the
+// canvas gets distorted (this was the cause of the deformed proportions).
+function drawImageContain(ctx, img, boxW, boxH) {
+  var imgRatio = img.naturalWidth / img.naturalHeight;
+  var boxRatio = boxW / boxH;
+  var drawW, drawH, offsetX, offsetY;
+  if (imgRatio > boxRatio) {
+    drawW = boxW; drawH = boxW / imgRatio;
+    offsetX = 0; offsetY = (boxH - drawH) / 2;
+  } else {
+    drawH = boxH; drawW = boxH * imgRatio;
+    offsetX = (boxW - drawW) / 2; offsetY = 0;
+  }
+  ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
+}
+
+function captureTechPackImage() {
+  return new Promise(function(resolve, reject) {
+    var layerIds = ['img-base','img-waistband','img-pocket','img-cuff'];
+    var W = 760, H = 1160;
+    var canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    var ctx = canvas.getContext('2d');
+
+    var toDraw = layerIds
+      .map(function(id){ return document.getElementById(id); })
+      .filter(function(el){ return el && el.src && el.style.opacity !== '0'; });
+
+    if (toDraw.length === 0) { resolve(canvas.toDataURL('image/png')); return; }
+
+    var loaded = 0, failed = false;
+    toDraw.forEach(function(el) {
+      var img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function() {
+        if (failed) return;
+        drawImageContain(ctx, img, W, H);
+        loaded++;
+        if (loaded === toDraw.length) resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = function(){ failed = true; reject(new Error('Failed to load layer: ' + el.id)); };
+      img.src = el.src;
+    });
+  });
+}
+
+// Checks the cache first; only captures + uploads on a miss. Returns the
+// Drive URL either way, or '' if anything along the way fails (never blocks
+// the actual order from saving over a silhouette-image hiccup).
+function getOrCaptureSilhouette() {
+  var key = buildSilhouetteKey();
+  return fetch(SHEET_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'checkSilhouetteCache', key: key })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(res) {
+    if (res && res.success && res.cached) return res.url; // already cached — reuse as-is
+    return captureTechPackImage().then(function(dataUrl) {
+      return fetch(SHEET_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'saveSilhouetteCache', key: key, imageBase64: dataUrl })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(saveRes){ return (saveRes && saveRes.success) ? saveRes.url : ''; });
+    });
+  })
+  .catch(function(err) {
+    console.error('Silhouette cache/capture failed:', err);
+    return '';
+  });
+}
+
+function isLoggedIn() {
+  return !!(window._fb && window._fb.auth && window._fb.auth.currentUser);
+}
+
+// window._currentPersonId is set asynchronously (a real network round-trip
+// to Apps Script's getClient, kicked off from onAuthStateChanged). Email is
+// available instantly from Firebase's local session, but Person ID isn't —
+// so submitting immediately after sign-in can race ahead of it and send an
+// order with no Person ID. This waits for it (or fetches it fresh) before
+// any save proceeds.
+function ensurePersonId() {
+  return new Promise(function(resolve, reject) {
+    if (window._currentPersonId) { resolve(); return; }
+
+    var user = window._fb && window._fb.auth && window._fb.auth.currentUser;
+    if (!user) { resolve(); return; } // not logged in — nothing to wait for here
+
+    var settled = false;
+    var timer = setTimeout(function() {
+      if (settled) return;
+      settled = true;
+      resolve(); // proceed anyway rather than block the order indefinitely
+    }, 6000);
+
+    getClientJSONP(user.email, user.uid, function(res) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (res && res.success && res.client && res.client['Person ID']) {
+        window._currentPersonId = res.client['Person ID'];
+      }
+      resolve();
+    });
+  });
+}
+
+function redirectToAuthWithPendingOrder(status, intent) {
+  try {
+    var data = collectConfig();
+    data['Status']     = status;
+    data['garment']    = 'sweatpants';
+    data['action']     = 'saveSweatpants';
+    data['Created At'] = new Date().toISOString();
+    sessionStorage.setItem('tt_pending_order', JSON.stringify({ data: data, intent: intent }));
+    sessionStorage.setItem('tt_return_url', window.location.href);
+  } catch(e) {}
+  toast('Please sign in to continue — your configuration is saved');
+  setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/auth.html'; }, 900);
+}
+
+// Called once a user is authenticated (fresh sign-in or already signed in)
+// and their Person ID has been resolved. Completes any order that was
+// interrupted by the auth redirect above.
+function resumePendingOrderIfAny(user) {
+  var raw;
+  try { raw = sessionStorage.getItem('tt_pending_order'); } catch(e) { raw = null; }
+  if (!raw) return;
+  try { sessionStorage.removeItem('tt_pending_order'); } catch(e) {}
+
+  var pending;
+  try { pending = JSON.parse(raw); } catch(e) { return; }
+  if (!pending || !pending.data) return;
+
+  pending.data['Person ID'] = window._currentPersonId || '';
+  pending.data['Email']     = user.email || pending.data['Email'] || '';
+
+  _saveToSheet(pending.data).then(function(res) {
+    if (pending.intent === 'cart') {
+      toast('Added to cart!');
+      setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/cart'; }, 1500);
+    } else if (pending.intent === 'order') {
+      toast('Order placed — #' + (res && res.orderNumber ? res.orderNumber : ''));
+      setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/checkout'; }, 1500);
+    } else {
+      toast('Configuration saved!');
+      setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/dashboard'; }, 1500);
+    }
+  }).catch(function(err) {
+    toast('Signed in, but could not save your order: ' + err.message, 'err');
+  });
+}
+
+function getClientJSONP(email, uid, callback) {
+  var cbName  = '__ttGetClient_' + Date.now();
+  var payload = encodeURIComponent(JSON.stringify({ email: email, uid: uid || '' }));
+  var url     = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec?action=getClient&payload='+payload+'&callback='+cbName;
+  var script  = document.createElement('script');
+  var timer   = setTimeout(function(){ cleanup(); callback(null); }, 8000);
+  function cleanup() { clearTimeout(timer); delete window[cbName]; if (script.parentNode) document.body.removeChild(script); }
+  window[cbName] = function(res){ cleanup(); callback(res); };
+  script.onerror = function(){ cleanup(); callback(null); };
+  script.src = url;
+  document.body.appendChild(script);
+}
+function ddCopy(type) {
+  var val = type==='pid'
+    ? (window._currentPersonId || '')
+    : (window._fb && window._fb.auth && window._fb.auth.currentUser && window._fb.auth.currentUser.email) || '';
+  if (!val || val==='—') { showFeedback('Nothing to copy','#a05050'); return; }
+  if (navigator.clipboard) navigator.clipboard.writeText(val).then(function(){ showFeedback(type.toUpperCase()+' copied','#4a8a5a'); });
+}
+</script>
+
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.0.0</div>
+
+</body>
+</html>
