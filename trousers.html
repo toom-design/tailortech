@@ -45,7 +45,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 .tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 28px; position: sticky; top: 0; background: var(--white); z-index: 20; }
 .tab { font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; padding: 18px 0; margin-right: 24px; border: none; background: none; color: var(--ink-faint); cursor: pointer; border-bottom: 1.5px solid transparent; margin-bottom: -1px; transition: color 0.2s, border-color 0.2s; white-space: nowrap; }
 .tab.active { color: var(--ink); border-bottom-color: var(--ink); }
-.config-body { padding: 28px 28px 48px; display: flex; flex-direction: column; }
+.config-body { padding: 28px 28px 110px; display: flex; flex-direction: column; }
 #panel-measurements { padding: 0 !important; flex: 1; min-height: 0; overflow: hidden; }
 
 /* Loading measurements notification */
@@ -92,6 +92,8 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 .pill { font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 500; padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 50px; background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s; }
 .pill:hover { border-color: var(--ink); color: var(--ink); }
 .pill.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.pill-extra-price, .icon-card-extra-price { color: var(--ink-faint); font-weight: 500; margin-left: 6px; }
+.pill.selected .pill-extra-price, .icon-card.selected .icon-card-extra-price { color: rgba(250,250,248,0.6); }
 
 /* Fabric grid */
 .fabric-search-row { margin-bottom: 12px; }
@@ -252,6 +254,9 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 
   <!-- ══ CONFIG PANEL ══ -->
   <div class="config-panel">
+    <div id="price-bar-fixed" style="position:fixed;bottom:0;z-index:20;font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:14px 24px;background:var(--white);color:var(--ink);border-top:1.5px solid var(--ink);display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 -4px 12px rgba(0,0,0,0.08);transition:opacity 0.15s,transform 0.15s;">
+      Estimated Price <span class="price-display-amount">—</span>
+    </div>
     <div class="tabs">
       <button class="tab active" onclick="switchTab(this,'panel-design')">Design</button>
       <button class="tab" onclick="switchTab(this,'panel-materials')">Materials &amp; Construction</button>
@@ -367,9 +372,6 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
       </div>
 
       <div class="section" style="border-bottom:none;">
-        <div class="price-display" style="position:sticky;bottom:0;z-index:10;font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;width:100%;padding:14px 24px;background:var(--white);color:var(--ink);border:1.5px solid var(--ink);border-radius:3px;cursor:default;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;box-shadow:0 -4px 12px rgba(0,0,0,0.06);">
-          Estimated Price <span class="price-display-amount">—</span>
-        </div>
         <button onclick="goToMaterials()" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;width:100%;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
           Continue to Materials
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
@@ -459,9 +461,6 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
       </div>
 
       <div class="section" style="border-bottom:none;">
-        <div class="price-display" style="position:sticky;bottom:0;z-index:10;font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;width:100%;padding:14px 24px;background:var(--white);color:var(--ink);border:1.5px solid var(--ink);border-radius:3px;cursor:default;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;box-shadow:0 -4px 12px rgba(0,0,0,0.06);">
-          Estimated Price <span class="price-display-amount">—</span>
-        </div>
         <button onclick="goToMeasurements()" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;width:100%;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
           Continue to Measurements
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
@@ -518,9 +517,6 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
           </form>
 
           <!-- Save / Continue button -->
-          <div class="price-display" style="position:sticky;bottom:0;z-index:10;font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;width:100%;padding:14px 24px;background:var(--white);color:var(--ink);border:1.5px solid var(--ink);border-radius:3px;cursor:default;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:28px;box-shadow:0 -4px 12px rgba(0,0,0,0.06);">
-            Estimated Price <span class="price-display-amount">—</span>
-          </div>
           <div style="margin-top:10px;padding-top:20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;padding-bottom:8px;">
             <button type="button" onclick="measPrimaryAction(event)" id="meas-save-btn" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:inline-flex;align-items:center;gap:10px;">
               <span id="meas-save-lbl">Continue to Summary</span>
@@ -725,7 +721,7 @@ function sectionPill(label) {
     var lbl = sections[i].querySelector('.section-label');
     if (lbl && lbl.textContent.trim() === label) {
       var sel = sections[i].querySelector('.pill.selected');
-      return sel ? sel.textContent.trim() : '';
+      return sel ? (sel.dataset.optionLabel || sel.textContent.trim()) : '';
     }
   }
   return '';
@@ -738,7 +734,7 @@ function sectionIconCard(label) {
     var lbl = sections[i].querySelector('.section-label');
     if (lbl && lbl.textContent.trim() === label) {
       var sel = sections[i].querySelector('.icon-card.selected .icon-card-label');
-      return sel ? sel.textContent.trim() : '';
+      return sel ? (sel.dataset.optionLabel || sel.textContent.trim()) : '';
     }
   }
   return '';
@@ -786,7 +782,8 @@ function selectWatch(btn, show) {
 function selectPillInGroupWithState(btn) {
   selectPillInGroup(btn);
   var label = btn.closest('.section').querySelector('.section-label').textContent.trim();
-  var val   = btn.textContent.trim().toLowerCase().replace(/ /g,'-');
+  var rawText = btn.dataset.optionLabel || btn.textContent.trim();
+  var val = rawText.toLowerCase().replace(/ /g,'-');
   if (label === 'Fit') {
     var m = { 'regular':'regular','wide-leg':'wideleg','baggy':'baggy' };
     state.fit = m[val] || 'regular';
@@ -831,7 +828,7 @@ function selectIconCard(btn) {
 // hidden for "No Lining", shown for "Half Lining" / "Full Lining".
 function onLiningTypeChange(btn) {
   var label = btn.querySelector('.icon-card-label');
-  var text = label ? label.textContent.trim() : '';
+  var text = label ? (label.dataset.optionLabel || label.textContent.trim()) : '';
   var body = document.getElementById('lining-fabric-body');
   if (body) body.style.display = (text === 'No Lining') ? 'none' : '';
 }
@@ -1666,7 +1663,7 @@ function discoverSectionConfigMap() {
     var buttonLabels = [];
     section.querySelectorAll('.pill, .icon-card').forEach(function(btn) {
       var textEl = btn.querySelector('.icon-card-label') || btn;
-      var raw = textEl.textContent.replace(/\s*\(\+€[\d.,]+\)\s*$/, '').trim();
+      var raw = textEl.dataset.optionLabel || textEl.textContent.trim();
       if (raw) buttonLabels.push(normalizeOptionText(raw));
     });
     if (!buttonLabels.length) return;
@@ -1707,10 +1704,14 @@ function applyPriceBadges() {
 
     section.querySelectorAll('.pill, .icon-card').forEach(function(btn) {
       var textEl = btn.querySelector('.icon-card-label') || btn;
-      var label = textEl.textContent.replace(/\s*\(\+€[\d.,]+\)\s*$/, '').trim();
+      // Capture the original label once — if this runs again later, it
+      // must read the real label, not text already rebuilt with a badge.
+      if (!textEl.dataset.optionLabel) textEl.dataset.optionLabel = textEl.textContent.trim();
+      var label = textEl.dataset.optionLabel;
       var price = lookupOptionPrice(configName, label);
       if (price > 0) {
-        textEl.textContent = label + ' (+€' + price.toFixed(2).replace(/\.00$/, '') + ')';
+        var priceClass = textEl.classList.contains('icon-card-label') ? 'icon-card-extra-price' : 'pill-extra-price';
+        textEl.innerHTML = '<span>' + label + '</span><span class="' + priceClass + '">+€' + price.toFixed(2).replace(/\.00$/, '') + '</span>';
       }
     });
   });
@@ -1728,7 +1729,7 @@ function calculateOptionsExtra() {
     var selected = section.querySelector('.pill.selected, .icon-card.selected');
     if (!selected) return;
     var textEl = selected.querySelector('.icon-card-label') || selected;
-    var label = textEl.textContent.replace(/\s*\(\+€[\d.,]+\)\s*$/, '').trim();
+    var label = textEl.dataset.optionLabel || textEl.textContent.trim();
     total += lookupOptionPrice(configName, label);
   });
   return total;
@@ -1754,10 +1755,69 @@ function updatePriceBar() {
   amounts.forEach(function(el){ el.textContent = text; });
 }
 
+// The fixed price bar stays visible the whole time — but right as the
+// real "Continue to..." button for whatever tab is active would naturally
+// scroll into view, it needs to get out of the way rather than sit on top
+// of it forever. Finds that button, checks its position against the
+// panel's own visible bottom edge, and fades the bar out once genuinely close.
+// Keeps the fixed bar aligned to config-panel's actual horizontal bounds
+// (not a hardcoded percentage — the panel's width is flex-based, not a
+// fixed split, so this reads its real position directly).
+function syncPriceBarWidth() {
+  var panel = document.querySelector('.config-panel');
+  var bar = document.getElementById('price-bar-fixed');
+  if (!panel || !bar) return;
+  var rect = panel.getBoundingClientRect();
+  bar.style.left = rect.left + 'px';
+  bar.style.width = rect.width + 'px';
+  bar.style.right = 'auto';
+}
+
+function updateFixedBarVisibility() {
+  var panel = document.querySelector('.config-panel');
+  var bar = document.getElementById('price-bar-fixed');
+  if (!panel || !bar) return;
+
+  var activeBody = null;
+  ['panel-design','panel-materials','panel-measurements'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && el.style.display !== 'none') activeBody = el;
+  });
+  if (!activeBody) { bar.style.opacity = '1'; bar.style.pointerEvents = ''; return; }
+
+  var realButton = activeBody.querySelector('button[onclick="goToMaterials()"], button[onclick="goToMeasurements()"], #meas-save-btn');
+  if (!realButton) { bar.style.opacity = '1'; bar.style.pointerEvents = ''; return; }
+
+  var btnRect = realButton.getBoundingClientRect();
+  var panelRect = panel.getBoundingClientRect();
+  var barHeight = bar.offsetHeight;
+
+  // "About to appear" = the real button's top edge has come within one
+  // bar-height (plus a little breathing room) of the panel's visible
+  // bottom edge — i.e. it would be the very next thing to show.
+  var distanceFromPanelBottom = panelRect.bottom - btnRect.top;
+  if (distanceFromPanelBottom > -20 && distanceFromPanelBottom < (barHeight + 40)) {
+    bar.style.opacity = '0';
+    bar.style.pointerEvents = 'none';
+    bar.style.transform = 'translateY(8px)';
+  } else {
+    bar.style.opacity = '1';
+    bar.style.pointerEvents = '';
+    bar.style.transform = 'translateY(0)';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  var panel = document.querySelector('.config-panel');
+  if (panel) panel.addEventListener('scroll', updateFixedBarVisibility);
+  syncPriceBarWidth();
+  window.addEventListener('resize', syncPriceBarWidth);
+});
+
 // Broad, simple, and robust: any click anywhere could be an option
 // changing — recompute after it, rather than wiring every individual
 // handler by hand. setTimeout(0) lets the click's own state-change run first.
-document.addEventListener('click', function(){ setTimeout(updatePriceBar, 0); });
+document.addEventListener('click', function(){ setTimeout(function(){ updatePriceBar(); updateFixedBarVisibility(); }, 0); });
 
 document.addEventListener('DOMContentLoaded', function() {
   // Wire up pills that affect state (Fit, Rise, Pockets, Waistband, Waist Adjustment, Hem)
@@ -1781,7 +1841,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // when built, rather than appearing blank and needing a later patch.
   loadPricingData().then(function() {
     applyPriceBadges();
-    renderFabricGrids().then(updatePriceBar);
+    renderFabricGrids().then(function(){ syncPriceBarWidth(); updatePriceBar(); updateFixedBarVisibility(); });
   });
 });
 </script>
@@ -2070,7 +2130,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v4.3.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v4.5.2</div>
 
 </body>
 </html>
