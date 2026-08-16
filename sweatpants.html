@@ -477,12 +477,17 @@ const BASE_COMBO = {
   'flared_regular': 7, 'flared_wide-leg': 8, 'flared_baggy': 9
 };
 
-// The pocket layer's numbered variants (seam_147, seam_29, seam_36...)
-// don't correspond to any confirmed state combination — using one known-
-// existing file per type as a placeholder until that numbering scheme is
-// clarified. Pocket type still switches correctly; the specific numbered
-// variant does not yet vary with other selections.
-const POCKET_DEFAULT = { seam: '8', slanted: '8', welt: 'F' };
+// Each pocket file's number is actually a group of style×fit combo numbers
+// concatenated together — e.g. "147" means this one file is used for
+// combos 1, 4, and 7 (which are the three "regular fit" combos across
+// cuffed/open-hem/flared — they look the same from the pocket's
+// perspective, so one image covers all three). Confirmed against the real
+// filenames: every pocket type's files partition all 9 combos exactly once.
+const POCKET_GROUPS = {
+  seam:    { 1:'147', 2:'29',  3:'36', 4:'147', 5:'5',  6:'36', 7:'147', 8:'8', 9:'29' },
+  slanted: { 1:'147', 2:'25',  3:'36', 4:'147', 5:'25', 6:'36', 7:'147', 8:'8', 9:'9'  },
+  welt:    { 1:'F',   2:'F',   3:'F',  4:'F',   5:'F',  6:'F',  7:'F',   8:'F', 9:'F'  }
+};
 
 // ── URL builders ──────────────────────────────────────────────────
 function enc(s) { return encodeURIComponent(s); }
@@ -492,7 +497,11 @@ const urls = {
     return BASE + enc('SWEATPANTS_live_' + style + '_' + fit + '_' + n + '.webp');
   },
   waistband: function(wbType) { return BASE + enc('SWEATPANTS_waistband_' + wbType + '.webp'); },
-  pocket:    function(pkType) { return BASE + enc('SWEATPANTS_live_pocket_' + pkType + '_' + (POCKET_DEFAULT[pkType] || '8') + '.webp'); },
+  pocket:    function(pkType, comboNum) {
+    var group = POCKET_GROUPS[pkType] || POCKET_GROUPS.seam;
+    var suffix = group[comboNum] || 'F';
+    return BASE + enc('SWEATPANTS_live_pocket_' + pkType + '_' + suffix + '.webp');
+  },
   cuff:      function(cuffType) { return BASE + enc('SWEATPANTS_cuffs_' + cuffType + '.webp'); },
 };
 
@@ -507,9 +516,10 @@ function setImg(id, url) {
 
 // ── Update all layers ─────────────────────────────────────────────
 function updatePreview() {
+  var comboNum = BASE_COMBO[state.style + '_' + state.fit] || 1;
   setImg('img-base', urls.base(state.style, state.fit));
   setImg('img-waistband', urls.waistband(state.waistband));
-  setImg('img-pocket', urls.pocket(state.pocket));
+  setImg('img-pocket', urls.pocket(state.pocket, comboNum));
   // Ankle cuff only exists as a real detail when the style is "cuffed" —
   // for open-hem/flared it has no meaning, so no cuff overlay is shown.
   setImg('img-cuff', state.style === 'cuffed' ? urls.cuff(state.cuffType) : '');
@@ -1995,7 +2005,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.0.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.1.0</div>
 
 </body>
 </html>
