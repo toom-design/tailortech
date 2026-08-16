@@ -948,11 +948,15 @@ async function _loadAllFabrics() {
 // Splits the Garments field into individual tags and checks for an EXACT
 // match — not a substring match. "denim_trousers" contains "trousers" as
 // a substring, so .includes('trousers') would wrongly match it too;
-// exact-matching each comma-separated tag avoids that entirely.
+// exact-matching each tag avoids that. Tags in this sheet are actually
+// separated by NEWLINES within one cell (confirmed directly against the
+// real data — a cell can contain "suit\ntrousers\njacket" as three lines),
+// not commas — commas/semicolons are also handled as a fallback in case
+// that format is ever used instead.
 function hasGarmentTag(garmentsField, tag) {
   var target = tag.trim().toLowerCase();
   return String(garmentsField || '')
-    .split(',')
+    .split(/[\n\r,;]+/)
     .some(function(t){ return t.trim().toLowerCase() === target; });
 }
 
@@ -2146,7 +2150,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v4.7.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v4.7.1</div>
 
 </body>
 </html>
