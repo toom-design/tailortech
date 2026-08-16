@@ -909,7 +909,7 @@ function buildFabricCard(fabric, group, isFirst) {
     var basePrice = _pricing.tailoring * (1 + _pricing.marginPercent / 100);
     var fabricPrice = unitPrice * _pricing.fabricCoefficient;
     var fmt = function(n){ return n.toFixed(2).replace(/\.00$/, ''); };
-    priceEl.textContent = '€' + fmt(basePrice) + ' + €' + fmt(fabricPrice);
+    priceEl.textContent = '€' + fmt(basePrice + fabricPrice);
   }
 
   var detBtn = document.createElement('button');
@@ -2135,7 +2135,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v4.6.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v4.6.1</div>
 
 </body>
 </html>
