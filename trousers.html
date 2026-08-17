@@ -92,7 +92,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 .pill { font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 500; padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 50px; background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s; }
 .pill:hover { border-color: var(--ink); color: var(--ink); }
 .pill.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
-.pill-extra-price, .icon-card-extra-price { color: var(--ink-faint); font-weight: 500; margin-left: 6px; }
+.pill-extra-price, .icon-card-extra-price { color: var(--ink-faint); font-weight: 400; margin-left: 6px; }
 .pill.selected .pill-extra-price, .icon-card.selected .icon-card-extra-price { color: rgba(250,250,248,0.6); }
 
 /* Fabric grid */
@@ -904,7 +904,7 @@ function buildFabricCard(fabric, group, isFirst) {
   var codeEl = document.createElement('span'); codeEl.className = 'fcode'; codeEl.textContent = code;
   var compEl = document.createElement('span'); compEl.className = 'fcomp'; compEl.textContent = comp;
   var priceEl = document.createElement('span'); priceEl.className = 'fprice';
-  priceEl.style.cssText = 'font-family:Jost,sans-serif;font-size:12px;font-weight:600;color:var(--ink);margin-top:2px;';
+  priceEl.style.cssText = 'font-family:Jost,sans-serif;font-size:12px;font-weight:400;color:var(--ink-faint);margin-top:2px;';
   if (typeof _pricing !== 'undefined' && _pricing) {
     var basePrice = _pricing.tailoring * (1 + _pricing.marginPercent / 100);
     var fabricPrice = unitPrice * _pricing.fabricCoefficient;
@@ -2150,7 +2150,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v4.7.1</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v4.7.2</div>
 
 </body>
 </html>
