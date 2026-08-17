@@ -561,12 +561,19 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
       <div class="section" id="section-chest" style="display:none;">
         <div class="section-label">Chest Pocket</div>
         <div class="pill-group">
-          <button class="pill selected" data-value="none" onclick="selectChest(this,'none')">None</button>
-          <button class="pill"          data-value="left" onclick="selectChest(this,'left')">Left</button>
-          <button class="pill"          data-value="right" onclick="selectChest(this,'right')">Right</button>
-          <button class="pill"          data-value="both" onclick="selectChest(this,'both')">Both</button>
-          <button class="pill"          data-value="patch-left" onclick="selectChest(this,'patch-left')">Patch Left</button>
-          <button class="pill"          data-value="patch-right" onclick="selectChest(this,'patch-right')">Patch Right</button>
+          <button class="pill selected" data-value="none"  onclick="selectChestPosition(this,'none')">None</button>
+          <button class="pill"          data-value="right" onclick="selectChestPosition(this,'right')">Right</button>
+          <button class="pill"          data-value="left"  onclick="selectChestPosition(this,'left')">Left</button>
+          <button class="pill"          data-value="both"  onclick="selectChestPosition(this,'both')">Both</button>
+        </div>
+      </div>
+
+      <!-- CHEST POCKET STYLE — shown once Position isn't None -->
+      <div class="section" id="section-chest-style" style="display:none;">
+        <div class="section-label">Chest Pocket Style</div>
+        <div class="pill-group">
+          <button class="pill selected" data-value="pleated" onclick="selectChestStyle(this,'pleated')">Pleated Patch with Flap</button>
+          <button class="pill"          data-value="rounded" onclick="selectChestStyle(this,'rounded')">Rounded Patch</button>
         </div>
       </div>
 
@@ -750,7 +757,8 @@ const state = {
   closure: 'zipper',    // zipper / buttons / push-buttons
   neck: 'rib',          // option set differs entirely by style — see NECK_OPTIONS below
   pocket: 'jetted',     // option set differs entirely by style — see POCKET_OPTIONS below
-  chest: 'none',        // Utility only: none / left / right / patch-left / patch-right
+  chestPosition: 'none',  // Utility only: none / left / right / both
+  chestStyle: 'pleated',  // pleated / rounded — only relevant when chestPosition !== 'none'
   hem: 'rib',           // option set differs entirely by style — see HEM_OPTIONS below
   side: 'front',
   zoom: 1.5,
@@ -801,11 +809,17 @@ const UTILITY_HEM_FILES = {
   'self':             { '12': 'CASUAL_utility_hem_self_12.webp',             '34': 'CASUAL_utility_hem_self_34.webp' },
 };
 const CHEST_POCKET_FILES = {
-  // Patch has no confirmed oversize-fit (_34) variant — reuses _12.
-  'left':         { '12': 'CASUAL_chest-pocket_12_L.webp',       '34': 'CASUAL_chest-pocket_34_L.webp' },
-  'right':        { '12': 'CASUAL_chest-pocket_12_R.webp',       '34': 'CASUAL_chest-pocket_34_R.webp' },
-  'patch-left':   { '12': 'CASUAL_chest-pocket_patch_12_L.webp', '34': 'CASUAL_chest-pocket_patch_12_L.webp' },
-  'patch-right':  { '12': 'CASUAL_chest-pocket_patch_12_R.webp', '34': 'CASUAL_chest-pocket_patch_12_R.webp' },
+  // "Pleated Patch with Flap" = the plain (non-"patch"-named) files.
+  // "Rounded Patch" = the "patch"-named files. No confirmed oversize-fit
+  // (_34) variant exists for the rounded/patch style — reuses _12.
+  pleated: {
+    left:  { '12': 'CASUAL_chest-pocket_12_L.webp', '34': 'CASUAL_chest-pocket_34_L.webp' },
+    right: { '12': 'CASUAL_chest-pocket_12_R.webp', '34': 'CASUAL_chest-pocket_34_R.webp' },
+  },
+  rounded: {
+    left:  { '12': 'CASUAL_chest-pocket_patch_12_L.webp', '34': 'CASUAL_chest-pocket_patch_12_L.webp' },
+    right: { '12': 'CASUAL_chest-pocket_patch_12_R.webp', '34': 'CASUAL_chest-pocket_patch_12_R.webp' },
+  },
 };
 
 // Option sets genuinely differ by style — Bomber and Utility don't share
@@ -825,8 +839,8 @@ const HEM_OPTIONS = {
 
 // Default selections applied whenever Style changes.
 const STYLE_DEFAULTS = {
-  bomber:  { fit: 'regular', sleeve: 'raglan',  closure: 'zipper',  neck: 'shirt-style',   pocket: 'welt',   chest: 'none', hem: 'self-elastic' },
-  utility: { fit: 'regular', sleeve: 'regular', closure: 'buttons', neck: 'shirt-collar',  pocket: 'jetted', chest: 'both', hem: 'extended-banded' },
+  bomber:  { fit: 'regular', sleeve: 'raglan',  closure: 'zipper',  neck: 'shirt-style',   pocket: 'welt',   chestPosition: 'none', chestStyle: 'pleated', hem: 'self-elastic' },
+  utility: { fit: 'regular', sleeve: 'regular', closure: 'buttons', neck: 'shirt-collar',  pocket: 'jetted', chestPosition: 'both', chestStyle: 'pleated', hem: 'extended-banded' },
 };
 
 function enc(s) { return encodeURIComponent(s); }
@@ -870,7 +884,7 @@ const urls = {
   // "Both" isn't a single file — it means the left and right images shown
   // together, so this returns null for it; initPreview() handles "both"
   // as a special case across the two chest layers instead.
-  chest: (chestType, fitGroup) => (chestType === 'none' || chestType === 'both') ? null : BASE + enc(CHEST_POCKET_FILES[chestType][fitGroup]),
+  chest: (position, style, side, fitGroup) => (position === 'none') ? null : BASE + enc(CHEST_POCKET_FILES[style][side][fitGroup]),
   hem: (style, hemType, fitGroup, side) => {
     if (style === 'bomber') {
       const v = side === 'back' ? 'B' : 'F';
@@ -935,14 +949,18 @@ function initPreview() {
     setImg('img-pocket', '');
   }
 
-  // Chest pocket only exists for Utility. "Both" shows left+right at once
-  // across two separate layers — everything else uses just img-chest.
+  // Chest pocket only exists for Utility. Position (None/Left/Right/Both)
+  // determines which side(s) show; Style (Pleated/Rounded) determines
+  // which asset variant is used for whichever side(s) are shown.
   const showChest = isFront && state.style === 'utility';
-  if (showChest && state.chest === 'both') {
-    setImg('img-chest', BASE + enc(CHEST_POCKET_FILES['left'][fitGroup]));
-    setImg('img-chest2', BASE + enc(CHEST_POCKET_FILES['right'][fitGroup]));
+  if (showChest && state.chestPosition === 'both') {
+    setImg('img-chest', urls.chest('left', state.chestStyle, 'left', fitGroup));
+    setImg('img-chest2', urls.chest('left', state.chestStyle, 'right', fitGroup));
+  } else if (showChest && state.chestPosition !== 'none') {
+    setImg('img-chest', urls.chest(state.chestPosition, state.chestStyle, state.chestPosition, fitGroup));
+    setImg('img-chest2', '');
   } else {
-    setImg('img-chest', showChest ? urls.chest(state.chest, fitGroup) : '');
+    setImg('img-chest', '');
     setImg('img-chest2', '');
   }
 
@@ -975,7 +993,8 @@ function preloadAll() {
     urls.hem('bomber', 'rib', null, 'front'), urls.hem('bomber', 'self-elastic', null, 'front'),
     urls.hem('utility', 'banded', '12', 'front'),
     BASE + 'CASUAL_icon_bomber.webp', BASE + 'CASUAL_icon_utility-jacket.webp',
-    urls.chest('left', '12'), urls.chest('right', '12'),
+    urls.chest('left', 'pleated', 'left', '12'), urls.chest('right', 'pleated', 'right', '12'),
+    urls.chest('left', 'rounded', 'left', '12'), urls.chest('right', 'rounded', 'right', '12'),
   ];
   let done = 0;
   const finish = () => { if (++done >= all.length) document.getElementById('loading-overlay').classList.add('done'); };
@@ -1031,7 +1050,8 @@ function renderStyleDependentSections() {
   state.closure = defaults.closure;
   state.neck = defaults.neck;
   state.pocket = defaults.pocket;
-  state.chest = defaults.chest;
+  state.chestPosition = defaults.chestPosition;
+  state.chestStyle = defaults.chestStyle;
   state.hem = defaults.hem;
 
   // Sync the static pill groups (Fit/Sleeve/Closure/Chest share the same
@@ -1039,7 +1059,8 @@ function renderStyleDependentSections() {
   syncStaticPillGroup('Fit', state.fit);
   syncStaticPillGroup('Sleeve', state.sleeve);
   syncStaticPillGroup('Closure', state.closure);
-  syncStaticPillGroup('Chest Pocket', state.chest);
+  syncStaticPillGroup('Chest Pocket', state.chestPosition);
+  syncStaticPillGroup('Chest Pocket Style', state.chestStyle);
 
   // Rebuild the dynamic pill groups — Neck/Pocket/Hem genuinely differ by style.
   renderPillGroup('neck-pill-group',    NECK_OPTIONS[state.style],   state.neck,   'selectNeck');
@@ -1047,6 +1068,7 @@ function renderStyleDependentSections() {
   renderPillGroup('hem-pill-group',     HEM_OPTIONS[state.style],    state.hem,    'selectHem');
 
   updateClosureSectionVisibility();
+  updateChestStyleSectionVisibility();
 }
 
 function selectStyle(el, v) {
@@ -1108,10 +1130,23 @@ function selectPocket(el, v) {
   setFrontBack('front');
 }
 
-function selectChest(el, v) {
+function updateChestStyleSectionVisibility() {
+  const section = document.getElementById('section-chest-style');
+  if (section) section.style.display = (state.style === 'utility' && state.chestPosition !== 'none') ? '' : 'none';
+}
+
+function selectChestPosition(el, v) {
   el.closest('.pill-group').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
   el.classList.add('selected');
-  state.chest = v;
+  state.chestPosition = v;
+  updateChestStyleSectionVisibility();
+  setFrontBack('front');
+}
+
+function selectChestStyle(el, v) {
+  el.closest('.pill-group').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  state.chestStyle = v;
   setFrontBack('front');
 }
 
@@ -1595,7 +1630,9 @@ function collectConfig() {
     'CLOSURE':             (state.style === 'utility' && state.neck === 'lapel') ? 'Lapel (built-in)' : sectionPill('Closure'),
     'NECK':                sectionPill('Neck'),
     'FRONT POCKETS':       sectionPill('Front Pocket'),
-    'EXTRA POCKETS':       state.style === 'utility' ? sectionPill('Chest Pocket') : 'N/A',
+    'EXTRA POCKETS':       state.style === 'utility' && state.chestPosition !== 'none'
+                            ? sectionPill('Chest Pocket') + ' — ' + sectionPill('Chest Pocket Style')
+                            : (state.style === 'utility' ? 'None' : 'N/A'),
     'HEM/FINISH':          sectionPill('Hem'),
     'BACK':                'N/A',
 
@@ -2007,7 +2044,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.4.1</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.5.0</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -2086,7 +2123,7 @@ function buildSilhouetteKey() {
   var s = state;
   return 'CJ_gender-' + slug(s.gender) + '_style-' + slug(s.style) + '_fit-' + slug(s.fit) +
     '_sleeve-' + slug(s.sleeve) + '_closure-' + slug(s.closure) + '_neck-' + slug(s.neck) +
-    '_pocket-' + slug(s.pocket) + '_chest-' + slug(s.chest) + '_hem-' + slug(s.hem);
+    '_pocket-' + slug(s.pocket) + '_chestPos-' + slug(s.chestPosition) + '_chestStyle-' + slug(s.chestStyle) + '_hem-' + slug(s.hem);
 }
 
 function drawImageContain(ctx, img, boxW, boxH) {
