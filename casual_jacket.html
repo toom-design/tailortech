@@ -504,9 +504,15 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
       <!-- STYLE -->
       <div class="section">
         <div class="section-label">Style</div>
-        <div class="pill-group">
-          <button class="pill selected" onclick="selectStyle(this,'bomber')">Bomber</button>
-          <button class="pill"          onclick="selectStyle(this,'utility')">Utility</button>
+        <div class="card-grid-4" id="style-grid">
+          <div class="option-card selected" onclick="selectStyleCard(this,'bomber')">
+            <img class="thumb" src="https://raw.githubusercontent.com/toom-design/casual-jacket/main/CASUAL_icon_bomber.webp" alt="Bomber">
+            <span class="cname">Bomber</span>
+          </div>
+          <div class="option-card" onclick="selectStyleCard(this,'utility')">
+            <img class="thumb" src="https://raw.githubusercontent.com/toom-design/casual-jacket/main/CASUAL_icon_utility-jacket.webp" alt="Utility">
+            <span class="cname">Utility</span>
+          </div>
         </div>
       </div>
 
@@ -940,6 +946,7 @@ function preloadAll() {
     urls.utilityPocket('patch', '12'), urls.utilityPocket('patch', '34'),
     urls.hem('bomber', 'rib', null, 'front'), urls.hem('bomber', 'self-elastic', null, 'front'),
     urls.hem('utility', 'banded', '12', 'front'),
+    BASE + 'CASUAL_icon_bomber.webp', BASE + 'CASUAL_icon_utility-jacket.webp',
   ];
   let done = 0;
   const finish = () => { if (++done >= all.length) document.getElementById('loading-overlay').classList.add('done'); };
@@ -983,6 +990,14 @@ function renderStyleDependentSections() {
 
 function selectStyle(el, v) {
   el.closest('.pill-group').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  state.style = v;
+  renderStyleDependentSections();
+  setFrontBack('front');
+}
+
+function selectStyleCard(el, v) {
+  el.closest('.card-grid-4').querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
   state.style = v;
   renderStyleDependentSections();
@@ -1485,8 +1500,11 @@ function collectConfig() {
   const sectionPill = (labelText) => {
     const sections = document.querySelectorAll('.section');
     for (const s of sections) {
-      if (s.querySelector('.section-label')?.textContent.trim() === labelText)
-        return s.querySelector('.pill.selected')?.textContent.trim() || '';
+      if (s.querySelector('.section-label')?.textContent.trim() === labelText) {
+        const pillVal = s.querySelector('.pill.selected')?.textContent.trim();
+        if (pillVal) return pillVal;
+        return s.querySelector('.option-card.selected .cname')?.textContent.trim() || '';
+      }
     }
     return '';
   };
@@ -1922,7 +1940,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.0.1</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.1.0</div>
 
 <!-- Firebase -->
 <script type="module">
