@@ -440,12 +440,13 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
             <div class="spinner"></div>
             <span>Loading</span>
           </div>
-          <div class="layer"><img id="img-base"    src="" alt="base"></div>
-          <div class="layer"><img id="img-closure"  src="" alt="closure"></div>
-          <div class="layer"><img id="img-neck"     src="" alt="neck"></div>
-          <div class="layer"><img id="img-pocket"   src="" alt="pocket"></div>
-          <div class="layer"><img id="img-chest"    src="" alt="chest pocket"></div>
-          <div class="layer"><img id="img-hem"      src="" alt="hem"></div>
+          <div class="layer" style="z-index:1;"><img id="img-base"    src="" alt="base"></div>
+          <div class="layer" style="z-index:2;"><img id="img-pocket"   src="" alt="pocket"></div>
+          <div class="layer" style="z-index:3;"><img id="img-chest"    src="" alt="chest pocket"></div>
+          <div class="layer" style="z-index:4;"><img id="img-chest2"   src="" alt="chest pocket right"></div>
+          <div class="layer" style="z-index:5;"><img id="img-neck"     src="" alt="neck"></div>
+          <div class="layer" style="z-index:6;"><img id="img-hem"      src="" alt="hem"></div>
+          <div class="layer" style="z-index:10;"><img id="img-closure"  src="" alt="closure"></div>
         </div>
       </div>
 
@@ -520,8 +521,8 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
       <div class="section" id="section-fit" style="display:none;">
         <div class="section-label">Fit</div>
         <div class="pill-group">
-          <button class="pill selected" onclick="selectFit(this,'regular')">Regular</button>
-          <button class="pill"          onclick="selectFit(this,'oversize')">Oversize</button>
+          <button class="pill selected" data-value="regular" onclick="selectFit(this,'regular')">Regular</button>
+          <button class="pill"          data-value="oversize" onclick="selectFit(this,'oversize')">Oversize</button>
         </div>
       </div>
 
@@ -529,18 +530,18 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
       <div class="section">
         <div class="section-label">Sleeve</div>
         <div class="pill-group">
-          <button class="pill selected" onclick="selectSleeve(this,'regular')">Regular</button>
-          <button class="pill"          onclick="selectSleeve(this,'raglan')">Raglan</button>
+          <button class="pill selected" data-value="regular" onclick="selectSleeve(this,'regular')">Regular</button>
+          <button class="pill"          data-value="raglan" onclick="selectSleeve(this,'raglan')">Raglan</button>
         </div>
       </div>
 
-      <!-- CLOSURE -->
-      <div class="section">
+      <!-- CLOSURE — hidden when Neck is Lapel (Utility), since Lapel's own image already includes its closure -->
+      <div class="section" id="section-closure">
         <div class="section-label">Closure</div>
         <div class="pill-group">
-          <button class="pill selected" onclick="selectClosure(this,'zipper')">Zipper</button>
-          <button class="pill"          onclick="selectClosure(this,'buttons')">Buttons</button>
-          <button class="pill"          onclick="selectClosure(this,'push-buttons')">Push-Buttons</button>
+          <button class="pill selected" data-value="zipper" onclick="selectClosure(this,'zipper')">Zipper</button>
+          <button class="pill"          data-value="buttons" onclick="selectClosure(this,'buttons')">Buttons</button>
+          <button class="pill"          data-value="push-buttons" onclick="selectClosure(this,'push-buttons')">Push-Buttons</button>
         </div>
       </div>
 
@@ -560,11 +561,12 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
       <div class="section" id="section-chest" style="display:none;">
         <div class="section-label">Chest Pocket</div>
         <div class="pill-group">
-          <button class="pill selected" onclick="selectChest(this,'none')">None</button>
-          <button class="pill"          onclick="selectChest(this,'left')">Left</button>
-          <button class="pill"          onclick="selectChest(this,'right')">Right</button>
-          <button class="pill"          onclick="selectChest(this,'patch-left')">Patch Left</button>
-          <button class="pill"          onclick="selectChest(this,'patch-right')">Patch Right</button>
+          <button class="pill selected" data-value="none" onclick="selectChest(this,'none')">None</button>
+          <button class="pill"          data-value="left" onclick="selectChest(this,'left')">Left</button>
+          <button class="pill"          data-value="right" onclick="selectChest(this,'right')">Right</button>
+          <button class="pill"          data-value="both" onclick="selectChest(this,'both')">Both</button>
+          <button class="pill"          data-value="patch-left" onclick="selectChest(this,'patch-left')">Patch Left</button>
+          <button class="pill"          data-value="patch-right" onclick="selectChest(this,'patch-right')">Patch Right</button>
         </div>
       </div>
 
@@ -821,6 +823,12 @@ const HEM_OPTIONS = {
   utility: [['banded', 'Banded'], ['extended-banded', 'Extended-Banded'], ['self', 'Self']],
 };
 
+// Default selections applied whenever Style changes.
+const STYLE_DEFAULTS = {
+  bomber:  { fit: 'regular', sleeve: 'raglan',  closure: 'zipper',  neck: 'shirt-style',   pocket: 'welt',   chest: 'none', hem: 'self-elastic' },
+  utility: { fit: 'regular', sleeve: 'regular', closure: 'buttons', neck: 'shirt-collar',  pocket: 'jetted', chest: 'both', hem: 'extended-banded' },
+};
+
 function enc(s) { return encodeURIComponent(s); }
 
 const urls = {
@@ -859,7 +867,10 @@ const urls = {
     return null; // handled by pocket(style, type, fitGroup) below for utility
   },
   utilityPocket: (pocketType, fitGroup) => BASE + enc(UTILITY_POCKET_FILES[pocketType][fitGroup]),
-  chest: (chestType, fitGroup) => chestType === 'none' ? null : BASE + enc(CHEST_POCKET_FILES[chestType][fitGroup]),
+  // "Both" isn't a single file — it means the left and right images shown
+  // together, so this returns null for it; initPreview() handles "both"
+  // as a special case across the two chest layers instead.
+  chest: (chestType, fitGroup) => (chestType === 'none' || chestType === 'both') ? null : BASE + enc(CHEST_POCKET_FILES[chestType][fitGroup]),
   hem: (style, hemType, fitGroup, side) => {
     if (style === 'bomber') {
       const v = side === 'back' ? 'B' : 'F';
@@ -910,7 +921,10 @@ function initPreview() {
 
   // Closure and Neck are front-view-only for both styles — no back
   // variant exists for either in the real asset set.
-  setImg('img-closure', isFront ? urls.closure(state.style, state.closure, fitGroup) : '');
+  // Lapel's image already depicts its own closure/front construction —
+  // showing the separate Closure overlay on top of it would be wrong.
+  const hasOwnClosure = (state.style === 'utility' && state.neck === 'lapel');
+  setImg('img-closure', (isFront && !hasOwnClosure) ? urls.closure(state.style, state.closure, fitGroup) : '');
   setImg('img-neck', isFront ? urls.neck(state.style, state.neck, fitGroup) : '');
 
   // Front pocket — Bomber uses urls.pocket() directly; Utility needs the
@@ -921,8 +935,16 @@ function initPreview() {
     setImg('img-pocket', '');
   }
 
-  // Chest pocket only exists for Utility.
-  setImg('img-chest', (isFront && state.style === 'utility') ? urls.chest(state.chest, fitGroup) : '');
+  // Chest pocket only exists for Utility. "Both" shows left+right at once
+  // across two separate layers — everything else uses just img-chest.
+  const showChest = isFront && state.style === 'utility';
+  if (showChest && state.chest === 'both') {
+    setImg('img-chest', BASE + enc(CHEST_POCKET_FILES['left'][fitGroup]));
+    setImg('img-chest2', BASE + enc(CHEST_POCKET_FILES['right'][fitGroup]));
+  } else {
+    setImg('img-chest', showChest ? urls.chest(state.chest, fitGroup) : '');
+    setImg('img-chest2', '');
+  }
 
   // Hem/cuff — Bomber has real front/back variants; Utility is front-only.
   if (state.style === 'bomber') {
@@ -930,6 +952,12 @@ function initPreview() {
   } else {
     setImg('img-hem', isFront ? urls.hem('utility', state.hem, fitGroup, state.side) : '');
   }
+
+  // Closure sits above every other layer by default. The one exception:
+  // Extended-Banded hem needs to render on top of Closure specifically,
+  // since it visually wraps over the closure at the waist.
+  const hemEl = document.getElementById('img-hem');
+  if (hemEl) hemEl.parentElement.style.zIndex = (state.hem === 'extended-banded') ? '11' : '6';
 }
 
 function preloadAll() {
@@ -947,6 +975,7 @@ function preloadAll() {
     urls.hem('bomber', 'rib', null, 'front'), urls.hem('bomber', 'self-elastic', null, 'front'),
     urls.hem('utility', 'banded', '12', 'front'),
     BASE + 'CASUAL_icon_bomber.webp', BASE + 'CASUAL_icon_utility-jacket.webp',
+    urls.chest('left', '12'), urls.chest('right', '12'),
   ];
   let done = 0;
   const finish = () => { if (++done >= all.length) document.getElementById('loading-overlay').classList.add('done'); };
@@ -974,6 +1003,18 @@ function renderPillGroup(containerId, options, currentValue, handlerName) {
   return value;
 }
 
+function syncStaticPillGroup(sectionLabel, value) {
+  const sections = document.querySelectorAll('.section');
+  for (const s of sections) {
+    if (s.querySelector('.section-label')?.textContent.trim() === sectionLabel) {
+      s.querySelectorAll('.pill').forEach(p => {
+        p.classList.toggle('selected', p.dataset.value === value);
+      });
+      return;
+    }
+  }
+}
+
 function renderStyleDependentSections() {
   const isUtility = state.style === 'utility';
 
@@ -983,9 +1024,29 @@ function renderStyleDependentSections() {
   const chestSection = document.getElementById('section-chest');
   if (chestSection) chestSection.style.display = isUtility ? '' : 'none';
 
-  state.neck    = renderPillGroup('neck-pill-group',    NECK_OPTIONS[state.style],   state.neck,    'selectNeck');
-  state.pocket  = renderPillGroup('pocket-pill-group',  POCKET_OPTIONS[state.style], state.pocket,  'selectPocket');
-  state.hem     = renderPillGroup('hem-pill-group',      HEM_OPTIONS[state.style],   state.hem,     'selectHem');
+  // Each style has its own default selections — applied every time Style changes.
+  const defaults = STYLE_DEFAULTS[state.style];
+  state.fit = defaults.fit;
+  state.sleeve = defaults.sleeve;
+  state.closure = defaults.closure;
+  state.neck = defaults.neck;
+  state.pocket = defaults.pocket;
+  state.chest = defaults.chest;
+  state.hem = defaults.hem;
+
+  // Sync the static pill groups (Fit/Sleeve/Closure/Chest share the same
+  // option set across both styles, so these are shown/hidden, not rebuilt).
+  syncStaticPillGroup('Fit', state.fit);
+  syncStaticPillGroup('Sleeve', state.sleeve);
+  syncStaticPillGroup('Closure', state.closure);
+  syncStaticPillGroup('Chest Pocket', state.chest);
+
+  // Rebuild the dynamic pill groups — Neck/Pocket/Hem genuinely differ by style.
+  renderPillGroup('neck-pill-group',    NECK_OPTIONS[state.style],   state.neck,   'selectNeck');
+  renderPillGroup('pocket-pill-group',  POCKET_OPTIONS[state.style], state.pocket, 'selectPocket');
+  renderPillGroup('hem-pill-group',     HEM_OPTIONS[state.style],    state.hem,    'selectHem');
+
+  updateClosureSectionVisibility();
 }
 
 function selectStyle(el, v) {
@@ -1027,10 +1088,16 @@ function selectClosure(el, v) {
   setFrontBack('front');
 }
 
+function updateClosureSectionVisibility() {
+  const section = document.getElementById('section-closure');
+  if (section) section.style.display = (state.style === 'utility' && state.neck === 'lapel') ? 'none' : '';
+}
+
 function selectNeck(el, v) {
   el.closest('.pill-group').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
   el.classList.add('selected');
   state.neck = v;
+  updateClosureSectionVisibility();
   setFrontBack('front');
 }
 
@@ -1525,7 +1592,7 @@ function collectConfig() {
     // "selected" by default) would be misleading to report as real data.
     'FIT':                 state.style === 'utility' ? sectionPill('Fit') : 'N/A',
     'STYLE/SILHOUETTE':    sectionPill('Style'),
-    'CLOSURE':             sectionPill('Closure'),
+    'CLOSURE':             (state.style === 'utility' && state.neck === 'lapel') ? 'Lapel (built-in)' : sectionPill('Closure'),
     'NECK':                sectionPill('Neck'),
     'FRONT POCKETS':       sectionPill('Front Pocket'),
     'EXTRA POCKETS':       state.style === 'utility' ? sectionPill('Chest Pocket') : 'N/A',
@@ -1940,7 +2007,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.1.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.4.1</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -2038,7 +2105,7 @@ function drawImageContain(ctx, img, boxW, boxH) {
 
 function captureTechPackImage() {
   return new Promise(function(resolve, reject) {
-    var layerIds = ['img-base','img-closure','img-neck','img-pocket','img-chest','img-hem'];
+    var layerIds = ['img-base','img-closure','img-neck','img-pocket','img-chest','img-chest2','img-hem'];
     var W = 760, H = 1160;
     var canvas = document.createElement('canvas');
     canvas.width = W; canvas.height = H;
