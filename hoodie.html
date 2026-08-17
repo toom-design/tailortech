@@ -564,8 +564,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
         <div class="section-label">Cuff</div>
         <div class="pill-group">
           <button class="pill selected" onclick="selectCuff(this,'rib')">Rib</button>
-          <button class="pill"          onclick="selectCuff(this,'self-elastic')">Elastic</button>
-          <button class="pill"          onclick="selectCuff(this,'none')">None</button>
+          <button class="pill"          onclick="selectCuff(this,'self-elastic')">Self-Elastic</button>
         </div>
       </div>
 
@@ -743,7 +742,7 @@ const state = {
   zipTrim: 'rib',       // rib / self — only relevant when style === 'quarterzip'
   sleeve: 'regular',    // regular / raglan
   pocket: 'kangaroo',   // kangaroo / welt / zipper / none
-  cuff: 'rib',          // rib / none
+  cuff: 'rib',          // rib / self-elastic
   side: 'front',
   zoom: 1.5,
   panX: 0,
@@ -1776,7 +1775,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.4.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.4.1</div>
 
 <!-- Firebase -->
 <script type="module">
