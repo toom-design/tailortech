@@ -429,6 +429,8 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
     <!-- STAGE -->
     <div class="avatar-stage">
       <div class="zoom-controls">
+        <button class="zoom-btn" onclick="manualZoom(0.15)" title="Zoom in">+</button>
+        <button class="zoom-btn" onclick="manualZoom(-0.15)" title="Zoom out">−</button>
         <button class="zoom-btn" onclick="resetZoom()" title="Reset">↻</button>
       </div>
 
@@ -441,9 +443,9 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
           <div class="layer"><img id="img-base"   src="" alt="base"></div>
           <div class="layer"><img id="img-sleeve" src="" alt="sleeve"></div>
           <div class="layer"><img id="img-style"  src="" alt="style"></div>
-          <div class="layer"><img id="img-zipper" src="" alt="zipper"></div>
           <div class="layer"><img id="img-pocket" src="" alt="pocket"></div>
           <div class="layer"><img id="img-cuff"   src="" alt="cuff"></div>
+          <div class="layer"><img id="img-zipper" src="" alt="zipper"></div>
         </div>
       </div>
 
@@ -562,6 +564,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
         <div class="section-label">Cuff</div>
         <div class="pill-group">
           <button class="pill selected" onclick="selectCuff(this,'rib')">Rib</button>
+          <button class="pill"          onclick="selectCuff(this,'self-elastic')">Elastic</button>
           <button class="pill"          onclick="selectCuff(this,'none')">None</button>
         </div>
       </div>
@@ -764,7 +767,7 @@ const urls = {
   // variant exists for any of them in the real file set.
   zipper: () => BASE + 'HOODIE_live_zipper_F.webp',
   pocket: p => p === 'none' ? null : BASE + `HOODIE_live_pocket_${p}_F.webp`,
-  cuff:   c => c === 'none' ? null : BASE + 'HOODIE_live_cuff_rib.webp'
+  cuff:   c => c === 'none' ? null : BASE + `HOODIE_live_cuff_${c}.webp`
 };
 
 function applyTransform() {
@@ -809,7 +812,7 @@ function initPreview() {
   // Zipper, pocket, and cuff only exist for the front view.
   var isFront = state.side !== 'back';
   var isHoodStyle = (state.style === '2-piece-hood' || state.style === '3-piece-hood');
-  var showZipper = isFront && (state.style === 'quarterzip' || (isHoodStyle && state.hoodClosure === 'zip-up'));
+  var showZipper = isFront && (isHoodStyle && state.hoodClosure === 'zip-up');
   setImg('img-zipper', showZipper ? urls.zipper() : '');
   setImg('img-pocket', isFront ? urls.pocket(state.pocket) : '');
   setImg('img-cuff', isFront ? urls.cuff(state.cuff) : '');
@@ -826,7 +829,7 @@ function preloadAll() {
     urls.style('quarterzip', 'self', 'front'), urls.style('quarterzip', 'self', 'back'),
     urls.zipper(),
     urls.pocket('kangaroo'), urls.pocket('welt'), urls.pocket('zipper'),
-    urls.cuff('rib'),
+    urls.cuff('rib'), urls.cuff('self-elastic'),
   ];
   let done = 0;
   const finish = () => { if (++done >= all.length) document.getElementById('loading-overlay').classList.add('done'); };
@@ -845,7 +848,6 @@ function selectFit(el, v) {
   el.classList.add('selected');
   state.fit = v;
   setImg('img-base', urls.base(v));
-  resetZoom();
 }
 
 function selectSleeve(el, v) {
@@ -853,7 +855,6 @@ function selectSleeve(el, v) {
   el.classList.add('selected');
   state.sleeve = v;
   setImg('img-sleeve', urls.sleeve(v));
-  resetZoom();
 }
 
 function selectStyle(el, v) {
@@ -868,7 +869,6 @@ function selectStyle(el, v) {
   const closureSection = document.getElementById('section-hood-closure');
   if (closureSection) closureSection.style.display = isHoodStyle ? '' : 'none';
   setFrontBack('front');
-  zoomToRegion(2.4, 0.5, 0.3);
 }
 
 function selectHoodClosure(el, v) {
@@ -876,7 +876,6 @@ function selectHoodClosure(el, v) {
   el.classList.add('selected');
   state.hoodClosure = v;
   initPreview();
-  zoomToRegion(2.4, 0.5, 0.3);
 }
 
 function selectZipTrim(el, v) {
@@ -891,11 +890,6 @@ function selectPocket(el, v) {
   el.classList.add('selected');
   state.pocket = v;
   setFrontBack('front');
-  if (v !== 'none') {
-    zoomToRegion(2.6, 0.5, 0.4);
-  } else {
-    resetZoom();
-  }
 }
 
 function selectCuff(el, v) {
@@ -903,7 +897,6 @@ function selectCuff(el, v) {
   el.classList.add('selected');
   state.cuff = v;
   setFrontBack('front');
-  zoomToRegion(2.4, 0.20, 0.80);
 }
 
 function selectPillInGroup(el) {
@@ -1783,7 +1776,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.2.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.4.0</div>
 
 <!-- Firebase -->
 <script type="module">
