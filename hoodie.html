@@ -1,0 +1,2036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hoodie Configurator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #F0EDE6;
+  --cream-dark: #E5E1D8;
+  --cream-mid: #EBE7DF;
+  --ink: #1A1916;
+  --ink-mid: #4A4844;
+  --ink-light: #8A8880;
+  --ink-faint: #C0BDB8;
+  --white: #FAFAF8;
+  --border: rgba(26,25,22,0.12);
+  --border-mid: rgba(26,25,22,0.22);
+}
+body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+.app { display: flex; width: 100%; flex: 1; overflow: hidden; min-height: 0; }
+
+/* ── LEFT PANEL ── */
+.preview-panel {
+  flex: 3;
+  background: #ffffff;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  transition: flex 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* MEASUREMENTS ACTIVE — swap to 2:3 */
+.app.measurements-active .preview-panel { flex: 2; background: var(--white); }
+.app.measurements-active .config-panel  { flex: 3; }
+.app.measurements-active #meas-avatar-panel { display: flex !important; }
+
+/* view toggle at top */
+.view-toggle { display: flex; padding: 16px 20px 0; justify-content: center; gap: 0; flex-shrink: 0; }
+.view-btn {
+  font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600;
+  letter-spacing: 0.13em; padding: 8px 28px;
+  border: 1px solid var(--border-mid); background: transparent;
+  color: var(--ink-light); cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+}
+.view-btn:first-child { border-radius: 2px 0 0 2px; border-right: none; }
+.view-btn:last-child  { border-radius: 0 2px 2px 0; }
+.view-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+
+/* stage — fills remaining space */
+.avatar-stage {
+  flex: 1; position: relative;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; background: #ffffff;
+}
+
+/* zoom */
+.zoom-controls { position: absolute; top: 14px; right: 14px; display: flex; flex-direction: column; gap: 4px; z-index: 10; }
+.zoom-btn {
+  width: 28px; height: 28px; border: 1px solid var(--border-mid);
+  background: var(--white); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 15px; color: var(--ink-mid); font-weight: 300; line-height: 1;
+}
+.zoom-btn:hover { background: var(--cream-mid); }
+
+/* layer stack — viewport into which we pan/zoom */
+.stage-viewport {
+  position: relative;
+  width: 100%; height: 100%;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.layer-stack {
+  position: relative;
+  width: 420px; height: 620px;
+  flex-shrink: 0;
+  transform-origin: center center;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.layer-stack .layer { position: absolute; inset: 0; }
+.layer-stack .layer img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+/* loading */
+.loading-overlay {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px; z-index: 20;
+  background: #ffffff; transition: opacity 0.5s;
+}
+.loading-overlay.done { opacity: 0; pointer-events: none; }
+.spinner { width: 22px; height: 22px; border: 2px solid var(--ink-faint); border-top-color: var(--ink); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-overlay span { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-light); font-weight: 500; }
+
+/* front / back toggle bar */
+.view-bar {
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 12px 20px 16px; gap: 0;
+  border-top: 1px solid var(--border);
+  background: #ffffff;
+}
+.view-bar-btn {
+  font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600;
+  letter-spacing: 0.13em; padding: 7px 28px;
+  border: 1px solid var(--border-mid); background: transparent;
+  color: var(--ink-light); cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+}
+.view-bar-btn:first-child { border-radius: 2px 0 0 2px; border-right: none; }
+.view-bar-btn:last-child  { border-radius: 0 2px 2px 0; }
+.view-bar-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+
+/* ── RIGHT PANEL ── */
+.config-panel { flex: 2; background: var(--white); overflow-y: auto; min-height: 0; position: relative; display: flex; flex-direction: column; transition: flex 0.35s cubic-bezier(0.4,0,0.2,1); }
+
+
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  padding: 0 28px; position: sticky; top: 0; background: var(--white); z-index: 20;
+}
+.tab {
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 18px 0; margin-right: 24px;
+  border: none; background: none; color: var(--ink-faint); cursor: pointer;
+  border-bottom: 1.5px solid transparent; margin-bottom: -1px;
+  transition: color 0.2s, border-color 0.2s; white-space: nowrap;
+}
+.tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+
+.config-body { padding: 28px 28px 48px; display: flex; flex-direction: column; }
+#panel-measurements { padding: 0 !important; flex: 1; min-height: 0; overflow: hidden; }
+.section { padding: 22px 0; border-bottom: 1px solid var(--border); }
+.section:last-child { border-bottom: none; }
+.section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink); margin-bottom: 14px; }
+
+/* pills */
+.pill-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill {
+  font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 400;
+  letter-spacing: 0.03em; padding: 7px 16px;
+  border: 1px solid var(--border-mid); border-radius: 100px;
+  background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s;
+}
+.pill:hover { border-color: var(--ink); color: var(--ink); }
+.pill.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
+
+/* card grids */
+.card-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.card-grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+
+.option-card {
+  border: 1px solid var(--border); border-radius: 6px;
+  background: #ffffff; padding: 10px 6px 8px;
+  cursor: pointer; display: flex; flex-direction: column;
+  align-items: center; gap: 6px; transition: all 0.15s;
+}
+.option-card:hover { border-color: var(--ink-mid); }
+.option-card.selected { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.option-card .thumb { width: 58px; height: 48px; object-fit: contain; display: block; opacity: 0.75; transition: opacity 0.15s; }
+.card-grid-5 .option-card .thumb { width: 44px; height: 44px; }
+.option-card.selected .thumb { opacity: 1; }
+.option-card .cname { font-size: 10px; letter-spacing: 0.04em; color: var(--ink-light); text-align: center; font-weight: 400; }
+.option-card.selected .cname { color: var(--ink); font-weight: 500; }
+
+/* ── MATERIALS ── */
+.sub-label { font-size: 11px; color: var(--ink-light); letter-spacing: 0.04em; margin-bottom: 12px; }
+
+.fabric-search-row { margin-bottom: 12px; }
+.fabric-search {
+  width: 100%; padding: 8px 12px; font-family: 'Jost', sans-serif; font-size: 12px;
+  border: 1px solid var(--border-mid); border-radius: 4px; background: var(--white);
+  color: var(--ink); outline: none; transition: border-color 0.15s;
+}
+.fabric-search:focus { border-color: var(--ink); }
+
+.fabric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+
+/* ── Rich fabric cards from Google Sheet ── */
+.fabric-card {
+  border: 1px solid var(--border); border-radius: 6px; background: #fff;
+  cursor: pointer; display: flex; flex-direction: column;
+  transition: all 0.15s; overflow: hidden; position: relative;
+}
+.fabric-card:hover { border-color: var(--ink-mid); }
+.fabric-card.selected { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+
+/* square image with padding */
+.fabric-card .fc-images {
+  display: flex; align-items: center; justify-content: center;
+  padding: 14px 14px 10px; flex-shrink: 0;
+}
+.fabric-card .fc-img {
+  width: 100%; aspect-ratio: 1 / 1; object-fit: cover;
+  display: block; background: var(--cream-mid); border-radius: 2px;
+}
+.fabric-card .fc-img.fc-img-back { display: none; }
+.fabric-card .fc-img-label { display: none; }
+
+/* text section — centred */
+.fabric-card .fc-body { padding: 0 10px 14px; display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; }
+.fname { font-size: 12px; font-weight: 600; color: var(--ink); letter-spacing: 0.02em; line-height: 1.3; }
+.fcode { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.06em; }
+.fcomp { font-size: 10px; color: var(--ink-light); letter-spacing: 0.01em; line-height: 1.4; margin-top: 1px; }
+
+/* details toggle — hidden for clean card look */
+.fc-details-toggle { display: none; }
+
+/* expandable details drawer */
+.fc-details-drawer {
+  display: none; border-top: 1px solid var(--border);
+  padding: 8px 8px 9px; background: var(--cream-mid);
+  grid-template-columns: 1fr 1fr; gap: 4px 8px;
+  pointer-events: none;
+}
+.fc-details-drawer.open { display: grid; pointer-events: auto; }
+.fc-detail-item { display: flex; flex-direction: column; gap: 1px; }
+.fc-detail-label { font-size: 8px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; color: var(--ink-light); }
+.fc-detail-val   { font-size: 10px; color: var(--ink); font-weight: 400; }
+
+/* loading / error states */
+.fabric-loading {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: 10px;
+  padding: 20px 0; color: var(--ink-light); font-size: 11px; letter-spacing: 0.06em;
+}
+.fabric-error {
+  grid-column: 1 / -1; padding: 14px 12px; font-size: 11px; color: #b04040;
+  background: #fdf2f2; border: 1px solid #e8c0c0; border-radius: 4px;
+}
+
+/* fallback swatch for when images fail */
+.swatch { width: 100%; aspect-ratio: 1 / 1; border-radius: 2px; flex-shrink: 0; }
+
+/* ── Tuxedo Bib fabric section ── */
+#section-tuxedo-bib { display: none; }
+#section-tuxedo-bib.visible { display: block; }
+
+/* ── Complementary fabric parts toggle ── */
+.comp-parts-row {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.comp-part-btn {
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 100px;
+  background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s;
+}
+.comp-part-btn:hover { border-color: var(--ink); color: var(--ink); }
+.comp-part-btn.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
+
+/* Comp section hint */
+.comp-hint {
+  font-size: 11px; color: var(--ink-light); letter-spacing: 0.03em;
+  margin-bottom: 12px; line-height: 1.5;
+}
+
+/* Button material row */
+.btn-material-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.btn-material {
+  font-family: 'Jost', sans-serif; display: flex; align-items: center; gap: 8px;
+  padding: 10px 18px; border: 1px solid var(--border-mid); border-radius: 6px;
+  background: #fff; cursor: pointer; transition: all 0.15s;
+}
+.btn-material:hover { border-color: var(--ink); }
+.btn-material.selected { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.bm-name { font-size: 13px; font-weight: 500; color: var(--ink); letter-spacing: 0.02em; text-transform: uppercase; }
+.bm-price { font-size: 11px; color: var(--ink-light); letter-spacing: 0.04em; }
+.btn-material.selected .bm-price { color: var(--ink-mid); }
+
+/* Button size row */
+.btn-size-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+.btn-size {
+  font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 500;
+  letter-spacing: 0.04em; padding: 7px 14px;
+  border: 1px solid var(--border-mid); border-radius: 5px;
+  background: #fff; color: var(--ink-mid); cursor: pointer; transition: all 0.15s;
+  min-width: 48px; text-align: center;
+}
+.btn-size:hover { border-color: var(--ink); color: var(--ink); }
+.btn-size.selected { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); color: var(--ink); }
+
+/* Button stitch grid — 3 cols, larger cards */
+.btn-stitch-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.btn-stitch-card {
+  border: 1px solid var(--border); border-radius: 6px; background: #ffffff;
+  padding: 20px 12px 12px; cursor: pointer; display: flex; flex-direction: column;
+  align-items: center; gap: 10px; transition: all 0.15s;
+}
+.btn-stitch-card:hover { border-color: var(--ink-mid); }
+.btn-stitch-card.selected { border-color: var(--ink); background: var(--cream-dark); box-shadow: inset 0 0 0 1px var(--ink); }
+.stitch-icon { width: 64px; height: 64px; background: #fff; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+.btn-stitch-card .cname { font-size: 12px; }
+
+/* Measurements */
+.measure-grid { display: flex; flex-direction: column; gap: 0; }
+.measure-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.measure-row:last-child { border-bottom: none; }
+.measure-row label { font-size: 13px; color: var(--ink-mid); font-weight: 400; letter-spacing: 0.02em; }
+.measure-input-wrap { display: flex; align-items: center; gap: 6px; }
+.measure-input {
+  font-family: 'Jost', sans-serif; font-size: 13px; width: 72px; padding: 6px 10px;
+  border: 1px solid var(--border-mid); border-radius: 4px; text-align: right;
+  background: #fff; color: var(--ink); outline: none; transition: border-color 0.15s;
+}
+.measure-input:focus { border-color: var(--ink); }
+.measure-unit { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.06em; width: 20px; }
+
+/* Loading measurements notification */
+#meas-loading-notif {
+  display: none;
+  align-items: center; gap: 8px;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  border-radius: 2px;
+  background: rgba(109,70,180,0.08);
+  border: 1px solid rgba(109,70,180,0.22);
+  font-size: 11px; font-weight: 500; letter-spacing: 0.06em;
+  color: #6d46b4;
+}
+#meas-loading-notif.visible { display: flex; }
+.meas-notif-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  border: 1.5px solid rgba(109,70,180,0.35);
+  border-top-color: #6d46b4;
+  animation: spin 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
+/* Submit button */
+.submit-btn {
+  font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  width: 100%; padding: 14px 24px;
+  background: var(--ink); color: var(--white);
+  border: none; border-radius: 3px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: opacity 0.2s;
+}
+.submit-btn:hover { opacity: 0.85; }
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Nav ── */
+.nav {
+  height: 52px; background: var(--white); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 28px; gap: 16px;
+  position: sticky; top: 0; z-index: 100;
+}
+.nav-brand {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.20em;
+  text-transform: uppercase; color: var(--ink); margin-right: auto; text-decoration: none;
+}
+.nav-btn {
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 2px;
+  background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
+}
+.nav-btn:hover { background: var(--cream-mid); color: var(--ink); }
+.nav-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--ink); color: var(--white);
+  font-size: 11px; font-weight: 600; letter-spacing: 0;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; flex-shrink: 0;
+  border: none; padding: 0; cursor: pointer;
+  -webkit-appearance: none;
+}
+.nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
+</style>
+</head>
+<body>
+
+
+ 
+  
+<!-- Nav -->
+<nav class="nav" style="position:relative;">
+  <a class="nav-brand" href="https://tailortech.toom.design/">
+    <img src="data:image/webp;base64,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" 
+         alt="TailorTech" height="24">
+  </a>
+  <button class="nav-avatar" id="nav-av" type="button" onclick="toggleDropdown(event)" style="display:none"></button>
+  <a class="nav-btn" id="nav-login" href="#" onclick="goToAuth(); return false;">Log In</a>
+  <button class="nav-btn" id="nav-signout" onclick="doSignOut()" style="display:none">Sign out</button>
+
+  <!-- Dropdown -->
+  <div id="nav-dd" style="display:none;position:absolute;top:52px;right:0;width:260px;background:#FAFAF8;border:1px solid rgba(26,25,22,0.20);border-radius:2px;box-shadow:0 12px 40px rgba(26,25,22,0.16);padding:20px;z-index:9999;font-family:'Jost',sans-serif;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div id="dd-av" style="width:40px;height:40px;border-radius:50%;background:#1A1916;color:#FAFAF8;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"></div>
+      <div>
+        <div id="dd-name" style="font-size:13px;font-weight:600;color:#1A1916;margin-bottom:2px;">—</div>
+        <div id="dd-email-sub" style="font-size:11px;color:#8A8880;word-break:break-all;"></div>
+      </div>
+    </div>
+    <div style="height:1px;background:rgba(26,25,22,0.10);margin-bottom:14px;"></div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#8A8880;margin-bottom:5px;">Person ID</div>
+      <div id="dd-pid" style="font-size:15px;font-weight:600;color:#1A1916;letter-spacing:0.04em;">—</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid rgba(26,25,22,0.10);padding-top:14px;">
+      <a href="https://tailortech.toom.design/dashboard" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:none;background:#1A1916;color:#FAFAF8;border-radius:2px;cursor:pointer;text-decoration:none;display:block;text-align:center;">My Dashboard</a>
+      <button onclick="doSignOut()" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:1px solid rgba(138,48,48,0.30);background:transparent;color:#8a3030;border-radius:2px;cursor:pointer;width:100%;">Sign Out</button>
+    </div>
+  </div>
+</nav>
+
+
+
+<div class="app" id="main-app">
+
+  <!-- ══ PREVIEW PANEL (3/5) ══ -->
+  <div class="preview-panel">
+
+    <!-- TECHNICAL / 3D toggle -->
+    <div class="view-toggle">
+      <button class="view-btn active" id="btn-technical" onclick="setTechView('technical')">Technical</button>
+      <button class="view-btn" id="btn-3d" onclick="setTechView('3d')">3D</button>
+    </div>
+
+    <!-- STAGE -->
+    <div class="avatar-stage">
+      <div class="zoom-controls">
+        <button class="zoom-btn" onclick="manualZoom(0.15)" title="Zoom in">+</button>
+        <button class="zoom-btn" onclick="manualZoom(-0.15)" title="Zoom out">−</button>
+        <button class="zoom-btn" onclick="resetZoom()" title="Reset">↻</button>
+      </div>
+
+      <div class="stage-viewport" id="stage-viewport">
+        <div class="layer-stack" id="layer-stack">
+          <div class="loading-overlay" id="loading-overlay">
+            <div class="spinner"></div>
+            <span>Loading</span>
+          </div>
+          <div class="layer"><img id="img-base"   src="" alt="base"></div>
+          <div class="layer"><img id="img-sleeve" src="" alt="sleeve"></div>
+          <div class="layer"><img id="img-style"  src="" alt="style"></div>
+          <div class="layer"><img id="img-zipper" src="" alt="zipper"></div>
+          <div class="layer"><img id="img-pocket" src="" alt="pocket"></div>
+          <div class="layer"><img id="img-cuff"   src="" alt="cuff"></div>
+        </div>
+      </div>
+
+      <div id="threed-placeholder" style="display:none;position:absolute;inset:0;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#ffffff;">
+        <svg width="44" height="44" viewBox="0 0 44 44" fill="none" stroke="#C0BDB8" stroke-width="1.2">
+          <path d="M22 4 L40 14 L40 30 L22 40 L4 30 L4 14 Z"/>
+          <line x1="22" y1="4" x2="22" y2="40"/>
+          <line x1="4" y1="14" x2="40" y2="14"/>
+          <line x1="4" y1="30" x2="40" y2="30"/>
+        </svg>
+        <div style="text-align:center;">
+          <div style="font-family:'Jost',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#1A1916;margin-bottom:6px;">3D Preview</div>
+          <div style="font-family:'Jost',sans-serif;font-size:12px;color:#8A8880;letter-spacing:0.04em;">This section is being prepared</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FRONT / BACK toggle -->
+    <div class="view-bar" id="shirt-view-bar">
+      <button class="view-bar-btn active" id="btn-front" onclick="setFrontBack('front')">Front</button>
+      <button class="view-bar-btn" id="btn-back" onclick="setFrontBack('back')">Back</button>
+    </div>
+
+    <!-- MEASUREMENT AVATAR — shown instead of shirt when Measurements tab is active -->
+    <div id="meas-avatar-panel" style="display:none;flex:1;min-height:0;flex-direction:column;background:var(--white);overflow:hidden;padding:2rem;">
+      <div style="flex:1;min-height:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:relative;">
+        <img id="meas-diag-img" src="" alt="" style="width:100%;height:100%;object-fit:contain;transition:opacity 0.25s,transform 0.25s;opacity:1;">
+      </div>
+      <div id="meas-diag-label" style="flex-shrink:0;margin-top:10px;font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);opacity:0;transition:opacity 0.25s;text-align:center;min-height:14px;"></div>
+    </div>
+
+  </div>
+
+  <!-- ══ CONFIG PANEL (2/5) ══ -->
+  <div class="config-panel">
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab(this,'panel-design')">Design</button>
+      <button class="tab" onclick="switchTab(this,'panel-materials')">Materials &amp; Construction</button>
+      <button class="tab" onclick="switchTab(this,'panel-measurements')">Measurements</button>
+      <button class="tab" onclick="switchTab(this,'panel-summary')">Summary</button>
+    </div>
+
+    <!-- DESIGN PANEL -->
+    <div class="config-body" id="panel-design">
+
+      <!-- GENDER -->
+      <div class="section">
+        <div class="section-label">Gender</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectGender(this,'M')">Male</button>
+          <button class="pill"          onclick="selectGender(this,'F')">Female</button>
+        </div>
+      </div>
+
+      <!-- FIT -->
+      <div class="section">
+        <div class="section-label">Fit</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectFit(this,'regular')">Regular</button>
+          <button class="pill"          onclick="selectFit(this,'oversized')">Oversized</button>
+        </div>
+      </div>
+
+      <!-- STYLE -->
+      <div class="section">
+        <div class="section-label">Style</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectStyle(this,'crewneck')">Crewneck</button>
+          <button class="pill"          onclick="selectStyle(this,'2-piece-hood')">2-Piece Hood</button>
+          <button class="pill"          onclick="selectStyle(this,'3-piece-hood')">3-Piece Hood</button>
+          <button class="pill"          onclick="selectStyle(this,'quarterzip')">Quarterzip</button>
+        </div>
+      </div>
+
+      <!-- ZIP TRIM — only relevant when Style is Quarterzip -->
+      <div class="section" id="section-zip-trim" style="display:none;">
+        <div class="section-label">Zip Trim</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectZipTrim(this,'rib')">Rib</button>
+          <button class="pill"          onclick="selectZipTrim(this,'self')">Self Fabric</button>
+        </div>
+      </div>
+
+      <!-- SLEEVE -->
+      <div class="section">
+        <div class="section-label">Sleeve</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectSleeve(this,'regular')">Regular</button>
+          <button class="pill"          onclick="selectSleeve(this,'raglan')">Raglan</button>
+        </div>
+      </div>
+
+      <!-- FRONT POCKET -->
+      <div class="section">
+        <div class="section-label">Front Pocket</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectPocket(this,'kangaroo')">Kangaroo</button>
+          <button class="pill"          onclick="selectPocket(this,'welt')">Welt</button>
+          <button class="pill"          onclick="selectPocket(this,'zipper')">Zipper</button>
+          <button class="pill"          onclick="selectPocket(this,'none')">None</button>
+        </div>
+      </div>
+
+      <!-- CUFF -->
+      <div class="section">
+        <div class="section-label">Cuff</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectCuff(this,'rib')">Rib</button>
+          <button class="pill"          onclick="selectCuff(this,'none')">None</button>
+        </div>
+      </div>
+
+      <!-- CONTINUE -->
+      <div class="section" style="border-bottom:none;">
+        <button onclick="goToMaterials()" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;width:100%;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
+          Continue to Materials &amp; Construction
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
+        </button>
+      </div>
+
+    </div><!-- /panel-design -->
+
+    <!-- MATERIALS & CONSTRUCTION PANEL -->
+    <div class="config-body" id="panel-materials" style="display:none;">
+
+      <!-- MAIN FABRIC — dynamically loaded from Google Sheet -->
+      <div class="section">
+        <div class="section-label">Main Fabric</div>
+        <div class="fabric-search-row">
+          <input class="fabric-search" type="text" placeholder="Search fabrics…" oninput="filterFabrics(this.value,'main')">
+        </div>
+        <div class="fabric-grid" id="fabric-main-grid">
+          <div class="fabric-loading">
+            <div class="spinner"></div>
+            <span>Loading fabrics…</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTRAST FABRIC — optional, cuff & pocket -->
+      <div class="section" style="border-bottom:none;">
+        <div class="section-label">Contrast Fabric</div>
+        <p class="comp-hint">Select parts to use a contrast fabric. Leave unchecked to use the main fabric throughout.</p>
+
+        <div class="comp-parts-row" style="margin-bottom:0;">
+          <button class="comp-part-btn" id="comp-part-cuff"    onclick="toggleCompPart(this,'cuff')">Cuff</button>
+          <button class="comp-part-btn" id="comp-part-pocket"  onclick="toggleCompPart(this,'pocket')">Pocket</button>
+        </div>
+
+        <div id="comp-fabric-body" style="display:none;margin-top:16px;">
+          <div class="fabric-search-row">
+            <input class="fabric-search" type="text" placeholder="Search fabrics…" oninput="filterFabrics(this.value,'comp')">
+          </div>
+          <div class="fabric-grid" id="fabric-comp-grid">
+            <div class="fabric-loading">
+              <div class="spinner"></div>
+              <span>Loading fabrics…</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTINUE -->
+      <div class="section" style="border-bottom:none;">
+        <button onclick="goToMeasurements()" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;width:100%;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
+          Continue to Measurements
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
+        </button>
+      </div>
+
+    </div><!-- /panel-materials -->
+
+    <!-- MEASUREMENTS PANEL -->
+    <div class="config-body" id="panel-measurements" style="display:none;padding:0;">
+
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0;overflow:hidden;height:100%;">
+
+          <div style="flex:1;overflow-y:auto;padding:28px 28px 16px;" id="meas-form-scroll">
+
+            <div style="font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink);margin-bottom:18px;">Hoodie Measurements</div>
+
+            <form id="meas-form" novalidate>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                <div style="display:flex;flex-direction:column;">
+                  <label style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:5px;">Email Address</label>
+                  <input type="email" id="mf-email" name="email" placeholder="your@email.com" style="padding:8px 10px;background:var(--white);border:1px solid var(--border-mid);border-radius:2px;color:var(--ink);font-size:12px;font-family:'Jost',sans-serif;outline:none;">
+                </div>
+                <div style="display:flex;flex-direction:column;">
+                  <label style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:5px;">Person ID</label>
+                  <input type="text" id="mf-personId" name="personId" placeholder="TT-0001" readonly style="padding:8px 10px;background:var(--white);border:1px solid var(--border-mid);border-radius:2px;color:var(--ink);font-size:12px;font-family:'Jost',sans-serif;outline:none;opacity:0.65;cursor:not-allowed;">
+                </div>
+              </div>
+
+              <!-- Version selector — hidden until history loads -->
+              <div id="meas-version-row" style="display:none;margin-bottom:20px;">
+                <label style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:5px;display:block;">Saved Version</label>
+                <div style="position:relative;">
+                  <select id="meas-version-select" onchange="measLoadVersion(this.value)" style="width:100%;padding:8px 32px 8px 10px;background:var(--white);border:1px solid var(--border-mid);border-radius:2px;color:var(--ink);font-size:12px;font-family:'Jost',sans-serif;outline:none;appearance:none;-webkit-appearance:none;cursor:pointer;"></select>
+                  <svg style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg>
+                </div>
+              </div>
+
+              <!-- Loading measurements notification -->
+              <div id="meas-loading-notif">
+                <span class="meas-notif-dot"></span>
+                Loading measurements…
+              </div>
+
+              <div style="margin-bottom:20px;">
+                <div style="display:flex;flex-direction:column;max-width:200px;">
+                  <label style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:5px;">Height</label>
+                  <div style="position:relative;">
+                    <input type="number" id="mf-height" name="height" step="0.1" min="100" max="250" placeholder="0.0" onfocus="measFocusField('Height','height')" style="width:100%;padding:8px 32px 8px 10px;background:var(--white);border:1px solid var(--border-mid);border-radius:2px;color:var(--ink);font-size:12px;font-family:'Jost',sans-serif;outline:none;">
+                    <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--ink-faint);pointer-events:none;">cm</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-light);padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px;display:flex;align-items:center;gap:7px;">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4v10l-9 4-9-4V7z"/></svg>
+                Volumetric Measurements
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:20px;" id="meas-grid-vol"></div>
+
+              <div style="font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-light);padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px;display:flex;align-items:center;gap:7px;">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20M2 7l2 5-2 5M22 7l-2 5 2 5"/></svg>
+                Linear Measurements
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;" id="meas-grid-lin"></div>
+
+            </form>
+
+            <!-- Save / Continue button — label switches based on whether fields have changed -->
+            <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;padding-bottom:8px;">
+              <button type="button" onclick="measPrimaryAction(event)" id="meas-save-btn" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:inline-flex;align-items:center;gap:10px;">
+                <span id="meas-save-lbl">Continue to Summary</span>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
+                <div id="meas-save-spin" style="display:none;width:12px;height:12px;border:1.5px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.65s linear infinite;"></div>
+              </button>
+            </div>
+
+          </div><!-- /scroll -->
+
+
+
+        </div>
+
+    </div><!-- /panel-measurements -->
+
+    <!-- SUMMARY PANEL -->
+    <div class="config-body" id="panel-summary" style="display:none;">
+
+      <div class="section" style="border-bottom:none;">
+        <div class="section-label">Order Summary</div>
+        <div id="summary-rows" style="display:flex;flex-direction:column;gap:0;margin-bottom:28px;"></div>
+
+        <!-- Action buttons -->
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+          <button onclick="handleAddToCart()" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;width:100%;padding:13px 16px;background:transparent;border:1px solid var(--border-mid);border-radius:2px;color:var(--ink-mid);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:all 0.15s;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+            Add to Cart
+          </button>
+          <button onclick="handleOrderNow()" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;width:100%;padding:14px 16px;background:var(--ink);color:var(--white);border:none;border-radius:2px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:opacity 0.15s;">
+            Order Now
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="5,12 19,12"/><polyline points="13,6 19,12 13,18"/></svg>
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /panel-summary -->
+
+  </div><!-- /config-panel -->
+</div><!-- /app -->
+
+<script>
+const BASE = 'https://raw.githubusercontent.com/toom-design/tailortech-hoodie/main/';
+
+const state = {
+  gender: 'M',
+  fit: 'regular',      // regular / oversized
+  style: 'crewneck',   // crewneck / 2-piece-hood / 3-piece-hood / quarterzip
+  zipTrim: 'rib',      // rib / self — only relevant when style === 'quarterzip'
+  sleeve: 'regular',   // regular / raglan
+  pocket: 'kangaroo',  // kangaroo / welt / zipper / none
+  cuff: 'rib',         // rib / none
+  side: 'front',
+  zoom: 1.5,
+  panX: 0,
+  panY: 0
+};
+
+const urls = {
+  // Base and sleeve are single combined front+back images ("_FB") —
+  // confirmed from the real filenames — so they don't change with the
+  // front/back view toggle at all, unlike style/pocket/etc.
+  base:   f => BASE + `HOODIE_live_${f}-base_FB.webp`,
+  sleeve: s => BASE + `HOODIE_live_sleeve_${s}_FB.webp`,
+  // "Quarterzip" has its own rib/self trim sub-choice; the other three
+  // styles (crewneck, 2-piece-hood, 3-piece-hood) don't.
+  style:  (st, zt, side) => {
+    var v = side === 'back' ? 'B' : 'F';
+    if (st === 'quarterzip') return BASE + `HOODIE_live_quarterzip_${zt}_${v}.webp`;
+    return BASE + `HOODIE_live_${st}_${v}.webp`;
+  },
+  // Zipper, pocket, and cuff only exist as front-view assets — no back
+  // variant exists for any of them in the real file set.
+  zipper: () => BASE + 'HOODIE_live_zipper_F.webp',
+  pocket: p => p === 'none' ? null : BASE + `HOODIE_live_pocket_${p}_F.webp`,
+  cuff:   c => c === 'none' ? null : BASE + 'HOODIE_live_cuff_rib.webp'
+};
+
+function applyTransform() {
+  const el = document.getElementById('layer-stack');
+  el.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.zoom})`;
+}
+
+function zoomToRegion(scale, cx, cy) {
+  state.zoom = scale;
+  const stackW = 420, stackH = 620;
+  const pointX = (cx - 0.5) * stackW;
+  const pointY = (cy - 0.5) * stackH;
+  state.panX = -pointX * scale;
+  state.panY = -pointY * scale;
+  applyTransform();
+}
+
+function resetZoom() {
+  state.zoom = 1.5; state.panX = 0; state.panY = 0;
+  applyTransform();
+}
+
+function manualZoom(delta) {
+  state.zoom = Math.min(3, Math.max(0.5, state.zoom + delta));
+  applyTransform();
+}
+
+// Unlike Shirt's version, this handles a null url (e.g. pocket "None",
+// cuff "None") by hiding the layer rather than setting a broken src.
+function setImg(id, url) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  if (!url) { el.style.opacity = '0'; return; }
+  el.style.opacity = '1';
+  if (el.src !== url) el.src = url;
+}
+
+function initPreview() {
+  setImg('img-base', urls.base(state.fit));
+  setImg('img-sleeve', urls.sleeve(state.sleeve));
+  setImg('img-style', urls.style(state.style, state.zipTrim, state.side));
+  // Zipper, pocket, and cuff only exist for the front view.
+  var isFront = state.side !== 'back';
+  setImg('img-zipper', (isFront && state.style === 'quarterzip') ? urls.zipper() : '');
+  setImg('img-pocket', isFront ? urls.pocket(state.pocket) : '');
+  setImg('img-cuff', isFront ? urls.cuff(state.cuff) : '');
+}
+
+function preloadAll() {
+  const all = [
+    urls.base('regular'), urls.base('oversized'),
+    urls.sleeve('regular'), urls.sleeve('raglan'),
+    urls.style('crewneck', null, 'front'), urls.style('crewneck', null, 'back'),
+    urls.style('2-piece-hood', null, 'front'), urls.style('2-piece-hood', null, 'back'),
+    urls.style('3-piece-hood', null, 'front'), urls.style('3-piece-hood', null, 'back'),
+    urls.style('quarterzip', 'rib', 'front'), urls.style('quarterzip', 'rib', 'back'),
+    urls.style('quarterzip', 'self', 'front'), urls.style('quarterzip', 'self', 'back'),
+    urls.zipper(),
+    urls.pocket('kangaroo'), urls.pocket('welt'), urls.pocket('zipper'),
+    urls.cuff('rib'),
+  ];
+  let done = 0;
+  const finish = () => { if (++done >= all.length) document.getElementById('loading-overlay').classList.add('done'); };
+  all.forEach(u => { const i = new Image(); i.onload = i.onerror = finish; i.src = u; });
+  setTimeout(() => document.getElementById('loading-overlay').classList.add('done'), 5000);
+}
+
+function selectGender(el, v) {
+  el.closest('.pill-group').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  state.gender = v;
+}
+
+function selectFit(el, v) {
+  el.closest('.pill-group').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  state.fit = v;
+  setImg('img-base', urls.base(v));
+  resetZoom();
+}
+
+function selectSleeve(el, v) {
+  el.closest('.pill-group').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  state.sleeve = v;
+  setImg('img-sleeve', urls.sleeve(v));
+  resetZoom();
+}
+
+function selectStyle(el, v) {
+  el.closest('.pill-group').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  state.style = v;
+  // The rib/self trim sub-choice only makes sense for Quarterzip.
+  const trimSection = document.getElementById('section-zip-trim');
+  if (trimSection) trimSection.style.display = (v === 'quarterzip') ? '' : 'none';
+  setFrontBack('front');
+  zoomToRegion(2.4, 0.5, 0.3);
+}
+
+function selectZipTrim(el, v) {
+  el.closest('.pill-group').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  state.zipTrim = v;
+  setImg('img-style', urls.style(state.style, v, state.side));
+}
+
+function selectPocket(el, v) {
+  el.closest('.pill-group').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  state.pocket = v;
+  setFrontBack('front');
+  if (v !== 'none') {
+    zoomToRegion(2.6, 0.5, 0.4);
+  } else {
+    resetZoom();
+  }
+}
+
+function selectCuff(el, v) {
+  el.closest('.pill-group').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  state.cuff = v;
+  setFrontBack('front');
+  zoomToRegion(2.4, 0.20, 0.80);
+}
+
+function selectPillInGroup(el) {
+  el.closest('.pill-group').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function setFrontBack(side) {
+  state.side = side;
+  document.getElementById('btn-front').classList.toggle('active', side === 'front');
+  document.getElementById('btn-back').classList.toggle('active', side === 'back');
+  initPreview();
+}
+
+function setTechView(v) {
+  document.getElementById('btn-technical').classList.toggle('active', v === 'technical');
+  document.getElementById('btn-3d').classList.toggle('active', v === '3d');
+  document.getElementById('stage-viewport').style.display = v === 'technical' ? 'flex' : 'none';
+  const ph = document.getElementById('threed-placeholder');
+  ph.style.display = v === '3d' ? 'flex' : 'none';
+}
+
+function goToMaterials() {
+  const tab = document.querySelector('.tab:nth-child(2)');
+  switchTab(tab, 'panel-materials');
+  document.querySelector('.config-panel').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goToMeasurements() {
+  const tab = document.querySelector('.tab:nth-child(3)');
+  switchTab(tab, 'panel-measurements');
+  document.querySelector('.config-panel').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goToSummary() {
+  const tab = document.querySelector('.tab:nth-child(4)');
+  switchTab(tab, 'panel-summary');
+  buildSummary();
+  document.querySelector('.config-panel').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function switchTab(el, panelId) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  ['panel-design','panel-materials','panel-measurements','panel-summary'].forEach(id => {
+    document.getElementById(id).style.display = id === panelId ? '' : 'none';
+  });
+
+  var isMeas = (panelId === 'panel-measurements');
+
+  // ── Toggle 2:3 ratio for measurements tab ──
+  document.getElementById('main-app').classList.toggle('measurements-active', isMeas);
+
+  var viewToggle   = document.querySelector('.view-toggle');
+  var avatarStage  = document.getElementById('stage-viewport') && document.getElementById('stage-viewport').closest('.avatar-stage');
+  var shirtViewBar = document.getElementById('shirt-view-bar');
+  var measAvatar   = document.getElementById('meas-avatar-panel');
+
+  if (viewToggle)   viewToggle.style.display   = isMeas ? 'none' : '';
+  if (avatarStage)  avatarStage.style.display   = isMeas ? 'none' : '';
+  if (shirtViewBar) shirtViewBar.style.display  = isMeas ? 'none' : '';
+  if (measAvatar)   measAvatar.style.display    = isMeas ? 'flex'  : 'none';
+
+  if (isMeas) {
+    var di = document.getElementById('meas-diag-img');
+    if (di && !di.getAttribute('data-inited')) {
+      di.setAttribute('data-inited','1');
+      if (window.measFocusField) window.measFocusField('', null);
+    }
+    // Refresh summary rows in case config changed
+    if (typeof buildSummary === 'function') buildSummary();
+  }
+}
+
+function selectFabric(el, group, name) {
+  const grid = el.closest('.fabric-grid');
+  grid.querySelectorAll('.fabric-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function toggleFabricDetails(btn, event) {
+  event.stopPropagation();
+  const card   = btn.closest('.fabric-card');
+  const drawer = card.querySelector('.fc-details-drawer');
+  const isOpen = drawer.classList.contains('open');
+  drawer.classList.toggle('open', !isOpen);
+  btn.classList.toggle('open', !isOpen);
+  btn.querySelector('span').textContent = isOpen ? 'Details' : 'Hide';
+}
+
+function toggleCompPart(el, part) {
+  el.classList.toggle('selected');
+  const cuff   = document.getElementById('comp-part-cuff')?.classList.contains('selected');
+  const pocket = document.getElementById('comp-part-pocket')?.classList.contains('selected');
+  const body   = document.getElementById('comp-fabric-body');
+  if (body) body.style.display = (cuff || pocket) ? '' : 'none';
+}
+
+function filterFabrics(q, group) {
+  const grid = document.getElementById(`fabric-${group}-grid`);
+  const term = q.toLowerCase();
+  grid.querySelectorAll('.fabric-card').forEach(card => {
+    const name = (card.dataset.name || '').toLowerCase();
+    const code = (card.dataset.code || '').toLowerCase();
+    const comp = (card.dataset.comp || '').toLowerCase();
+    card.style.display = (name.includes(term) || code.includes(term) || comp.includes(term)) ? '' : 'none';
+  });
+}
+
+// ── Build a rich fabric card from a row object ──
+function buildFabricCard(fabric, group, isFirst) {
+  const name  = fabric.ProductName   || '';
+  const code  = fabric.FabricCode    || '';
+  const comp  = fabric.Composition   || '';
+  const color = fabric.Color         || '—';
+  const pat   = fabric.Pattern       || '—';
+  const wt    = fabric.Weight_gsm    ? fabric.Weight_gsm + ' g/m²' : '—';
+  const wd    = fabric.Width_cm      ? fabric.Width_cm   + ' cm'   : '—';
+  const face  = fabric['Photo FACE'] || '';
+  const back  = fabric['photo BACK'] || '';
+
+  const card = document.createElement('div');
+  card.className = 'fabric-card' + (isFirst ? ' selected' : '');
+  card.dataset.name  = name;
+  card.dataset.code  = code;
+  card.dataset.comp  = comp;
+  card.dataset.color = color;
+  card.onclick = () => selectFabric(card, group, name);
+
+  // Image strip (face + back)
+  const imgWrap = document.createElement('div');
+  imgWrap.className = 'fc-images';
+  imgWrap.style.position = 'relative';
+
+  const faceImg = document.createElement('img');
+  faceImg.className = 'fc-img'; faceImg.alt = name + ' face'; faceImg.loading = 'lazy';
+  if (face) faceImg.src = face; else faceImg.style.background = 'var(--cream-dark)';
+
+  imgWrap.append(faceImg);
+
+  // Card body
+  const body = document.createElement('div');
+  body.className = 'fc-body';
+
+  const nameEl = document.createElement('span'); nameEl.className = 'fname'; nameEl.textContent = name;
+  const codeEl = document.createElement('span'); codeEl.className = 'fcode'; codeEl.textContent = code;
+  const compEl = document.createElement('span'); compEl.className = 'fcomp'; compEl.textContent = comp;
+
+  const detBtn = document.createElement('button');
+  detBtn.className = 'fc-details-toggle';
+  detBtn.innerHTML = `<span>Details</span><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>`;
+  detBtn.onclick = (e) => toggleFabricDetails(detBtn, e);
+
+  body.append(nameEl, codeEl, compEl, detBtn);
+
+  // Expandable details drawer
+  const drawer = document.createElement('div');
+  drawer.className = 'fc-details-drawer';
+  [['Color', color], ['Pattern', pat], ['Composition', comp], ['Weight', wt], ['Width', wd]].forEach(([lbl, val]) => {
+    const item = document.createElement('div'); item.className = 'fc-detail-item';
+    const l = document.createElement('span'); l.className = 'fc-detail-label'; l.textContent = lbl;
+    const v = document.createElement('span'); v.className = 'fc-detail-val';   v.textContent = val;
+    item.append(l, v); drawer.appendChild(item);
+  });
+
+  card.append(imgWrap, body, drawer);
+  return card;
+}
+
+// ── Load fabrics from Google Sheet ──
+let _fabricsRawCache = null;
+
+async function _loadAllFabrics() {
+  if (_fabricsRawCache) return _fabricsRawCache;
+  const res  = await fetch(SHEET_URL + '?action=getFabrics');
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const json = await res.json();
+  if (!json.success) throw new Error(json.message || 'API error');
+  _fabricsRawCache = json.fabrics || [];
+  return _fabricsRawCache;
+}
+
+// Splits the Garments field into individual tags and checks for an EXACT
+// match — not a substring match, since e.g. "sweatshirt" would otherwise
+// wrongly match a plain "shirt" tag search. Tags are newline-separated
+// within a cell (confirmed against the real sheet data elsewhere in this
+// project) — commas/semicolons are handled too as a fallback.
+function hasGarmentTag(garmentsField, tag) {
+  var target = tag.trim().toLowerCase();
+  return String(garmentsField || '')
+    .split(/[\n\r,;]+/)
+    .some(function(t){ return t.trim().toLowerCase() === target; });
+}
+
+async function loadFabrics() {
+  const all = await _loadAllFabrics();
+  return all.filter(r => hasGarmentTag(r['Garments'], 'hoodie'));
+}
+
+async function renderFabricGrids() {
+  const mainGrid = document.getElementById('fabric-main-grid');
+  const compGrid = document.getElementById('fabric-comp-grid');
+  try {
+    const fabrics = await loadFabrics();
+
+    if (!fabrics.length) {
+      const msg = '<div class="fabric-error">No hoodie fabrics found. Check the Garments column in your sheet.</div>';
+      mainGrid.innerHTML = msg; compGrid.innerHTML = msg;
+    } else {
+      mainGrid.innerHTML = '';
+      fabrics.forEach((f, i) => mainGrid.appendChild(buildFabricCard(f, 'main', i === 0)));
+      compGrid.innerHTML = '';
+      fabrics.forEach((f, i) => compGrid.appendChild(buildFabricCard(f, 'comp', false)));
+    }
+  } catch (err) {
+    console.error('Fabric load error:', err);
+    const errHtml = `<div class="fabric-error">Could not load fabrics (${err.message}).</div>`;
+    mainGrid.innerHTML = errHtml; compGrid.innerHTML = errHtml;
+  }
+}
+
+initPreview();
+applyTransform();
+preloadAll();
+
+// ── Order Summary panel ──────────────────────────────────────
+
+function buildSummary() {
+  var rows = document.getElementById('summary-rows');
+  if (!rows) return;
+  var cfg = collectConfig();
+
+  // Helper: read a measurement input value
+  function mval(id) {
+    var el = document.getElementById('mf-' + id);
+    return (el && el.value && parseFloat(el.value) > 0) ? el.value + ' cm' : '';
+  }
+
+  var sections = [
+    {
+      label: 'Design',
+      rows: [
+        ['Garment',              'Hoodie'],
+        ['Gender',               cfg['GENDER']],
+        ['Fit',                  cfg['FIT']],
+        ['Style',                cfg['STYLE/SILHOUETTE']],
+        ['Sleeve',               cfg['SLEEVE STYLE']],
+        ['Front Pocket',         cfg['FRONT POCKETS']],
+        ['Cuff',                 cfg['SLEEVE CUFF']],
+      ]
+    },
+    {
+      label: 'Materials & Construction',
+      rows: [
+        ['Main Fabric',    cfg['MAIN FABRIC']],
+        ['Fabric Code',    cfg['CODE']],
+        ['Color',          cfg['color']],
+        ['Composition',    cfg['composition']],
+        ['Contrast Fabric',cfg['CONTRAST FABRIC'] === 'None' ? '' : cfg['CONTRAST FABRIC']],
+        ['Contrast On',    cfg['CONTRAST PLACEMENT']],
+      ]
+    },
+    {
+      label: 'Measurements',
+      rows: [
+        ['Height',                    mval('height')],
+        ['Bust Girth',                mval('bustGirth')],
+        ['Waist Girth',               mval('waistGirth')],
+        ['Hip Girth',                 mval('hipGirth')],
+        ['Neck Base Girth',           mval('neckBaseGirth')],
+        ['Upper Bicep Girth',         mval('upperBicepGirth')],
+        ['Wrist Girth',               mval('wristGirth')],
+        ['Shoulder Length',           mval('shoulderLength')],
+        ['Outer Arm Length',          mval('outerArmLength')],
+        ['Upper Arm Length',          mval('upperArmLength')],
+        ['Back Neck to Waist',        mval('backNeckToWaist')],
+        ['Across Back Shoulder',      mval('acrossBackShoulderWidth')],
+        ['Across Back Width',         mval('acrossBackWidth')],
+        ['Hoodie Length',             mval('shirtLength')],
+      ]
+    }
+  ];
+
+  function selText(sel) {
+    var el = document.querySelector(sel);
+    return el ? el.textContent.trim() : '';
+  }
+
+  rows.innerHTML = sections.map(function(sec) {
+    var visibleRows = sec.rows.filter(function(r){ return r[1] && r[1].toString().trim(); });
+    if (!visibleRows.length) return '';
+    return '<div style="margin-bottom:4px;">'
+      + '<div style="font-size:9px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint);padding:14px 0 6px;border-bottom:1px solid var(--border);">' + sec.label + '</div>'
+      + visibleRows.map(function(r) {
+          return '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--border);">'
+            + '<span style="font-family:\'Jost\',sans-serif;font-size:11px;color:var(--ink-light);letter-spacing:0.03em;flex-shrink:0;padding-right:12px;">' + r[0] + '</span>'
+            + '<span style="font-family:\'Jost\',sans-serif;font-size:11px;font-weight:500;color:var(--ink);text-align:right;letter-spacing:0.02em;">' + r[1] + '</span>'
+            + '</div>';
+        }).join('')
+      + '</div>';
+  }).join('') + '<div style="height:16px;"></div>';
+}
+
+async function handleAddToCart() {
+  if (!isLoggedIn()) { redirectToAuthWithPendingOrder('InCart', 'cart'); return; }
+  var btn = document.querySelector('[onclick="handleAddToCart()"]');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  try {
+    await ensurePersonId();
+    var techPackUrl = await getOrCaptureSilhouette();
+    await _saveViaIframe('InCart', { 'tech pack': techPackUrl });
+    toast('Added to cart!');
+    setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/cart'; }, 1800);
+  } catch(e) {
+    console.error('handleAddToCart:', e);
+    toast('Could not add to cart: ' + e.message, 'err');
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+  }
+}
+
+async function handleOrderNow() {
+  if (!isLoggedIn()) { redirectToAuthWithPendingOrder('Pending', 'order'); return; }
+  var btn = document.querySelector('[onclick="handleOrderNow()"]');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  try {
+    await ensurePersonId();
+    var techPackUrl = await getOrCaptureSilhouette();
+    var res = await _saveViaIframe('Pending', { 'tech pack': techPackUrl });
+    toast('Order placed — #' + (res && res.orderNumber ? res.orderNumber : '') + ' — going to checkout…');
+    setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/checkout'; }, 1800);
+  } catch(e) {
+    console.error('handleOrderNow:', e);
+    toast('Could not place order: ' + e.message, 'err');
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+  }
+}
+
+// ── On-screen debug panel ──
+function _debugLog(msg, isErr) {
+  var panel = document.getElementById('tt-debug');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'tt-debug';
+    panel.style.cssText = 'position:fixed;bottom:0;left:0;right:0;max-height:200px;overflow-y:auto;' +
+      'background:#111;color:#0f0;font:12px/1.6 monospace;padding:8px 12px 8px;z-index:99999;' +
+      'border-top:2px solid #0f0;';
+    var x = document.createElement('button');
+    x.textContent = 'close';
+    x.style.cssText = 'float:right;background:none;border:1px solid #0f0;color:#0f0;cursor:pointer;font:11px monospace;padding:1px 7px;margin-left:8px;';
+    x.onclick = function(){ panel.remove(); };
+    panel.appendChild(x);
+    document.body.appendChild(panel);
+  }
+  var line = document.createElement('div');
+  line.style.color = isErr ? '#f66' : '#0f0';
+  line.textContent = new Date().toISOString().slice(11,19) + '  ' + msg;
+  panel.appendChild(line);
+  panel.scrollTop = panel.scrollHeight;
+}
+
+// ── Core save — JSONP script tag gets real response AND bypasses CORS ──
+function _saveToSheet(data) {
+  _debugLog('saving… keys: ' + Object.keys(data).join(', '));
+  return new Promise(function(resolve, reject) {
+    var cbName = '__ttSave_' + Date.now();
+
+    // Sanitize: stringify first, then strip lone surrogates from the raw JSON string
+    var json;
+    try { json = JSON.stringify(data); }
+    catch(e) { json = '{}'; }
+    json = json.replace(/[\uD800-\uDFFF]/g, '');
+    json = json.replace(/\u00A0/g, ' ');
+    json = json.replace(/%(?![0-9A-Fa-f]{2})/g, '%25');
+    try { json = json.normalize('NFC'); } catch(e) {}
+    var payload;
+    try {
+      payload = encodeURIComponent(json);
+    } catch(encErr) {
+      _debugLog('encode still failing, stripping to ASCII: ' + encErr.message, true);
+      payload = encodeURIComponent(json.replace(/[^\x00-\x7F]/g, '?'));
+    }
+    var url = SHEET_URL + '?payload=' + payload + '&callback=' + cbName;
+    _debugLog('URL length: ' + url.length + '  cb: ' + cbName);
+
+    var script = document.createElement('script');
+    var timer  = setTimeout(function() {
+      cleanup();
+      var m = 'TIMEOUT 12s — script never called back';
+      _debugLog(m, true);
+      reject(new Error(m));
+    }, 12000);
+
+    function cleanup() {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (script.parentNode) document.body.removeChild(script);
+    }
+
+    window[cbName] = function(res) {
+      _debugLog('response: ' + JSON.stringify(res));
+      cleanup();
+      if (res && res.success) { _debugLog('OK — saved'); resolve(res); }
+      else {
+        var m = res && res.message ? res.message : 'success:false (no message)';
+        _debugLog('FAIL: ' + m, true);
+        reject(new Error(m));
+      }
+    };
+
+    script.onerror = function() {
+      cleanup();
+      var m = 'script.onerror — URL blocked or unreachable';
+      _debugLog(m, true);
+      reject(new Error(m));
+    };
+
+    document.body.appendChild(script);
+    script.src = url;
+    _debugLog('script tag injected, waiting…');
+  });
+}
+
+function _saveViaIframe(status, extra) {
+  var data = collectConfig();
+  data['Status'] = status;
+  data['Created At'] = new Date().toISOString();
+  data['action'] = 'saveHoodie';
+  data['garment'] = 'hoodies';
+  if (extra) { for (var k in extra) data[k] = extra[k]; }
+  return _saveToSheet(data);
+}
+
+// ── Google Sheets Integration ──
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
+
+// Load fabric grids now that SHEET_URL is defined
+renderFabricGrids();
+
+function collectConfig() {
+  const selText = (selector) => document.querySelector(selector)?.textContent.trim() || '';
+  const sectionPill = (labelText) => {
+    const sections = document.querySelectorAll('.section');
+    for (const s of sections) {
+      if (s.querySelector('.section-label')?.textContent.trim() === labelText)
+        return s.querySelector('.pill.selected')?.textContent.trim() || '';
+    }
+    return '';
+  };
+
+  return {
+    'Order Number':        '',
+    'Person ID':           window._currentPersonId || '',
+    'Email':               (window._fb && window._fb.auth && window._fb.auth.currentUser
+                              ? (window._fb.auth.currentUser.email || '') : ''),
+    'Status':              'New',
+    'Created At':          new Date().toISOString(),
+    'Terms Accepted':      '',
+    'Marketing Consent':   '',
+    'GENDER':              sectionPill('Gender'),
+
+    'FIT':                 sectionPill('Fit'),
+    'STYLE/SILHOUETTE':    sectionPill('Style'),
+    'CLOSURE':             state.style === 'quarterzip' ? 'Zipper' : 'N/A',
+    'NECK':                sectionPill('Style'),
+    'FRONT POCKETS':       sectionPill('Front Pocket'),
+    'EXTRA POCKETS':       'N/A',
+    'HEM/FINISH':          sectionPill('Cuff'),
+    'BACK':                'N/A',
+
+    'SLEEVE HEAD':         'N/A',
+    'SLEEVE STYLE':        sectionPill('Sleeve'),
+    'CONSTRUCTION':        'N/A',
+    'SLEEVE BUTTONS':      'N/A',
+    'SLEEVE CUFF':         sectionPill('Cuff'),
+
+    'WAISTBAND STYLE':     'N/A',
+    'WAIST ADJUSTMENT':    'N/A',
+    'RISE':                'N/A',
+
+    'MAIN FABRIC':         selText('#fabric-main-grid .fabric-card.selected .fname'),
+    'CODE':                selText('#fabric-main-grid .fabric-card.selected .fcode'),
+    'color':               document.querySelector('#fabric-main-grid .fabric-card.selected')?.dataset.color || '',
+    'composition':         document.querySelector('#fabric-main-grid .fabric-card.selected')?.dataset.comp  || '',
+    'CONTRAST FABRIC':     (() => {
+                             const body = document.getElementById('comp-fabric-body');
+                             if (!body || body.style.display === 'none') return 'None';
+                             return selText('#fabric-comp-grid .fabric-card.selected .fname') || '';
+                           })(),
+    'CONTRAST CODE':       (() => {
+                             const body = document.getElementById('comp-fabric-body');
+                             if (!body || body.style.display === 'none') return '';
+                             return selText('#fabric-comp-grid .fabric-card.selected .fcode') || '';
+                           })(),
+    'CONTRAST PLACEMENT':  (() => {
+                             const body = document.getElementById('comp-fabric-body');
+                             if (!body || body.style.display === 'none') return '';
+                             const parts = [];
+                             if (document.getElementById('comp-part-cuff')?.classList.contains('selected'))   parts.push('Cuff');
+                             if (document.getElementById('comp-part-pocket')?.classList.contains('selected')) parts.push('Pocket');
+                             return parts.join(', ');
+                           })(),
+
+    'STRUCTURE':           'N/A',
+    'LINING FABRIC':       'N/A',
+    'LINING CODE':         '',
+    'LINING TYPE':         'N/A',
+  };
+}
+window.collectConfig = collectConfig;
+
+async function submitOrder() {
+  if (!isLoggedIn()) { redirectToAuthWithPendingOrder('New', 'save'); return; }
+  const btn   = document.getElementById('submit-btn');
+  const label = document.getElementById('submit-label');
+  if (btn)   btn.disabled = true;
+  if (label) label.textContent = 'Saving…';
+
+  try {
+    await ensurePersonId();
+    const data = collectConfig();
+    data['action'] = 'saveHoodie';
+    data['garment'] = 'hoodies';
+    await _saveToSheet(data);
+
+    if (label) label.textContent = 'Save Configuration';
+    if (btn)   btn.disabled = false;
+    toast('Configuration saved!');
+    setTimeout(function() { window.location.href = 'https://tailortech.toom.design/dashboard'; }, 2000);
+
+  } catch (err) {
+    if (label) label.textContent = 'Save Configuration';
+    if (btn)   btn.disabled = false;
+    // Show the real error so we can debug it
+    toast('Save failed: ' + err.message, 'err');
+    console.error('submitOrder error:', err);
+  }
+}
+
+function showFeedback(msg, color) {
+  const el = document.getElementById('submit-feedback');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.background = color + '18';
+  el.style.color = color;
+  el.style.border = `1px solid ${color}40`;
+  setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+
+// ═══════════════════════════════════════════════════════════
+// MEASUREMENTS PANEL ENGINE — fields loaded live from measurements-9.html
+// ═══════════════════════════════════════════════════════════
+(function() {
+  'use strict';
+
+  var SHEETS_API  = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
+  var RAW_BASE    = 'https://raw.githubusercontent.com/toom-design/measurements/main/';
+  var FRONT_IMG   = RAW_BASE + 'MEASUREMENTS_front.png';
+  var MEAS_URL    = 'https://tailortech.toom.design/measurements';
+
+  // Fallback field definitions (used if fetch fails)
+  var FALLBACK_FIELD_IMG = {
+    'height':                  'MEASUREMENTS_Height.png',
+    'bustGirth':               'MEASUREMENTS_Bust girth.png',
+    'calfGirth':               'MEASUREMENTS_Calf girth.png',
+    'hipGirth':                'MEASUREMENTS_Hip girth.png',
+    'kneeGirth':               'MEASUREMENTS_Knee girth.png',
+    'neckBaseGirth':           'MEASUREMENTS_Neck base girth.png',
+    'pantWaist':               'MEASUREMENTS_Pant waist.png',
+    'upperBicepGirth':         'MEASUREMENTS_Upper bicep girth.png',
+    'waistGirth':              'MEASUREMENTS_Waist girth.png',
+    'wristGirth':              'MEASUREMENTS_Wrist girth.png',
+    'outerArmLength':          'MEASUREMENTS_Outer arm length.png',
+    'backNeckToWaist':         'MEASUREMENTS_Back neck point to waist.png',
+    'shoulderLength':          'MEASUREMENTS_Shoulder length.png',
+    'acrossBackShoulderWidth': 'MEASUREMENTS_Across back shoulder width.png',
+    'acrossBackWidth':         'MEASUREMENTS_Across back width.png',
+    'upperArmLength':          'MEASUREMENTS_Upper arm length.png',
+    'shirtLength':             'MEASUREMENTS_Shirt length.png',
+  };
+  var FALLBACK_SHIRT_KEYS = new Set([
+    'neckBaseGirth','height','bustGirth','waistGirth','hipGirth','backNeckToWaist',
+    'acrossBackWidth','shoulderLength','outerArmLength','upperArmLength','shirtLength',
+    'acrossBackShoulderWidth','upperBicepGirth','wristGirth'
+  ]);
+  var FALLBACK_VOL = [
+    ['bustGirth','Bust girth (cm)'],['waistGirth','Waist girth (cm)'],['hipGirth','Hip girth (cm)'],
+    ['upperBicepGirth','Upper bicep girth (cm)'],['wristGirth','Wrist girth (cm)'],['neckBaseGirth','Neck base girth (cm)'],
+  ];
+  var FALLBACK_LIN = [
+    ['outerArmLength','Outer arm length (cm)'],['shoulderLength','Shoulder length (cm)'],
+    ['backNeckToWaist','Back neck point to waist (cm)'],['acrossBackShoulderWidth','Across back shoulder width (cm)'],
+    ['acrossBackWidth','Across back width (cm)'],['upperArmLength','Upper arm length (cm)'],
+    ['shirtLength','Shirt length (cm)'],
+  ];
+
+  // Active field definitions (replaced by fetched data if available)
+  var FIELD_IMG   = FALLBACK_FIELD_IMG;
+  var SHIRT_VOL   = FALLBACK_VOL;
+  var SHIRT_LIN   = FALLBACK_LIN;
+
+  // ── Fetch & parse field definitions from live measurements page ──
+  function loadFieldDefs() {
+    return fetch(MEAS_URL)
+      .then(function(r) { return r.text(); })
+      .then(function(html) {
+        // Extract FIELD_IMG object
+        var fiMatch = html.match(/var FIELD_IMG\s*=\s*(\{[\s\S]*?\});/);
+        if (fiMatch) {
+          try { FIELD_IMG = (new Function('return ' + fiMatch[1]))(); } catch(e) {}
+        }
+
+        // Extract VOL and LIN arrays
+        var volMatch = html.match(/const VOL\s*=\s*(\[[\s\S]*?\]);/);
+        var linMatch = html.match(/const LIN\s*=\s*(\[[\s\S]*?\]);/);
+
+        // Extract shirt GARMENT_SETS keys
+        var gsMatch = html.match(/shirt\s*:\s*new Set\(\[([\s\S]*?)\]\)/);
+        var shirtKeys = null;
+        if (gsMatch) {
+          try {
+            shirtKeys = new Set(gsMatch[1].replace(/['"]/g,'').split(',').map(function(s){ return s.trim(); }).filter(Boolean));
+          } catch(e) {}
+        }
+
+        if (volMatch && shirtKeys) {
+          try {
+            var allVol = (new Function('return ' + volMatch[1]))();
+            SHIRT_VOL = allVol.filter(function(f){ return shirtKeys.has(f[0]); });
+          } catch(e) {}
+        }
+        if (linMatch && shirtKeys) {
+          try {
+            var allLin = (new Function('return ' + linMatch[1]))();
+            SHIRT_LIN = allLin.filter(function(f){ return shirtKeys.has(f[0]); });
+          } catch(e) {}
+        }
+      })
+      .catch(function() {
+        // silently use fallbacks
+      });
+  }
+
+  var _diagImg = null, _diagLabel = null, _diagActive = null;
+
+  function initMeasDiag() {
+    _diagImg   = document.getElementById('meas-diag-img');
+    _diagLabel = document.getElementById('meas-diag-label');
+    if (!_diagImg) return;
+    _diagImg.onload = function() { _diagImg.style.opacity = '1'; _diagLabel.style.opacity = '0'; };
+    _diagImg.src = FRONT_IMG;
+    _diagActive  = FRONT_IMG;
+  }
+
+  function showMeasDiagImage(url, labelText) {
+    if (!_diagImg) return;
+    if (url === _diagActive) return;
+    _diagActive = url;
+    _diagImg.style.opacity = '0';
+    _diagImg.style.transform = 'scale(0.97)';
+    setTimeout(function() {
+      _diagImg.onload = function() {
+        _diagImg.style.opacity = '1';
+        _diagImg.style.transform = '';
+        _diagLabel.textContent = labelText || '';
+        _diagLabel.style.opacity = labelText ? '1' : '0';
+      };
+      _diagImg.onerror = function() {
+        _diagImg.src = FRONT_IMG; _diagLabel.style.opacity = '0'; _diagActive = FRONT_IMG;
+      };
+      _diagImg.src = url;
+    }, 200);
+  }
+
+  window.measFocusField = function(label, key) {
+    if (!_diagImg) initMeasDiag();
+    if (key && FIELD_IMG[key]) showMeasDiagImage(RAW_BASE + encodeURIComponent(FIELD_IMG[key]), label);
+    else showMeasDiagImage(FRONT_IMG, '');
+  };
+
+  function makeField(key, label) {
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;';
+    var lbl = document.createElement('label');
+    lbl.style.cssText = 'font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:5px;';
+    lbl.textContent = label;
+    wrap.appendChild(lbl);
+    var inp = document.createElement('input');
+    inp.type='number'; inp.id='mf-'+key; inp.name=key;
+    inp.step='0.1'; inp.min='0'; inp.max='999'; inp.placeholder='0.0';
+    inp.style.cssText = 'padding:8px 10px;background:var(--white);border:1px solid var(--border-mid);border-radius:2px;color:var(--ink);font-size:12px;font-family:\'Jost\',sans-serif;outline:none;width:100%;';
+    inp.addEventListener('focus', function(){ window.measFocusField(label, key); });
+    wrap.appendChild(inp);
+    return wrap;
+  }
+
+  function buildFields() {
+    var gv = document.getElementById('meas-grid-vol');
+    var gl = document.getElementById('meas-grid-lin');
+    if (!gv || !gl) return;
+    gv.innerHTML = ''; gl.innerHTML = '';
+    SHIRT_VOL.forEach(function(f){ gv.appendChild(makeField(f[0], f[1])); });
+    SHIRT_LIN.forEach(function(f){ gl.appendChild(makeField(f[0], f[1])); });
+    initMeasDiag();
+    _attachMeasDirtyListeners();
+  }
+
+  function sheetsReq(action, payload) {
+    payload = payload || {};
+    if (action === 'getMeasurements') {
+      return new Promise(function(resolve, reject) {
+        var cbName = '__ttMeas_' + Date.now();
+        var encoded = encodeURIComponent(JSON.stringify(Object.assign({action:action}, payload)));
+        var url = SHEETS_API + '?action=' + action + '&payload=' + encoded + '&callback=' + cbName;
+        var script = document.createElement('script');
+        var timer = setTimeout(function(){ cleanup(); resolve({success:false,records:[],message:'timeout'}); }, 10000);
+        function cleanup(){ clearTimeout(timer); delete window[cbName]; if(script.parentNode) document.body.removeChild(script); }
+        window[cbName] = function(res){ cleanup(); resolve(res); };
+        script.onerror = function(){ cleanup(); reject(new Error('Script load failed')); };
+        script.src = url; document.body.appendChild(script);
+      });
+    }
+    return fetch(SHEETS_API, {method:'POST', body:JSON.stringify(Object.assign({action:action}, payload))}).then(function(r){ return r.json(); });
+  }
+
+  function prefillMeasurements(rec) {
+    if (!rec) return;
+    var hEl = document.getElementById('mf-height');
+    var hVal = rec['Height [CM]'] || rec['height'] || '';
+    if (hEl && hVal && hVal !== '0') hEl.value = parseFloat(hVal);
+    Object.keys(rec).forEach(function(key) {
+      var val = rec[key];
+      if (!val || val === '0' || val === '0.0' || val === '') return;
+      var el = document.getElementById('mf-' + key);
+      if (el && el.type === 'number') { var num = parseFloat(val); if (!isNaN(num) && num > 0) el.value = num; }
+    });
+    // Prefilling from saved data is not a user change — reset dirty flag
+    _measDirty = false;
+    if (typeof updateMeasBtn === 'function') updateMeasBtn();
+  }
+
+  var _measRecords = [];
+
+  function loadHistory(email) {
+    if (!email) return;
+    var notif = document.getElementById('meas-loading-notif');
+    sheetsReq('getMeasurements', {email: email}).then(function(res) {
+      if (notif) notif.classList.remove('visible');
+      if (!res || !res.success || !res.records || res.records.length === 0) return;
+      _measRecords = res.records;
+      var sel = document.getElementById('meas-version-select');
+      var row = document.getElementById('meas-version-row');
+      if (!sel || !row) return;
+      sel.innerHTML = res.records.map(function(rec, i) {
+        var date = rec['Created At'] || rec['Updated At'] || rec['dateTime'] || ('Version ' + (res.records.length - i));
+        return '<option value="' + i + '">' + (i === 0 ? '⬤ Latest — ' : 'Version ' + (res.records.length - i) + ' — ') + date + '</option>';
+      }).join('');
+      sel.value = '0';
+      row.style.display = 'block';
+      prefillMeasurements(res.records[0]);
+    }).catch(function() { if (notif) notif.classList.remove('visible'); });
+  }
+
+  window.measLoadVersion = function(idx) {
+    var rec = _measRecords[parseInt(idx, 10)];
+    if (rec) prefillMeasurements(rec);
+  };
+
+  window.measHandleSubmit = function(e) {
+    if (e) e.preventDefault();
+    var form = document.getElementById('meas-form');
+    if (!form) return;
+    var btn = document.getElementById('meas-save-btn');
+    var lbl = document.getElementById('meas-save-lbl');
+    var sp  = document.getElementById('meas-save-spin');
+    btn.disabled = true; lbl.style.display = 'none'; sp.style.display = 'block';
+    var data = { garment: 'hoodie', dateTime: new Date().toLocaleString() };
+    var fd = new FormData(form);
+    fd.forEach(function(v, k){ if (v) data[k] = v; });
+    var email = document.getElementById('mf-email').value.trim();
+    sheetsReq('saveMeasurement', { email: email, data: data })
+      .then(function(res) {
+        if (res && res.success) { toast('Measurements saved!'); }
+        else { toast('Could not save — check connection', 'err'); }
+      })
+      .catch(function(){ toast('Network error', 'err'); })
+      .finally(function(){ btn.disabled = false; lbl.style.display = ''; sp.style.display = 'none'; });
+  };
+
+  window.measHandleSubmitAndContinue = function(e) {
+    if (e) e.preventDefault();
+    var form = document.getElementById('meas-form');
+    if (!form) return;
+    var btn = document.getElementById('meas-save-btn');
+    var lbl = document.getElementById('meas-save-lbl');
+    var sp  = document.getElementById('meas-save-spin');
+    btn.disabled = true; lbl.style.display = 'none'; sp.style.display = 'block';
+    var data = { garment: 'hoodie', dateTime: new Date().toLocaleString() };
+    var fd = new FormData(form);
+    fd.forEach(function(v, k){ if (v) data[k] = v; });
+    var email = document.getElementById('mf-email').value.trim();
+    sheetsReq('saveMeasurement', { email: email, data: data })
+      .then(function(res) {
+        if (res && res.success) { toast('Measurements saved!'); }
+        else { toast('Could not save — check connection', 'err'); }
+      })
+      .catch(function(){ toast('Network error', 'err'); })
+      .finally(function(){
+        btn.disabled = false; lbl.style.display = ''; sp.style.display = 'none';
+        _measDirty = false;
+        updateMeasBtn();
+        if (typeof goToSummary === 'function') goToSummary();
+      });
+  };
+
+  // ── Dirty tracking: watch all measurement inputs ──
+  var _measDirty = false;
+
+  function _attachMeasDirtyListeners() {
+    var form = document.getElementById('meas-form');
+    if (!form) return;
+    form.addEventListener('input', function() {
+      if (!_measDirty) {
+        _measDirty = true;
+        updateMeasBtn();
+      }
+    });
+  }
+
+  window.updateMeasBtn = function() {
+    var lbl = document.getElementById('meas-save-lbl');
+    if (!lbl) return;
+    lbl.innerHTML = _measDirty ? 'Save Measurements &amp; Continue' : 'Continue to Summary';
+  };
+
+  window.measPrimaryAction = function(e) {
+    if (_measDirty) {
+      window.measHandleSubmitAndContinue(e);
+    } else {
+      if (typeof goToSummary === 'function') goToSummary();
+    }
+  };
+
+  window.measResetForm = function() {
+    var form = document.getElementById('meas-form');
+    if (form) form.reset();
+  };
+
+  window._measPanelReady = false;
+  window._measInitForUser = function(user, personId) {
+    if (window._measPanelReady) return;
+    window._measPanelReady = true;
+    var emailEl = document.getElementById('mf-email');
+    var pidEl   = document.getElementById('mf-personId');
+    if (emailEl && user.email) { emailEl.value = user.email; emailEl.readOnly = true; emailEl.style.opacity = '0.65'; emailEl.style.cursor = 'not-allowed'; }
+    if (pidEl && personId)     { pidEl.value = personId; }
+    var notif = document.getElementById('meas-loading-notif');
+    if (notif) notif.classList.add('visible');
+    loadHistory(user.email);
+  };
+
+  // Boot: fetch live field defs, then build fields
+  function boot() {
+    loadFieldDefs().then(function() { buildFields(); });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+
+})();
+</script>
+
+<!-- Version badge -->
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.0.0</div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const _app = initializeApp({
+  apiKey:            "AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY",
+  authDomain:        "tailortech-accounts.firebaseapp.com",
+  projectId:         "tailortech-accounts",
+  storageBucket:     "tailortech-accounts.firebasestorage.app",
+  messagingSenderId: "137614433833",
+  appId:             "1:137614433833:web:c78ea40b0d04ba89f3c638"
+});
+const _auth = getAuth(_app);
+window._fb = { auth: _auth, signOut };
+
+onAuthStateChanged(_auth, function(user) {
+  if (user) {
+    setAccountPopover(user);
+    document.getElementById('nav-av').style.display      = '';
+    document.getElementById('nav-signout').style.display = '';
+    document.getElementById('nav-login').style.display   = 'none';
+    if (!window._currentPersonId) {
+      getClientJSONP(user.email, user.uid, function(res) {
+        if (res && res.success && res.client && res.client['Person ID']) {
+          window._currentPersonId = res.client['Person ID'];
+          var el = document.getElementById('dd-pid');
+          if (el) el.textContent = window._currentPersonId;
+          if (window._measInitForUser) window._measInitForUser(user, window._currentPersonId);
+        } else {
+          if (window._measInitForUser) window._measInitForUser(user, '');
+        }
+        if (window.resumePendingOrderIfAny) window.resumePendingOrderIfAny(user);
+      });
+    } else {
+      if (window._measInitForUser) window._measInitForUser(user, window._currentPersonId);
+      if (window.resumePendingOrderIfAny) window.resumePendingOrderIfAny(user);
+    }
+  } else {
+    var av = document.getElementById('nav-av');
+    if (av) { av.style.display = 'none'; av.innerHTML = ''; }
+    document.getElementById('nav-signout').style.display = 'none';
+    document.getElementById('nav-login').style.display   = '';
+    var dd = document.getElementById('nav-dd');
+    if (dd) dd.style.display = 'none';
+  }
+});
+</script>
+
+<script>
+function toggleDropdown(e) {
+  if (e) e.stopPropagation();
+  var d = document.getElementById('nav-dd');
+  if (!d) return;
+  d.style.display = (d.style.display === 'block') ? 'none' : 'block';
+}
+
+document.addEventListener('click', function(e) {
+  var d  = document.getElementById('nav-dd');
+  var av = document.getElementById('nav-av');
+  if (d && d.style.display === 'block' && !d.contains(e.target) && av && !av.contains(e.target))
+    d.style.display = 'none';
+});
+
+function goToAuth() {
+  try { sessionStorage.setItem('tt_return_url', window.location.href); } catch(e) {}
+  window.location.href = 'https://tailortech.toom.design/auth';
+}
+
+// ── Silhouette cache: same mechanism as Trousers/Suits, adapted to Shirt's
+// own layer IDs and state fields.
+function slug(v) { return String(v == null ? '' : v).trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'x'; }
+
+function buildSilhouetteKey() {
+  var s = state;
+  return 'SH_gender-' + slug(s.gender) + '_fit-' + slug(s.fit) +
+    '_placket-' + slug(s.placket) + '_collar-' + slug(s.collar) + '_cuffs-' + slug(s.cuffs);
+}
+
+function drawImageContain(ctx, img, boxW, boxH) {
+  var imgRatio = img.naturalWidth / img.naturalHeight;
+  var boxRatio = boxW / boxH;
+  var drawW, drawH, offsetX, offsetY;
+  if (imgRatio > boxRatio) {
+    drawW = boxW; drawH = boxW / imgRatio;
+    offsetX = 0; offsetY = (boxH - drawH) / 2;
+  } else {
+    drawH = boxH; drawW = boxH * imgRatio;
+    offsetX = (boxW - drawW) / 2; offsetY = 0;
+  }
+  ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
+}
+
+function captureTechPackImage() {
+  return new Promise(function(resolve, reject) {
+    var layerIds = ['img-fit','img-placket','img-collar','img-cuffs'];
+    var W = 760, H = 1160;
+    var canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    var ctx = canvas.getContext('2d');
+
+    var toDraw = layerIds
+      .map(function(id){ return document.getElementById(id); })
+      .filter(function(el){ return el && el.src && el.style.opacity !== '0'; });
+
+    if (toDraw.length === 0) { resolve(canvas.toDataURL('image/png')); return; }
+
+    var loaded = 0, failed = false;
+    toDraw.forEach(function(el) {
+      var img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function() {
+        if (failed) return;
+        drawImageContain(ctx, img, W, H);
+        loaded++;
+        if (loaded === toDraw.length) resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = function(){ failed = true; reject(new Error('Failed to load layer: ' + el.id)); };
+      img.src = el.src;
+    });
+  });
+}
+
+function getOrCaptureSilhouette() {
+  var key = buildSilhouetteKey();
+  return fetch(SHEET_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'checkSilhouetteCache', key: key })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(res) {
+    if (res && res.success && res.cached) return res.url;
+    return captureTechPackImage().then(function(dataUrl) {
+      return fetch(SHEET_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'saveSilhouetteCache', key: key, imageBase64: dataUrl })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(saveRes){ return (saveRes && saveRes.success) ? saveRes.url : ''; });
+    });
+  })
+  .catch(function(err) {
+    console.error('Silhouette cache/capture failed:', err);
+    return '';
+  });
+}
+
+function isLoggedIn() {
+  return !!(window._fb && window._fb.auth && window._fb.auth.currentUser);
+}
+function redirectToAuthWithPendingOrder(status, intent) {
+  try {
+    var data = collectConfig();
+    data['Status']     = status;
+    data['garment']    = 'hoodies';
+    data['action']     = 'saveHoodie';
+    data['Created At'] = new Date().toISOString();
+    sessionStorage.setItem('tt_pending_order', JSON.stringify({ data: data, intent: intent }));
+    sessionStorage.setItem('tt_return_url', window.location.href);
+  } catch(e) {}
+  toast('Please sign in to continue — your configuration is saved');
+  setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/auth.html'; }, 900);
+}
+function resumePendingOrderIfAny(user) {
+  var raw;
+  try { raw = sessionStorage.getItem('tt_pending_order'); } catch(e) { raw = null; }
+  if (!raw) return;
+  try { sessionStorage.removeItem('tt_pending_order'); } catch(e) {}
+
+  var pending;
+  try { pending = JSON.parse(raw); } catch(e) { return; }
+  if (!pending || !pending.data) return;
+
+  pending.data['Person ID'] = window._currentPersonId || '';
+  pending.data['Email']     = user.email || pending.data['Email'] || '';
+
+  _saveToSheet(pending.data).then(function(res) {
+    if (pending.intent === 'cart') {
+      toast('Added to cart!');
+      setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/cart'; }, 1500);
+    } else if (pending.intent === 'order') {
+      toast('Order placed — #' + (res && res.orderNumber ? res.orderNumber : ''));
+      setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/checkout'; }, 1500);
+    } else {
+      toast('Configuration saved!');
+      setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/dashboard'; }, 1500);
+    }
+  }).catch(function(err) {
+    toast('Signed in, but could not save your order: ' + err.message, 'err');
+  });
+}
+function ensurePersonId() {
+  return new Promise(function(resolve) {
+    if (window._currentPersonId) { resolve(); return; }
+    var user = window._fb && window._fb.auth && window._fb.auth.currentUser;
+    if (!user) { resolve(); return; }
+    var settled = false;
+    var timer = setTimeout(function(){ if (!settled) { settled = true; resolve(); } }, 6000);
+    getClientJSONP(user.email, user.uid, function(res) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (res && res.success && res.client && res.client['Person ID']) {
+        window._currentPersonId = res.client['Person ID'];
+      }
+      resolve();
+    });
+  });
+}
+
+function doSignOut() {
+  var auth = window._fb && window._fb.auth;
+  var so   = window._fb && window._fb.signOut;
+  if (auth && so) so(auth);
+}
+
+function setAccountPopover(user) {
+  if (!user) return;
+  var fullname = user.displayName || user.email || '—';
+  var av = document.getElementById('nav-av');
+  if (av) {
+    if (user.photoURL) av.innerHTML = '<img src="' + user.photoURL + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">';
+    else av.textContent = fullname[0].toUpperCase();
+  }
+  var ddAv = document.getElementById('dd-av');
+  if (ddAv) {
+    if (user.photoURL) ddAv.innerHTML = '<img src="' + user.photoURL + '" style="width:100%;height:100%;object-fit:cover;" alt="">';
+    else ddAv.textContent = fullname[0].toUpperCase();
+  }
+  var el;
+  el = document.getElementById('dd-name');      if (el) el.textContent = fullname;
+  el = document.getElementById('dd-email-sub'); if (el) el.textContent = user.email || '';
+  el = document.getElementById('dd-pid');       if (el) el.textContent = window._currentPersonId || '—';
+}
+
+function getClientJSONP(email, uid, callback) {
+  var cbName  = '__ttGetClient_' + Date.now();
+  var payload = encodeURIComponent(JSON.stringify({ email: email, uid: uid || '' }));
+  var url     = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec?action=getClient&payload=' + payload + '&callback=' + cbName;
+  var script  = document.createElement('script');
+  var timer   = setTimeout(function() { cleanup(); callback(null); }, 8000);
+  function cleanup() {
+    clearTimeout(timer); delete window[cbName];
+    if (script.parentNode) document.body.removeChild(script);
+  }
+  window[cbName]  = function(res) { cleanup(); callback(res); };
+  script.onerror  = function()    { cleanup(); callback(null); };
+  script.src = url;
+  document.body.appendChild(script);
+}
+
+function toast(msg, type) {
+  var t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);'
+    + 'background:' + (type === 'err' ? '#7a2c2c' : '#1A1916') + ';color:#FAFAF8;'
+    + 'font-family:Jost,sans-serif;font-size:11px;font-weight:500;letter-spacing:0.08em;'
+    + 'padding:10px 20px;border-radius:2px;z-index:99999;pointer-events:none;text-transform:uppercase;';
+  document.body.appendChild(t);
+  setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 2200);
+}
+
+function ddCopy(type) {
+  var val = type === 'pid'
+    ? (window._currentPersonId || '')
+    : (window._fb && window._fb.auth && window._fb.auth.currentUser && window._fb.auth.currentUser.email) || '';
+  if (!val || val === '—') { toast('Nothing to copy', 'err'); return; }
+  if (navigator.clipboard) navigator.clipboard.writeText(val).then(function() { toast(type.toUpperCase() + ' copied'); });
+}
+</script>
+
+</body>
+</html>
