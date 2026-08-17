@@ -429,8 +429,6 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
     <!-- STAGE -->
     <div class="avatar-stage">
       <div class="zoom-controls">
-        <button class="zoom-btn" onclick="manualZoom(0.15)" title="Zoom in">+</button>
-        <button class="zoom-btn" onclick="manualZoom(-0.15)" title="Zoom out">−</button>
         <button class="zoom-btn" onclick="resetZoom()" title="Reset">↻</button>
       </div>
 
@@ -518,6 +516,15 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
           <button class="pill"          onclick="selectStyle(this,'2-piece-hood')">2-Piece Hood</button>
           <button class="pill"          onclick="selectStyle(this,'3-piece-hood')">3-Piece Hood</button>
           <button class="pill"          onclick="selectStyle(this,'quarterzip')">Quarterzip</button>
+        </div>
+      </div>
+
+      <!-- HOOD CLOSURE — only relevant when Style is 2-Piece or 3-Piece Hood -->
+      <div class="section" id="section-hood-closure" style="display:none;">
+        <div class="section-label">Hood Closure</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectHoodClosure(this,'overhead')">Overhead</button>
+          <button class="pill"          onclick="selectHoodClosure(this,'zip-up')">Zip-Up</button>
         </div>
       </div>
 
@@ -727,12 +734,13 @@ const BASE = 'https://raw.githubusercontent.com/toom-design/tailortech-hoodie/ma
 
 const state = {
   gender: 'M',
-  fit: 'regular',      // regular / oversized
-  style: 'crewneck',   // crewneck / 2-piece-hood / 3-piece-hood / quarterzip
-  zipTrim: 'rib',      // rib / self — only relevant when style === 'quarterzip'
-  sleeve: 'regular',   // regular / raglan
-  pocket: 'kangaroo',  // kangaroo / welt / zipper / none
-  cuff: 'rib',         // rib / none
+  fit: 'regular',       // regular / oversized
+  style: 'crewneck',    // crewneck / 2-piece-hood / 3-piece-hood / quarterzip
+  hoodClosure: 'overhead', // overhead / zip-up — only relevant when style is a hood style
+  zipTrim: 'rib',       // rib / self — only relevant when style === 'quarterzip'
+  sleeve: 'regular',    // regular / raglan
+  pocket: 'kangaroo',   // kangaroo / welt / zipper / none
+  cuff: 'rib',          // rib / none
   side: 'front',
   zoom: 1.5,
   panX: 0,
@@ -800,7 +808,9 @@ function initPreview() {
   setImg('img-style', urls.style(state.style, state.zipTrim, state.side));
   // Zipper, pocket, and cuff only exist for the front view.
   var isFront = state.side !== 'back';
-  setImg('img-zipper', (isFront && state.style === 'quarterzip') ? urls.zipper() : '');
+  var isHoodStyle = (state.style === '2-piece-hood' || state.style === '3-piece-hood');
+  var showZipper = isFront && (state.style === 'quarterzip' || (isHoodStyle && state.hoodClosure === 'zip-up'));
+  setImg('img-zipper', showZipper ? urls.zipper() : '');
   setImg('img-pocket', isFront ? urls.pocket(state.pocket) : '');
   setImg('img-cuff', isFront ? urls.cuff(state.cuff) : '');
 }
@@ -850,10 +860,22 @@ function selectStyle(el, v) {
   el.closest('.pill-group').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
   el.classList.add('selected');
   state.style = v;
+  const isHoodStyle = (v === '2-piece-hood' || v === '3-piece-hood');
   // The rib/self trim sub-choice only makes sense for Quarterzip.
   const trimSection = document.getElementById('section-zip-trim');
   if (trimSection) trimSection.style.display = (v === 'quarterzip') ? '' : 'none';
+  // Overhead/Zip-Up only makes sense for the two hood styles.
+  const closureSection = document.getElementById('section-hood-closure');
+  if (closureSection) closureSection.style.display = isHoodStyle ? '' : 'none';
   setFrontBack('front');
+  zoomToRegion(2.4, 0.5, 0.3);
+}
+
+function selectHoodClosure(el, v) {
+  el.closest('.pill-group').querySelectorAll('.pill').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  state.hoodClosure = v;
+  initPreview();
   zoomToRegion(2.4, 0.5, 0.3);
 }
 
@@ -1128,6 +1150,7 @@ function buildSummary() {
         ['Gender',               cfg['GENDER']],
         ['Fit',                  cfg['FIT']],
         ['Style',                cfg['STYLE/SILHOUETTE']],
+        ['Closure',              cfg['CLOSURE']],
         ['Sleeve',               cfg['SLEEVE STYLE']],
         ['Front Pocket',         cfg['FRONT POCKETS']],
         ['Cuff',                 cfg['SLEEVE CUFF']],
@@ -1344,7 +1367,10 @@ function collectConfig() {
 
     'FIT':                 sectionPill('Fit'),
     'STYLE/SILHOUETTE':    sectionPill('Style'),
-    'CLOSURE':             state.style === 'quarterzip' ? 'Zipper' : 'N/A',
+    'CLOSURE':             state.style === 'quarterzip' ? 'Zipper'
+                            : (state.style === '2-piece-hood' || state.style === '3-piece-hood')
+                              ? (state.hoodClosure === 'zip-up' ? 'Zipper' : 'Overhead')
+                              : 'N/A',
     'NECK':                sectionPill('Style'),
     'FRONT POCKETS':       sectionPill('Front Pocket'),
     'EXTRA POCKETS':       'N/A',
@@ -1757,7 +1783,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.0.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.2.0</div>
 
 <!-- Firebase -->
 <script type="module">
