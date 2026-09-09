@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TailorTech — Fabrics</title>
+<title>TailorTech — Fabrics v2.2.2</title>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- Firebase SDK -->
@@ -550,7 +550,7 @@ tbody td{padding:11px 14px;vertical-align:middle}
     </div>
 
     <!-- Garments -->
-    <div class="form-row single"><div class="form-group"><label class="form-label">Garments</label><input class="form-input" id="f-garments" placeholder="e.g. Suit, Jacket, Shirt (comma separated)"><div class="form-hint">Used for filtering in inventory. Match filter button labels exactly.</div></div></div>
+    <div class="form-row single"><div class="form-group"><label class="form-label">Garments</label><div class="garment-filters" id="f-garments-options" style="margin:0"></div><input type="hidden" id="f-garments"><div class="form-hint">Used for filtering in inventory. Select all that apply.</div></div></div>
 
     <!-- Notes -->
     <div class="form-row single"><div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="f-notes" placeholder="Any additional details..."></textarea></div></div>
@@ -634,14 +634,14 @@ function usageToSheet(u){return{'UsageID':u.id||'','FabricCode':u.fabricCode||''
 async function apiGet(a){return(await fetch(API_URL+'?action='+a)).json();}
 async function apiPost(b){return(await fetch(API_URL,{method:'POST',body:JSON.stringify(b)})).json();}
 
-let fabricsMatrix = { types: [], colors: [], patterns: [] };
+let fabricsMatrix = { types: [], colors: [], patterns: [], garments: [] };
 
 async function loadData(){
   setLoading(true);
   try{const[fR,uR,mR]=await Promise.all([apiGet('getFabrics'),apiGet('getFabricUsageLog'),apiGet('getFabricsMatrix')]);
   if(fR.success)fabrics=(fR.fabrics||[]).map(sheetToFabric);
   if(uR.success)usageLog=(uR.log||[]).map(sheetToUsage).reverse();
-  if(mR.success){fabricsMatrix={types:mR.types||[],colors:mR.colors||[],patterns:mR.patterns||[]};populateMatrixDropdowns();}}
+  if(mR.success){fabricsMatrix={types:mR.types||[],colors:mR.colors||[],patterns:mR.patterns||[],garments:mR.garments||[]};populateMatrixDropdowns();}}
   catch(e){showToast('Could not connect to sheet');console.error(e);}
   setLoading(false);
 }
@@ -658,6 +658,30 @@ function populateMatrixDropdowns(){
   colorSel.innerHTML='<option value="">Select color...</option>'+fabricsMatrix.colors.map(c=>'<option value="'+esc(c.color)+'" data-shortcut="'+esc(c.shortcut)+'">'+esc(c.color)+'</option>').join('');
   patternSel.innerHTML='<option value="">Select pattern...</option>'+fabricsMatrix.patterns.map(p=>'<option value="'+esc(p.pattern)+'" data-shortcut="'+esc(p.shortcut)+'">'+esc(p.pattern)+'</option>').join('');
   typeSel.value=cur.type; colorSel.value=cur.color; patternSel.value=cur.pattern;
+
+  // Garments — multi-select chips (reuses the same .gf-btn look as the
+  // inventory filter bar, but here more than one can be active at once).
+  const gWrap=document.getElementById('f-garments-options');
+  gWrap.innerHTML=fabricsMatrix.garments.map(g=>'<button type="button" class="gf-btn" data-garment="'+esc(g)+'" onclick="toggleGarmentChip(this)">'+esc(g)+'</button>').join('');
+  syncGarmentChips();
+}
+
+// Toggles one chip's active state and rewrites the hidden f-garments input
+// (comma-separated) that saveFabric() actually reads.
+function toggleGarmentChip(btn){
+  btn.classList.toggle('active');
+  const selected=Array.from(document.querySelectorAll('#f-garments-options .gf-btn.active')).map(b=>b.dataset.garment);
+  document.getElementById('f-garments').value=selected.join(', ');
+}
+
+// Re-checks chip active states from whatever is currently in the hidden
+// f-garments input — used after loadEditForm() sets it, and after the
+// chips are (re)rendered so an in-progress edit survives a matrix reload.
+function syncGarmentChips(){
+  const current=(document.getElementById('f-garments').value||'').toLowerCase().split(/[,\n]+/).map(s=>s.trim()).filter(Boolean);
+  document.querySelectorAll('#f-garments-options .gf-btn').forEach(b=>{
+    b.classList.toggle('active', current.includes((b.dataset.garment||'').toLowerCase()));
+  });
 }
 
 // Auto-fills Product Name always (a convenience default — still hand-editable
@@ -943,6 +967,7 @@ function clearForm() {
   document.getElementById('upload-back-btn').style.display = 'none';
   editingPhotoFace = null; editingPhotoBack = null;
   editingPhotoFaceUrl = ''; editingPhotoBackUrl = '';
+  syncGarmentChips();
 }
 
 function loadEditForm(f) {
@@ -963,6 +988,7 @@ function loadEditForm(f) {
   document.getElementById('f-price').value = f.price || '';
   document.getElementById('f-care').value = f.care || '';
   document.getElementById('f-garments').value = f.garments || '';
+  syncGarmentChips();
   document.getElementById('f-notes').value = f.notes || '';
   // Face photo
   if (f.photo) {
@@ -1235,7 +1261,7 @@ window.__appBoot = async function() {
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.2.1</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.2.2</div>
 </div><!-- /#app-root -->
 </body>
 </html>
