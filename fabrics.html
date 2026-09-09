@@ -519,13 +519,13 @@ tbody td{padding:11px 14px;vertical-align:middle}
 
     <!-- Type + Color -->
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Type <span>*</span></label><input class="form-input" id="f-type" placeholder="e.g. Suiting Fabric, Pocketing"></div>
-      <div class="form-group"><label class="form-label">Color <span>*</span></label><input class="form-input" id="f-color" placeholder="e.g. charcoal, grey, navy"></div>
+      <div class="form-group"><label class="form-label">Type <span>*</span></label><select class="form-select" id="f-type" onchange="onTypeColorPatternChange()"><option value="">Select type...</option></select></div>
+      <div class="form-group"><label class="form-label">Color <span>*</span></label><select class="form-select" id="f-color" onchange="onTypeColorPatternChange()"><option value="">Select color...</option></select></div>
     </div>
 
     <!-- Pattern + Composition -->
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Pattern</label><input class="form-input" id="f-pattern" placeholder="e.g. Plain, Herringbone, Check"></div>
+      <div class="form-group"><label class="form-label">Pattern</label><select class="form-select" id="f-pattern" onchange="onTypeColorPatternChange()"><option value="">Select pattern...</option></select></div>
       <div class="form-group"><label class="form-label">Composition</label><input class="form-input" id="f-composition" placeholder="e.g. 100% Wool, 70% PES 30% BA"></div>
     </div>
 
@@ -634,13 +634,63 @@ function usageToSheet(u){return{'UsageID':u.id||'','FabricCode':u.fabricCode||''
 async function apiGet(a){return(await fetch(API_URL+'?action='+a)).json();}
 async function apiPost(b){return(await fetch(API_URL,{method:'POST',body:JSON.stringify(b)})).json();}
 
+let fabricsMatrix = { types: [], colors: [], patterns: [] };
+
 async function loadData(){
   setLoading(true);
-  try{const[fR,uR]=await Promise.all([apiGet('getFabrics'),apiGet('getFabricUsageLog')]);
+  try{const[fR,uR,mR]=await Promise.all([apiGet('getFabrics'),apiGet('getFabricUsageLog'),apiGet('getFabricsMatrix')]);
   if(fR.success)fabrics=(fR.fabrics||[]).map(sheetToFabric);
-  if(uR.success)usageLog=(uR.log||[]).map(sheetToUsage).reverse();}
+  if(uR.success)usageLog=(uR.log||[]).map(sheetToUsage).reverse();
+  if(mR.success){fabricsMatrix={types:mR.types||[],colors:mR.colors||[],patterns:mR.patterns||[]};populateMatrixDropdowns();}}
   catch(e){showToast('Could not connect to sheet');console.error(e);}
   setLoading(false);
+}
+
+// Fills the Type/Color/Pattern dropdowns from the FABRICS MATRIX sheet.
+// Each option's visible value is the human-readable name (what actually
+// gets saved to the FABRICS sheet's Type/Color/Pattern columns, same as
+// before) — the short code/shortcut used to build the Fabric Code lives in
+// a data-* attribute instead, so saveFabric() needs no changes at all.
+function populateMatrixDropdowns(){
+  const typeSel=document.getElementById('f-type'), colorSel=document.getElementById('f-color'), patternSel=document.getElementById('f-pattern');
+  const cur={type:typeSel.value,color:colorSel.value,pattern:patternSel.value};
+  typeSel.innerHTML='<option value="">Select type...</option>'+fabricsMatrix.types.map(t=>'<option value="'+esc(t.type)+'" data-code="'+esc(t.code)+'">'+esc(t.type)+(t.use?' \u2014 '+esc(t.use):'')+'</option>').join('');
+  colorSel.innerHTML='<option value="">Select color...</option>'+fabricsMatrix.colors.map(c=>'<option value="'+esc(c.color)+'" data-shortcut="'+esc(c.shortcut)+'">'+esc(c.color)+'</option>').join('');
+  patternSel.innerHTML='<option value="">Select pattern...</option>'+fabricsMatrix.patterns.map(p=>'<option value="'+esc(p.pattern)+'" data-shortcut="'+esc(p.shortcut)+'">'+esc(p.pattern)+'</option>').join('');
+  typeSel.value=cur.type; colorSel.value=cur.color; patternSel.value=cur.pattern;
+}
+
+// Auto-fills Product Name always (a convenience default — still hand-editable
+// afterward), and auto-fills Fabric Code only when adding a brand-new fabric
+// (never rewrites the code of one already being edited).
+function onTypeColorPatternChange(){
+  const editId=document.getElementById('edit-id').value;
+  const typeSel=document.getElementById('f-type'), colorSel=document.getElementById('f-color'), patternSel=document.getElementById('f-pattern');
+  const typeOpt=typeSel.selectedOptions[0], colorOpt=colorSel.selectedOptions[0], patternOpt=patternSel.selectedOptions[0];
+  const typeCode=typeOpt?(typeOpt.dataset.code||''):'';
+  const colorShort=colorOpt?(colorOpt.dataset.shortcut||''):'';
+  const patternShort=patternOpt?(patternOpt.dataset.shortcut||''):'';
+
+  if(typeSel.value && colorSel.value){
+    const isSolid=/^solid/i.test(patternSel.value||'');
+    document.getElementById('f-name').value=[colorSel.value,(!isSolid&&patternSel.value)?patternSel.value:'',typeSel.value].filter(Boolean).join(' ');
+  }
+
+  if(!editId && typeCode && colorShort){
+    document.getElementById('f-code').value=typeCode+'-'+colorShort+patternShort+'-'+nextFabricSequence();
+    autoFillQR();
+  }
+}
+
+// Single running sequence across all fabrics (not per type/color) — scans
+// existing Fabric Codes for a trailing 4-digit number and continues from
+// the highest one found. Computed client-side from data already loaded, so
+// if two people add a fabric at nearly the same moment before either saves,
+// they could land on the same number — a non-issue for single-person use,
+// but worth knowing if that ever changes.
+function nextFabricSequence(){
+  const nums=fabrics.map(f=>{const m=String(f.code||'').match(/(\d{4})\s*$/);return m?parseInt(m[1],10):0;});
+  return String((nums.length?Math.max(...nums):0)+1).padStart(4,'0');
 }
 function setLoading(on){document.getElementById('loading-indicator').style.display=on?'flex':'none';}
 
@@ -1185,7 +1235,7 @@ window.__appBoot = async function() {
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.2.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.2.1</div>
 </div><!-- /#app-root -->
 </body>
 </html>
