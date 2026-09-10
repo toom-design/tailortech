@@ -1283,13 +1283,8 @@ function normalizeOptionText(s) {
 
 async function loadPricingData() {
   try {
-    // TODO-CONFIRM: 'SU' is a guess at Suit's code in the PRICE MATRIX
-    // sheet (Trousers uses 'TR'). If PRICE MATRIX doesn't have a
-    // "... (SU)" block yet, or uses a different code, this needs updating
-    // to match — and publishGarmentPricing() in the Apps Script (currently
-    // only publishing ['TR','SP','DT']) needs the same code added and a
-    // re-publish, or getGarmentPricing will always report "not published".
-    var res = await fetch(SHEET_URL + '?action=getGarmentPricing&garment=SU');
+    // Confirmed against PRICE MATRIX: Suit's block is "SUIT (SUI)".
+    var res = await fetch(SHEET_URL + '?action=getGarmentPricing&garment=SUI');
     if (!res.ok) throw new Error('HTTP ' + res.status);
     var json = await res.json();
     if (!json.success) throw new Error(json.message || 'API error');
