@@ -44,6 +44,8 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 .pill { font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 500; padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 50px; background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s; }
 .pill:hover { border-color: var(--ink); color: var(--ink); }
 .pill.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.pill-extra-price, .icon-card-extra-price { color: var(--ink-faint); font-weight: 400; margin-left: 6px; }
+.pill.selected .pill-extra-price, .icon-card.selected .icon-card-extra-price { color: rgba(250,250,248,0.6); }
 .icon-card-group { display: flex; flex-wrap: wrap; gap: 10px; }
 .icon-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 14px 12px 12px; min-width: 88px; max-width: 110px; background: var(--white); border: 1.5px solid var(--border-mid); border-radius: 4px; cursor: pointer; transition: border-color 0.15s, background 0.15s; font-family: 'Jost', sans-serif; }
 .icon-card:hover { background: var(--cream-mid); }
@@ -206,6 +208,9 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 
   <!-- CONFIG PANEL -->
   <div class="config-panel" style="display:flex;flex-direction:column;">
+    <div id="price-bar-fixed" style="position:fixed;bottom:0;z-index:20;font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:14px 24px;background:var(--white);color:var(--ink);border-top:1.5px solid var(--ink);display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 -4px 12px rgba(0,0,0,0.08);transition:opacity 0.15s,transform 0.15s;">
+      Estimated Price <span class="price-display-amount">—</span>
+    </div>
     <div class="tabs">
       <button class="tab active" onclick="switchTab(this,'panel-design')">Design</button>
       <button class="tab" onclick="switchTab(this,'panel-materials')">Materials &amp; Construction</button>
@@ -832,6 +837,7 @@ function buildFabricCard(fabric, group, isFirst) {
   var wt    = fabric.Weight_gsm    ? fabric.Weight_gsm + ' g/m²' : '—';
   var wd    = fabric.Width_cm      ? fabric.Width_cm   + ' cm'   : '—';
   var face  = fabric['Photo FACE'] || '';
+  var unitPrice = parseFloat(String(fabric.UnitPrice || '0').replace(',', '.')) || 0;
 
   var card = document.createElement('div');
   card.className = 'fabric-card' + (isFirst ? ' selected' : '');
@@ -839,7 +845,8 @@ function buildFabricCard(fabric, group, isFirst) {
   card.dataset.code  = code;
   card.dataset.comp  = comp;
   card.dataset.color = color;
-  card.onclick = function() { selectFabric(card, group); };
+  card.dataset.unitprice = unitPrice;
+  card.onclick = function() { selectFabric(card, group); if (typeof updatePriceBar === 'function') updatePriceBar(); };
 
   var imgWrap = document.createElement('div');
   imgWrap.className = 'fc-images';
@@ -853,7 +860,15 @@ function buildFabricCard(fabric, group, isFirst) {
   var nameEl = document.createElement('span'); nameEl.className = 'fname'; nameEl.textContent = name;
   var codeEl = document.createElement('span'); codeEl.className = 'fcode'; codeEl.textContent = code;
   var compEl = document.createElement('span'); compEl.className = 'fcomp'; compEl.textContent = comp;
-  body.append(nameEl, codeEl, compEl);
+  var priceEl = document.createElement('span'); priceEl.className = 'fprice';
+  priceEl.style.cssText = 'font-family:Jost,sans-serif;font-size:12px;font-weight:400;color:var(--ink-faint);margin-top:2px;';
+  if (typeof _pricing !== 'undefined' && _pricing) {
+    var basePrice = _pricing.tailoring * (1 + _pricing.marginPercent / 100);
+    var fabricPrice = unitPrice * _pricing.fabricCoefficient;
+    var fmt = function(n){ return n.toFixed(2).replace(/\.00$/, ''); };
+    priceEl.textContent = '€' + fmt(basePrice + fabricPrice);
+  }
+  body.append(nameEl, priceEl, codeEl, compEl);
 
   var drawer = document.createElement('div');
   drawer.className = 'fc-details-drawer';
@@ -898,7 +913,7 @@ function renderFabricGrids() {
   var mainGrid = document.getElementById('fabric-main-grid');
   var compGrid = document.getElementById('fabric-comp-grid');
   var liningGrid = document.getElementById('fabric-lining-grid');
-  loadSuitFabrics()
+  var mainDone = loadSuitFabrics()
     .then(function(fabrics) {
       if (!fabrics.length) {
         var msg = '<div class="fabric-error">No suit fabrics found. Check the Garments column in your sheet.</div>';
@@ -917,8 +932,9 @@ function renderFabricGrids() {
       mainGrid.innerHTML = errHtml; if (compGrid) compGrid.innerHTML = errHtml;
     });
 
+  var liningDone = Promise.resolve();
   if (liningGrid) {
-    loadLiningFabrics()
+    liningDone = loadLiningFabrics()
       .then(function(fabrics) {
         if (!fabrics.length) {
           liningGrid.innerHTML = '<div class="fabric-error">No lining fabrics found. Check the Garments column in your sheet.</div>';
@@ -931,6 +947,7 @@ function renderFabricGrids() {
         liningGrid.innerHTML = '<div class="fabric-error">Could not load fabrics (' + err.message + ').</div>';
       });
   }
+  return Promise.all([mainDone, liningDone]);
 }
 
 // ── collectConfig ─────────────────────────────────────────────────
@@ -1256,12 +1273,221 @@ function showFeedback(msg, color) {
   setTimeout(function(){ el.style.display = 'none'; }, 5000);
 }
 
+// ── Pricing ───────────────────────────────────────────────────────
+var _pricing = null;           // { fabricCoefficient, tailoring, marginPercent, configurations }
+var _sectionConfigMap = {};    // discovered automatically — see below
+
+function normalizeOptionText(s) {
+  return String(s || '').trim().toLowerCase().replace(/[-_]+/g, ' ').replace(/\s+/g, ' ');
+}
+
+async function loadPricingData() {
+  try {
+    // TODO-CONFIRM: 'SU' is a guess at Suit's code in the PRICE MATRIX
+    // sheet (Trousers uses 'TR'). If PRICE MATRIX doesn't have a
+    // "... (SU)" block yet, or uses a different code, this needs updating
+    // to match — and publishGarmentPricing() in the Apps Script (currently
+    // only publishing ['TR','SP','DT']) needs the same code added and a
+    // re-publish, or getGarmentPricing will always report "not published".
+    var res = await fetch(SHEET_URL + '?action=getGarmentPricing&garment=SU');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    var json = await res.json();
+    if (!json.success) throw new Error(json.message || 'API error');
+    _pricing = json;
+    _sectionConfigMap = discoverSectionConfigMap();
+  } catch(err) {
+    console.error('Pricing load failed:', err);
+    _pricing = null;
+    _sectionConfigMap = {};
+  }
+}
+
+// Automatically matches each on-page section to a PRICE MATRIX
+// configuration by comparing OPTION VALUES, not names — the sheet's
+// category names don't reliably match this page's section labels, but
+// the actual option text does line up once normalized. A section only
+// gets mapped if every one of its buttons is found in that configuration's
+// option list — a partial/coincidental overlap doesn't count, so a wrong
+// price can never get attributed to the wrong option. New configuration
+// categories in the sheet get picked up automatically, no code change here.
+function discoverSectionConfigMap() {
+  var map = {};
+  if (!_pricing || !_pricing.configurations) return map;
+
+  var configEntries = Object.keys(_pricing.configurations).map(function(name) {
+    return {
+      name: name,
+      values: _pricing.configurations[name].map(function(o){ return normalizeOptionText(o.value); })
+    };
+  });
+
+  document.querySelectorAll('.section').forEach(function(section) {
+    var lbl = section.querySelector('.section-label');
+    if (!lbl) return;
+
+    var buttonLabels = [];
+    section.querySelectorAll('.pill, .icon-card').forEach(function(btn) {
+      var textEl = btn.querySelector('.icon-card-label') || btn;
+      var raw = textEl.dataset.optionLabel || textEl.textContent.trim();
+      if (raw) buttonLabels.push(normalizeOptionText(raw));
+    });
+    if (!buttonLabels.length) return;
+
+    var bestConfig = null;
+    for (var i = 0; i < configEntries.length; i++) {
+      var entry = configEntries[i];
+      var allMatch = buttonLabels.every(function(bl){ return entry.values.indexOf(bl) !== -1; });
+      if (allMatch) { bestConfig = entry.name; break; }
+    }
+    if (bestConfig) map[lbl.textContent.trim()] = bestConfig;
+  });
+
+  return map;
+}
+
+// Looks up the price for one option value within one PRICE MATRIX
+// configuration — used both to badge buttons and to total up the
+// currently-selected options.
+function lookupOptionPrice(configName, optionText) {
+  if (!_pricing || !_pricing.configurations || !_pricing.configurations[configName]) return 0;
+  var target = normalizeOptionText(optionText);
+  var match = _pricing.configurations[configName].find(function(opt){
+    return normalizeOptionText(opt.value) === target;
+  });
+  return match ? match.price : 0;
+}
+
+// Adds a "+€X" badge to any button whose section has a known mapping and
+// whose specific option carries a non-zero price.
+function applyPriceBadges() {
+  if (!_pricing) return;
+  document.querySelectorAll('.section').forEach(function(section) {
+    var lbl = section.querySelector('.section-label');
+    if (!lbl) return;
+    var configName = _sectionConfigMap[lbl.textContent.trim()];
+    if (!configName) return;
+
+    section.querySelectorAll('.pill, .icon-card').forEach(function(btn) {
+      var textEl = btn.querySelector('.icon-card-label') || btn;
+      if (!textEl.dataset.optionLabel) textEl.dataset.optionLabel = textEl.textContent.trim();
+      var label = textEl.dataset.optionLabel;
+      var price = lookupOptionPrice(configName, label);
+      if (price > 0) {
+        var priceClass = textEl.classList.contains('icon-card-label') ? 'icon-card-extra-price' : 'pill-extra-price';
+        textEl.innerHTML = '<span>' + label + '</span><span class="' + priceClass + '">+€' + price.toFixed(2).replace(/\.00$/, '') + '</span>';
+      }
+    });
+  });
+}
+
+// Sums the currently-selected option's price across every mapped section.
+function calculateOptionsExtra() {
+  var total = 0;
+  document.querySelectorAll('.section').forEach(function(section) {
+    var lbl = section.querySelector('.section-label');
+    if (!lbl) return;
+    var configName = _sectionConfigMap[lbl.textContent.trim()];
+    if (!configName) return;
+
+    var selected = section.querySelector('.pill.selected, .icon-card.selected');
+    if (!selected) return;
+    var textEl = selected.querySelector('.icon-card-label') || selected;
+    var label = textEl.dataset.optionLabel || textEl.textContent.trim();
+    total += lookupOptionPrice(configName, label);
+  });
+  return total;
+}
+
+function updatePriceBar() {
+  var amounts = document.querySelectorAll('.price-display-amount');
+  if (!amounts.length) return;
+
+  var text = '—';
+  if (_pricing) {
+    var base = _pricing.tailoring * (1 + _pricing.marginPercent / 100);
+
+    var fabricCard = document.querySelector('#fabric-main-grid .fabric-card.selected');
+    var fabricUnitPrice = fabricCard ? parseFloat(fabricCard.dataset.unitprice || '0') : 0;
+    var fabricCost = fabricUnitPrice * _pricing.fabricCoefficient;
+
+    var extras = calculateOptionsExtra();
+
+    var total = base + fabricCost + extras;
+    text = '€' + total.toFixed(2).replace(/\.00$/, '');
+  }
+  amounts.forEach(function(el){ el.textContent = text; });
+}
+
+// The fixed price bar stays visible the whole time — but right as the
+// real "Continue to..." button for whatever tab is active would naturally
+// scroll into view, it needs to get out of the way rather than sit on top
+// of it forever. Finds that button, checks its position against the
+// panel's own visible bottom edge, and fades the bar out once genuinely close.
+function syncPriceBarWidth() {
+  var panel = document.querySelector('.config-panel');
+  var bar = document.getElementById('price-bar-fixed');
+  if (!panel || !bar) return;
+  var rect = panel.getBoundingClientRect();
+  bar.style.left = rect.left + 'px';
+  bar.style.width = rect.width + 'px';
+  bar.style.right = 'auto';
+}
+
+function updateFixedBarVisibility() {
+  var panel = document.querySelector('.config-panel');
+  var bar = document.getElementById('price-bar-fixed');
+  if (!panel || !bar) return;
+
+  var activeBody = null;
+  ['panel-design','panel-materials','panel-measurements'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && el.style.display !== 'none') activeBody = el;
+  });
+  if (!activeBody) { bar.style.opacity = '1'; bar.style.pointerEvents = ''; return; }
+
+  var realButton = activeBody.querySelector('button[onclick="goToMaterials()"], button[onclick="goToMeasurements()"], #meas-save-btn');
+  if (!realButton) { bar.style.opacity = '1'; bar.style.pointerEvents = ''; return; }
+
+  var btnRect = realButton.getBoundingClientRect();
+  var panelRect = panel.getBoundingClientRect();
+  var barHeight = bar.offsetHeight;
+
+  var distanceFromPanelBottom = panelRect.bottom - btnRect.top;
+  if (distanceFromPanelBottom > -20 && distanceFromPanelBottom < (barHeight + 40)) {
+    bar.style.opacity = '0';
+    bar.style.pointerEvents = 'none';
+    bar.style.transform = 'translateY(8px)';
+  } else {
+    bar.style.opacity = '1';
+    bar.style.pointerEvents = '';
+    bar.style.transform = 'translateY(0)';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  var panel = document.querySelector('.config-panel');
+  if (panel) panel.addEventListener('scroll', updateFixedBarVisibility);
+  syncPriceBarWidth();
+  window.addEventListener('resize', syncPriceBarWidth);
+});
+
+// Broad, simple, and robust: any click anywhere could be an option
+// changing — recompute after it, rather than wiring every individual
+// handler by hand. setTimeout(0) lets the click's own state-change run first.
+document.addEventListener('click', function(){ setTimeout(function(){ updatePriceBar(); updateFixedBarVisibility(); }, 0); });
+
 // ── Init ──────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
   updatePreview();
   applyTransform();
   document.getElementById('img-base').addEventListener('load', hideLoading);
-  renderFabricGrids();
+
+  // Pricing loads first so fabric cards can show their price immediately
+  // when built, rather than appearing blank and needing a later patch.
+  loadPricingData().then(function() {
+    applyPriceBadges();
+    renderFabricGrids().then(function(){ syncPriceBarWidth(); updatePriceBar(); updateFixedBarVisibility(); });
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1786,7 +2012,7 @@ function getClientJSONP(email, uid, callback) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.7.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.8.0</div>
 
 </body>
 </html>
