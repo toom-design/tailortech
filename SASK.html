@@ -267,6 +267,21 @@ button { cursor: pointer; font-family: inherit; }
 .section-label::after {
   content: ''; flex: 1; height: 1px; background: var(--border);
 }
+.garment-selection-title {
+  margin-bottom: 32px;
+  font-family: 'Jost', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: var(--ink-mid);
+  animation: selectionTitleAttention 2.2s ease-in-out infinite;
+}
+@keyframes selectionTitleAttention {
+  0%, 100% { opacity: 0.62; letter-spacing: 0.16em; }
+  50% { opacity: 1; letter-spacing: 0.21em; text-shadow: 0 0 14px rgba(26,25,22,0.16); }
+}
 
 /* ── Responsive ── */
 @media (max-width: 780px) {
@@ -337,7 +352,7 @@ button { cursor: pointer; font-family: inherit; }
   position: relative;
   width: 100%;
   min-height: 0;
-  height: calc(100vw * (1849 / 5333));
+  height: clamp(460px, 30vw, 600px);
   background: #111110;
   overflow: hidden;
   display: flex;
@@ -372,7 +387,7 @@ button { cursor: pointer; font-family: inherit; }
 }
 .hero-eyebrow img {
   display: block;
-  height: 24px;
+  height: 48px;
   width: auto;
   filter: brightness(0) invert(1);
   opacity: 0.78;
@@ -456,9 +471,14 @@ button { cursor: pointer; font-family: inherit; }
   letter-spacing: 0.16em;
   text-transform: uppercase;
   white-space: nowrap;
+  animation: cueAttention 2.2s ease-in-out infinite;
 }
 .hero-scroll-cue:hover { color: #F0EDE6; }
 .hero-scroll-cue svg { animation: scrollHint 1.6s ease-in-out infinite; }
+@keyframes cueAttention {
+  0%, 100% { opacity: 0.62; transform: translateX(-50%) translateY(0); letter-spacing: 0.16em; }
+  50% { opacity: 1; transform: translateX(-50%) translateY(-4px); letter-spacing: 0.21em; text-shadow: 0 0 14px rgba(240,237,230,0.38); }
+}
 @keyframes scrollHint {
   0%, 100% { transform: translateY(0); opacity: 0.55; }
   50% { transform: translateY(5px); opacity: 1; }
@@ -467,7 +487,7 @@ button { cursor: pointer; font-family: inherit; }
 @media (max-width: 700px) {
   .hero-content { padding: 60px 24px; }
   .hero-title { font-size: clamp(27px, 7.4vw, 38px); }
-  .hero { height: calc(100vw * (1849 / 5333)); }
+  .hero { height: 420px; }
   .hero-subtitle { font-size: 15px; }
   .hero-scroll-cue { bottom: 10px; font-size: 11px; gap: 4px; }
   .process-steps { width: calc(100% - 40px); }
@@ -528,7 +548,7 @@ button { cursor: pointer; font-family: inherit; }
 
   </div>
   <a class="hero-scroll-cue" href="#how-it-works" aria-label="Skroluj na interaktívny obsah">
-    <span>Scroll a interaguj</span>
+    <span>Scrolluj a interaguj</span>
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 4v15M6.5 13.5 12 19l5.5-5.5"/></svg>
   </a>
 </section>
@@ -551,7 +571,7 @@ button { cursor: pointer; font-family: inherit; }
 
   <div id="garment-options">
 
-  <h2 class="page-title" style="margin-bottom: 32px;">Vyber si svoj odev</h2>
+  <h2 class="garment-selection-title">Vyber si svoj odev</h2>
 
   <!-- Garment cards -->
   <div class="garment-grid">
@@ -677,6 +697,12 @@ button { cursor: pointer; font-family: inherit; }
     </div>
     <div class="garment-inline-window">
       <iframe id="garment-modal-frame" class="garment-inline-frame" src="about:blank" title="Garment configurator"></iframe>
+    </div>
+    <div class="garment-inline-restart-wrap">
+      <button type="button" class="garment-inline-restart" onclick="closeGarmentModal()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+        Restart
+      </button>
     </div>
   </section>
 
@@ -888,6 +914,32 @@ document.addEventListener('keydown', function(e) {
 }
 .garment-inline-frame {
   width: 100%; height: 100%; border: 0; display: block;
+}
+.garment-inline-restart-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 28px 0 4px;
+}
+.garment-inline-restart {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-width: 160px;
+  padding: 13px 24px;
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  background: var(--ink);
+  color: var(--white);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition: background 0.15s, color 0.15s;
+}
+.garment-inline-restart:hover {
+  background: transparent;
+  color: var(--ink);
 }
 @media (max-width: 640px) {
   .garment-inline-toolbar { align-items: flex-start; flex-direction: column; gap: 12px; }
