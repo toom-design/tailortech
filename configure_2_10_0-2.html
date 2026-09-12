@@ -451,8 +451,8 @@ button { cursor: pointer; font-family: inherit; }
   gap: 8px;
   color: rgba(240,237,230,0.72);
   text-decoration: none;
-  font-size: 10px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -469,7 +469,7 @@ button { cursor: pointer; font-family: inherit; }
   .hero-title { font-size: clamp(27px, 7.4vw, 38px); }
   .hero { height: calc(100vw * (1849 / 5333)); }
   .hero-subtitle { font-size: 15px; }
-  .hero-scroll-cue { bottom: 10px; font-size: 8px; gap: 4px; }
+  .hero-scroll-cue { bottom: 10px; font-size: 11px; gap: 4px; }
   .process-steps { width: calc(100% - 40px); }
 }
 
@@ -528,7 +528,7 @@ button { cursor: pointer; font-family: inherit; }
 
   </div>
   <a class="hero-scroll-cue" href="#how-it-works" aria-label="Skroluj na interaktívny obsah">
-    <span>Skroluj a interaguj</span>
+    <span>Scroll a interaguj</span>
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 4v15M6.5 13.5 12 19l5.5-5.5"/></svg>
   </a>
 </section>
@@ -548,6 +548,8 @@ button { cursor: pointer; font-family: inherit; }
 
 
 <div class="page" id="garments">
+
+  <div id="garment-options">
 
   <h2 class="page-title" style="margin-bottom: 32px;">Vyber si svoj odev</h2>
 
@@ -659,6 +661,24 @@ button { cursor: pointer; font-family: inherit; }
     <div style="font-size:10px;color:var(--ink-faint);letter-spacing:0.08em;">All garments are made to order using your body scan measurements.</div>
     <div style="font-size:10px;color:var(--ink-faint);letter-spacing:0.08em;margin-left:auto;">Need help? <a href="#" style="color:var(--ink-mid);text-decoration:underline;text-underline-offset:3px;">Contact us</a></div>
   </div>
+
+  </div>
+
+  <section id="garment-inline-panel" class="garment-inline-panel" aria-hidden="true">
+    <div class="garment-inline-toolbar">
+      <button type="button" class="garment-inline-back" onclick="closeGarmentModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Všetky odevy
+      </button>
+      <div>
+        <div class="garment-inline-label">Konfigurátor</div>
+        <div id="garment-inline-title" class="garment-inline-title">Odev na mieru</div>
+      </div>
+    </div>
+    <div class="garment-inline-window">
+      <iframe id="garment-modal-frame" class="garment-inline-frame" src="about:blank" title="Garment configurator"></iframe>
+    </div>
+  </section>
 
 </div>
 
@@ -781,75 +801,97 @@ function ddCopy(type) {
 }
 
 function openGarmentModal(url) {
-  var overlay = document.getElementById('garment-modal-overlay');
+  var options = document.getElementById('garment-options');
+  var panel   = document.getElementById('garment-inline-panel');
   var frame   = document.getElementById('garment-modal-frame');
-  if (!overlay || !frame) return;
+  var title   = document.getElementById('garment-inline-title');
+  if (!options || !panel || !frame) return;
+  var names = {
+    shirt: 'Shirt', trousers: 'Trousers', suit: 'Suit Jacket',
+    casual_jacket: 'Casual Jacket', denim_trousers: 'Denim Trousers'
+  };
+  var key = url.split('/').filter(Boolean).pop();
+  if (title) title.textContent = names[key] || 'Odev na mieru';
   frame.src = url;
-  overlay.classList.add('open');
-  document.body.style.overflow = 'hidden';
+  options.hidden = true;
+  panel.classList.add('open');
+  panel.setAttribute('aria-hidden', 'false');
+  document.getElementById('garments').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 function closeGarmentModal() {
-  var overlay = document.getElementById('garment-modal-overlay');
+  var options = document.getElementById('garment-options');
+  var panel   = document.getElementById('garment-inline-panel');
   var frame   = document.getElementById('garment-modal-frame');
-  if (!overlay) return;
-  overlay.classList.remove('open');
-  document.body.style.overflow = '';
+  if (!options || !panel) return;
+  panel.classList.remove('open');
+  panel.setAttribute('aria-hidden', 'true');
+  options.hidden = false;
   if (frame) frame.src = 'about:blank';
+  document.getElementById('garments').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeGarmentModal();
 });
 </script>
 
-<div id="garment-modal-overlay" class="garment-modal-overlay" onclick="if(event.target===this) closeGarmentModal()">
-  <div class="garment-modal-panel">
-    <button type="button" class="garment-modal-close" onclick="closeGarmentModal()" aria-label="Close">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
-    </button>
-    <iframe id="garment-modal-frame" class="garment-modal-frame" src="about:blank" title="Garment configurator"></iframe>
-  </div>
-</div>
-
 <style>
-.garment-modal-overlay {
-  position: fixed; inset: 0; z-index: 10000;
-  background: rgba(20,19,17,0.72);
-  display: flex; align-items: center; justify-content: center;
-  padding: 32px;
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.25s ease;
+.garment-inline-panel {
+  display: none;
+  animation: fadeUp 0.35s ease both;
 }
-.garment-modal-overlay.open {
-  opacity: 1; pointer-events: auto;
+.garment-inline-panel.open { display: block; }
+.garment-inline-toolbar {
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 14px 18px;
+  background: var(--white);
+  border: 1px solid var(--border-mid);
+  border-bottom: 0;
 }
-.garment-modal-panel {
-  position: relative;
-  width: 100%; height: 100%;
-  max-width: 1200px;
-  background: var(--cream, #FAFAF8);
-  border-radius: 4px;
+.garment-inline-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-mid);
+  background: transparent;
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.garment-inline-back:hover { background: var(--cream-mid); }
+.garment-inline-label {
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+  margin-bottom: 3px;
+}
+.garment-inline-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  line-height: 1;
+}
+.garment-inline-window {
+  width: 100%;
+  height: min(80vh, 900px);
+  min-height: 680px;
+  border: 1px solid var(--border-mid);
+  background: var(--white);
   overflow: hidden;
-  box-shadow: 0 30px 80px rgba(0,0,0,0.45);
-  transform: translateY(16px);
-  transition: transform 0.25s ease;
+  box-shadow: 0 18px 50px rgba(26,25,22,0.10);
 }
-.garment-modal-overlay.open .garment-modal-panel {
-  transform: translateY(0);
-}
-.garment-modal-frame {
+.garment-inline-frame {
   width: 100%; height: 100%; border: 0; display: block;
 }
-.garment-modal-close {
-  position: absolute; top: 14px; right: 14px; z-index: 2;
-  width: 36px; height: 36px; border-radius: 50%;
-  background: rgba(20,19,17,0.85); color: #FAFAF8;
-  border: none; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-}
-.garment-modal-close:hover { background: #1A1916; }
 @media (max-width: 640px) {
-  .garment-modal-overlay { padding: 0; }
-  .garment-modal-panel { max-width: none; border-radius: 0; }
+  .garment-inline-toolbar { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .garment-inline-window { height: 78vh; min-height: 560px; }
 }
 </style>
 
