@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>T-Shirt Configurator</title>
+<title>T-Shirt Configurator v1.3.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -166,6 +166,16 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 .nav-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: var(--white); font-size: 11px; font-weight: 600; letter-spacing: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; border: none; padding: 0; cursor: pointer; -webkit-appearance: none; }
 .nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Options without live images yet — shown but inactive ── */
+.section--inactive .pill-group { opacity: 0.38; pointer-events: none; }
+.section--inactive .pill[disabled] { cursor: not-allowed; }
+.section--inactive .section-label::after {
+  content: 'Coming soon'; margin-left: 10px; padding: 2px 7px;
+  font-size: 8px; font-weight: 600; letter-spacing: 0.14em;
+  border: 1px solid var(--border); border-radius: 2px; color: var(--ink-faint);
+  vertical-align: 1px;
+}
 </style>
 </head>
 <body>
@@ -267,98 +277,85 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
       <div class="section">
         <div class="section-label">Fit</div>
         <div class="pill-group">
-          <button class="pill selected" onclick="selectPillInGroup(this)">Regular</button>
-          <button class="pill"          onclick="selectPillInGroup(this)">Oversized</button>
-          <button class="pill"          onclick="selectPillInGroup(this)">Slim</button>
-          <button class="pill"          onclick="selectPillInGroup(this)">Boxy</button>
+          <button class="pill selected" onclick="selectPillInGroupWithState(this)">Regular</button>
+          <button class="pill"          onclick="selectPillInGroupWithState(this)">Oversized</button>
         </div>
       </div>
 
-      <div class="section">
+      <div class="section section--inactive" aria-disabled="true">
         <div class="section-label">Length</div>
         <div class="pill-group">
-          <button class="pill selected" onclick="selectPillInGroup(this)">Regular</button>
-          <button class="pill"          onclick="selectPillInGroup(this)">Cropped</button>
-          <button class="pill"          onclick="selectPillInGroup(this)">Longline</button>
+          <button disabled class="pill selected" onclick="selectPillInGroup(this)">Regular</button>
+          <button disabled class="pill"          onclick="selectPillInGroup(this)">Cropped</button>
+          <button disabled class="pill"          onclick="selectPillInGroup(this)">Longline</button>
         </div>
       </div>
 
       <div class="section">
         <div class="section-label">Neckline</div>
         <div class="pill-group">
-          <button class="pill selected" onclick="selectNeckline(this,'crew')">Crew Neck</button>
-          <button class="pill"          onclick="selectNeckline(this,'vneck')">V-Neck</button>
-          <button class="pill"          onclick="selectNeckline(this,'henley')">Henley</button>
-          <button class="pill"          onclick="selectNeckline(this,'scoop')">Scoop Neck</button>
+          <button class="pill selected" onclick="selectNeckline(this,'regular')">Crew Neck</button>
+          <button class="pill"          onclick="selectNeckline(this,'mid')">Mock Neck</button>
+          <button class="pill"          onclick="selectNeckline(this,'turtleNeck')">Turtleneck</button>
         </div>
       </div>
 
-      <div class="section">
+      <div class="section section--inactive" aria-disabled="true">
         <div class="section-label">Sleeve Length</div>
         <div class="pill-group">
-          <button class="pill selected" onclick="selectSleeveLength(this,'short')">Short Sleeve</button>
-          <button class="pill"          onclick="selectSleeveLength(this,'long')">Long Sleeve</button>
-          <button class="pill"          onclick="selectSleeveLength(this,'sleeveless')">Sleeveless</button>
+          <button disabled class="pill selected" onclick="selectSleeveLength(this,'short')">Short Sleeve</button>
+          <button disabled class="pill"          onclick="selectSleeveLength(this,'long')">Long Sleeve</button>
+          <button disabled class="pill"          onclick="selectSleeveLength(this,'sleeveless')">Sleeveless</button>
         </div>
       </div>
 
       <div class="section">
         <div class="section-label">Sleeve Style</div>
-        <div class="icon-card-group">
-          <button class="icon-card selected" onclick="selectIconCard(this); setSleeveStyle(this);">
-            <img src="https://raw.githubusercontent.com/toom-design/tailortech-tshirt_m/main/tshirt_m_icon_sleeve_setin.png" alt="">
-            <span class="icon-card-label">Set-In</span>
-          </button>
-          <button class="icon-card" onclick="selectIconCard(this); setSleeveStyle(this);">
-            <img src="https://raw.githubusercontent.com/toom-design/tailortech-tshirt_m/main/tshirt_m_icon_sleeve_raglan.png" alt="">
-            <span class="icon-card-label">Raglan</span>
-          </button>
-          <button class="icon-card" onclick="selectIconCard(this); setSleeveStyle(this);">
-            <img src="https://raw.githubusercontent.com/toom-design/tailortech-tshirt_m/main/tshirt_m_icon_sleeve_dropshoulder.png" alt="">
-            <span class="icon-card-label">Drop Shoulder</span>
-          </button>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectSleeveStyle(this,'regular')">Set-In</button>
+          <button class="pill"          onclick="selectSleeveStyle(this,'raglan')">Raglan</button>
         </div>
       </div>
 
-      <div class="section">
+      <div class="section section--inactive" aria-disabled="true">
         <div class="section-label">Cuff Style</div>
         <div class="pill-group">
-          <button class="pill selected" onclick="selectPillInGroup(this)">Plain</button>
-          <button class="pill"          onclick="selectPillInGroup(this)">Ribbed</button>
+          <button disabled class="pill selected" onclick="selectPillInGroup(this)">Plain</button>
+          <button disabled class="pill"          onclick="selectPillInGroup(this)">Ribbed</button>
         </div>
       </div>
 
-      <div class="section">
+      <div class="section section--inactive" aria-disabled="true">
         <div class="section-label">Chest Pocket</div>
         <div class="pill-group">
-          <button class="pill selected" onclick="selectPillInGroup(this)">None</button>
-          <button class="pill"          onclick="selectPillInGroup(this)">Patch Pocket</button>
-          <button class="pill"          onclick="selectPillInGroup(this)">Welt Pocket</button>
+          <button disabled class="pill selected" onclick="selectPillInGroup(this)">None</button>
+          <button disabled class="pill"          onclick="selectPillInGroup(this)">Patch Pocket</button>
+          <button disabled class="pill"          onclick="selectPillInGroup(this)">Welt Pocket</button>
         </div>
       </div>
 
-      <div class="section">
+      <div class="section section--inactive" aria-disabled="true">
         <div class="section-label">Hem Finish</div>
         <div class="pill-group">
-          <button class="pill selected" onclick="selectPillInGroup(this)">Straight Hem</button>
-          <button class="pill"          onclick="selectPillInGroup(this)">Curved Hem</button>
-          <button class="pill"          onclick="selectPillInGroup(this)">Ribbed Hem</button>
+          <button disabled class="pill selected" onclick="selectPillInGroup(this)">Straight Hem</button>
+          <button disabled class="pill"          onclick="selectPillInGroup(this)">Curved Hem</button>
+          <button disabled class="pill"          onclick="selectPillInGroup(this)">Ribbed Hem</button>
         </div>
       </div>
 
-      <div class="section">
+      <div class="section section--inactive" aria-disabled="true">
         <div class="section-label">Neck Rib</div>
         <div class="pill-group">
-          <button class="pill selected" onclick="selectPillInGroup(this)">Self Fabric</button>
-          <button class="pill"          onclick="selectPillInGroup(this)">Contrast Rib</button>
+          <button disabled class="pill selected" onclick="selectPillInGroup(this)">Self Fabric</button>
+          <button disabled class="pill"          onclick="selectPillInGroup(this)">Contrast Rib</button>
         </div>
       </div>
 
-      <div class="section" style="border-bottom:none;">
+      <div class="section section--inactive" aria-disabled="true" style="border-bottom:none;">
         <div class="section-label">Side Slits</div>
         <div class="pill-group">
-          <button class="pill selected" onclick="selectSideSlit(this, false)">None</button>
-          <button class="pill"          onclick="selectSideSlit(this, true)">Side Slits</button>
+          <button disabled class="pill selected" onclick="selectSideSlit(this, false)">None</button>
+          <button disabled class="pill"          onclick="selectSideSlit(this, true)">Side Slits</button>
         </div>
       </div>
 
@@ -518,15 +515,15 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 // ─────────────────────────────────────────────────────────────────
 
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
-// NOTE: this repo doesn't exist yet — create it (or point BASE at wherever
-// the T-shirt layer PNGs actually live) following the same file-naming
-// pattern as tailortech-trousers_m.
-const BASE = 'https://raw.githubusercontent.com/toom-design/tailortech-tshirt_m/main/';
+// Live layer images — github.com/toom-design/t-shirt (all 2250×2250 transparent WebP,
+// stacked in this order: body (fit) → sleeve seams (cut + sleeve) → collar (front/back)).
+const BASE   = 'https://raw.githubusercontent.com/toom-design/t-shirt/main/';
+const PREFIX = 't-shirt selector_live_';
 
 // ── State ─────────────────────────────────────────────────────────
 const state = {
-  fit: 'regular', length: 'regular', neckline: 'crew',
-  sleeveLength: 'short', sleeveStyle: 'setin', cuff: 'plain',
+  fit: 'regular', length: 'regular', neckline: 'regular',
+  sleeveLength: 'short', sleeveStyle: 'regular', cuff: 'plain',
   pocket: 'none', hem: 'straight', neckrib: 'self',
   sideslit: false, view: 'f',
 };
@@ -534,14 +531,14 @@ const state = {
 // ── URL builders ──────────────────────────────────────────────────
 function enc(s) { return encodeURIComponent(s); }
 const urls = {
-  base:      function(fit, len, v)  { return BASE + enc('tshirt_m_live_fit-'+fit+'_length-'+len+'_'+v+'.png'); },
-  sleeve:    function(style, len, v){ return BASE + enc('tshirt_m_live_sleeve-'+style+'_length-'+len+'_'+v+'.png'); },
-  cuff:      function(cuff, v)      { return BASE + enc('tshirt_m_live_cuff-'+cuff+'_'+v+'.png'); },
-  neckline:  function(neck, v)      { return BASE + enc('tshirt_m_live_neckline-'+neck+'_'+v+'.png'); },
-  pocket:    function(pk)           { return BASE + enc('tshirt_m_live_pocket-'+pk+'_f.png'); },
-  hem:       function(fit, hem)     { return BASE + enc('tshirt_m_live_fit-'+fit+'_hem-'+hem+'_f-b.png'); },
-  neckrib:   function(neck)         { return BASE + enc('tshirt_m_live_neckrib-contrast_neckline-'+neck+'_f.png'); },
-  sideslit:  function(v)            { return BASE + enc('tshirt_m_live_sideslit_'+v+'.png'); },
+  // fit: 'regular' | 'oversize'  — same body image for front & back
+  base:   function(fit)          { return BASE + enc(PREFIX+'fit-'+fit+'.webp'); },
+  // sleeve seam lines depend on body cut + sleeve style: 'regular' | 'raglan'
+  sleeve: function(fit, style)   { return BASE + enc(PREFIX+'cut-'+fit+'_sleeve-'+style+'.webp'); },
+  // collar: 'regular' | 'mid' | 'turtleNeck', view 'f' | 'b'
+  collar: function(neck, v)      { return BASE + enc(PREFIX+'collar-'+neck+'_'+v.toUpperCase()+'.webp'); },
+  // Not drawn yet — no images in the repo. Add builders here when they are uploaded:
+  // cuff, pocket, hem, neckrib, sideslit
 };
 
 // ── Image helper ──────────────────────────────────────────────────
@@ -555,30 +552,12 @@ function setImg(id, url) {
 
 // ── Update all layers ─────────────────────────────────────────────
 function updatePreview() {
-  var v=state.view, f=state.fit, len=state.length, sleeveless = state.sleeveLength === 'sleeveless';
-
-  setImg('img-base', urls.base(f,len,v));
-  setImg('img-hem',  urls.hem(f,state.hem));
-
-  if (sleeveless) {
-    setImg('img-sleeve', '');
-    setImg('img-cuff', '');
-  } else {
-    setImg('img-sleeve', urls.sleeve(state.sleeveStyle, state.sleeveLength, v));
-    setImg('img-cuff',   urls.cuff(state.cuff, v));
-  }
-
-  if (v==='f') {
-    setImg('img-neckline', urls.neckline(state.neckline,'f'));
-    setImg('img-pocket',   state.pocket !== 'none' ? urls.pocket(state.pocket) : '');
-    setImg('img-neckrib',  state.neckrib === 'contrast' ? urls.neckrib(state.neckline) : '');
-    setImg('img-sideslit', '');
-  } else {
-    setImg('img-neckline', urls.neckline(state.neckline,'b'));
-    setImg('img-pocket',   '');
-    setImg('img-neckrib',  '');
-    setImg('img-sideslit', state.sideslit ? urls.sideslit('b') : '');
-  }
+  var v = state.view, f = state.fit;
+  setImg('img-base',     urls.base(f));
+  setImg('img-sleeve',   urls.sleeve(f, state.sleeveStyle));
+  setImg('img-neckline', urls.collar(state.neckline, v));
+  // Layers without live images yet — kept hidden
+  ['img-cuff','img-pocket','img-hem','img-neckrib','img-sideslit'].forEach(function(id){ setImg(id,''); });
 }
 
 function hideLoading() {
@@ -705,12 +684,12 @@ function inputVal(label) {
 function selectNeckline(btn, val) {
   selectPillInGroup(btn);
   state.neckline = val;
-  goFront(); updatePreview(); zoomToRegion(2.6, 0.5, 0.14);
+  updatePreview(); zoomToRegion(2.6, 0.5, 0.32);
 }
 function selectSleeveLength(btn, val) {
   selectPillInGroup(btn);
   state.sleeveLength = val;
-  goFront(); updatePreview(); zoomToRegion(2.2, 0.18, 0.35);
+  goFront(); updatePreview(); zoomToRegion(2.2, 0.28, 0.42);
 }
 function selectSideSlit(btn, val) {
   selectPillInGroup(btn);
@@ -719,7 +698,7 @@ function selectSideSlit(btn, val) {
     state.view = 'b';
     document.querySelectorAll('.view-bar-btn').forEach(function(b){ b.classList.remove('active'); });
     document.querySelector('.view-bar-btn:last-child').classList.add('active');
-    updatePreview(); zoomToRegion(2.4, 0.5, 0.75);
+    updatePreview(); zoomToRegion(2.4, 0.5, 0.68);
   } else {
     goFront(); updatePreview(); resetZoom();
   }
@@ -732,7 +711,7 @@ function selectPillInGroupWithState(btn) {
   var rawText = btn.dataset.optionLabel || btn.textContent.trim();
   var val = rawText.toLowerCase().replace(/ /g,'-');
   if (label === 'Fit') {
-    var m = { 'regular':'regular','oversized':'oversized','slim':'slim','boxy':'boxy' };
+    var m = { 'regular':'regular','oversized':'oversize' };
     state.fit = m[val] || 'regular';
     goFront(); updatePreview(); resetZoom();
   }
@@ -743,21 +722,21 @@ function selectPillInGroupWithState(btn) {
   }
   if (label === 'Cuff Style') {
     state.cuff = val.includes('rib') ? 'ribbed' : 'plain';
-    updatePreview(); zoomToRegion(2.2, 0.18, 0.6);
+    updatePreview(); zoomToRegion(2.2, 0.28, 0.46);
   }
   if (label === 'Chest Pocket') {
     var m3 = { 'none':'none','patch-pocket':'patch','welt-pocket':'welt' };
     state.pocket = m3[val] || 'none';
-    goFront(); updatePreview(); zoomToRegion(2.6, 0.4, 0.32);
+    goFront(); updatePreview(); zoomToRegion(2.6, 0.42, 0.43);
   }
   if (label === 'Hem Finish') {
     var m4 = { 'straight-hem':'straight','curved-hem':'curved','ribbed-hem':'ribbed' };
     state.hem = m4[val] || 'straight';
-    goFront(); updatePreview(); zoomToRegion(2.2, 0.5, 0.88);
+    goFront(); updatePreview(); zoomToRegion(2.2, 0.5, 0.70);
   }
   if (label === 'Neck Rib') {
     state.neckrib = val.includes('contrast') ? 'contrast' : 'self';
-    goFront(); updatePreview(); zoomToRegion(2.6, 0.5, 0.14);
+    goFront(); updatePreview(); zoomToRegion(2.6, 0.5, 0.32);
   }
 }
 
@@ -773,12 +752,10 @@ function selectIconCard(btn) {
   btn.classList.add('selected');
 }
 
-function setSleeveStyle(btn) {
-  var label = btn.querySelector('.icon-card-label');
-  var text = label ? (label.dataset.optionLabel || label.textContent.trim()) : '';
-  var m = { 'Set-In':'setin', 'Raglan':'raglan', 'Drop Shoulder':'dropshoulder' };
-  state.sleeveStyle = m[text] || 'setin';
-  updatePreview();
+function selectSleeveStyle(btn, val) {
+  selectPillInGroup(btn);
+  state.sleeveStyle = val;            // 'regular' | 'raglan'
+  goFront(); updatePreview(); zoomToRegion(2.0, 0.5, 0.40);
 }
 
 // ── Fabric — sheet-backed ─────────────────────────────────────────
@@ -975,7 +952,7 @@ function collectConfig() {
     'LENGTH':             sectionPill('Length'),
     'NECKLINE':           sectionPill('Neckline'),
     'SLEEVE LENGTH':      sectionPill('Sleeve Length'),
-    'SLEEVE STYLE':       sectionIconCard('Sleeve Style'),
+    'SLEEVE STYLE':       sectionPill('Sleeve Style'),
     'CUFF STYLE':         sectionPill('Cuff Style'),
     'CHEST POCKET':       sectionPill('Chest Pocket'),
     'HEM/FINISH':         sectionPill('Hem Finish'),
@@ -1977,7 +1954,7 @@ function captureTechPackImage() {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.2.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.3.0</div>
 
 </body>
 </html>
