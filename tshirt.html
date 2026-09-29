@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>T-Shirt Configurator v1.3.1</title>
+<title>T-Shirt Configurator v1.4.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -47,6 +47,11 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 .tab.active { color: var(--ink); border-bottom-color: var(--ink); }
 .config-body { padding: 28px 28px 110px; display: flex; flex-direction: column; }
 #panel-measurements { padding: 0 !important; flex: 1; min-height: 0; overflow: hidden; }
+
+/* Measure-from switch */
+.meas-source-switch { display:inline-flex; border:1px solid var(--border-mid); border-radius:2px; padding:3px; background:var(--white); }
+.meas-source-btn { font-family:'Jost',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; padding:9px 14px; border:none; border-radius:1px; background:transparent; color:var(--ink-mid); cursor:pointer; transition:background 0.15s,color 0.15s; }
+.meas-source-btn[aria-pressed="true"] { background:var(--ink); color:var(--white); }
 
 /* Loading measurements notification */
 #meas-loading-notif {
@@ -442,6 +447,17 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
               Loading measurements…
             </div>
 
+            <!-- Measure from: body or a garment that fits -->
+            <div style="margin-bottom:24px;">
+              <div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:8px;">Measure from</div>
+              <div class="meas-source-switch" role="group" aria-label="Measure from">
+                <button type="button" class="meas-source-btn" data-source="body" aria-pressed="true" onclick="measSetSource('body')">My body</button>
+                <button type="button" class="meas-source-btn" data-source="garment" aria-pressed="false" onclick="measSetSource('garment')">A garment that fits me</button>
+              </div>
+              <p id="meas-source-hint" style="font-size:11px;color:var(--ink-light);margin-top:8px;line-height:1.5;"></p>
+            </div>
+
+            <div id="meas-body-fields">
             <div style="margin-bottom:20px;">
               <div style="display:flex;flex-direction:column;max-width:200px;">
                 <label style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:5px;">Height</label>
@@ -463,6 +479,15 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
               Linear Measurements
             </div>
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;" id="meas-grid-lin"></div>
+            </div><!-- /meas-body-fields -->
+
+            <div id="meas-garment-fields" style="display:none;">
+              <div style="font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-light);padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px;display:flex;align-items:center;gap:7px;">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3l-5 4 3 4 2-1v11h8V10l2 1 3-4-5-4c-.5 1.5-2 2.5-4 2.5S8.5 4.5 8 3z"/></svg>
+                T-shirt Measurements
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;" id="meas-grid-garment"></div>
+            </div>
 
           </form>
 
@@ -938,7 +963,7 @@ function collectConfig() {
     return (el && el.value && parseFloat(el.value) > 0) ? el.value + ' cm' : '';
   }
 
-  return {
+  var cfg = {
     // ── Meta ──────────────────────────────────────────────────────
     'Order Number':      '',
     'Person ID':         window._currentPersonId || '',
@@ -971,17 +996,12 @@ function collectConfig() {
     'CONTRAST CODE':     contrastCode,
     'CONTRAST PLACEMENT':contrastParts.join(', '),
 
-    // ── Measurements ──────────────────────────────────────────────
-    'height':            mval('height'),
-    'chestGirth':        mval('chestGirth'),
-    'waistGirth':        mval('waistGirth'),
-    'hipGirth':          mval('hipGirth'),
-    'neckGirth':         mval('neckGirth'),
-    'bicepGirth':        mval('bicepGirth'),
-    'shoulderWidth':     mval('shoulderWidth'),
-    'sleeveLen':         mval('sleeveLen'),
-    'bodyLength':        mval('bodyLength'),
+    // ── Measurements — see measActive() below ──────────────────────
   };
+  var active = window.measActive ? window.measActive() : { source: 'body', fields: [] };
+  cfg['MEASUREMENT TYPE'] = active.source === 'garment' ? 'Garment' : 'Body';
+  active.fields.forEach(function(f){ cfg[f[0]] = mval(f[0]); });
+  return cfg;
 }
 window.collectConfig = collectConfig;
 
@@ -1118,17 +1138,11 @@ function buildSummary() {
     },
     {
       label: 'Measurements',
-      rows: [
-        mrow('Height',          'height'),
-        mrow('Chest Girth',     'chestGirth'),
-        mrow('Waist Girth',     'waistGirth'),
-        mrow('Hip Girth',       'hipGirth'),
-        mrow('Neck Girth',      'neckGirth'),
-        mrow('Bicep Girth',     'bicepGirth'),
-        mrow('Shoulder Width',  'shoulderWidth'),
-        mrow('Sleeve Length',   'sleeveLen'),
-        mrow('Body Length',     'bodyLength'),
-      ]
+      rows: [['Measured from', cfg['MEASUREMENT TYPE'] === 'Garment' ? 'A garment that fits' : 'Body']].concat(
+        (window.measActive ? window.measActive().fields : []).map(function(f){
+          return mrow(f[1].replace(/\s*\(cm\)$/,''), f[0]);
+        })
+      )
     }
   ];
 
@@ -1213,6 +1227,22 @@ function showFeedback(msg, color) {
     'shoulderWidth','sleeveLen','bodyLength'
   ]);
 
+  // Garment measurements (measure a T-shirt that already fits).
+  // Source of truth is GARMENT_MEAS.tshirt on the measurements page; this is the fallback.
+  var FALLBACK_GARMENT = {
+    name:  'T-shirt',
+    front: 'GARMENT_T-shirt_front.png',
+    hint:  'Lay a T-shirt that fits you well flat on a table and measure it.',
+    fields: [
+      ['garmentTshirtChest',    'Chest (cm)',    'GARMENT_T-shirt_Chest.png'],
+      ['garmentTshirtLength',   'Length (cm)',   'GARMENT_T-shirt_Length.png'],
+      ['garmentTshirtShoulder', 'Shoulder (cm)', 'GARMENT_T-shirt_Shoulder.png'],
+      ['garmentTshirtSleeve',   'Sleeve (cm)',   'GARMENT_T-shirt_Sleeve.png'],
+    ]
+  };
+  var GARMENT = FALLBACK_GARMENT;
+  var _measSource = 'body';      // 'body' | 'garment'
+
   var FIELD_IMG   = FALLBACK_FIELD_IMG;
   var TSHIRT_VOL  = FALLBACK_VOL;
   var TSHIRT_LIN  = FALLBACK_LIN;
@@ -1222,6 +1252,13 @@ function showFeedback(msg, color) {
     return fetch(MEAS_URL)
       .then(function(r) { return r.text(); })
       .then(function(html) {
+        var gmMatch = html.match(/var GARMENT_MEAS\s*=\s*(\{[\s\S]*?\n\});/);
+        if (gmMatch) {
+          try {
+            var gm = (new Function('return ' + gmMatch[1]))();
+            if (gm && gm.tshirt && gm.tshirt.fields && gm.tshirt.fields.length) GARMENT = gm.tshirt;
+          } catch(e) {}
+        }
         var fiMatch = html.match(/var FIELD_IMG\s*=\s*(\{[\s\S]*?\});/);
         if (fiMatch) {
           try { FIELD_IMG = (new Function('return ' + fiMatch[1]))(); } catch(e) {}
@@ -1262,8 +1299,16 @@ function showFeedback(msg, color) {
     _diagLabel = document.getElementById('meas-diag-label');
     if (!_diagImg) return;
     _diagImg.onload = function() { _diagImg.style.opacity = '1'; _diagLabel.style.opacity = '0'; };
-    _diagImg.src = FRONT_IMG;
-    _diagActive  = FRONT_IMG;
+    _diagImg.src = frontImg();
+    _diagActive  = frontImg();
+  }
+
+  function frontImg() {
+    return _measSource === 'garment' ? RAW_BASE + encodeURIComponent(GARMENT.front) : FRONT_IMG;
+  }
+  function garmentImg(key) {
+    var f = GARMENT.fields.find(function(x){ return x[0] === key; });
+    return f ? f[2] : null;
   }
 
   function showMeasDiagImage(url, labelText) {
@@ -1288,8 +1333,10 @@ function showFeedback(msg, color) {
 
   window.measFocusField = function(label, key) {
     if (!_diagImg) initMeasDiag();
-    if (key && FIELD_IMG[key]) showMeasDiagImage(RAW_BASE + encodeURIComponent(FIELD_IMG[key]), label);
-    else showMeasDiagImage(FRONT_IMG, '');
+    var gImg = key ? garmentImg(key) : null;
+    if (gImg) showMeasDiagImage(RAW_BASE + encodeURIComponent(gImg), label);
+    else if (key && FIELD_IMG[key]) showMeasDiagImage(RAW_BASE + encodeURIComponent(FIELD_IMG[key]), label);
+    else showMeasDiagImage(frontImg(), '');
   };
 
   function makeField(key, label) {
@@ -1315,9 +1362,40 @@ function showFeedback(msg, color) {
     gv.innerHTML = ''; gl.innerHTML = '';
     TSHIRT_VOL.forEach(function(f){ gv.appendChild(makeField(f[0], f[1])); });
     TSHIRT_LIN.forEach(function(f){ gl.appendChild(makeField(f[0], f[1])); });
+    var gg = document.getElementById('meas-grid-garment');
+    if (gg) { gg.innerHTML = ''; GARMENT.fields.forEach(function(f){ gg.appendChild(makeField(f[0], f[1])); }); }
     initMeasDiag();
+    applySource();
     _attachMeasDirtyListeners();
   }
+
+  // ── Measure from: body / garment ──
+  function applySource() {
+    var garment = _measSource === 'garment';
+    document.querySelectorAll('.meas-source-btn').forEach(function(b){
+      b.setAttribute('aria-pressed', String(b.dataset.source === _measSource));
+    });
+    var bf = document.getElementById('meas-body-fields');
+    var gf = document.getElementById('meas-garment-fields');
+    if (bf) bf.style.display = garment ? 'none' : '';
+    if (gf) gf.style.display = garment ? '' : 'none';
+    var hint = document.getElementById('meas-source-hint');
+    if (hint) hint.textContent = garment ? GARMENT.hint : 'Measure your body, or a T-shirt you already own that fits well.';
+  }
+
+  window.measSetSource = function(source) {
+    _measSource = (source === 'garment') ? 'garment' : 'body';
+    applySource();
+    if (_diagImg) showMeasDiagImage(frontImg(), '');
+  };
+
+  // Used by the order / summary: which mode, and the fields that belong to it
+  window.measActive = function() {
+    var fields = _measSource === 'garment'
+      ? GARMENT.fields.map(function(f){ return [f[0], f[1]]; })
+      : [['height','Height (cm)']].concat(TSHIRT_VOL, TSHIRT_LIN);
+    return { source: _measSource, fields: fields };
+  };
 
   function sheetsReq(action, payload) {
     payload = payload || {};
@@ -1339,6 +1417,8 @@ function showFeedback(msg, color) {
 
   function prefillMeasurements(rec) {
     if (!rec) return;
+    var savedSource = rec['tshirtMeasurementSource'];
+    if (savedSource === 'garment' || savedSource === 'body') window.measSetSource(savedSource);
     var hEl = document.getElementById('mf-height');
     var hVal = rec['Height [CM]'] || rec['height'] || '';
     if (hEl && hVal && hVal !== '0') hEl.value = parseFloat(hVal);
@@ -1387,7 +1467,7 @@ function showFeedback(msg, color) {
     var lbl = document.getElementById('meas-save-lbl');
     var sp  = document.getElementById('meas-save-spin');
     btn.disabled = true; lbl.style.display = 'none'; sp.style.display = 'block';
-    var data = { garment: 'tshirt', dateTime: new Date().toLocaleString() };
+    var data = { garment: 'tshirt', dateTime: new Date().toLocaleString(), tshirtMeasurementSource: _measSource };
     var fd = new FormData(form);
     fd.forEach(function(v, k){ if (v) data[k] = v; });
     var email = document.getElementById('mf-email').value.trim();
@@ -1408,7 +1488,7 @@ function showFeedback(msg, color) {
     var lbl = document.getElementById('meas-save-lbl');
     var sp  = document.getElementById('meas-save-spin');
     btn.disabled = true; lbl.style.display = 'none'; sp.style.display = 'block';
-    var data = { garment: 'tshirt', dateTime: new Date().toLocaleString() };
+    var data = { garment: 'tshirt', dateTime: new Date().toLocaleString(), tshirtMeasurementSource: _measSource };
     var fd = new FormData(form);
     fd.forEach(function(v, k){ if (v) data[k] = v; });
     var email = document.getElementById('mf-email').value.trim();
@@ -1957,7 +2037,7 @@ function captureTechPackImage() {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.3.1</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.4.0</div>
 
 </body>
 </html>
