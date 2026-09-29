@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TailorTech — New Order v2.11.1</title>
+<title>TailorTech — New Order v2.12.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -727,7 +727,7 @@ button { cursor: pointer; font-family: inherit; }
   const heroImg = document.getElementById('hero-img');
   const HERO_IMAGES = {
     formal: heroImg ? heroImg.src : '',
-    casual: ''
+    casual: 'https://raw.githubusercontent.com/toom-design/tailortech_configure_images/main/configure%20images_hero_image_casual.webp'
   };
   const grids = {
     formal: document.getElementById('grid-formal'),
@@ -735,12 +735,14 @@ button { cursor: pointer; font-family: inherit; }
   };
   const buttons = document.querySelectorAll('.style-switch-btn');
 
-  function setStyle(style, updateHash) {
+  function setStyle(style, updateHash, instant) {
     if (!grids[style]) style = 'casual';
     buttons.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.style === style)));
     Object.keys(grids).forEach(k => { if (grids[k]) grids[k].hidden = (k !== style); });
     const src = HERO_IMAGES[style] || HERO_IMAGES.formal;
-    if (heroImg && src && heroImg.src !== src) {
+    if (heroImg && src && heroImg.src !== src && instant) {
+      heroImg.src = src;                       // first paint: no fade
+    } else if (heroImg && src && heroImg.src !== src) {
       heroImg.classList.add('is-swapping');
       setTimeout(() => { heroImg.src = src; heroImg.classList.remove('is-swapping'); }, 250);
     }
@@ -748,11 +750,12 @@ button { cursor: pointer; font-family: inherit; }
   }
 
   buttons.forEach(b => b.addEventListener('click', () => setStyle(b.dataset.style, true)));
-  setStyle(location.hash === '#formal' ? 'formal' : 'casual', false);
+  if (HERO_IMAGES.casual) { var pre = new Image(); pre.src = HERO_IMAGES.casual; }   // preload for instant switching
+  setStyle(location.hash === '#formal' ? 'formal' : 'casual', false, true);
 })();
 </script>
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.25);z-index:9999;pointer-events:none;">v2.11.1</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.25);z-index:9999;pointer-events:none;">v2.12.0</div>
 
 <!-- Firebase -->
 <script type="module">
