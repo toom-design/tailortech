@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TailorTech — Measurements v2.10.0</title>
+<title>TailorTech — Measurements v2.10.1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -374,13 +374,13 @@ const GARMENT_SETS = {
 var GARMENT_MEAS = {
   tshirt: {
     name:  'T-shirt',
-    front: 'GARMENT_T-shirt_front.png',
+    front: 'MEASUREMENTS_t-shirt_front.webp',   // file name in the measurements repo (or a full URL)
     hint:  'Lay a T-shirt that fits you well flat on a table and measure it.',
     fields: [
-      ['garmentTshirtChest',    'Chest (cm)',    'GARMENT_T-shirt_Chest.png'],
-      ['garmentTshirtLength',   'Length (cm)',   'GARMENT_T-shirt_Length.png'],
-      ['garmentTshirtShoulder', 'Shoulder (cm)', 'GARMENT_T-shirt_Shoulder.png'],
-      ['garmentTshirtSleeve',   'Sleeve (cm)',   'GARMENT_T-shirt_Sleeve.png'],
+      ['garmentTshirtChest',    'Chest (cm)',    'MEASUREMENTS_t-shirt_chest.webp'],
+      ['garmentTshirtLength',   'Length (cm)',   'MEASUREMENTS_t-shirt_length.webp'],
+      ['garmentTshirtShoulder', 'Shoulder (cm)', 'MEASUREMENTS_t-shirt_shoulder.webp'],
+      ['garmentTshirtSleeve',   'Sleeve (cm)',   'MEASUREMENTS_t-shirt_sleeve.webp'],
     ]
   }
 };
@@ -540,7 +540,7 @@ var currentSource = 'body';
 
 function currentFrontImg() {
   var gm = GARMENT_MEAS[currentFilter];
-  return (currentSource === 'garment' && gm) ? RAW_BASE + encodeURIComponent(gm.front) : FRONT_IMG;
+  return (currentSource === 'garment' && gm) ? (/^https?:/.test(gm.front) ? gm.front : RAW_BASE + encodeURIComponent(gm.front)) : FRONT_IMG;
 }
 
 function setSource(source) {
@@ -713,7 +713,7 @@ function prefillMeasurements(rec){
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.10.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.10.1</div>
 
 <!-- Firebase -->
 <script type="module">
