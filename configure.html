@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TailorTech</title>
+<title>TailorTech — New Order v2.14.1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -502,6 +502,36 @@ button { cursor: pointer; font-family: inherit; }
   .hero-subtitle { font-size: 15px; }
 }
 
+
+/* Card text — Suit Jacket style for every garment card */
+#grid-formal .gcard-inner, #grid-casual .gcard-inner,
+#grid-formal .gcard:nth-child(3) .gcard-inner, #grid-casual .gcard:nth-child(3) .gcard-inner { justify-content: flex-end; padding: 32px 28px 28px; }
+#grid-formal .gcard-name, #grid-casual .gcard-name,
+#grid-formal .gcard:nth-child(3) .gcard-name, #grid-casual .gcard:nth-child(3) .gcard-name {
+  color: var(--cream); font-size: 40px; margin-bottom: 12px;
+}
+#grid-formal .gcard-divider, #grid-casual .gcard-divider {
+  width: 32px; height: 1px; background: rgba(240,237,230,0.15); margin: 24px 0 20px;
+}
+@media (max-width: 780px) {
+  #grid-formal .gcard-name, #grid-casual .gcard-name,
+  #grid-formal .gcard:nth-child(3) .gcard-name, #grid-casual .gcard:nth-child(3) .gcard-name { font-size: 24px; margin-bottom: 8px; }
+  #grid-formal .gcard-divider, #grid-casual .gcard-divider { margin: 12px 0 12px; }
+  #grid-formal .gcard-inner, #grid-casual .gcard-inner,
+  #grid-formal .gcard:nth-child(3) .gcard-inner, #grid-casual .gcard:nth-child(3) .gcard-inner { padding: 20px 18px 18px; }
+}
+@media (max-width: 520px) {
+  #grid-formal .gcard-name, #grid-casual .gcard-name,
+  #grid-formal .gcard:nth-child(3) .gcard-name, #grid-casual .gcard:nth-child(3) .gcard-name { font-size: 36px; }
+  #grid-formal .gcard-divider, #grid-casual .gcard-divider { margin: 20px 0 18px; }
+}
+
+/* "Coming soon" button — solid white, not clickable-looking */
+.gcard--photo .gcard-cta.gcard-cta--soon,
+.gcard--photo:hover .gcard-cta.gcard-cta--soon {
+  background: #FFFFFF; color: var(--ink); border: 1px solid #FFFFFF;
+  backdrop-filter: none; gap: 8px; cursor: default;
+}
 </style>
 </head>
 <body>
@@ -584,12 +614,11 @@ button { cursor: pointer; font-family: inherit; }
       <div class="gcard-photo-fade" style="background: linear-gradient(to top, rgba(26,25,22,0.90) 0%, rgba(26,25,22,0.35) 55%, transparent 100%);"></div>
       <div class="gcard-inner" style="justify-content:flex-end;z-index:2;">
         <!-- <div class="gcard-number" style="color: rgba(240,237,230,0.30); position: absolute; top: 32px; left: 32px;">03</div> -->
-        <div style="font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:rgba(240,237,230,0.45);margin-bottom:12px;">Featured</div>
-        <div class="gcard-name" style="color: var(--cream); font-size: 40px; margin-bottom: 12px;">Suit Jacket</div>
+        <div class="gcard-name">Suit Jacket</div>
         <!-- <div class="gcard-desc" style="color: rgba(240,237,230,0.55); max-width: 240px;">Bespoke suits and blazers, tailored to you. Full canvassing, your choice of fabric and lining.</div> -->
         <!-- <div class="gcard-price" style="color: rgba(240,237,230,0.50);">From <strong style="color: var(--cream);">$395</strong></div> -->
-        <div class="gcard-divider" style="width:32px;height:1px;background:rgba(240,237,230,0.15);margin: 24px 0 20px;"></div>
-        <div class="gcard-cta" style="background: var(--cream); color: var(--ink);">
+        <div class="gcard-divider"></div>
+        <div class="gcard-cta">
           Configure
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </div>
@@ -605,6 +634,7 @@ button { cursor: pointer; font-family: inherit; }
         <div class="gcard-name">Trousers</div>
         <!--<div class="gcard-desc">Tailored trousers with perfect fit. Wool, cotton, linen — your choice.</div> -->
         <!-- <div class="gcard-price">From <strong>$175</strong></div> -->
+        <div class="gcard-divider"></div>
         <div class="gcard-cta">
           Configure
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -621,6 +651,7 @@ button { cursor: pointer; font-family: inherit; }
         <div class="gcard-name">Shirt</div>
         <!-- <div class="gcard-desc">Dress shirts, casual shirts, oxfords. Configure collar, cuffs, fabric, and more.</div> -->
         <!-- <div class="gcard-price">From <strong>$145</strong></div> -->
+        <div class="gcard-divider"></div>
         <div class="gcard-cta">
           Configure
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -637,6 +668,7 @@ button { cursor: pointer; font-family: inherit; }
         <div class="gcard-name">Casual Jacket</div>
         <!-- <div class="gcard-desc">Dress shirts, casual shirts, oxfords. Configure collar, cuffs, fabric, and more.</div> -->
         <!-- <div class="gcard-price">From <strong>$145</strong></div> -->
+        <div class="gcard-divider"></div>
         <div class="gcard-cta">
           Configure
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -645,7 +677,6 @@ button { cursor: pointer; font-family: inherit; }
     </div>
     <!-- Denim Trousers -->
     <div class="gcard gcard--photo" onclick="window.location.href='https://tailortech.toom.design/denim_trousers'">
-      <span class="gcard-badge soon">Coming soon</span>
       <img class="gcard-photo" src="https://raw.githubusercontent.com/toom-design/tailortech_configure_images/main/configure%20images_denim_trousers-17.webp" alt="Denim Trousers" loading="lazy">
 
      <div class="gcard-photo-fade"></div>
@@ -654,10 +685,8 @@ button { cursor: pointer; font-family: inherit; }
         <div class="gcard-name">Denim Trousers</div>
         <!-- <div class="gcard-desc">Dress shirts, casual shirts, oxfords. Configure collar, cuffs, fabric, and more.</div> -->
         <!-- <div class="gcard-price">From <strong>$145</strong></div> -->
-        <div class="gcard-cta">
-          Configure
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </div>
+        <div class="gcard-divider"></div>
+        <div class="gcard-cta gcard-cta--soon">Coming soon</div>
       </div>
     </div>
   </div>
@@ -671,6 +700,8 @@ button { cursor: pointer; font-family: inherit; }
       <div class="gcard-inner">
         
         <div class="gcard-name">T-shirt</div>
+        
+        <div class="gcard-divider"></div>
         
         <div class="gcard-cta">
           Configure
@@ -686,6 +717,8 @@ button { cursor: pointer; font-family: inherit; }
         
         <div class="gcard-name">Sweatpants</div>
         
+        <div class="gcard-divider"></div>
+        
         <div class="gcard-cta">
           Configure
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -699,10 +732,9 @@ button { cursor: pointer; font-family: inherit; }
       <img class="gcard-photo" src="https://raw.githubusercontent.com/toom-design/tailortech_configure_images/main/configure%20images_crewneck.webp" alt="Hoodie" loading="lazy">
       <div class="gcard-photo-fade" style="background: linear-gradient(to top, rgba(26,25,22,0.90) 0%, rgba(26,25,22,0.35) 55%, transparent 100%);"></div>
       <div class="gcard-inner" style="justify-content:flex-end;z-index:2;">
-        <div style="font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:rgba(240,237,230,0.45);margin-bottom:12px;">Featured</div>
-        <div class="gcard-name" style="color: var(--cream); font-size: 40px; margin-bottom: 12px;">Hoodie</div>
-        <div class="gcard-divider" style="width:32px;height:1px;background:rgba(240,237,230,0.15);margin: 24px 0 20px;"></div>
-        <div class="gcard-cta" style="background: var(--cream); color: var(--ink);">
+        <div class="gcard-name">Hoodie</div>
+        <div class="gcard-divider"></div>
+        <div class="gcard-cta">
           Configure
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </div>
@@ -755,7 +787,7 @@ button { cursor: pointer; font-family: inherit; }
 })();
 </script>
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.25);z-index:9999;pointer-events:none;">v2.13.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.25);z-index:9999;pointer-events:none;">v2.14.1</div>
 
 <!-- Firebase -->
 <script type="module">
