@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TailorTech — New Order v2.11.0</title>
+<title>TailorTech — New Order v2.11.1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -462,7 +462,7 @@ button { cursor: pointer; font-family: inherit; }
 .garment-grid[hidden] { display: none; }
 /* Casual: three equal tall cards, hoodie keeps the featured styling */
 .garment-grid--casual { grid-template-rows: auto; }
-.garment-grid--casual .gcard:nth-child(n) { grid-column: auto; grid-row: 1; min-height: 520px; }
+.garment-grid--casual .gcard:nth-child(n) { grid-column: auto; grid-row: 1; min-height: 0; aspect-ratio: 1 / 1; }
 .gcard-placeholder {
   position: absolute; inset: 0; z-index: 0;
   background: linear-gradient(160deg, #3a3935 0%, #22211f 100%);
@@ -471,11 +471,14 @@ button { cursor: pointer; font-family: inherit; }
   color: rgba(240,237,230,0.22);
 }
 @media (max-width: 780px) {
-  .garment-grid--casual .gcard:nth-child(n) { grid-row: auto; min-height: 320px; }
-  .garment-grid--casual .gcard:nth-child(3) { grid-column: 1 / span 2; }
+  /* keep three squares side by side on tablets */
+  .garment-grid.garment-grid--casual { grid-template-columns: repeat(3, 1fr); }
+  .garment-grid--casual .gcard:nth-child(n) { grid-column: auto; grid-row: 1; }
+  .garment-grid--casual .gcard-inner { padding: 20px 18px 18px; }
 }
 @media (max-width: 520px) {
-  .garment-grid--casual .gcard:nth-child(3) { grid-column: 1; }
+  .garment-grid.garment-grid--casual { grid-template-columns: 1fr; }
+  .garment-grid--casual .gcard:nth-child(n) { grid-column: 1; grid-row: auto; }
 }
 
 @media (max-width: 700px) {
@@ -663,7 +666,7 @@ button { cursor: pointer; font-family: inherit; }
   <div class="garment-grid garment-grid--casual" id="grid-casual">
     <!-- T-shirt -->
     <div class="gcard gcard--photo" onclick="window.location.href='https://tailortech.toom.design/tshirt'">
-      <img class="gcard-photo" src="https://raw.githubusercontent.com/toom-design/tailortech_configure_images/main/configure%20images_t-shirt.webp" alt="T-shirt" loading="lazy" style="object-position:right center;">
+      <img class="gcard-photo" src="https://raw.githubusercontent.com/toom-design/tailortech_configure_images/main/configure%20images_t-shirt.webp" alt="T-shirt" loading="lazy">
       <div class="gcard-photo-fade"></div>
       <div class="gcard-inner">
         
@@ -677,7 +680,7 @@ button { cursor: pointer; font-family: inherit; }
     </div>
     <!-- Sweatpants -->
     <div class="gcard gcard--photo" onclick="window.location.href='https://tailortech.toom.design/sweatpants'">
-      <img class="gcard-photo" src="https://raw.githubusercontent.com/toom-design/tailortech_configure_images/main/configure%20images_sweatpants.webp" alt="Sweatpants" loading="lazy" style="object-position:center center;">
+      <img class="gcard-photo" src="https://raw.githubusercontent.com/toom-design/tailortech_configure_images/main/configure%20images_sweatpants.webp" alt="Sweatpants" loading="lazy">
       <div class="gcard-photo-fade"></div>
       <div class="gcard-inner">
         
@@ -693,7 +696,7 @@ button { cursor: pointer; font-family: inherit; }
     <div class="gcard gcard--photo" onclick="window.location.href='https://tailortech.toom.design/hoodie'" style="background: #2a2a28;">
       
   <!-- temporary: crewneck photo until a hoodie photo exists -->
-      <img class="gcard-photo" src="https://raw.githubusercontent.com/toom-design/tailortech_configure_images/main/configure%20images_crewneck.webp" alt="Hoodie" loading="lazy" style="object-position:right center;">
+      <img class="gcard-photo" src="https://raw.githubusercontent.com/toom-design/tailortech_configure_images/main/configure%20images_crewneck.webp" alt="Hoodie" loading="lazy">
       <div class="gcard-photo-fade" style="background: linear-gradient(to top, rgba(26,25,22,0.90) 0%, rgba(26,25,22,0.35) 55%, transparent 100%);"></div>
       <div class="gcard-inner" style="justify-content:flex-end;z-index:2;">
         <div style="font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:rgba(240,237,230,0.45);margin-bottom:12px;">Featured</div>
@@ -749,7 +752,7 @@ button { cursor: pointer; font-family: inherit; }
 })();
 </script>
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.25);z-index:9999;pointer-events:none;">v2.11.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.25);z-index:9999;pointer-events:none;">v2.11.1</div>
 
 <!-- Firebase -->
 <script type="module">
