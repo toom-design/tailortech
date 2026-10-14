@@ -2171,7 +2171,7 @@ function captureTechPackImage() {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.0</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.1</div>
 
 
 <!-- ═══════════════ 3D PREVIEW (three.js + glTF) ═══════════════ -->
@@ -2307,7 +2307,8 @@ async function loadModel() {
   center = box.getCenter(new THREE.Vector3());
   fitRadius = box.getBoundingSphere(new THREE.Sphere()).radius;
   shadow = makeShadow(box); scene.add(shadow);
-  controls.minDistance = fitRadius * 0.35;   // allow close-up to see the knit controls.maxDistance = fitRadius * 8;
+  controls.minDistance = fitRadius * 0.35;   // allow close-up to see the knit
+  controls.maxDistance = fitRadius * 8;
   reset();
   buildPartButtons(decodeURIComponent(url.split('/').pop()));
   await setFabric(fabricInfo || selectedFabricInfo());
