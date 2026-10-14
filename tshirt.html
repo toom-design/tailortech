@@ -936,6 +936,8 @@ function buildFabricCard(fabric, group, isFirst) {
   card.dataset.color = color;
   card.dataset.unitprice = unitPrice;
   card.dataset.tilecm = fabric.TileSize_cm || '';
+  card.dataset.colorhex = fabric.ColorHex || '';
+  card.dataset.type = (fabric.Type || '') + ' ' + name;
   card.onclick = function(){ selectFabric(card, group); if (typeof updatePriceBar === 'function') updatePriceBar(); };
 
   var imgWrap = document.createElement('div');
@@ -943,7 +945,12 @@ function buildFabricCard(fabric, group, isFirst) {
 
   var faceImg = document.createElement('img');
   faceImg.className = 'fc-img'; faceImg.alt = name; faceImg.loading = 'lazy';
-  if (face) faceImg.src = face; else faceImg.style.background = 'var(--cream-dark)';
+  if (face) faceImg.src = face;
+  else {                                   // no photo yet: show the sheet's ColorHex as a swatch
+    faceImg.alt = '';
+    faceImg.style.background = /^#?[0-9a-f]{6}$/i.test(String(fabric.ColorHex || '').trim())
+      ? '#' + String(fabric.ColorHex).trim().replace('#', '') : 'var(--cream-dark)';
+  }
   imgWrap.appendChild(faceImg);
 
   var body = document.createElement('div');
@@ -1023,6 +1030,7 @@ async function renderFabricGrids() {
     } else {
       mainGrid.innerHTML = '';
       fabrics.forEach(function(f, i){ mainGrid.appendChild(buildFabricCard(f, 'main', i === 0)); });
+      if (window.tt3d && window.tt3d.syncFabric) window.tt3d.syncFabric();   // 3D picks up the pre-selected fabric
       if (compGrid) {
         compGrid.innerHTML = '';
         fabrics.forEach(function(f, i){ compGrid.appendChild(buildFabricCard(f, 'comp', false)); });
@@ -2163,7 +2171,7 @@ function captureTechPackImage() {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.5</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.7</div>
 
 
 <!-- ═══════════════ 3D PREVIEW (three.js + glTF) ═══════════════ -->
@@ -2325,6 +2333,13 @@ function fabricMaterial(key) {
 // scaled by the sheet's TileSize_cm. Fallback: a calm patch cut from <CODE>_face photo.
 // The model's UVs are in metres (CLO export), so repeat = 100 / tile size in cm.
 const FABRIC_BASE = 'https://raw.githubusercontent.com/toom-design/fabrics/main/webp/';
+const FABRIC_ROOT = 'https://raw.githubusercontent.com/toom-design/fabrics/main/';   // also checked
+const NORMAL_STRENGTH = 1.5;
+// Shared surface textures: one normal map reused by every fabric of that kind
+// (used when there's no <CODE>_normal.webp). Size applies if the sheet's TileSize_cm is empty.
+const SHARED_NORMALS = [
+  { test: /^JRS-|jersey/i, file: 'jersey_texture.webp', tileCm: [4, 4.3] },
+];         // knit relief; black fabric needs a bit more to read
 const DEFAULT_TILE_CM = 8;
 let fabricInfo = null, fabricMaps = null;
 const mapCache = {};
@@ -2333,8 +2348,9 @@ function applyFabricTo(mat) {
   const m = fabricMaps;
   mat.map = m ? m.map : null;
   mat.normalMap = m && m.normal ? m.normal : null;
-  if (mat.normalMap) mat.normalScale.set(1, 1);
-  mat.color.set(m ? 0xb0b0b0 : FABRIC.color);   // slight darkening: studio light lifts photo colours
+  if (mat.normalMap) mat.normalScale.set(NORMAL_STRENGTH, NORMAL_STRENGTH);
+  if (m && m.map) mat.color.set(0xb0b0b0);       // slight darkening: studio light lifts photo colours
+  else mat.color.set(m && m.color ? m.color : FABRIC.color);
   mat.needsUpdate = true;
 }
 
@@ -2399,26 +2415,48 @@ function photoToTile(img) {
 }
 
 function loadFabricMaps(info) {
-  const key = info.code + '|' + info.face + '|' + info.tileCm;
+  const key = [info.code, info.face, info.tileCm, info.colorHex, info.type].join('|');
   if (mapCache[key]) return mapCache[key];
   return mapCache[key] = (async () => {
     // TileSize_cm: "4" (square) or "4 x 4.3" (width x height), comma decimals allowed
     const nums = String(info.tileCm || '').replace(/,/g, '.').match(/\d+(\.\d+)?/g) || [];
-    const tileCm = nums.length >= 2 ? [parseFloat(nums[0]), parseFloat(nums[1])] : (parseFloat(nums[0]) || 0);
-    let map = null, normal = null, source = 'photo';
-    if (info.code) {
-      const [tile, nrm] = await Promise.allSettled([
-        loadImg(FABRIC_BASE + encodeURIComponent(info.code) + '_tile.webp'),
-        loadImg(FABRIC_BASE + encodeURIComponent(info.code) + '_normal.webp'),
-      ]);
-      if (tile.status === 'fulfilled') { map = toTexture(tile.value, tileCm, true); source = 'tile'; }
-      if (nrm.status === 'fulfilled')  normal = toTexture(nrm.value, tileCm, false);
+    let tileCm = nums.length >= 2 ? [parseFloat(nums[0]), parseFloat(nums[1])] : (parseFloat(nums[0]) || 0);
+    // look in webp/ first, then the repo root
+    const find = name => loadImg(FABRIC_BASE + encodeURIComponent(name))
+      .catch(() => loadImg(FABRIC_ROOT + encodeURIComponent(name)));
+
+    let map = null, normal = null, source = 'default colour', normalSrc = '';
+    const [tile, nrm] = info.code
+      ? await Promise.allSettled([find(info.code + '_tile.webp'), find(info.code + '_normal.webp')])
+      : [{ status: 'rejected' }, { status: 'rejected' }];
+
+    // Normal map: own file, else the shared one for this kind of fabric
+    let nrmImg = nrm.status === 'fulfilled' ? nrm.value : null;
+    if (nrmImg) normalSrc = info.code + '_normal';
+    if (!nrmImg) {
+      const shared = SHARED_NORMALS.find(r => r.test.test(info.code) || r.test.test(info.type || ''));
+      if (shared) {
+        try { nrmImg = await find(shared.file); normalSrc = shared.file; if (!tileCm) tileCm = shared.tileCm; } catch (e) {}
+      }
     }
-    // Photo patch keeps its own scale (≈8 cm of fabric); TileSize_cm describes the _tile/_normal maps
-    if (!map && info.face) map = toTexture(photoToTile(await loadImg(info.face)), DEFAULT_TILE_CM, true);
-    if (!map) return null;
-    console.info('3D fabric', info.code || '', '→ colour from', source, normal ? '+ normal map (' + ([].concat(tileCm || DEFAULT_TILE_CM).join(' × ')) + ' cm)' : '(no normal map)');
-    return { map, normal };
+
+    // Colour: _tile → face photo → ColorHex → default
+    if (tile.status === 'fulfilled') { map = toTexture(tile.value, tileCm, true); source = info.code + '_tile'; }
+    if (!map && info.face) {
+      try { map = toTexture(photoToTile(await loadImg(info.face)), DEFAULT_TILE_CM, true); source = 'face photo'; }
+      catch (e) { console.warn('3D fabric: face photo failed', e); }
+    }
+    let color = null;
+    if (!map && /^#?[0-9a-f]{6}$/i.test(String(info.colorHex || '').trim())) {
+      color = new THREE.Color('#' + String(info.colorHex).trim().replace('#', ''));
+      source = 'ColorHex ' + info.colorHex;
+    }
+    if (nrmImg) normal = toTexture(nrmImg, tileCm, false);
+
+    console.info('3D fabric', info.code || '', '→ colour from', source,
+      normal ? '+ normal map ' + normalSrc + ' (' + [].concat(tileCm || DEFAULT_TILE_CM).join(' × ') + ' cm)' : '(no normal map)');
+    if (!map && !color && !normal) return null;
+    return { map, normal, color };
   })();
 }
 
@@ -2426,7 +2464,8 @@ function fabricInfoFromCard(card) {
   if (!card) return null;
   const img = card.querySelector('img');
   const face = img && img.src && !img.src.startsWith('data:') ? img.src : '';
-  return { code: card.dataset.code || '', face, tileCm: card.dataset.tilecm || '' };
+  return { code: card.dataset.code || '', face, tileCm: card.dataset.tilecm || '',
+           colorHex: card.dataset.colorhex || '', type: card.dataset.type || '' };
 }
 function selectedFabricInfo() {
   return fabricInfoFromCard(document.querySelector('#fabric-main-grid .fabric-card.selected'));
@@ -2516,7 +2555,8 @@ function hide() {
 // Reload when design choices point to a different model file
 function refresh() { if (visible) show(); }
 
-window.tt3d = { show, hide, refresh, face, zoom, reset, setFabric };
+window.tt3d = { show, hide, refresh, face, zoom, reset, setFabric, syncFabric: () => setFabric(selectedFabricInfo()) };
+if (document.querySelector('#fabric-main-grid .fabric-card.selected')) setFabric(selectedFabricInfo());
 if (typeof selectFabric === 'function') {
   const _sf = selectFabric;
   window.selectFabric = selectFabric = function (el, group) {
