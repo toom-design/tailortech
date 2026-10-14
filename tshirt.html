@@ -2171,7 +2171,7 @@ function captureTechPackImage() {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.9</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.0</div>
 
 
 <!-- ═══════════════ 3D PREVIEW (three.js + glTF) ═══════════════ -->
@@ -2341,8 +2341,9 @@ const USE_TILE_IMAGE = false;        // <CODE>_tile.webp
 const USE_FACE_PHOTO = false;        // patch cut from <CODE>_face photo
 // Shared surface textures: one normal map reused by every fabric of that kind
 // (used when there's no <CODE>_normal.webp). Size applies if the sheet's TileSize_cm is empty.
+// zfab: CLO fabric file read directly (normal map + real tile size); file: plain image fallback.
 const SHARED_NORMALS = [
-  { test: /^JRS-|jersey/i, file: 'jersey_texture.webp', tileCm: [4, 4.3] },
+  { test: /^JRS-|jersey/i, zfab: 'jersey_structure.zfab', file: 'jersey_texture.webp', tileCm: [4, 4.3] },
 ];         // knit relief; black fabric needs a bit more to read
 const DEFAULT_TILE_CM = 8;
 let fabricInfo = null, fabricMaps = null;
@@ -2418,6 +2419,66 @@ function photoToTile(img) {
   return c;
 }
 
+// ── CLO .zfab reader ────────────────────────────────────────────────
+// A .zfab is a zip (with extra bytes in front) holding the .fab settings and PNG maps.
+// Pulls out the normal map (*_NRM.png) and the texture's physical size (v2PhysicalSize, mm).
+const zfabCache = {};
+async function inflateRaw(bytes) {
+  const ds = new DecompressionStream('deflate-raw');
+  return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(ds)).arrayBuffer());
+}
+function readZfab(url) {
+  if (zfabCache[url]) return zfabCache[url];
+  return zfabCache[url] = (async () => {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + url);
+    const buf = new Uint8Array(await res.arrayBuffer()), dv = new DataView(buf.buffer);
+    let eocd = -1;
+    for (let i = buf.length - 22; i >= Math.max(0, buf.length - 66000); i--) {
+      if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+    }
+    if (eocd < 0) throw new Error('not a zip');
+    const count = dv.getUint16(eocd + 10, true), cdSize = dv.getUint32(eocd + 12, true), cdOff = dv.getUint32(eocd + 16, true);
+    const shift = (eocd - cdSize) - cdOff;                 // bytes prepended before the zip
+    const files = {};
+    let p = eocd - cdSize;
+    for (let n = 0; n < count; n++) {
+      if (dv.getUint32(p, true) !== 0x02014b50) break;
+      const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
+      const nlen = dv.getUint16(p + 28, true), xlen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true);
+      const lho = dv.getUint32(p + 42, true) + shift;
+      const name = new TextDecoder().decode(buf.subarray(p + 46, p + 46 + nlen));
+      files[name] = { method, csize, lho };
+      p += 46 + nlen + xlen + clen;
+    }
+    async function get(name) {
+      const f = files[name]; if (!f) return null;
+      const start = f.lho + 30 + dv.getUint16(f.lho + 26, true) + dv.getUint16(f.lho + 28, true);
+      const raw = buf.subarray(start, start + f.csize);
+      return f.method === 8 ? inflateRaw(raw) : raw;
+    }
+    const names = Object.keys(files);
+    const nrmName = names.find(n => /_NRM\.(png|jpe?g|webp)$/i.test(n));
+    const fabName = names.find(n => /\.fab$/i.test(n));
+    if (!nrmName) throw new Error('no normal map in zfab');
+
+    let tileCm = null;
+    if (fabName) {
+      const fab = await get(fabName), key = new TextEncoder().encode('v2PhysicalSize');
+      outer: for (let i = 0; i + key.length + 8 <= fab.length; i++) {
+        for (let k = 0; k < key.length; k++) if (fab[i + k] !== key[k]) continue outer;
+        const fv = new DataView(fab.buffer, fab.byteOffset + i + key.length, 8);
+        const w = fv.getFloat32(0, true), h = fv.getFloat32(4, true);
+        if (w > 0.1 && w < 10000 && h > 0.1 && h < 10000) tileCm = [w / 10, h / 10];   // mm → cm
+        break;
+      }
+    }
+    const png = await get(nrmName);
+    const img = await loadImg(URL.createObjectURL(new Blob([png], { type: 'image/png' })));
+    return { img, tileCm, name: nrmName };
+  })();
+}
+
 // Normal maps from scans carry soft light/dark patches on top of the stitch detail. Seen from a
 // distance the stitches blur away and only those patches remain, repeating every few cm as a
 // crinkled pattern. This keeps the stitch-level detail and removes the patches (wrap-aware blur).
@@ -2470,7 +2531,14 @@ function loadFabricMaps(info) {
     if (nrmImg) normalSrc = info.code + '_normal';
     if (!nrmImg) {
       const shared = SHARED_NORMALS.find(r => r.test.test(info.code) || r.test.test(info.type || ''));
-      if (shared) {
+      if (shared && shared.zfab) {
+        try {
+          const z = await readZfab(FABRIC_BASE + shared.zfab).catch(() => readZfab(FABRIC_ROOT + shared.zfab));
+          nrmImg = z.img; normalSrc = shared.zfab;
+          if (!tileCm) tileCm = z.tileCm || shared.tileCm;
+        } catch (e) { console.warn('3D fabric: zfab', e); }
+      }
+      if (!nrmImg && shared && shared.file) {
         try { nrmImg = await find(shared.file); normalSrc = shared.file; if (!tileCm) tileCm = shared.tileCm; } catch (e) {}
       }
     }
@@ -2489,7 +2557,7 @@ function loadFabricMaps(info) {
     if (nrmImg) normal = toTexture(normalHighPass(nrmImg), tileCm, false);
 
     console.info('3D fabric', info.code || '', '→ colour from', source,
-      normal ? '+ normal map ' + normalSrc + ' (' + [].concat(tileCm || DEFAULT_TILE_CM).join(' × ') + ' cm)' : '(no normal map)');
+      normal ? '+ normal map ' + normalSrc + ' (' + [].concat(tileCm || DEFAULT_TILE_CM).map(v => +v.toFixed(2)).join(' × ') + ' cm)' : '(no normal map)');
     if (!map && !color && !normal) return null;
     return { map, normal, color };
   })();
