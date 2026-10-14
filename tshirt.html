@@ -2171,7 +2171,7 @@ function captureTechPackImage() {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.8</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.9</div>
 
 
 <!-- ═══════════════ 3D PREVIEW (three.js + glTF) ═══════════════ -->
@@ -2307,7 +2307,7 @@ async function loadModel() {
   center = box.getCenter(new THREE.Vector3());
   fitRadius = box.getBoundingSphere(new THREE.Sphere()).radius;
   shadow = makeShadow(box); scene.add(shadow);
-  controls.minDistance = fitRadius * 1.3; controls.maxDistance = fitRadius * 8;
+  controls.minDistance = fitRadius * 0.35;   // allow close-up to see the knit controls.maxDistance = fitRadius * 8;
   reset();
   buildPartButtons(decodeURIComponent(url.split('/').pop()));
   await setFabric(fabricInfo || selectedFabricInfo());
@@ -2334,7 +2334,7 @@ function fabricMaterial(key) {
 // The model's UVs are in metres (CLO export), so repeat = 100 / tile size in cm.
 const FABRIC_BASE = 'https://raw.githubusercontent.com/toom-design/fabrics/main/webp/';
 const FABRIC_ROOT = 'https://raw.githubusercontent.com/toom-design/fabrics/main/';   // also checked
-const NORMAL_STRENGTH = 1.5;
+const NORMAL_STRENGTH = 1.0;
 // Colour sources. For now: colour only from the sheet's ColorHex + the knit structure (normal map).
 // Flip these to true to let fabric images drive the colour again.
 const USE_TILE_IMAGE = false;        // <CODE>_tile.webp
@@ -2418,6 +2418,37 @@ function photoToTile(img) {
   return c;
 }
 
+// Normal maps from scans carry soft light/dark patches on top of the stitch detail. Seen from a
+// distance the stitches blur away and only those patches remain, repeating every few cm as a
+// crinkled pattern. This keeps the stitch-level detail and removes the patches (wrap-aware blur).
+function normalHighPass(img) {
+  const w = img.naturalWidth, h = img.naturalHeight;
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d', { willReadFrequently: true });
+  g.drawImage(img, 0, 0);
+  const px = g.getImageData(0, 0, w, h), d = px.data;
+
+  const t = document.createElement('canvas'); t.width = w * 3; t.height = h * 3;   // 3×3 tiling = seamless blur
+  const tg = t.getContext('2d');
+  for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) tg.drawImage(img, x * w, y * h);
+  const k = 16;                                                                       // blur radius ≈ 16 px
+  const sm = document.createElement('canvas'); sm.width = Math.max(1, Math.round(w * 3 / k)); sm.height = Math.max(1, Math.round(h * 3 / k));
+  const smg = sm.getContext('2d'); smg.imageSmoothingQuality = 'high'; smg.drawImage(t, 0, 0, sm.width, sm.height);
+  const bl = document.createElement('canvas'); bl.width = w * 3; bl.height = h * 3;
+  const blg = bl.getContext('2d', { willReadFrequently: true }); blg.imageSmoothingQuality = 'high';
+  blg.drawImage(sm, 0, 0, w * 3, h * 3);
+  const b = blg.getImageData(w, h, w, h).data;
+
+  for (let i = 0; i < d.length; i += 4) {
+    let nx = (d[i] - b[i]) / 127.5, ny = (d[i + 1] - b[i + 1]) / 127.5;
+    const l2 = nx * nx + ny * ny; if (l2 > 0.95) { const f = Math.sqrt(0.95 / l2); nx *= f; ny *= f; }
+    const nz = Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny));
+    d[i] = 127.5 + nx * 127.5; d[i + 1] = 127.5 + ny * 127.5; d[i + 2] = 127.5 + nz * 127.5; d[i + 3] = 255;
+  }
+  g.putImageData(px, 0, 0);
+  return c;
+}
+
 function loadFabricMaps(info) {
   const key = [info.code, info.face, info.tileCm, info.colorHex, info.type].join('|');
   if (mapCache[key]) return mapCache[key];
@@ -2455,7 +2486,7 @@ function loadFabricMaps(info) {
       color = new THREE.Color('#' + String(info.colorHex).trim().replace('#', ''));
       source = 'ColorHex ' + info.colorHex;
     }
-    if (nrmImg) normal = toTexture(nrmImg, tileCm, false);
+    if (nrmImg) normal = toTexture(normalHighPass(nrmImg), tileCm, false);
 
     console.info('3D fabric', info.code || '', '→ colour from', source,
       normal ? '+ normal map ' + normalSrc + ' (' + [].concat(tileCm || DEFAULT_TILE_CM).join(' × ') + ' cm)' : '(no normal map)');
