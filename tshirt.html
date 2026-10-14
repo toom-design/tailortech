@@ -935,6 +935,7 @@ function buildFabricCard(fabric, group, isFirst) {
   card.dataset.comp  = comp;
   card.dataset.color = color;
   card.dataset.unitprice = unitPrice;
+  card.dataset.tilecm = fabric.TileSize_cm || '';
   card.onclick = function(){ selectFabric(card, group); if (typeof updatePriceBar === 'function') updatePriceBar(); };
 
   var imgWrap = document.createElement('div');
@@ -2162,7 +2163,7 @@ function captureTechPackImage() {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.2</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.5</div>
 
 
 <!-- ═══════════════ 3D PREVIEW (three.js + glTF) ═══════════════ -->
@@ -2301,7 +2302,7 @@ async function loadModel() {
   controls.minDistance = fitRadius * 1.3; controls.maxDistance = fitRadius * 8;
   reset();
   buildPartButtons(decodeURIComponent(url.split('/').pop()));
-  await setFabric(fabricUrl || selectedFabricUrl());
+  await setFabric(fabricInfo || selectedFabricInfo());
 }
 
 // One material per part group, so contrast parts (cuffs, collar…) can get their own fabric later
@@ -2319,21 +2320,47 @@ function fabricMaterial(key) {
   return partMaterials[key];
 }
 
-// ── Fabric photo → repeating cloth texture ─────────────────────────
-// The model's UVs are in metres (CLO export), so repeat = 1 / tile size.
-const TILE_M = 0.08;                 // one texture tile ≈ 8 cm of real fabric
-let fabricUrl = null, fabricTex = null;
-const texCache = {};
+// ── Fabric → cloth texture ──────────────────────────────────────────
+// Preferred: fabrics/webp/<CODE>_tile.webp (seamless colour) + <CODE>_normal.webp (optional),
+// scaled by the sheet's TileSize_cm. Fallback: a calm patch cut from <CODE>_face photo.
+// The model's UVs are in metres (CLO export), so repeat = 100 / tile size in cm.
+const FABRIC_BASE = 'https://raw.githubusercontent.com/toom-design/fabrics/main/webp/';
+const DEFAULT_TILE_CM = 8;
+let fabricInfo = null, fabricMaps = null;
+const mapCache = {};
 
 function applyFabricTo(mat) {
-  mat.map = fabricTex || null;
-  mat.color.set(fabricTex ? 0xb0b0b0 : FABRIC.color);   // slight darkening: studio light lifts photo colours
+  const m = fabricMaps;
+  mat.map = m ? m.map : null;
+  mat.normalMap = m && m.normal ? m.normal : null;
+  if (mat.normalMap) mat.normalScale.set(1, 1);
+  mat.color.set(m ? 0xb0b0b0 : FABRIC.color);   // slight darkening: studio light lifts photo colours
   mat.needsUpdate = true;
 }
 
-// Takes a calm patch of the product photo (away from the central swirl),
-// flattens the fold shading so it tiles without visible light/dark blotches,
-// and keeps the weave and the real colour.
+function loadImg(url) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => res(img);
+    img.onerror = () => rej(new Error('not found: ' + url));
+    img.src = url;
+  });
+}
+
+function toTexture(src, tileCm, isColor) {
+  const tex = new THREE.Texture(src);
+  tex.needsUpdate = true;
+  if (isColor) tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  const t = Array.isArray(tileCm) ? tileCm : [tileCm || DEFAULT_TILE_CM, tileCm || DEFAULT_TILE_CM];
+  tex.repeat.set(100 / t[0], 100 / t[1]);
+  tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return tex;
+}
+
+// Fallback: takes a calm patch of the product photo (away from the central swirl),
+// flattens the fold shading and blends the edges so it tiles without seams.
 function photoToTile(img) {
   const N = 512;
   const w = img.naturalWidth, h = img.naturalHeight, side = Math.min(w, h) * 0.34;
@@ -2342,7 +2369,7 @@ function photoToTile(img) {
   g.drawImage(img, w * 0.06, h * 0.06, side, side, 0, 0, N, N);
 
   const b = document.createElement('canvas'); b.width = b.height = 12;     // heavy blur = shading map
-  const bg = b.getContext('2d'); bg.drawImage(c, 0, 0, 12, 12);
+  b.getContext('2d').drawImage(c, 0, 0, 12, 12);
   const big = document.createElement('canvas'); big.width = big.height = N;
   const bigG = big.getContext('2d', { willReadFrequently: true });
   bigG.imageSmoothingQuality = 'high'; bigG.drawImage(b, 0, 0, N, N);
@@ -2356,12 +2383,10 @@ function photoToTile(img) {
     d[i + 1] = Math.min(255, d[i + 1] * mg / Math.max(bl[i + 1], 1));
     d[i + 2] = Math.min(255, d[i + 2] * mb / Math.max(bl[i + 2], 1));
   }
-  // Make the tile seamless: blend it with a copy shifted by half a tile, weighting the
-  // shifted copy at the edges (where it is continuous across the wrap).
   const src = new Uint8ClampedArray(d), H = N / 2;
   for (let y = 0; y < N; y++) {
     for (let x = 0; x < N; x++) {
-      const ex = Math.min(x, N - 1 - x) / H, ey = Math.min(y, N - 1 - y) / H;   // 0 at edge → 1 at centre
+      const ex = Math.min(x, N - 1 - x) / H, ey = Math.min(y, N - 1 - y) / H;
       let m = Math.min(ex, ey) * 2; m = m >= 1 ? 1 : m * m * (3 - 2 * m);
       const i = (y * N + x) * 4, j = (((y + H) % N) * N + ((x + H) % N)) * 4;
       d[i]     = src[i]     * m + src[j]     * (1 - m);
@@ -2370,37 +2395,52 @@ function photoToTile(img) {
     }
   }
   g.putImageData(px, 0, 0);
-
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  tex.repeat.set(1 / TILE_M, 1 / TILE_M);
-  tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
-  return tex;
+  return c;
 }
 
-function loadFabricTexture(url) {
-  if (texCache[url]) return texCache[url];
-  return texCache[url] = new Promise((res, rej) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => { try { res(photoToTile(img)); } catch (e) { rej(e); } };
-    img.onerror = () => rej(new Error('Fabric photo failed to load'));
-    img.src = url;
-  });
+function loadFabricMaps(info) {
+  const key = info.code + '|' + info.face + '|' + info.tileCm;
+  if (mapCache[key]) return mapCache[key];
+  return mapCache[key] = (async () => {
+    // TileSize_cm: "4" (square) or "4 x 4.3" (width x height), comma decimals allowed
+    const nums = String(info.tileCm || '').replace(/,/g, '.').match(/\d+(\.\d+)?/g) || [];
+    const tileCm = nums.length >= 2 ? [parseFloat(nums[0]), parseFloat(nums[1])] : (parseFloat(nums[0]) || 0);
+    let map = null, normal = null, source = 'photo';
+    if (info.code) {
+      const [tile, nrm] = await Promise.allSettled([
+        loadImg(FABRIC_BASE + encodeURIComponent(info.code) + '_tile.webp'),
+        loadImg(FABRIC_BASE + encodeURIComponent(info.code) + '_normal.webp'),
+      ]);
+      if (tile.status === 'fulfilled') { map = toTexture(tile.value, tileCm, true); source = 'tile'; }
+      if (nrm.status === 'fulfilled')  normal = toTexture(nrm.value, tileCm, false);
+    }
+    // Photo patch keeps its own scale (≈8 cm of fabric); TileSize_cm describes the _tile/_normal maps
+    if (!map && info.face) map = toTexture(photoToTile(await loadImg(info.face)), DEFAULT_TILE_CM, true);
+    if (!map) return null;
+    console.info('3D fabric', info.code || '', '→ colour from', source, normal ? '+ normal map (' + ([].concat(tileCm || DEFAULT_TILE_CM).join(' × ')) + ' cm)' : '(no normal map)');
+    return { map, normal };
+  })();
 }
 
-async function setFabric(url) {
-  fabricUrl = url || null;
-  if (!renderer) return;                       // applied once the 3D view opens
-  try { fabricTex = fabricUrl ? await loadFabricTexture(fabricUrl) : null; }
-  catch (e) { console.warn('3D fabric:', e); fabricTex = null; }
-  if (url !== fabricUrl) return;               // a newer selection won
+function fabricInfoFromCard(card) {
+  if (!card) return null;
+  const img = card.querySelector('img');
+  const face = img && img.src && !img.src.startsWith('data:') ? img.src : '';
+  return { code: card.dataset.code || '', face, tileCm: card.dataset.tilecm || '' };
+}
+function selectedFabricInfo() {
+  return fabricInfoFromCard(document.querySelector('#fabric-main-grid .fabric-card.selected'));
+}
+
+async function setFabric(info) {
+  fabricInfo = info || null;
+  if (!renderer) return;                        // applied once the 3D view opens
+  let maps = null;
+  try { maps = fabricInfo ? await loadFabricMaps(fabricInfo) : null; }
+  catch (e) { console.warn('3D fabric:', e); }
+  if (info !== fabricInfo) return;              // a newer selection won
+  fabricMaps = maps;
   Object.values(partMaterials).forEach(applyFabricTo);
-}
-function selectedFabricUrl() {
-  const img = document.querySelector('#fabric-main-grid .fabric-card.selected img');
-  return img && img.src && !img.src.startsWith('data:') ? img.src : null;
 }
 
 function buildPartButtons(fileName) {
@@ -2481,10 +2521,7 @@ if (typeof selectFabric === 'function') {
   const _sf = selectFabric;
   window.selectFabric = selectFabric = function (el, group) {
     const r = _sf.apply(this, arguments);
-    if (group === 'main') {
-      const img = el && el.querySelector('img');
-      setFabric(img && img.src && !img.src.startsWith('data:') ? img.src : null);
-    }
+    if (group === 'main') setFabric(fabricInfoFromCard(el));
     return r;
   };
 }
