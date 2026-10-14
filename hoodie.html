@@ -2153,7 +2153,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.5.0</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.5.1</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -2435,22 +2435,37 @@ function ddCopy(type) {
 // Naming: hoodie_fit_<fit>_style_<style>_sleeve_<sleeve>.gltf (or .glb). If the exact
 // combination isn't uploaded yet, the first available fallback is shown.
 const MODEL_BASE = 'https://raw.githubusercontent.com/toom-design/tailortech-hoodie/main/';
-// Which 3D file shows which configuration. Only an exact match is shown — no "closest" model.
-// Keys are state fields (fit, style, hoodClosure, zipTrim, sleeve, pocket, cuff); leave a key out
-// if that choice doesn't change the model. .glb is tried first, then .gltf.
-const MODELS = [
-  { file: 'SWEATSHIRT2', label: 'Crewneck · Kangaroo pocket',          match: { fit: 'regular', style: 'crewneck',     sleeve: 'regular', pocket: 'kangaroo' } },
-  { file: 'SWEATSHIRT1', label: '3-Piece Hood (overhead) · Welt pocket', match: { fit: 'regular', style: '3-piece-hood', hoodClosure: 'overhead', sleeve: 'regular', pocket: 'welt' } },
-];
-
-function matchingModel() {
-  const st = (typeof state !== 'undefined') ? state : {};
-  return MODELS.find(m => Object.keys(m.match).every(k => st[k] === m.match[k])) || null;
+// ── Modular 3D: the hoodie is assembled from pieces taken out of the CLO exports ──
+// Each module = a set of pattern pieces (by CLO piece ID) from one file. The design choices pick
+// which modules are shown, so e.g. selecting 3-Piece Hood swaps the crewneck collar for the hood.
+// All exports come from the same CLO project, so the pieces line up in the same space.
+// To add a variant: export it from CLO, upload it, and add a module + a line in modulesFor().
+const MODULES = {
+  body:            { file: 'SWEATSHIRT2', pieces: ['Pattern_1301135', 'Pattern_1299746', 'Pattern_1302524', 'Pattern_1302525', 'Pattern_1303223', 'Pattern_1303224', 'Pattern_1303225'] },
+  collar_crewneck: { file: 'SWEATSHIRT2', pieces: ['Pattern_1303292'] },
+  hood_3piece:     { file: 'SWEATSHIRT1', pieces: ['Pattern_1724221', 'Pattern_1724222', 'Pattern_1725890', 'Pattern_1303292'] },
+  pocket_kangaroo: { file: 'SWEATSHIRT2', pieces: ['Pattern_2901679'] },
+  pocket_welt:     { file: 'SWEATSHIRT1', pieces: ['Pattern_3171371', 'Pattern_3171373'] },
+};
+// Returns the modules for the current design + the choices that have no 3D piece yet.
+function modulesFor(st) {
+  const mods = ['body'], missing = [];
+  // Style
+  if (st.style === 'crewneck') mods.push('collar_crewneck');
+  else if (st.style === '3-piece-hood' && st.hoodClosure !== 'zip-up') mods.push('hood_3piece');
+  else if (st.style === '3-piece-hood') { mods.push('hood_3piece'); missing.push('Zip-up closure'); }
+  else { mods.push('collar_crewneck'); missing.push(st.style === '2-piece-hood' ? '2-Piece Hood' : st.style === 'quarterzip' ? 'Quarterzip' : st.style); }
+  // Pocket
+  if (st.pocket === 'kangaroo') mods.push('pocket_kangaroo');
+  else if (st.pocket === 'welt') mods.push('pocket_welt');
+  else if (st.pocket !== 'none') missing.push(st.pocket === 'zipper' ? 'Zipper pocket' : st.pocket);
+  // Not modelled yet: fit, sleeve and cuff variants (shown as Regular / set-in / Rib)
+  if (st.fit && st.fit !== 'regular') missing.push('Oversized fit');
+  if (st.sleeve && st.sleeve !== 'regular') missing.push('Raglan sleeve');
+  if (st.cuff && st.cuff !== 'rib') missing.push('Self-elastic cuff');
+  return { mods, missing };
 }
-function modelCandidates() {
-  const m = matchingModel();
-  return m ? [m.file + '.glb', m.file + '.gltf'] : [];
-}
+function modelCandidates() { return [...new Set(modulesFor(typeof state !== 'undefined' ? state : {}).mods.map(m => MODULES[m].file))]; }
 
 // CLO names pattern pieces by ID — this maps them to parts (same IDs across exports of one project).
 const PART_BY_MESH = {
@@ -2552,53 +2567,75 @@ function makeShadow(box) {
   return m;
 }
 
+// Loads a CLO export once and indexes it: piece ID → meshes, each with the topstitches sitting on it.
+const fileIndex = {};
+function loadFileIndex(file) {
+  if (fileIndex[file]) return fileIndex[file];
+  return fileIndex[file] = (async () => {
+    let gltf = null, lastErr = null;
+    for (const ext of ['.glb', '.gltf']) {
+      try { gltf = await new GLTFLoader().loadAsync(MODEL_BASE + encodeURIComponent(file + ext)); break; }
+      catch (e) { lastErr = e; }
+    }
+    if (!gltf) { delete fileIndex[file]; throw lastErr || new Error('Model not found: ' + file); }
+    const root = gltf.scene; root.updateMatrixWorld(true);
+    const pieces = [], stitches = [];
+    root.traverse(o => { if (o.isMesh) (/^topstitch/i.test(o.name) ? stitches : pieces).push(o); });
+    const byName = {};
+    pieces.forEach(o => { (byName[o.name] = byName[o.name] || []).push({ mesh: o, stitches: [] }); });
+    // Topstitching follows the panel it sits on (smallest piece whose box contains the stitch)
+    const boxes = pieces.map(o => ({ o, box: new THREE.Box3().setFromObject(o).expandByScalar(0.01) }));
+    stitches.forEach(st => {
+      const c = new THREE.Box3().setFromObject(st).getCenter(new THREE.Vector3());
+      let best = null, bestVol = Infinity;
+      boxes.forEach(({ o, box }) => {
+        if (!box.containsPoint(c)) return;
+        const sz = box.getSize(new THREE.Vector3()), vol = sz.x * sz.y * sz.z;
+        if (vol < bestVol) { bestVol = vol; best = o; }
+      });
+      if (best) byName[best.name].find(e => e.mesh === best).stitches.push(st);
+    });
+    return byName;
+  })();
+}
+
+let currentKey = null, firstAssembly = true, missingNow = [];
 async function loadModel() {
-  const list = modelCandidates();
-  if (!list.length) { const e = new Error('no model for this combination'); e.noModel = true; throw e; }
-  if (MODEL_BASE + encodeURIComponent(list[0]) !== currentUrl && !cache[MODEL_BASE + encodeURIComponent(list[0])]) setLoading(true, 'Loading 3D model…');
-  let gltf = null, url = null, lastErr = null;
-  for (const name of list) {
-    const u = MODEL_BASE + encodeURIComponent(name);
-    if (cache[u] === false) continue;
-    try { gltf = cache[u] || await new GLTFLoader().loadAsync(u); cache[u] = gltf; url = u; break; }
-    catch (e) { cache[u] = false; lastErr = e; }
-  }
-  if (!gltf) throw lastErr || new Error('No model found');
-  if (url === currentUrl) return;
-  currentUrl = url;
+  const st = typeof state !== 'undefined' ? state : {};
+  const { mods, missing } = modulesFor(st);
+  missingNow = missing;
+  showMissing(missing);
+  const key = mods.join('+');
+  if (key === currentKey) return;
+  const files = [...new Set(mods.map(m => MODULES[m].file))];
+  if (files.some(f => !fileIndex[f])) setLoading(true, 'Loading 3D model…');
+  const idx = {};
+  await Promise.all(files.map(async f => { idx[f] = await loadFileIndex(f); }));
+  if (key !== modulesFor(typeof state !== 'undefined' ? state : {}).mods.join('+')) return;   // design changed meanwhile
+  currentKey = key;
 
   if (modelRoot) scene.remove(modelRoot);
   if (shadow) scene.remove(shadow);
-  modelRoot = gltf.scene;
+  modelRoot = new THREE.Group();
   parts = {};
-  const stitches = [], pieces = [];
-  modelRoot.traverse(o => {
-    if (!o.isMesh) return;
-    if (/^topstitch/i.test(o.name)) { stitches.push(o); return; }   // assigned to their panel below
-    pieces.push(o);
-    const r = classify(o);
-    // The CLO export's colour textures are mostly empty (transparent) with a stray white patch,
-    // so the viewer draws its own fabric instead. The original stays in userData.origMaterial.
-    o.userData.origMaterial = o.material;
-    o.material = fabricMaterial(r.key);
-    o.userData.partKey = r.key;
-    (parts[r.key] = parts[r.key] || { label: r.label, meshes: [], visible: true }).meshes.push(o);
-  });
-  // Topstitching follows the panel it sits on (tonal stitching, hides with that part)
-  modelRoot.updateMatrixWorld(true);
-  const boxes = pieces.map(o => ({ o, box: new THREE.Box3().setFromObject(o).expandByScalar(0.01) }));
-  stitches.forEach(st => {
-    const c = new THREE.Box3().setFromObject(st).getCenter(new THREE.Vector3());
-    let best = null, bestVol = Infinity;
-    boxes.forEach(({ o, box }) => {
-      if (!box.containsPoint(c)) return;
-      const sz = box.getSize(new THREE.Vector3()), vol = sz.x * sz.y * sz.z;
-      if (vol < bestVol) { bestVol = vol; best = o; }
+  const add = (mesh, partKey, label) => {
+    const m = mesh.clone();                                 // shares geometry with the loaded file
+    m.position.set(0, 0, 0); m.quaternion.identity(); m.scale.set(1, 1, 1);
+    m.applyMatrix4(mesh.matrixWorld);                       // place it exactly where it sat in its file
+    m.userData.origMaterial = mesh.material;
+    m.material = fabricMaterial(partKey);
+    modelRoot.add(m);
+    (parts[partKey] = parts[partKey] || { label, meshes: [], visible: true }).meshes.push(m);
+  };
+  mods.forEach(modName => {
+    const mod = MODULES[modName];
+    mod.pieces.forEach(pieceId => {
+      (idx[mod.file][pieceId] || []).forEach(entry => {
+        const r = classify(entry.mesh);
+        add(entry.mesh, r.key, r.label);
+        entry.stitches.forEach(stc => add(stc, r.key, r.label));
+      });
     });
-    const key = best ? best.userData.partKey : 'x_Stitching';
-    st.userData.origMaterial = st.material;
-    st.material = fabricMaterial(key);
-    (parts[key] = parts[key] || { label: key === 'x_Stitching' ? 'Stitching' : key, meshes: [], visible: true }).meshes.push(st);
   });
   scene.add(modelRoot);
 
@@ -2606,10 +2643,29 @@ async function loadModel() {
   center = box.getCenter(new THREE.Vector3());
   fitRadius = box.getBoundingSphere(new THREE.Sphere()).radius;
   shadow = makeShadow(box); scene.add(shadow);
-  controls.minDistance = fitRadius * 0.35;   // allow close-up to see the knit controls.maxDistance = fitRadius * 8;
-  reset();
-  buildPartButtons(decodeURIComponent(url.split('/').pop()));
+  controls.minDistance = fitRadius * 0.35;   // allow close-up to see the knit
+  controls.maxDistance = fitRadius * 8;
+  if (firstAssembly) { reset(); firstAssembly = false; }    // keep the user's view when swapping pieces
+  else {                                                    // keep the viewing angle, re-frame for the new shape
+    const off = camera.position.clone().sub(controls.target);
+    placeCamera(Math.atan2(off.x, off.z));
+  }
+  buildPartButtons(mods.join(' + '));
   await setFabric(fabricInfo || selectedFabricInfo());
+}
+
+// Small note over the 3D view for choices that don't have a 3D piece yet
+function showMissing(list) {
+  let el = document.getElementById('s3d-missing');
+  if (!el) {
+    el = document.createElement('div'); el.id = 's3d-missing';
+    el.style.cssText = 'position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:6;max-width:80%;text-align:center;' +
+      'font-size:11px;letter-spacing:0.02em;color:var(--ink-mid);background:rgba(255,255,255,0.92);border:1px solid var(--border);' +
+      'border-radius:100px;padding:7px 16px;pointer-events:none;';
+    document.getElementById('stage-3d').appendChild(el);
+  }
+  el.textContent = list.length ? 'Not in 3D yet: ' + list.join(', ') + ' — preview shows the closest available' : '';
+  el.style.display = list.length ? '' : 'none';
 }
 
 // One material per part group, so contrast parts (cuffs, collar…) can get their own fabric later
@@ -2905,7 +2961,7 @@ function buildPartButtons(fileName) {
     };
     list.appendChild(b);
   });
-  $('s3d-model-name').textContent = fileName;
+  $('s3d-model-name').textContent = fileName.replace(/_/g, ' ');
   $('s3d-parts').style.display = '';
 }
 
@@ -2942,7 +2998,7 @@ async function show() {
     await init();
     if (!raf) loop();
     resize();
-    if (!currentUrl) setLoading(true, 'Loading 3D model…');
+    if (!currentKey) setLoading(true, 'Loading 3D model…');
     await loadModel();
     setLoading(false);
     const pb = $('s3d-parts'); if (pb && Object.keys(parts).length) pb.style.display = '';
