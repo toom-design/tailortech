@@ -3,9 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hoodie Configurator</title>
+<title>Hoodie</title>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -375,6 +381,139 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
   -webkit-appearance: none;
 }
 .nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
+/* ═════════ v1.5.0 — ported from T-Shirt configurator ═════════ */
+.preview-panel { flex: 1; }
+.config-panel { flex: 1; }
+.config-body { padding: 20px 20px 28px; display: flex; flex-direction: column; gap: 12px; background: var(--white); flex: 1 0 auto; }
+#panel-measurements { padding: 0 !important; flex: 1 1 0; min-height: 0; overflow: hidden; background: var(--white); }
+/* ── 3D preview ── */
+#stage-3d { position: absolute; inset: 0; display: none; }
+#stage-3d canvas { display: block; width: 100% !important; height: 100% !important; outline: none; cursor: grab; touch-action: none; }
+#stage-3d canvas:active { cursor: grabbing; }
+.s3d-loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; font-size: 10px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-light); background: #fff; z-index: 5; transition: opacity 0.4s; }
+.s3d-loading .spin { width: 22px; height: 22px; border: 2px solid #C0BDB8; border-top-color: #1A1916; border-radius: 50%; animation: spin 0.7s linear infinite; }
+.s3d-error { color: #b04040; letter-spacing: 0.04em; text-transform: none; font-size: 12px; max-width: 320px; text-align: center; line-height: 1.5; }
+.s3d-parts { position: absolute; top: 12px; left: 12px; z-index: 6; display: flex; flex-direction: column; gap: 6px; padding: 10px; background: rgba(255,255,255,0.88); border: 1px dashed var(--border-mid); border-radius: 10px; backdrop-filter: blur(6px); }
+.s3d-parts-title { font-size: 8px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-light); padding: 0 2px 2px; }
+.s3d-part-btn { font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; padding: 7px 14px; min-width: 96px; text-align: left; border: 1px solid var(--border-mid); border-radius: 100px; background: var(--white); color: var(--ink-light); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.15s; }
+.s3d-part-btn::before { content: ''; width: 7px; height: 7px; border-radius: 50%; border: 1px solid currentColor; flex-shrink: 0; }
+.s3d-part-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.s3d-part-btn.active::before { background: currentColor; }
+.s3d-model-name { font-size: 9px; color: var(--ink-faint); letter-spacing: 0.02em; padding: 4px 2px 0; max-width: 150px; word-break: break-all; }
+/* ── Framed section cards ── */
+.section { position: relative; display: flex; align-items: flex-start; gap: 16px; padding: 20px 22px; margin: 0; background: var(--white); border: 1px solid var(--border); border-radius: 12px; transition: border-color 0.2s; }
+.section:hover { border-color: var(--border-mid); }
+.section-icon { flex-shrink: 0; width: 40px; height: 40px; border-radius: 10px; background: var(--cream-mid); display: flex; align-items: center; justify-content: center; color: var(--ink); }
+.section-icon svg { width: 20px; height: 20px; }
+.section-main { flex: 1; min-width: 0; }
+.section--inactive { background: var(--white); }
+/* Hide unavailable options — only the current (default) choice is shown */
+.pill[disabled]:not(.selected) { display: none !important; }
+.section--inactive .section-icon { opacity: 0.5; }
+.section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); margin: 2px 0 14px; min-height: 18px; display: flex; align-items: center; }
+
+/* ── Sticky footer: price + next step ── */
+.config-footer { position: sticky; bottom: 0; margin-top: auto; z-index: 30; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; background: var(--white); border-top: 1px solid var(--border); box-shadow: 0 -6px 20px rgba(26,25,22,0.07); }
+.footer-price-label { font-size: 9px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 4px; }
+.footer-price-amount { font-size: 28px; font-weight: 600; letter-spacing: 0.01em; color: var(--ink); line-height: 1; }
+.footer-next { font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; padding: 17px 28px; min-width: 52%; background: var(--ink); color: var(--white); border: none; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 12px; transition: opacity 0.15s, transform 0.15s; }
+.footer-next:hover { opacity: 0.88; }
+.footer-next:active { transform: translateY(1px); }
+.footer-next:disabled { opacity: 0.5; cursor: not-allowed; }
+.footer-next .spin { width: 12px; height: 12px; border: 1.5px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.65s linear infinite; }
+@media (max-width: 520px) { .footer-price-amount { font-size: 22px; } .footer-next { padding: 15px 18px; min-width: 0; } }
+.sub-label { font-size: 11px; color: var(--ink-light); margin-bottom: 10px; letter-spacing: 0.02em; }
+
+.section:last-child { border-bottom: 1px solid var(--border); }
+/* Pills */
+.pill { font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 500; padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 50px; background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s; }
+.pill:hover { border-color: var(--ink); color: var(--ink); }
+.pill.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
+/* Materials: icon sits beside the label; banner, search and fabric cards span the full card width */
+#panel-materials .section { display: block; }
+#panel-materials .section-icon { position: absolute; top: 20px; left: 22px; }
+#panel-materials .section-label { padding-left: 56px; min-height: 40px; margin: 0 0 16px; }
+
+/* Narrow panel: drop icon tiles and tighten spacing */
+.config-panel { container-type: inline-size; }
+@container (max-width: 520px) {
+  .section { padding: 16px; gap: 0; }
+  .section-icon { display: none; }
+  #panel-materials .section-label { padding-left: 0; min-height: 0; }
+  .config-body { padding: 14px 12px 20px; }
+  .fabric-hero { padding: 24px 20px 20px; min-height: 0; }
+  .fabric-hero-quote { font-size: 21px; }
+  .fabric-grid { grid-template-columns: 1fr; }
+  .config-footer { padding: 12px; }
+  .footer-next { min-width: 0; padding: 14px 16px; letter-spacing: 0.08em; }
+  .footer-price-amount { font-size: 22px; }
+}
+/* Fabric hero banner */
+.fabric-hero { position: relative; overflow: hidden; border-radius: 10px; padding: 34px 32px 26px; margin-bottom: 14px; min-height: 168px; display: flex; flex-direction: column; justify-content: center; color: #F4F2EE; background-color: #121212;
+  background-image:
+    radial-gradient(120% 70% at 85% 10%, rgba(255,255,255,0.10), transparent 55%),
+    radial-gradient(90% 60% at 60% 110%, rgba(255,255,255,0.07), transparent 60%),
+    linear-gradient(115deg, transparent 38%, rgba(255,255,255,0.06) 50%, transparent 58%, transparent 66%, rgba(255,255,255,0.05) 74%, transparent 84%),
+    linear-gradient(160deg, #1d1d1d 0%, #0d0d0d 45%, #1a1a1a 70%, #090909 100%); }
+.fabric-hero::before { content: ''; position: absolute; inset: 0; opacity: 0.35; mix-blend-mode: overlay; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+.fabric-hero::after { content: ''; position: absolute; right: -10%; top: -40%; width: 70%; height: 180%; pointer-events: none; border-radius: 50%;
+  background: repeating-radial-gradient(ellipse at 30% 50%, transparent 0 22px, rgba(255,255,255,0.035) 26px, transparent 34px); filter: blur(2px); }
+.fabric-hero-quote { position: relative; z-index: 1; margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 27px; font-weight: 400; line-height: 1.28; letter-spacing: 0.005em; }
+.fabric-hero-attr { position: relative; z-index: 1; margin-top: 14px; font-size: 9px; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(244,242,238,0.55); }
+
+/* Fabric search */
+.fabric-search-row { position: relative; margin-bottom: 14px; }
+.fabric-search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--ink-mid); pointer-events: none; }
+.fabric-search { width: 100%; padding: 14px 16px 14px 46px; font-family: 'Jost', sans-serif; font-size: 13px; border: 1px solid var(--border); border-radius: 8px; background: var(--white); color: var(--ink); outline: none; transition: border-color 0.15s; }
+.fabric-search::placeholder { color: var(--ink-light); }
+.fabric-search:focus { border-color: var(--ink); }
+.fabric-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+@media (max-width: 480px) { .fabric-grid { grid-template-columns: 1fr; } }
+
+/* Rich fabric cards */
+.fabric-card {
+  border: 1px solid var(--border); border-radius: 8px; background: var(--white);
+  cursor: pointer; display: flex; flex-direction: column;
+  transition: border-color 0.15s, box-shadow 0.15s; overflow: hidden; position: relative;
+}
+.fabric-card:hover { border-color: var(--ink-mid); }
+.fabric-card.selected { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.fabric-card .fc-images { position: relative; padding: 10px 10px 0; flex-shrink: 0; }
+.fabric-card .fc-img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; background: var(--cream-mid); border-radius: 5px; }
+.fc-check { position: absolute; top: 20px; right: 20px; width: 26px; height: 26px; border-radius: 50%; background: rgba(250,250,248,0.92); color: var(--ink); display: none; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+.fabric-card.selected .fc-check { display: flex; }
+.fabric-card .fc-body { padding: 14px 10px 14px; display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.fc-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.fname { font-size: 14px; font-weight: 500; color: var(--ink); letter-spacing: 0.01em; line-height: 1.3; }
+.fcode, .fgsm { font-size: 11px; color: var(--ink-light); letter-spacing: 0.02em; }
+.fgsm { white-space: nowrap; }
+.fcomp { font-size: 11px; color: var(--ink-light); letter-spacing: 0.01em; line-height: 1.4; }
+.fc-details-toggle { display: none; }
+.fc-details-drawer {
+  display: none; border-top: 1px solid var(--border);
+  padding: 8px 8px 9px; background: var(--cream-mid);
+  grid-template-columns: 1fr 1fr; gap: 4px 8px; pointer-events: none;
+}
+.fc-details-drawer.open { display: grid; pointer-events: auto; }
+.fc-detail-item { display: flex; flex-direction: column; gap: 1px; }
+.fc-detail-label { font-size: 8px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; color: var(--ink-light); }
+.fc-detail-val   { font-size: 10px; color: var(--ink); font-weight: 400; }
+.fabric-loading {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: 10px;
+  padding: 20px 0; color: var(--ink-light); font-size: 11px; letter-spacing: 0.06em;
+}
+.fabric-error {
+  grid-column: 1 / -1; padding: 14px 12px; font-size: 11px; color: #b04040;
+  background: #fdf2f2; border: 1px solid #e8c0c0; border-radius: 4px;
+}
+.comp-parts-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.comp-part-btn { font-family: 'Jost', sans-serif; font-size: 13px; font-weight: 400; letter-spacing: 0.02em; padding: 14px 24px 14px 20px; border: 1px solid var(--border); border-radius: 100px; background: var(--white); color: var(--ink); cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 12px; }
+.comp-part-btn:hover { border-color: var(--ink); color: var(--ink); }
+.comp-part-btn.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.pill-extra-price, .icon-card-extra-price { color: var(--ink-faint); font-weight: 400; margin-left: 6px; }
+.pill.selected .pill-extra-price, .icon-card.selected .icon-card-extra-price { color: rgba(250,250,248,0.6); }
+.fabric-card .fc-body { align-items: stretch; text-align: left; }
 </style>
 </head>
 <body>
@@ -449,16 +588,14 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
         </div>
       </div>
 
-      <div id="threed-placeholder" style="display:none;position:absolute;inset:0;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#ffffff;">
-        <svg width="44" height="44" viewBox="0 0 44 44" fill="none" stroke="#C0BDB8" stroke-width="1.2">
-          <path d="M22 4 L40 14 L40 30 L22 40 L4 30 L4 14 Z"/>
-          <line x1="22" y1="4" x2="22" y2="40"/>
-          <line x1="4" y1="14" x2="40" y2="14"/>
-          <line x1="4" y1="30" x2="40" y2="30"/>
-        </svg>
-        <div style="text-align:center;">
-          <div style="font-family:'Jost',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#1A1916;margin-bottom:6px;">3D Preview</div>
-          <div style="font-family:'Jost',sans-serif;font-size:12px;color:#8A8880;letter-spacing:0.04em;">This section is being prepared</div>
+      <!-- 3D preview (glTF via three.js, loaded on first use) -->
+      <div id="stage-3d">
+        <div class="s3d-loading" id="s3d-loading"><div class="spin"></div><span id="s3d-loading-txt">Loading 3D model…</span></div>
+        <!-- TEMPORARY: part toggles to verify the model is modular -->
+        <div class="s3d-parts" id="s3d-parts" style="display:none;">
+          <div class="s3d-parts-title">Parts · test</div>
+          <div id="s3d-parts-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+          <div class="s3d-model-name" id="s3d-model-name"></div>
         </div>
       </div>
     </div>
@@ -568,13 +705,6 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
         </div>
       </div>
 
-      <!-- CONTINUE -->
-      <div class="section" style="border-bottom:none;">
-        <button onclick="goToMaterials()" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;width:100%;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
-          Continue to Materials &amp; Construction
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
-        </button>
-      </div>
 
     </div><!-- /panel-design -->
 
@@ -584,7 +714,12 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
       <!-- MAIN FABRIC — dynamically loaded from Google Sheet -->
       <div class="section">
         <div class="section-label">Main Fabric</div>
+        <div class="fabric-hero">
+          <blockquote class="fabric-hero-quote">Any color you want,<br>as long as it&rsquo;s black.</blockquote>
+          <div class="fabric-hero-attr">&mdash; Henry Ford, and, for now, us too.</div>
+        </div>
         <div class="fabric-search-row">
+          <svg class="fabric-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
           <input class="fabric-search" type="text" placeholder="Search fabrics…" oninput="filterFabrics(this.value,'main')">
         </div>
         <div class="fabric-grid" id="fabric-main-grid">
@@ -596,17 +731,18 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
       </div>
 
       <!-- CONTRAST FABRIC — optional, cuff & pocket -->
-      <div class="section" style="border-bottom:none;">
+      <div class="section">
         <div class="section-label">Contrast Fabric</div>
         <p class="comp-hint">Select parts to use a contrast fabric. Leave unchecked to use the main fabric throughout.</p>
 
         <div class="comp-parts-row" style="margin-bottom:0;">
-          <button class="comp-part-btn" id="comp-part-cuff"    onclick="toggleCompPart(this,'cuff')">Cuff</button>
-          <button class="comp-part-btn" id="comp-part-pocket"  onclick="toggleCompPart(this,'pocket')">Pocket</button>
+          <button class="comp-part-btn" id="comp-part-cuff"    onclick="toggleCompPart(this,'cuff')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M8 4l-5 4 2.5 3.5L8 10.5V20h8v-9.5l2.5 1L21 8l-5-4c-.8 2-2.2 3-4 3S8.8 6 8 4z"/><path d="M3.6 8.8l2.6 3.4M20.4 8.8l-2.6 3.4" stroke-width="2.4"/></svg>Cuff</button>
+          <button class="comp-part-btn" id="comp-part-pocket"  onclick="toggleCompPart(this,'pocket')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M8 4l-5 4 2.5 3.5L8 10.5V20h8v-9.5l2.5 1L21 8l-5-4c-.8 2-2.2 3-4 3S8.8 6 8 4z"/><path d="M8.5 13.5h7l1 4h-9z" stroke-width="2"/></svg>Pocket</button>
         </div>
 
         <div id="comp-fabric-body" style="display:none;margin-top:16px;">
           <div class="fabric-search-row">
+            <svg class="fabric-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
             <input class="fabric-search" type="text" placeholder="Search fabrics…" oninput="filterFabrics(this.value,'comp')">
           </div>
           <div class="fabric-grid" id="fabric-comp-grid">
@@ -618,13 +754,6 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
         </div>
       </div>
 
-      <!-- CONTINUE -->
-      <div class="section" style="border-bottom:none;">
-        <button onclick="goToMeasurements()" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;width:100%;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
-          Continue to Measurements
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
-        </button>
-      </div>
 
     </div><!-- /panel-materials -->
 
@@ -689,8 +818,8 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 
             </form>
 
-            <!-- Save / Continue button — label switches based on whether fields have changed -->
-            <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;padding-bottom:8px;">
+            <!-- Save / Continue button — driven by the footer button (kept for its state/label) -->
+            <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border);display:none;justify-content:flex-end;padding-bottom:8px;">
               <button type="button" onclick="measPrimaryAction(event)" id="meas-save-btn" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:inline-flex;align-items:center;gap:10px;">
                 <span id="meas-save-lbl">Continue to Summary</span>
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
@@ -709,7 +838,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
     <!-- SUMMARY PANEL -->
     <div class="config-body" id="panel-summary" style="display:none;">
 
-      <div class="section" style="border-bottom:none;">
+      <div class="section">
         <div class="section-label">Order Summary</div>
         <div id="summary-rows" style="display:flex;flex-direction:column;gap:0;margin-bottom:28px;"></div>
 
@@ -719,14 +848,22 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
             Add to Cart
           </button>
-          <button onclick="handleOrderNow()" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;width:100%;padding:14px 16px;background:var(--ink);color:var(--white);border:none;border-radius:2px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:opacity 0.15s;">
-            Order Now
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="5,12 19,12"/><polyline points="13,6 19,12 13,18"/></svg>
-          </button>
         </div>
       </div>
 
     </div><!-- /panel-summary -->
+
+    <!-- Sticky footer: estimated price + next step -->
+    <div class="config-footer" id="config-footer">
+      <div>
+        <div class="footer-price-label">Estimated Price</div>
+        <div class="footer-price-amount price-display-amount">—</div>
+      </div>
+      <button type="button" class="footer-next" id="footer-next" onclick="footerNext(event)">
+        <span id="footer-next-lbl">Continue to Materials</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="5,12 19,12"/><polyline points="13,6 19,12 13,18"/></svg>
+      </button>
+    </div>
 
   </div><!-- /config-panel -->
 </div><!-- /app -->
@@ -785,11 +922,13 @@ function zoomToRegion(scale, cx, cy) {
 }
 
 function resetZoom() {
+  if (window._is3D && window.tt3d) { window.tt3d.reset(); return; }
   state.zoom = 1.5; state.panX = 0; state.panY = 0;
   applyTransform();
 }
 
 function manualZoom(delta) {
+  if (window._is3D && window.tt3d) { window.tt3d.zoom(delta * 1.6); return; }
   state.zoom = Math.min(3, Math.max(0.5, state.zoom + delta));
   applyTransform();
 }
@@ -908,14 +1047,24 @@ function setFrontBack(side) {
   document.getElementById('btn-front').classList.toggle('active', side === 'front');
   document.getElementById('btn-back').classList.toggle('active', side === 'back');
   initPreview();
+  if (window._is3D && window.tt3d) window.tt3d.face(side);
+  if (window.tt3d) window.tt3d.refresh();      // design choice may point to a different 3D model
 }
 
 function setTechView(v) {
   document.getElementById('btn-technical').classList.toggle('active', v === 'technical');
   document.getElementById('btn-3d').classList.toggle('active', v === '3d');
-  document.getElementById('stage-viewport').style.display = v === 'technical' ? 'flex' : 'none';
-  const ph = document.getElementById('threed-placeholder');
-  ph.style.display = v === '3d' ? 'flex' : 'none';
+  var is3D = (v === '3d');
+  window._is3D = is3D;
+  document.getElementById('stage-viewport').style.display = is3D ? 'none' : 'flex';
+  var s3d = document.getElementById('stage-3d');
+  if (s3d) s3d.style.display = is3D ? 'block' : 'none';
+  if (is3D) {
+    if (window.tt3d) window.tt3d.show();
+    else window._pending3D = true;          // module still loading — it picks this up
+  } else if (window.tt3d) {
+    window.tt3d.hide();
+  }
 }
 
 function goToMaterials() {
@@ -968,6 +1117,8 @@ function switchTab(el, panelId) {
     // Refresh summary rows in case config changed
     if (typeof buildSummary === 'function') buildSummary();
   }
+  if (panelId === 'panel-summary' && typeof buildSummary === 'function') buildSummary();
+  if (typeof updateFooter === 'function') updateFooter();
 }
 
 function selectFabric(el, group, name) {
@@ -1007,61 +1158,69 @@ function filterFabrics(q, group) {
 
 // ── Build a rich fabric card from a row object ──
 function buildFabricCard(fabric, group, isFirst) {
-  const name  = fabric.ProductName   || '';
-  const code  = fabric.FabricCode    || '';
-  const comp  = fabric.Composition   || '';
-  const color = fabric.Color         || '—';
-  const pat   = fabric.Pattern       || '—';
-  const wt    = fabric.Weight_gsm    ? fabric.Weight_gsm + ' g/m²' : '—';
-  const wd    = fabric.Width_cm      ? fabric.Width_cm   + ' cm'   : '—';
-  const face  = fabric['Photo FACE'] || '';
-  const back  = fabric['photo BACK'] || '';
+  var name  = fabric.ProductName   || '';
+  var code  = fabric.FabricCode    || '';
+  var comp  = fabric.Composition   || '';
+  var color = fabric.Color         || '—';
+  var pat   = fabric.Pattern       || '—';
+  var wt    = fabric.Weight_gsm    ? fabric.Weight_gsm + ' g/m²' : '—';
+  var wd    = fabric.Width_cm      ? fabric.Width_cm   + ' cm'   : '—';
+  var face  = fabric['Photo FACE'] || '';
+  var unitPrice = parseFloat(String(fabric.UnitPrice || '0').replace(',', '.')) || 0;
 
-  const card = document.createElement('div');
+  var card = document.createElement('div');
   card.className = 'fabric-card' + (isFirst ? ' selected' : '');
   card.dataset.name  = name;
   card.dataset.code  = code;
   card.dataset.comp  = comp;
   card.dataset.color = color;
-  card.onclick = () => selectFabric(card, group, name);
+  card.dataset.unitprice = unitPrice;
+  card.dataset.tilecm = fabric.TileSize_cm || '';
+  card.dataset.colorhex = fabric.ColorHex || '';
+  card.dataset.type = (fabric.Type || '') + ' ' + name;
+  card.onclick = function(){ selectFabric(card, group); if (typeof updatePriceBar === 'function') updatePriceBar(); };
 
-  // Image strip (face + back)
-  const imgWrap = document.createElement('div');
+  var imgWrap = document.createElement('div');
   imgWrap.className = 'fc-images';
-  imgWrap.style.position = 'relative';
 
-  const faceImg = document.createElement('img');
-  faceImg.className = 'fc-img'; faceImg.alt = name + ' face'; faceImg.loading = 'lazy';
-  if (face) faceImg.src = face; else faceImg.style.background = 'var(--cream-dark)';
+  var faceImg = document.createElement('img');
+  faceImg.className = 'fc-img'; faceImg.alt = name; faceImg.loading = 'lazy';
+  if (face) faceImg.src = face;
+  else {                                   // no photo yet: show the sheet's ColorHex as a swatch
+    faceImg.alt = '';
+    faceImg.style.background = /^#?[0-9a-f]{6}$/i.test(String(fabric.ColorHex || '').trim())
+      ? '#' + String(fabric.ColorHex).trim().replace('#', '') : 'var(--cream-dark)';
+  }
+  imgWrap.appendChild(faceImg);
 
-  imgWrap.append(faceImg);
-
-  // Card body
-  const body = document.createElement('div');
+  var body = document.createElement('div');
   body.className = 'fc-body';
 
-  const nameEl = document.createElement('span'); nameEl.className = 'fname'; nameEl.textContent = name;
-  const codeEl = document.createElement('span'); codeEl.className = 'fcode'; codeEl.textContent = code;
-  const compEl = document.createElement('span'); compEl.className = 'fcomp'; compEl.textContent = comp;
+  var nameEl = document.createElement('span'); nameEl.className = 'fname'; nameEl.textContent = name;
+  var row    = document.createElement('div');  row.className = 'fc-row';
+  var codeEl = document.createElement('span'); codeEl.className = 'fcode'; codeEl.textContent = code;
+  var gsmEl  = document.createElement('span'); gsmEl.className = 'fgsm';
+  gsmEl.textContent = fabric.Weight_gsm ? fabric.Weight_gsm + ' GSM' : '';
+  row.appendChild(codeEl); row.appendChild(gsmEl);
+  var compEl = document.createElement('span'); compEl.className = 'fcomp'; compEl.textContent = comp;
 
-  const detBtn = document.createElement('button');
-  detBtn.className = 'fc-details-toggle';
-  detBtn.innerHTML = `<span>Details</span><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>`;
-  detBtn.onclick = (e) => toggleFabricDetails(detBtn, e);
+  var check = document.createElement('span');
+  check.className = 'fc-check';
+  check.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="5,12.5 10,17.5 19,7"/></svg>';
+  imgWrap.appendChild(check);
 
-  body.append(nameEl, codeEl, compEl, detBtn);
+  body.appendChild(nameEl); body.appendChild(row); body.appendChild(compEl);
 
-  // Expandable details drawer
-  const drawer = document.createElement('div');
+  var drawer = document.createElement('div');
   drawer.className = 'fc-details-drawer';
-  [['Color', color], ['Pattern', pat], ['Composition', comp], ['Weight', wt], ['Width', wd]].forEach(([lbl, val]) => {
-    const item = document.createElement('div'); item.className = 'fc-detail-item';
-    const l = document.createElement('span'); l.className = 'fc-detail-label'; l.textContent = lbl;
-    const v = document.createElement('span'); v.className = 'fc-detail-val';   v.textContent = val;
-    item.append(l, v); drawer.appendChild(item);
+  [['Color', color], ['Pattern', pat], ['Composition', comp], ['Weight', wt], ['Width', wd]].forEach(function(pair) {
+    var item = document.createElement('div'); item.className = 'fc-detail-item';
+    var l = document.createElement('span'); l.className = 'fc-detail-label'; l.textContent = pair[0];
+    var v = document.createElement('span'); v.className = 'fc-detail-val';   v.textContent = pair[1];
+    item.appendChild(l); item.appendChild(v); drawer.appendChild(item);
   });
 
-  card.append(imgWrap, body, drawer);
+  card.appendChild(imgWrap); card.appendChild(body); card.appendChild(drawer);
   return card;
 }
 
@@ -1107,6 +1266,7 @@ async function renderFabricGrids() {
     } else {
       mainGrid.innerHTML = '';
       fabrics.forEach((f, i) => mainGrid.appendChild(buildFabricCard(f, 'main', i === 0)));
+      if (window.tt3d && window.tt3d.syncFabric) window.tt3d.syncFabric();   // 3D picks up the pre-selected fabric
       compGrid.innerHTML = '';
       fabrics.forEach((f, i) => compGrid.appendChild(buildFabricCard(f, 'comp', false)));
     }
@@ -1219,7 +1379,7 @@ async function handleAddToCart() {
 
 async function handleOrderNow() {
   if (!isLoggedIn()) { redirectToAuthWithPendingOrder('Pending', 'order'); return; }
-  var btn = document.querySelector('[onclick="handleOrderNow()"]');
+  var btn = document.getElementById('footer-next');
   if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
   try {
     await ensurePersonId();
@@ -1333,7 +1493,224 @@ function _saveViaIframe(status, extra) {
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
 
 // Load fabric grids now that SHEET_URL is defined
-renderFabricGrids();
+// ── Pricing ───────────────────────────────────────────────────────
+var _pricing = null;           // { fabricCoefficient, tailoring, marginPercent, configurations }
+var _sectionConfigMap = {};    // discovered automatically — see below
+
+function normalizeOptionText(s) {
+  return String(s || '').trim().toLowerCase().replace(/[-_]+/g, ' ').replace(/\s+/g, ' ');
+}
+
+async function loadPricingData() {
+  try {
+    // Garment code for the price matrix — HD = Hoodie.
+    var res = await fetch(SHEET_URL + '?action=getGarmentPricing&garment=HD');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    var json = await res.json();
+    if (!json.success) throw new Error(json.message || 'API error');
+    _pricing = json;
+    _sectionConfigMap = discoverSectionConfigMap();
+  } catch(err) {
+    console.error('Pricing load failed:', err);
+    _pricing = null;
+    _sectionConfigMap = {};
+  }
+}
+
+// Automatically matches each on-page section to a PRICE MATRIX
+// configuration by comparing OPTION VALUES, not names.
+function discoverSectionConfigMap() {
+  var map = {};
+  if (!_pricing || !_pricing.configurations) return map;
+
+  var configEntries = Object.keys(_pricing.configurations).map(function(name) {
+    return {
+      name: name,
+      values: _pricing.configurations[name].map(function(o){ return normalizeOptionText(o.value); })
+    };
+  });
+
+  document.querySelectorAll('.section').forEach(function(section) {
+    var lbl = section.querySelector('.section-label');
+    if (!lbl) return;
+
+    var buttonLabels = [];
+    section.querySelectorAll('.pill, .icon-card').forEach(function(btn) {
+      var textEl = btn.querySelector('.icon-card-label') || btn;
+      var raw = textEl.dataset.optionLabel || textEl.textContent.trim();
+      if (raw) buttonLabels.push(normalizeOptionText(raw));
+    });
+    if (!buttonLabels.length) return;
+
+    var bestConfig = null;
+    for (var i = 0; i < configEntries.length; i++) {
+      var entry = configEntries[i];
+      var allMatch = buttonLabels.every(function(bl){ return entry.values.indexOf(bl) !== -1; });
+      if (allMatch) { bestConfig = entry.name; break; }
+    }
+    if (bestConfig) map[lbl.textContent.trim()] = bestConfig;
+  });
+
+  return map;
+}
+
+// Looks up the price for one option value within one PRICE MATRIX
+// configuration — used both to badge buttons and to total up the
+// currently-selected options.
+function lookupOptionPrice(configName, optionText) {
+  if (!_pricing || !_pricing.configurations || !_pricing.configurations[configName]) return 0;
+  var target = normalizeOptionText(optionText);
+  var match = _pricing.configurations[configName].find(function(opt){
+    return normalizeOptionText(opt.value) === target;
+  });
+  return match ? match.price : 0;
+}
+
+// Adds a "+€X" badge to any button whose section has a known mapping and
+// whose specific option carries a non-zero price.
+function applyPriceBadges() {
+  if (!_pricing) return;
+  document.querySelectorAll('.section').forEach(function(section) {
+    var lbl = section.querySelector('.section-label');
+    if (!lbl) return;
+    var configName = _sectionConfigMap[lbl.textContent.trim()];
+    if (!configName) return;
+
+    section.querySelectorAll('.pill, .icon-card').forEach(function(btn) {
+      var textEl = btn.querySelector('.icon-card-label') || btn;
+      if (!textEl.dataset.optionLabel) textEl.dataset.optionLabel = textEl.textContent.trim();
+      var label = textEl.dataset.optionLabel;
+      var price = lookupOptionPrice(configName, label);
+      if (price > 0) {
+        var priceClass = textEl.classList.contains('icon-card-label') ? 'icon-card-extra-price' : 'pill-extra-price';
+        textEl.innerHTML = '<span>' + label + '</span><span class="' + priceClass + '">+€' + price.toFixed(2).replace(/\.00$/, '') + '</span>';
+      }
+    });
+  });
+}
+
+// Sums the currently-selected option's price across every mapped section.
+function calculateOptionsExtra() {
+  var total = 0;
+  document.querySelectorAll('.section').forEach(function(section) {
+    var lbl = section.querySelector('.section-label');
+    if (!lbl) return;
+    var configName = _sectionConfigMap[lbl.textContent.trim()];
+    if (!configName) return;
+
+    var selected = section.querySelector('.pill.selected, .icon-card.selected');
+    if (!selected) return;
+    var textEl = selected.querySelector('.icon-card-label') || selected;
+    var label = textEl.dataset.optionLabel || textEl.textContent.trim();
+    total += lookupOptionPrice(configName, label);
+  });
+  return total;
+}
+
+function updatePriceBar() {
+  var amounts = document.querySelectorAll('.price-display-amount');
+  if (!amounts.length) return;
+
+  var text = '—';
+  if (_pricing) {
+    var base = _pricing.tailoring * (1 + _pricing.marginPercent / 100);
+
+    var fabricCard = document.querySelector('#fabric-main-grid .fabric-card.selected');
+    var fabricUnitPrice = fabricCard ? parseFloat(fabricCard.dataset.unitprice || '0') : 0;
+    var fabricCost = fabricUnitPrice * _pricing.fabricCoefficient;
+
+    var extras = calculateOptionsExtra();
+
+    var total = base + fabricCost + extras;
+    text = '€' + total.toFixed(2).replace(/\.00$/, '');
+  }
+  amounts.forEach(function(el){ el.textContent = text; });
+}
+
+// Price bar is now a sticky footer inside the config panel — these are kept as no-ops
+function syncPriceBarWidth() {}
+function updateFixedBarVisibility() { updateFooter(); }
+
+// ── Footer: next-step button follows the active tab ──
+function activePanelId() {
+  var ids = ['panel-design','panel-materials','panel-measurements','panel-summary'];
+  for (var i = 0; i < ids.length; i++) {
+    var el = document.getElementById(ids[i]);
+    if (el && el.style.display !== 'none') return ids[i];
+  }
+  return 'panel-design';
+}
+function updateFooter() {
+  var lbl = document.getElementById('footer-next-lbl');
+  if (!lbl) return;
+  var id = activePanelId();
+  if (id === 'panel-design')         lbl.textContent = 'Continue to Materials';
+  else if (id === 'panel-materials') lbl.textContent = 'Continue to Measurements';
+  else if (id === 'panel-summary')   lbl.textContent = 'Order Now';
+  else {
+    var ml = document.getElementById('meas-save-lbl');
+    lbl.textContent = ml ? ml.textContent : 'Continue to Summary';
+  }
+}
+function footerNext(e) {
+  var id = activePanelId();
+  if (id === 'panel-design')         goToMaterials();
+  else if (id === 'panel-materials') goToMeasurements();
+  else if (id === 'panel-measurements') { if (window.measPrimaryAction) window.measPrimaryAction(e); }
+  else handleOrderNow();
+}
+
+// ── Section icons: wrap each card as [icon | content] ──
+var SECTION_ICONS = {
+  'Gender':          '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
+  'Fit':             '<path d="M8 3l-5 4 3 4 2-1v11h8V10l2 1 3-4-5-4c-.5 1.5-2 2.5-4 2.5S8.5 4.5 8 3z"/>',
+  'Style':           '<path d="M7 9c0-4 2.2-6 5-6s5 2 5 6"/><path d="M7 9l-4 3 2.5 3.5L7 14.5V21h10v-6.5l1.5 1L21 12l-4-3"/><path d="M9.5 9c.6 1.4 1.4 2 2.5 2s1.9-.6 2.5-2"/>',
+  'Hood Closure':    '<path d="M7 9c0-4 2.2-6 5-6s5 2 5 6"/><path d="M7 9l-4 3 2.5 3.5L7 14.5V21h10v-6.5l1.5 1L21 12l-4-3"/><line x1="12" y1="11" x2="12" y2="21"/>',
+  'Zip Trim':        '<line x1="12" y1="3" x2="12" y2="21"/><path d="M10 6h4M10 9h4M10 12h4M10 15h4"/><rect x="10" y="17" width="4" height="4" rx="1"/>',
+  'Sleeve':          '<path d="M8 3l-5 4 3 4 2-1v11h8V10l2 1 3-4-5-4c-.5 1.5-2 2.5-4 2.5S8.5 4.5 8 3z"/><path d="M8 3l2 7M16 3l-2 7"/>',
+  'Front Pocket':    '<path d="M5 9h14l-1.5 9h-11z"/><path d="M8 9c0 2 1.8 3 4 3s4-1 4-3"/>',
+  'Cuff':            '<rect x="5" y="9" width="14" height="6" rx="1"/><line x1="9" y1="9" x2="9" y2="15"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="15" y1="9" x2="15" y2="15"/>',
+  'Main Fabric':     '<path d="M4 4h16v16H4z"/><path d="M4 9h16M4 14h16M9 4v16M14 4v16"/>',
+  'Contrast Fabric': '<path d="M4 4h16v16H4z"/><path d="M4 20L20 4"/>',
+  'Order Summary':   '<path d="M6 2h9l5 5v15H6z"/><line x1="9" y1="12" x2="17" y2="12"/><line x1="9" y1="16" x2="17" y2="16"/>'
+};
+function decorateSections() {
+  document.querySelectorAll('.config-panel .section').forEach(function(section) {
+    if (section.querySelector('.section-main')) return;
+    var lbl = section.querySelector('.section-label');
+    var key = lbl ? lbl.textContent.trim() : '';
+    var main = document.createElement('div');
+    main.className = 'section-main';
+    while (section.firstChild) main.appendChild(section.firstChild);
+    var icon = document.createElement('div');
+    icon.className = 'section-icon';
+    icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + (SECTION_ICONS[key] || '<circle cx="12" cy="12" r="3"/>') + '</svg>';
+    section.appendChild(icon);
+    section.appendChild(main);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  decorateSections();
+  updateFooter();
+  // Mirror the (hidden) measurements button's busy/disabled state onto the footer button
+  var mb = document.getElementById('meas-save-btn'), fb = document.getElementById('footer-next');
+  if (mb && fb && window.MutationObserver) {
+    new MutationObserver(function() {
+      var busy = activePanelId() === 'panel-measurements' && mb.disabled;
+      fb.disabled = busy;
+      fb.style.opacity = busy ? '0.6' : '';
+      updateFooter();
+    }).observe(mb, { attributes: true, attributeFilter: ['disabled'] });
+  }
+});
+// Any click in the config panel may change an option → refresh the price
+document.addEventListener('click', function(){ setTimeout(function(){ updatePriceBar(); if (window.tt3d) window.tt3d.refresh(); }, 0); });
+
+loadPricingData().then(function() {
+  applyPriceBadges();
+  renderFabricGrids().then(function(){ updatePriceBar(); });
+});
 
 function collectConfig() {
   const selText = (selector) => document.querySelector(selector)?.textContent.trim() || '';
@@ -1732,6 +2109,7 @@ function showFeedback(msg, color) {
     var lbl = document.getElementById('meas-save-lbl');
     if (!lbl) return;
     lbl.innerHTML = _measDirty ? 'Save Measurements &amp; Continue' : 'Continue to Summary';
+    if (typeof updateFooter === 'function') updateFooter();
   };
 
   window.measPrimaryAction = function(e) {
@@ -1775,7 +2153,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.4.1</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.5.0</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -2048,6 +2426,559 @@ function ddCopy(type) {
   if (!val || val === '—') { toast('Nothing to copy', 'err'); return; }
   if (navigator.clipboard) navigator.clipboard.writeText(val).then(function() { toast(type.toUpperCase() + ' copied'); });
 }
+</script>
+
+
+<!-- ═══════════════ 3D PREVIEW (three.js + glTF) ═══════════════ -->
+<script type="module">
+// Model files live next to the layer images in github.com/toom-design/tailortech-hoodie.
+// Naming: hoodie_fit_<fit>_style_<style>_sleeve_<sleeve>.gltf (or .glb). If the exact
+// combination isn't uploaded yet, the first available fallback is shown.
+const MODEL_BASE = 'https://raw.githubusercontent.com/toom-design/tailortech-hoodie/main/';
+// Which 3D file shows which configuration. Only an exact match is shown — no "closest" model.
+// Keys are state fields (fit, style, hoodClosure, zipTrim, sleeve, pocket, cuff); leave a key out
+// if that choice doesn't change the model. .glb is tried first, then .gltf.
+const MODELS = [
+  { file: 'SWEATSHIRT2', label: 'Crewneck · Kangaroo pocket',          match: { fit: 'regular', style: 'crewneck',     sleeve: 'regular', pocket: 'kangaroo' } },
+  { file: 'SWEATSHIRT1', label: '3-Piece Hood (overhead) · Welt pocket', match: { fit: 'regular', style: '3-piece-hood', hoodClosure: 'overhead', sleeve: 'regular', pocket: 'welt' } },
+];
+
+function matchingModel() {
+  const st = (typeof state !== 'undefined') ? state : {};
+  return MODELS.find(m => Object.keys(m.match).every(k => st[k] === m.match[k])) || null;
+}
+function modelCandidates() {
+  const m = matchingModel();
+  return m ? [m.file + '.glb', m.file + '.gltf'] : [];
+}
+
+// CLO names pattern pieces by ID — this maps them to parts (same IDs across exports of one project).
+const PART_BY_MESH = {
+  Pattern_1301135: 'front',   Pattern_1299746: 'back',
+  Pattern_1302524: 'sleeves', Pattern_1302525: 'sleeves',
+  Pattern_1303292: 'collar',  Pattern_1303223: 'hem',
+  Pattern_1303224: 'cuff',    Pattern_1303225: 'cuff',
+  Pattern_1724221: 'hood',    Pattern_1724222: 'hood',    Pattern_1725890: 'hood',
+  Pattern_2901679: 'pocket',  Pattern_3171371: 'pocket',  Pattern_3171373: 'pocket',
+};
+
+// Part groups — matched against mesh name + material name, first rule wins.
+// Anything that doesn't match gets its own button, so new parts show up automatically.
+const PART_RULES = [
+  { key: 'hood',    label: 'Hood',    test: /hood/i },
+  { key: 'pocket',  label: 'Pocket',  test: /pocket|kangaroo|welt/i },
+  { key: 'cuff',    label: 'Cuff',    test: /cuff/i },
+  { key: 'hem',     label: 'Hem',     test: /hem|waist/i },
+  { key: 'zip',     label: 'Zip',     test: /zip|placket/i },
+  { key: 'sleeves', label: 'Sleeves', test: /sleeve/i },
+  { key: 'collar',  label: 'Collar',  test: /collar|neck|rib/i },
+  { key: 'front',   label: 'Front',   test: /front|body_f(?![a-z])/i },
+  { key: 'back',    label: 'Back',    test: /back|body_b(?![a-z])/i },
+];
+function classify(mesh) {
+  const mapped = PART_BY_MESH[mesh.name];
+  if (mapped) { const r = PART_RULES.find(x => x.key === mapped); if (r) return r; }
+  const mats = [].concat(mesh.material || []).map(m => m && m.name || '').join(' ');
+  const hay = (mesh.name || '') + ' ' + mats;
+  for (const r of PART_RULES) if (r.test.test(hay)) return r;
+  const n = (mesh.name || 'Part').replace(/_\d+$/, '');
+  return { key: 'x_' + n, label: n.replace(/_/g, ' ') };
+}
+
+let THREE, GLTFLoader, OrbitControls, RoomEnvironment;
+let renderer, scene, camera, controls, modelRoot = null, shadow = null;
+let parts = {};              // key -> { label, meshes: [], visible }
+let fitRadius = 1, center = null, currentUrl = null, visible = false, raf = null;
+const cache = {};
+
+const $ = id => document.getElementById(id);
+function setLoading(on, txt, isErr) {
+  const el = $('s3d-loading'); if (!el) return;
+  el.style.opacity = on ? '1' : '0';
+  el.style.pointerEvents = on ? 'auto' : 'none';
+  const t = $('s3d-loading-txt'); if (t && txt) { t.textContent = txt; t.className = isErr ? 's3d-error' : ''; }
+  const sp = el.querySelector('.spin'); if (sp) sp.style.display = isErr ? 'none' : '';
+}
+
+async function init() {
+  if (renderer) return;
+  [THREE, { GLTFLoader }, { OrbitControls }, { RoomEnvironment }] = await Promise.all([
+    import('three'),
+    import('three/addons/loaders/GLTFLoader.js'),
+    import('three/addons/controls/OrbitControls.js'),
+    import('three/addons/environments/RoomEnvironment.js'),
+  ]);
+  const host = $('stage-3d');
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.75;
+  host.insertBefore(renderer.domElement, host.firstChild);
+
+  scene = new THREE.Scene();
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+  const key = new THREE.DirectionalLight(0xffffff, 0.8); key.position.set(1, 2, 2); scene.add(key);
+
+  camera = new THREE.PerspectiveCamera(30, 1, 0.01, 100);
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.08;
+  controls.enablePan = false;
+  controls.minPolarAngle = Math.PI * 0.15; controls.maxPolarAngle = Math.PI * 0.85;
+
+  new ResizeObserver(resize).observe(host);
+  resize();
+}
+
+function resize() {
+  if (!renderer) return;
+  const host = $('stage-3d');
+  const w = host.clientWidth || 1, h = host.clientHeight || 1;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+
+function makeShadow(box) {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const g = c.getContext('2d'), grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grd.addColorStop(0, 'rgba(0,0,0,0.28)'); grd.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = grd; g.fillRect(0, 0, 128, 128);
+  const size = box.getSize(new THREE.Vector3());
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(size.x * 1.4, size.z * 3 + size.x * 0.4),
+    new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false }));
+  m.rotation.x = -Math.PI / 2;
+  m.position.set(center.x, box.min.y - size.y * 0.08, center.z);
+  return m;
+}
+
+async function loadModel() {
+  const list = modelCandidates();
+  if (!list.length) { const e = new Error('no model for this combination'); e.noModel = true; throw e; }
+  if (MODEL_BASE + encodeURIComponent(list[0]) !== currentUrl && !cache[MODEL_BASE + encodeURIComponent(list[0])]) setLoading(true, 'Loading 3D model…');
+  let gltf = null, url = null, lastErr = null;
+  for (const name of list) {
+    const u = MODEL_BASE + encodeURIComponent(name);
+    if (cache[u] === false) continue;
+    try { gltf = cache[u] || await new GLTFLoader().loadAsync(u); cache[u] = gltf; url = u; break; }
+    catch (e) { cache[u] = false; lastErr = e; }
+  }
+  if (!gltf) throw lastErr || new Error('No model found');
+  if (url === currentUrl) return;
+  currentUrl = url;
+
+  if (modelRoot) scene.remove(modelRoot);
+  if (shadow) scene.remove(shadow);
+  modelRoot = gltf.scene;
+  parts = {};
+  const stitches = [], pieces = [];
+  modelRoot.traverse(o => {
+    if (!o.isMesh) return;
+    if (/^topstitch/i.test(o.name)) { stitches.push(o); return; }   // assigned to their panel below
+    pieces.push(o);
+    const r = classify(o);
+    // The CLO export's colour textures are mostly empty (transparent) with a stray white patch,
+    // so the viewer draws its own fabric instead. The original stays in userData.origMaterial.
+    o.userData.origMaterial = o.material;
+    o.material = fabricMaterial(r.key);
+    o.userData.partKey = r.key;
+    (parts[r.key] = parts[r.key] || { label: r.label, meshes: [], visible: true }).meshes.push(o);
+  });
+  // Topstitching follows the panel it sits on (tonal stitching, hides with that part)
+  modelRoot.updateMatrixWorld(true);
+  const boxes = pieces.map(o => ({ o, box: new THREE.Box3().setFromObject(o).expandByScalar(0.01) }));
+  stitches.forEach(st => {
+    const c = new THREE.Box3().setFromObject(st).getCenter(new THREE.Vector3());
+    let best = null, bestVol = Infinity;
+    boxes.forEach(({ o, box }) => {
+      if (!box.containsPoint(c)) return;
+      const sz = box.getSize(new THREE.Vector3()), vol = sz.x * sz.y * sz.z;
+      if (vol < bestVol) { bestVol = vol; best = o; }
+    });
+    const key = best ? best.userData.partKey : 'x_Stitching';
+    st.userData.origMaterial = st.material;
+    st.material = fabricMaterial(key);
+    (parts[key] = parts[key] || { label: key === 'x_Stitching' ? 'Stitching' : key, meshes: [], visible: true }).meshes.push(st);
+  });
+  scene.add(modelRoot);
+
+  const box = new THREE.Box3().setFromObject(modelRoot);
+  center = box.getCenter(new THREE.Vector3());
+  fitRadius = box.getBoundingSphere(new THREE.Sphere()).radius;
+  shadow = makeShadow(box); scene.add(shadow);
+  controls.minDistance = fitRadius * 0.35;   // allow close-up to see the knit controls.maxDistance = fitRadius * 8;
+  reset();
+  buildPartButtons(decodeURIComponent(url.split('/').pop()));
+  await setFabric(fabricInfo || selectedFabricInfo());
+}
+
+// One material per part group, so contrast parts (cuffs, collar…) can get their own fabric later
+const FABRIC = { color: 0x1c1c1c, roughness: 0.92 };   // Black jersey
+const partMaterials = {};
+function fabricMaterial(key) {
+  if (!partMaterials[key]) {
+    partMaterials[key] = new THREE.MeshStandardMaterial({
+      color: FABRIC.color, roughness: FABRIC.roughness, metalness: 0,
+      side: THREE.DoubleSide,                        // single-layer cloth: inside visible when a panel is hidden
+    });
+    partMaterials[key].name = 'fabric_' + key;
+    applyFabricTo(partMaterials[key]);
+  }
+  return partMaterials[key];
+}
+
+// ── Fabric → cloth texture ──────────────────────────────────────────
+// Preferred: fabrics/webp/<CODE>_tile.webp (seamless colour) + <CODE>_normal.webp (optional),
+// scaled by the sheet's TileSize_cm. Fallback: a calm patch cut from <CODE>_face photo.
+// The model's UVs are in metres (CLO export), so repeat = 100 / tile size in cm.
+const FABRIC_BASE = 'https://raw.githubusercontent.com/toom-design/fabrics/main/webp/';
+const FABRIC_ROOT = 'https://raw.githubusercontent.com/toom-design/fabrics/main/';   // also checked
+const NORMAL_STRENGTH = 1.0;
+// Colour sources. For now: colour only from the sheet's ColorHex + the knit structure (normal map).
+// Flip these to true to let fabric images drive the colour again.
+const USE_TILE_IMAGE = false;        // <CODE>_tile.webp
+const USE_FACE_PHOTO = false;        // patch cut from <CODE>_face photo
+// Shared surface textures: one normal map reused by every fabric of that kind
+// (used when there's no <CODE>_normal.webp). Size applies if the sheet's TileSize_cm is empty.
+// zfab: CLO fabric file read directly (normal map + real tile size); file: plain image fallback.
+const SHARED_NORMALS = [
+  { test: /^JRS-|jersey/i, zfab: 'jersey_structure.zfab', file: 'jersey_texture.webp', tileCm: [4, 4.3] },
+];         // knit relief; black fabric needs a bit more to read
+const DEFAULT_TILE_CM = 8;
+let fabricInfo = null, fabricMaps = null;
+const mapCache = {};
+
+function applyFabricTo(mat) {
+  const m = fabricMaps;
+  mat.map = m ? m.map : null;
+  mat.normalMap = m && m.normal ? m.normal : null;
+  if (mat.normalMap) mat.normalScale.set(NORMAL_STRENGTH, NORMAL_STRENGTH);
+  if (m && m.map) mat.color.set(0xb0b0b0);       // slight darkening: studio light lifts photo colours
+  else mat.color.set(m && m.color ? m.color : FABRIC.color);
+  mat.needsUpdate = true;
+}
+
+function loadImg(url) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => res(img);
+    img.onerror = () => rej(new Error('not found: ' + url));
+    img.src = url;
+  });
+}
+
+function toTexture(src, tileCm, isColor) {
+  const tex = new THREE.Texture(src);
+  tex.needsUpdate = true;
+  if (isColor) tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  const t = Array.isArray(tileCm) ? tileCm : [tileCm || DEFAULT_TILE_CM, tileCm || DEFAULT_TILE_CM];
+  tex.repeat.set(100 / t[0], 100 / t[1]);
+  tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return tex;
+}
+
+// Fallback: takes a calm patch of the product photo (away from the central swirl),
+// flattens the fold shading and blends the edges so it tiles without seams.
+function photoToTile(img) {
+  const N = 512;
+  const w = img.naturalWidth, h = img.naturalHeight, side = Math.min(w, h) * 0.34;
+  const c = document.createElement('canvas'); c.width = c.height = N;
+  const g = c.getContext('2d', { willReadFrequently: true });
+  g.drawImage(img, w * 0.06, h * 0.06, side, side, 0, 0, N, N);
+
+  const b = document.createElement('canvas'); b.width = b.height = 12;     // heavy blur = shading map
+  b.getContext('2d').drawImage(c, 0, 0, 12, 12);
+  const big = document.createElement('canvas'); big.width = big.height = N;
+  const bigG = big.getContext('2d', { willReadFrequently: true });
+  bigG.imageSmoothingQuality = 'high'; bigG.drawImage(b, 0, 0, N, N);
+
+  const px = g.getImageData(0, 0, N, N), bl = bigG.getImageData(0, 0, N, N).data, d = px.data;
+  let mr = 0, mg = 0, mb = 0;
+  for (let i = 0; i < d.length; i += 4) { mr += d[i]; mg += d[i + 1]; mb += d[i + 2]; }
+  const n = d.length / 4; mr /= n; mg /= n; mb /= n;
+  for (let i = 0; i < d.length; i += 4) {
+    d[i]     = Math.min(255, d[i]     * mr / Math.max(bl[i], 1));
+    d[i + 1] = Math.min(255, d[i + 1] * mg / Math.max(bl[i + 1], 1));
+    d[i + 2] = Math.min(255, d[i + 2] * mb / Math.max(bl[i + 2], 1));
+  }
+  const src = new Uint8ClampedArray(d), H = N / 2;
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      const ex = Math.min(x, N - 1 - x) / H, ey = Math.min(y, N - 1 - y) / H;
+      let m = Math.min(ex, ey) * 2; m = m >= 1 ? 1 : m * m * (3 - 2 * m);
+      const i = (y * N + x) * 4, j = (((y + H) % N) * N + ((x + H) % N)) * 4;
+      d[i]     = src[i]     * m + src[j]     * (1 - m);
+      d[i + 1] = src[i + 1] * m + src[j + 1] * (1 - m);
+      d[i + 2] = src[i + 2] * m + src[j + 2] * (1 - m);
+    }
+  }
+  g.putImageData(px, 0, 0);
+  return c;
+}
+
+// ── CLO .zfab reader ────────────────────────────────────────────────
+// A .zfab is a zip (with extra bytes in front) holding the .fab settings and PNG maps.
+// Pulls out the normal map (*_NRM.png) and the texture's physical size (v2PhysicalSize, mm).
+const zfabCache = {};
+async function inflateRaw(bytes) {
+  const ds = new DecompressionStream('deflate-raw');
+  return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(ds)).arrayBuffer());
+}
+function readZfab(url) {
+  if (zfabCache[url]) return zfabCache[url];
+  return zfabCache[url] = (async () => {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + url);
+    const buf = new Uint8Array(await res.arrayBuffer()), dv = new DataView(buf.buffer);
+    let eocd = -1;
+    for (let i = buf.length - 22; i >= Math.max(0, buf.length - 66000); i--) {
+      if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+    }
+    if (eocd < 0) throw new Error('not a zip');
+    const count = dv.getUint16(eocd + 10, true), cdSize = dv.getUint32(eocd + 12, true), cdOff = dv.getUint32(eocd + 16, true);
+    const shift = (eocd - cdSize) - cdOff;                 // bytes prepended before the zip
+    const files = {};
+    let p = eocd - cdSize;
+    for (let n = 0; n < count; n++) {
+      if (dv.getUint32(p, true) !== 0x02014b50) break;
+      const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
+      const nlen = dv.getUint16(p + 28, true), xlen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true);
+      const lho = dv.getUint32(p + 42, true) + shift;
+      const name = new TextDecoder().decode(buf.subarray(p + 46, p + 46 + nlen));
+      files[name] = { method, csize, lho };
+      p += 46 + nlen + xlen + clen;
+    }
+    async function get(name) {
+      const f = files[name]; if (!f) return null;
+      const start = f.lho + 30 + dv.getUint16(f.lho + 26, true) + dv.getUint16(f.lho + 28, true);
+      const raw = buf.subarray(start, start + f.csize);
+      return f.method === 8 ? inflateRaw(raw) : raw;
+    }
+    const names = Object.keys(files);
+    const nrmName = names.find(n => /_NRM\.(png|jpe?g|webp)$/i.test(n));
+    const fabName = names.find(n => /\.fab$/i.test(n));
+    if (!nrmName) throw new Error('no normal map in zfab');
+
+    let tileCm = null;
+    if (fabName) {
+      const fab = await get(fabName), key = new TextEncoder().encode('v2PhysicalSize');
+      outer: for (let i = 0; i + key.length + 8 <= fab.length; i++) {
+        for (let k = 0; k < key.length; k++) if (fab[i + k] !== key[k]) continue outer;
+        const fv = new DataView(fab.buffer, fab.byteOffset + i + key.length, 8);
+        const w = fv.getFloat32(0, true), h = fv.getFloat32(4, true);
+        if (w > 0.1 && w < 10000 && h > 0.1 && h < 10000) tileCm = [w / 10, h / 10];   // mm → cm
+        break;
+      }
+    }
+    const png = await get(nrmName);
+    const img = await loadImg(URL.createObjectURL(new Blob([png], { type: 'image/png' })));
+    return { img, tileCm, name: nrmName };
+  })();
+}
+
+// Normal maps from scans carry soft light/dark patches on top of the stitch detail. Seen from a
+// distance the stitches blur away and only those patches remain, repeating every few cm as a
+// crinkled pattern. This keeps the stitch-level detail and removes the patches (wrap-aware blur).
+function normalHighPass(img) {
+  const w = img.naturalWidth, h = img.naturalHeight;
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d', { willReadFrequently: true });
+  g.drawImage(img, 0, 0);
+  const px = g.getImageData(0, 0, w, h), d = px.data;
+
+  const t = document.createElement('canvas'); t.width = w * 3; t.height = h * 3;   // 3×3 tiling = seamless blur
+  const tg = t.getContext('2d');
+  for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) tg.drawImage(img, x * w, y * h);
+  const k = 16;                                                                       // blur radius ≈ 16 px
+  const sm = document.createElement('canvas'); sm.width = Math.max(1, Math.round(w * 3 / k)); sm.height = Math.max(1, Math.round(h * 3 / k));
+  const smg = sm.getContext('2d'); smg.imageSmoothingQuality = 'high'; smg.drawImage(t, 0, 0, sm.width, sm.height);
+  const bl = document.createElement('canvas'); bl.width = w * 3; bl.height = h * 3;
+  const blg = bl.getContext('2d', { willReadFrequently: true }); blg.imageSmoothingQuality = 'high';
+  blg.drawImage(sm, 0, 0, w * 3, h * 3);
+  const b = blg.getImageData(w, h, w, h).data;
+
+  for (let i = 0; i < d.length; i += 4) {
+    let nx = (d[i] - b[i]) / 127.5, ny = (d[i + 1] - b[i + 1]) / 127.5;
+    const l2 = nx * nx + ny * ny; if (l2 > 0.95) { const f = Math.sqrt(0.95 / l2); nx *= f; ny *= f; }
+    const nz = Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny));
+    d[i] = 127.5 + nx * 127.5; d[i + 1] = 127.5 + ny * 127.5; d[i + 2] = 127.5 + nz * 127.5; d[i + 3] = 255;
+  }
+  g.putImageData(px, 0, 0);
+  return c;
+}
+
+function loadFabricMaps(info) {
+  const key = [info.code, info.face, info.tileCm, info.colorHex, info.type].join('|');
+  if (mapCache[key]) return mapCache[key];
+  return mapCache[key] = (async () => {
+    // TileSize_cm: "4" (square) or "4 x 4.3" (width x height), comma decimals allowed
+    const nums = String(info.tileCm || '').replace(/,/g, '.').match(/\d+(\.\d+)?/g) || [];
+    let tileCm = nums.length >= 2 ? [parseFloat(nums[0]), parseFloat(nums[1])] : (parseFloat(nums[0]) || 0);
+    // look in webp/ first, then the repo root
+    const find = name => loadImg(FABRIC_BASE + encodeURIComponent(name))
+      .catch(() => loadImg(FABRIC_ROOT + encodeURIComponent(name)));
+
+    let map = null, normal = null, source = 'default colour', normalSrc = '';
+    const [tile, nrm] = info.code
+      ? await Promise.allSettled([USE_TILE_IMAGE ? find(info.code + '_tile.webp') : Promise.reject(), find(info.code + '_normal.webp')])
+      : [{ status: 'rejected' }, { status: 'rejected' }];
+
+    // Normal map: own file, else the shared one for this kind of fabric
+    let nrmImg = nrm.status === 'fulfilled' ? nrm.value : null;
+    if (nrmImg) normalSrc = info.code + '_normal';
+    if (!nrmImg) {
+      const shared = SHARED_NORMALS.find(r => r.test.test(info.code) || r.test.test(info.type || ''));
+      if (shared && shared.zfab) {
+        try {
+          const z = await readZfab(FABRIC_BASE + shared.zfab).catch(() => readZfab(FABRIC_ROOT + shared.zfab));
+          nrmImg = z.img; normalSrc = shared.zfab;
+          if (!tileCm) tileCm = z.tileCm || shared.tileCm;
+        } catch (e) { console.warn('3D fabric: zfab', e); }
+      }
+      if (!nrmImg && shared && shared.file) {
+        try { nrmImg = await find(shared.file); normalSrc = shared.file; if (!tileCm) tileCm = shared.tileCm; } catch (e) {}
+      }
+    }
+
+    // Colour: _tile → face photo → ColorHex → default
+    if (USE_TILE_IMAGE && tile.status === 'fulfilled') { map = toTexture(tile.value, tileCm, true); source = info.code + '_tile'; }
+    if (USE_FACE_PHOTO && !map && info.face) {
+      try { map = toTexture(photoToTile(await loadImg(info.face)), DEFAULT_TILE_CM, true); source = 'face photo'; }
+      catch (e) { console.warn('3D fabric: face photo failed', e); }
+    }
+    let color = null;
+    if (!map && /^#?[0-9a-f]{6}$/i.test(String(info.colorHex || '').trim())) {
+      color = new THREE.Color('#' + String(info.colorHex).trim().replace('#', ''));
+      source = 'ColorHex ' + info.colorHex;
+    }
+    if (nrmImg) normal = toTexture(normalHighPass(nrmImg), tileCm, false);
+
+    console.info('3D fabric', info.code || '', '→ colour from', source,
+      normal ? '+ normal map ' + normalSrc + ' (' + [].concat(tileCm || DEFAULT_TILE_CM).map(v => +v.toFixed(2)).join(' × ') + ' cm)' : '(no normal map)');
+    if (!map && !color && !normal) return null;
+    return { map, normal, color };
+  })();
+}
+
+function fabricInfoFromCard(card) {
+  if (!card) return null;
+  const img = card.querySelector('img');
+  const face = img && img.src && !img.src.startsWith('data:') ? img.src : '';
+  return { code: card.dataset.code || '', face, tileCm: card.dataset.tilecm || '',
+           colorHex: card.dataset.colorhex || '', type: card.dataset.type || '' };
+}
+function selectedFabricInfo() {
+  return fabricInfoFromCard(document.querySelector('#fabric-main-grid .fabric-card.selected'));
+}
+
+async function setFabric(info) {
+  fabricInfo = info || null;
+  if (!renderer) return;                        // applied once the 3D view opens
+  let maps = null;
+  try { maps = fabricInfo ? await loadFabricMaps(fabricInfo) : null; }
+  catch (e) { console.warn('3D fabric:', e); }
+  if (info !== fabricInfo) return;              // a newer selection won
+  fabricMaps = maps;
+  Object.values(partMaterials).forEach(applyFabricTo);
+}
+
+function buildPartButtons(fileName) {
+  const list = $('s3d-parts-list'); if (!list) return;
+  list.innerHTML = '';
+  const order = ['front', 'back', 'sleeves', 'hood', 'collar', 'pocket', 'cuff', 'hem', 'zip'];
+  Object.keys(parts).sort((a, b) => {
+    const ia = order.indexOf(a), ib = order.indexOf(b);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+  }).forEach(key => {
+    const p = parts[key];
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 's3d-part-btn' + (p.visible ? ' active' : '');
+    b.textContent = p.label;
+    b.title = p.meshes.map(m => m.name).join(', ');
+    b.onclick = () => {
+      p.visible = !p.visible;
+      p.meshes.forEach(m => { m.visible = p.visible; });
+      b.classList.toggle('active', p.visible);
+    };
+    list.appendChild(b);
+  });
+  $('s3d-model-name').textContent = fileName;
+  $('s3d-parts').style.display = '';
+}
+
+function placeCamera(azimuth, distMul) {
+  const d = fitRadius * (distMul || 3.1);
+  camera.position.set(center.x + Math.sin(azimuth) * d, center.y + fitRadius * 0.15, center.z + Math.cos(azimuth) * d);
+  controls.target.copy(center);
+  controls.update();
+}
+function reset() { if (center) placeCamera(0); }
+function face(v) {
+  if (!center) return;
+  const dist = camera.position.distanceTo(controls.target) / fitRadius;
+  placeCamera(v === 'back' ? Math.PI : 0, dist);
+}
+function zoom(d) {
+  if (!center) return;
+  const off = camera.position.clone().sub(controls.target);
+  const len = THREE.MathUtils.clamp(off.length() * (1 - d * 0.6), controls.minDistance, controls.maxDistance);
+  camera.position.copy(controls.target).add(off.setLength(len));
+  controls.update();
+}
+
+function loop() {
+  raf = requestAnimationFrame(loop);
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+async function show() {
+  visible = true;
+  try {
+    if (!renderer) setLoading(true, 'Loading 3D model…');
+    await init();
+    if (!raf) loop();
+    resize();
+    if (!currentUrl) setLoading(true, 'Loading 3D model…');
+    await loadModel();
+    setLoading(false);
+    const pb = $('s3d-parts'); if (pb && Object.keys(parts).length) pb.style.display = '';
+  } catch (e) {
+    const parts = document.getElementById('s3d-parts');
+    if (e && e.noModel) {
+      if (parts) parts.style.display = 'none';
+      setLoading(true, 'This combination isn’t available in 3D yet. Available now: ' + MODELS.map(m => m.label).join(' / ') + '.', true);
+      return;
+    }
+    console.error('3D load error:', e);
+    setLoading(true, 'Could not load the 3D model (' + (e && e.message || e) + ').', true);
+  }
+}
+function hide() {
+  visible = false;
+  if (raf) { cancelAnimationFrame(raf); raf = null; }
+}
+// Reload when design choices point to a different model file
+function refresh() { if (visible) show(); }
+
+window.tt3d = { show, hide, refresh, face, zoom, reset, setFabric, syncFabric: () => setFabric(selectedFabricInfo()) };
+if (document.querySelector('#fabric-main-grid .fabric-card.selected')) setFabric(selectedFabricInfo());
+if (typeof selectFabric === 'function') {
+  const _sf = selectFabric;
+  window.selectFabric = selectFabric = function (el, group) {
+    const r = _sf.apply(this, arguments);
+    if (group === 'main') setFabric(fabricInfoFromCard(el));
+    return r;
+  };
+}
+if (typeof initPreview === 'function') {
+  const _ip = initPreview;
+  window.initPreview = initPreview = function () { const r = _ip.apply(this, arguments); refresh(); return r; };
+}
+if (window._pending3D) { window._pending3D = false; show(); }
 </script>
 
 </body>
