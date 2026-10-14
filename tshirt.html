@@ -23,7 +23,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 .app { display: flex; width: 100%; flex: 1; overflow: hidden; min-height: 0; }
 
 /* ── PREVIEW PANEL ── */
-.preview-panel { flex: 3; background: #ffffff; border-right: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; overflow: hidden; transition: flex 0.35s cubic-bezier(0.4,0,0.2,1); }
+.preview-panel { flex: 1; background: #ffffff; border-right: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; overflow: hidden; transition: flex 0.35s cubic-bezier(0.4,0,0.2,1); }
 .view-toggle { display: flex; padding: 16px 20px 0; justify-content: center; flex-shrink: 0; }
 .view-btn { font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; padding: 8px 28px; border: 1px solid var(--border-mid); background: transparent; color: var(--ink-light); cursor: pointer; transition: all 0.2s; }
 .view-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
@@ -61,7 +61,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 .app.measurements-active #meas-avatar-panel { display: flex !important; }
 
 /* ── CONFIG PANEL ── */
-.config-panel { flex: 2; background: var(--white); overflow-y: auto; min-height: 0; position: relative; display: flex; flex-direction: column; transition: flex 0.35s cubic-bezier(0.4,0,0.2,1); }
+.config-panel { flex: 1; background: var(--white); overflow-y: auto; min-height: 0; position: relative; display: flex; flex-direction: column; transition: flex 0.35s cubic-bezier(0.4,0,0.2,1); }
 .tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 28px; position: sticky; top: 0; background: var(--white); z-index: 20; }
 .tab { font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; padding: 18px 0; margin-right: 24px; border: none; background: none; color: var(--ink-faint); cursor: pointer; border-bottom: 1.5px solid transparent; margin-bottom: -1px; transition: color 0.2s, border-color 0.2s; white-space: nowrap; }
 .tab.active { color: var(--ink); border-bottom-color: var(--ink); }
@@ -2162,7 +2162,7 @@ function captureTechPackImage() {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.0</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.2</div>
 
 
 <!-- ═══════════════ 3D PREVIEW (three.js + glTF) ═══════════════ -->
@@ -2227,7 +2227,7 @@ async function init() {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.0;
+  renderer.toneMappingExposure = 0.75;
   host.insertBefore(renderer.domElement, host.firstChild);
 
   scene = new THREE.Scene();
@@ -2301,6 +2301,7 @@ async function loadModel() {
   controls.minDistance = fitRadius * 1.3; controls.maxDistance = fitRadius * 8;
   reset();
   buildPartButtons(decodeURIComponent(url.split('/').pop()));
+  await setFabric(fabricUrl || selectedFabricUrl());
 }
 
 // One material per part group, so contrast parts (cuffs, collar…) can get their own fabric later
@@ -2313,8 +2314,93 @@ function fabricMaterial(key) {
       side: THREE.DoubleSide,                        // single-layer cloth: inside visible when a panel is hidden
     });
     partMaterials[key].name = 'fabric_' + key;
+    applyFabricTo(partMaterials[key]);
   }
   return partMaterials[key];
+}
+
+// ── Fabric photo → repeating cloth texture ─────────────────────────
+// The model's UVs are in metres (CLO export), so repeat = 1 / tile size.
+const TILE_M = 0.08;                 // one texture tile ≈ 8 cm of real fabric
+let fabricUrl = null, fabricTex = null;
+const texCache = {};
+
+function applyFabricTo(mat) {
+  mat.map = fabricTex || null;
+  mat.color.set(fabricTex ? 0xb0b0b0 : FABRIC.color);   // slight darkening: studio light lifts photo colours
+  mat.needsUpdate = true;
+}
+
+// Takes a calm patch of the product photo (away from the central swirl),
+// flattens the fold shading so it tiles without visible light/dark blotches,
+// and keeps the weave and the real colour.
+function photoToTile(img) {
+  const N = 512;
+  const w = img.naturalWidth, h = img.naturalHeight, side = Math.min(w, h) * 0.34;
+  const c = document.createElement('canvas'); c.width = c.height = N;
+  const g = c.getContext('2d', { willReadFrequently: true });
+  g.drawImage(img, w * 0.06, h * 0.06, side, side, 0, 0, N, N);
+
+  const b = document.createElement('canvas'); b.width = b.height = 12;     // heavy blur = shading map
+  const bg = b.getContext('2d'); bg.drawImage(c, 0, 0, 12, 12);
+  const big = document.createElement('canvas'); big.width = big.height = N;
+  const bigG = big.getContext('2d', { willReadFrequently: true });
+  bigG.imageSmoothingQuality = 'high'; bigG.drawImage(b, 0, 0, N, N);
+
+  const px = g.getImageData(0, 0, N, N), bl = bigG.getImageData(0, 0, N, N).data, d = px.data;
+  let mr = 0, mg = 0, mb = 0;
+  for (let i = 0; i < d.length; i += 4) { mr += d[i]; mg += d[i + 1]; mb += d[i + 2]; }
+  const n = d.length / 4; mr /= n; mg /= n; mb /= n;
+  for (let i = 0; i < d.length; i += 4) {
+    d[i]     = Math.min(255, d[i]     * mr / Math.max(bl[i], 1));
+    d[i + 1] = Math.min(255, d[i + 1] * mg / Math.max(bl[i + 1], 1));
+    d[i + 2] = Math.min(255, d[i + 2] * mb / Math.max(bl[i + 2], 1));
+  }
+  // Make the tile seamless: blend it with a copy shifted by half a tile, weighting the
+  // shifted copy at the edges (where it is continuous across the wrap).
+  const src = new Uint8ClampedArray(d), H = N / 2;
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      const ex = Math.min(x, N - 1 - x) / H, ey = Math.min(y, N - 1 - y) / H;   // 0 at edge → 1 at centre
+      let m = Math.min(ex, ey) * 2; m = m >= 1 ? 1 : m * m * (3 - 2 * m);
+      const i = (y * N + x) * 4, j = (((y + H) % N) * N + ((x + H) % N)) * 4;
+      d[i]     = src[i]     * m + src[j]     * (1 - m);
+      d[i + 1] = src[i + 1] * m + src[j + 1] * (1 - m);
+      d[i + 2] = src[i + 2] * m + src[j + 2] * (1 - m);
+    }
+  }
+  g.putImageData(px, 0, 0);
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(1 / TILE_M, 1 / TILE_M);
+  tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return tex;
+}
+
+function loadFabricTexture(url) {
+  if (texCache[url]) return texCache[url];
+  return texCache[url] = new Promise((res, rej) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => { try { res(photoToTile(img)); } catch (e) { rej(e); } };
+    img.onerror = () => rej(new Error('Fabric photo failed to load'));
+    img.src = url;
+  });
+}
+
+async function setFabric(url) {
+  fabricUrl = url || null;
+  if (!renderer) return;                       // applied once the 3D view opens
+  try { fabricTex = fabricUrl ? await loadFabricTexture(fabricUrl) : null; }
+  catch (e) { console.warn('3D fabric:', e); fabricTex = null; }
+  if (url !== fabricUrl) return;               // a newer selection won
+  Object.values(partMaterials).forEach(applyFabricTo);
+}
+function selectedFabricUrl() {
+  const img = document.querySelector('#fabric-main-grid .fabric-card.selected img');
+  return img && img.src && !img.src.startsWith('data:') ? img.src : null;
 }
 
 function buildPartButtons(fileName) {
@@ -2390,7 +2476,18 @@ function hide() {
 // Reload when design choices point to a different model file
 function refresh() { if (visible) show(); }
 
-window.tt3d = { show, hide, refresh, face, zoom, reset };
+window.tt3d = { show, hide, refresh, face, zoom, reset, setFabric };
+if (typeof selectFabric === 'function') {
+  const _sf = selectFabric;
+  window.selectFabric = selectFabric = function (el, group) {
+    const r = _sf.apply(this, arguments);
+    if (group === 'main') {
+      const img = el && el.querySelector('img');
+      setFabric(img && img.src && !img.src.startsWith('data:') ? img.src : null);
+    }
+    return r;
+  };
+}
 if (typeof updatePreview === 'function') {
   const _up = updatePreview;
   window.updatePreview = updatePreview = function () { const r = _up.apply(this, arguments); refresh(); return r; };
