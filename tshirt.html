@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>T-Shirt</title>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
@@ -27,6 +33,20 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 .layer-stack { position: relative; width: 380px; height: 580px; flex-shrink: 0; transform-origin: center center; transition: transform 0.6s cubic-bezier(0.4,0,0.2,1); }
 .layer-stack .layer { position: absolute; inset: 0; }
 .layer-stack .layer img { width: 100%; height: 100%; object-fit: contain; display: block; }
+/* ── 3D preview ── */
+#stage-3d { position: absolute; inset: 0; display: none; }
+#stage-3d canvas { display: block; width: 100% !important; height: 100% !important; outline: none; cursor: grab; touch-action: none; }
+#stage-3d canvas:active { cursor: grabbing; }
+.s3d-loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; font-size: 10px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-light); background: #fff; z-index: 5; transition: opacity 0.4s; }
+.s3d-loading .spin { width: 22px; height: 22px; border: 2px solid #C0BDB8; border-top-color: #1A1916; border-radius: 50%; animation: spin 0.7s linear infinite; }
+.s3d-error { color: #b04040; letter-spacing: 0.04em; text-transform: none; font-size: 12px; max-width: 320px; text-align: center; line-height: 1.5; }
+.s3d-parts { position: absolute; top: 12px; left: 12px; z-index: 6; display: flex; flex-direction: column; gap: 6px; padding: 10px; background: rgba(255,255,255,0.88); border: 1px dashed var(--border-mid); border-radius: 10px; backdrop-filter: blur(6px); }
+.s3d-parts-title { font-size: 8px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-light); padding: 0 2px 2px; }
+.s3d-part-btn { font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; padding: 7px 14px; min-width: 96px; text-align: left; border: 1px solid var(--border-mid); border-radius: 100px; background: var(--white); color: var(--ink-light); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.15s; }
+.s3d-part-btn::before { content: ''; width: 7px; height: 7px; border-radius: 50%; border: 1px solid currentColor; flex-shrink: 0; }
+.s3d-part-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.s3d-part-btn.active::before { background: currentColor; }
+.s3d-model-name { font-size: 9px; color: var(--ink-faint); letter-spacing: 0.02em; padding: 4px 2px 0; max-width: 150px; word-break: break-all; }
 .zoom-btns { position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 4px; z-index: 50; }
 .zoom-btn { width: 28px; height: 28px; border: 1px solid var(--border-mid); background: var(--white); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; color: var(--ink-mid); }
 .view-bar { flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 12px 20px; gap: 0; border-top: 1px solid var(--border); }
@@ -296,6 +316,16 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
           <div class="layer"><img id="img-hem"      src="" alt=""></div>
           <div class="layer"><img id="img-neckrib"  src="" alt=""></div>
           <div class="layer"><img id="img-sideslit" src="" alt=""></div>
+        </div>
+      </div>
+      <!-- 3D preview (glTF via three.js, loaded on first use) -->
+      <div id="stage-3d">
+        <div class="s3d-loading" id="s3d-loading"><div class="spin"></div><span id="s3d-loading-txt">Loading 3D model…</span></div>
+        <!-- TEMPORARY: part toggles to verify the model is modular -->
+        <div class="s3d-parts" id="s3d-parts" style="display:none;">
+          <div class="s3d-parts-title">Parts · test</div>
+          <div id="s3d-parts-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+          <div class="s3d-model-name" id="s3d-model-name"></div>
         </div>
       </div>
     </div>
@@ -661,8 +691,8 @@ function zoomToRegion(scale, cx, cy) {
   _z.panY = -pointY * scale;
   applyTransform();
 }
-function resetZoom() { _z.zoom = DEFAULT_ZOOM; _z.panX = 0; _z.panY = 0; applyTransform(); }
-function manualZoom(d) { _z.zoom = Math.min(4, Math.max(0.5, _z.zoom + d)); applyTransform(); }
+function resetZoom() { if (window._is3D && window.tt3d) { window.tt3d.reset(); return; } _z.zoom = DEFAULT_ZOOM; _z.panX = 0; _z.panY = 0; applyTransform(); }
+function manualZoom(d) { if (window._is3D && window.tt3d) { window.tt3d.zoom(d); return; } _z.zoom = Math.min(4, Math.max(0.5, _z.zoom + d)); applyTransform(); }
 
 // ── Tabs ──────────────────────────────────────────────────────────
 function switchTab(btn, panelId) {
@@ -709,12 +739,25 @@ function goToSummary()      { switchTab(document.querySelectorAll('.tab')[3], 'p
 function setView(v, btn) {
   document.querySelectorAll('.view-btn').forEach(function(b){ b.classList.remove('active'); });
   btn.classList.add('active');
+  var is3D = (v === '3d');
+  window._is3D = is3D;
+  var tech = document.getElementById('stage-viewport');
+  var s3d  = document.getElementById('stage-3d');
+  if (tech) tech.style.display = is3D ? 'none' : 'flex';
+  if (s3d)  s3d.style.display  = is3D ? 'block' : 'none';
+  if (is3D) {
+    if (window.tt3d) window.tt3d.show();
+    else window._pending3D = true;          // module still loading — it picks this up
+  } else if (window.tt3d) {
+    window.tt3d.hide();
+  }
 }
 function setFrontBack(v, btn) {
   document.querySelectorAll('.view-bar-btn').forEach(function(b){ b.classList.remove('active'); });
   btn.classList.add('active');
   state.view = (v === 'front') ? 'f' : 'b';
   updatePreview();
+  if (window._is3D && window.tt3d) window.tt3d.face(v);
 }
 
 // ── Pill helpers ──────────────────────────────────────────────────
@@ -2119,7 +2162,241 @@ function captureTechPackImage() {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.5.2</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.0</div>
+
+
+<!-- ═══════════════ 3D PREVIEW (three.js + glTF) ═══════════════ -->
+<script type="module">
+// Model files live next to the layer images in github.com/toom-design/t-shirt.
+// Naming: t_shirt_fit_<fit>_sleeve_<style>.gltf (or .glb). If the exact combination
+// isn't uploaded yet, the first available fallback is shown.
+const MODEL_BASE = 'https://raw.githubusercontent.com/toom-design/t-shirt/main/';
+const FALLBACK_MODELS = ['t_shirt_fit_regular_sleeve_raglan.gltf'];
+
+function modelCandidates() {
+  const st = (typeof state !== 'undefined') ? state : {};
+  const fit = st.fit === 'oversized' ? 'oversize' : (st.fit || 'regular');
+  const sleeve = st.sleeveStyle === 'raglan' ? 'raglan' : 'regular';
+  const stem = 't_shirt_fit_' + fit + '_sleeve_' + sleeve;
+  const list = [stem + '.glb', stem + '.gltf'];
+  FALLBACK_MODELS.forEach(f => { if (!list.includes(f)) list.push(f); });
+  return list;
+}
+
+// Part groups — matched against mesh name + material name, first rule wins.
+// Anything that doesn't match gets its own button, so new parts show up automatically.
+const PART_RULES = [
+  { key: 'sleeves', label: 'Sleeves', test: /sleeve/i },
+  { key: 'collar',  label: 'Collar',  test: /collar|neck|rib/i },
+  { key: 'front',   label: 'Front',   test: /front|body_f(?![a-z])/i },
+  { key: 'back',    label: 'Back',    test: /back|body_b(?![a-z])/i },
+];
+function classify(mesh) {
+  const mats = [].concat(mesh.material || []).map(m => m && m.name || '').join(' ');
+  const hay = (mesh.name || '') + ' ' + mats;
+  for (const r of PART_RULES) if (r.test.test(hay)) return r;
+  const n = (mesh.name || 'Part').replace(/_\d+$/, '');
+  return { key: 'x_' + n, label: n.replace(/_/g, ' ') };
+}
+
+let THREE, GLTFLoader, OrbitControls, RoomEnvironment;
+let renderer, scene, camera, controls, modelRoot = null, shadow = null;
+let parts = {};              // key -> { label, meshes: [], visible }
+let fitRadius = 1, center = null, currentUrl = null, visible = false, raf = null;
+const cache = {};
+
+const $ = id => document.getElementById(id);
+function setLoading(on, txt, isErr) {
+  const el = $('s3d-loading'); if (!el) return;
+  el.style.opacity = on ? '1' : '0';
+  el.style.pointerEvents = on ? 'auto' : 'none';
+  const t = $('s3d-loading-txt'); if (t && txt) { t.textContent = txt; t.className = isErr ? 's3d-error' : ''; }
+  const sp = el.querySelector('.spin'); if (sp) sp.style.display = isErr ? 'none' : '';
+}
+
+async function init() {
+  if (renderer) return;
+  [THREE, { GLTFLoader }, { OrbitControls }, { RoomEnvironment }] = await Promise.all([
+    import('three'),
+    import('three/addons/loaders/GLTFLoader.js'),
+    import('three/addons/controls/OrbitControls.js'),
+    import('three/addons/environments/RoomEnvironment.js'),
+  ]);
+  const host = $('stage-3d');
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.0;
+  host.insertBefore(renderer.domElement, host.firstChild);
+
+  scene = new THREE.Scene();
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+  const key = new THREE.DirectionalLight(0xffffff, 0.8); key.position.set(1, 2, 2); scene.add(key);
+
+  camera = new THREE.PerspectiveCamera(30, 1, 0.01, 100);
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.08;
+  controls.enablePan = false;
+  controls.minPolarAngle = Math.PI * 0.15; controls.maxPolarAngle = Math.PI * 0.85;
+
+  new ResizeObserver(resize).observe(host);
+  resize();
+}
+
+function resize() {
+  if (!renderer) return;
+  const host = $('stage-3d');
+  const w = host.clientWidth || 1, h = host.clientHeight || 1;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+
+function makeShadow(box) {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const g = c.getContext('2d'), grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grd.addColorStop(0, 'rgba(0,0,0,0.28)'); grd.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = grd; g.fillRect(0, 0, 128, 128);
+  const size = box.getSize(new THREE.Vector3());
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(size.x * 1.4, size.z * 3 + size.x * 0.4),
+    new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false }));
+  m.rotation.x = -Math.PI / 2;
+  m.position.set(center.x, box.min.y - size.y * 0.08, center.z);
+  return m;
+}
+
+async function loadModel() {
+  const list = modelCandidates();
+  let gltf = null, url = null, lastErr = null;
+  for (const name of list) {
+    const u = MODEL_BASE + encodeURIComponent(name);
+    if (cache[u] === false) continue;
+    try { gltf = cache[u] || await new GLTFLoader().loadAsync(u); cache[u] = gltf; url = u; break; }
+    catch (e) { cache[u] = false; lastErr = e; }
+  }
+  if (!gltf) throw lastErr || new Error('No model found');
+  if (url === currentUrl) return;
+  currentUrl = url;
+
+  if (modelRoot) scene.remove(modelRoot);
+  if (shadow) scene.remove(shadow);
+  modelRoot = gltf.scene;
+  parts = {};
+  modelRoot.traverse(o => {
+    if (!o.isMesh) return;
+    const r = classify(o);
+    // The CLO export's colour textures are mostly empty (transparent) with a stray white patch,
+    // so the viewer draws its own fabric instead. The original stays in userData.origMaterial.
+    o.userData.origMaterial = o.material;
+    o.material = fabricMaterial(r.key);
+    (parts[r.key] = parts[r.key] || { label: r.label, meshes: [], visible: true }).meshes.push(o);
+  });
+  scene.add(modelRoot);
+
+  const box = new THREE.Box3().setFromObject(modelRoot);
+  center = box.getCenter(new THREE.Vector3());
+  fitRadius = box.getBoundingSphere(new THREE.Sphere()).radius;
+  shadow = makeShadow(box); scene.add(shadow);
+  controls.minDistance = fitRadius * 1.3; controls.maxDistance = fitRadius * 8;
+  reset();
+  buildPartButtons(decodeURIComponent(url.split('/').pop()));
+}
+
+// One material per part group, so contrast parts (cuffs, collar…) can get their own fabric later
+const FABRIC = { color: 0x1c1c1c, roughness: 0.92 };   // Black jersey
+const partMaterials = {};
+function fabricMaterial(key) {
+  if (!partMaterials[key]) {
+    partMaterials[key] = new THREE.MeshStandardMaterial({
+      color: FABRIC.color, roughness: FABRIC.roughness, metalness: 0,
+      side: THREE.DoubleSide,                        // single-layer cloth: inside visible when a panel is hidden
+    });
+    partMaterials[key].name = 'fabric_' + key;
+  }
+  return partMaterials[key];
+}
+
+function buildPartButtons(fileName) {
+  const list = $('s3d-parts-list'); if (!list) return;
+  list.innerHTML = '';
+  const order = ['front', 'back', 'sleeves', 'collar'];
+  Object.keys(parts).sort((a, b) => {
+    const ia = order.indexOf(a), ib = order.indexOf(b);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+  }).forEach(key => {
+    const p = parts[key];
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 's3d-part-btn' + (p.visible ? ' active' : '');
+    b.textContent = p.label;
+    b.title = p.meshes.map(m => m.name).join(', ');
+    b.onclick = () => {
+      p.visible = !p.visible;
+      p.meshes.forEach(m => { m.visible = p.visible; });
+      b.classList.toggle('active', p.visible);
+    };
+    list.appendChild(b);
+  });
+  $('s3d-model-name').textContent = fileName;
+  $('s3d-parts').style.display = '';
+}
+
+function placeCamera(azimuth, distMul) {
+  const d = fitRadius * (distMul || 3.1);
+  camera.position.set(center.x + Math.sin(azimuth) * d, center.y + fitRadius * 0.15, center.z + Math.cos(azimuth) * d);
+  controls.target.copy(center);
+  controls.update();
+}
+function reset() { if (center) placeCamera(0); }
+function face(v) {
+  if (!center) return;
+  const dist = camera.position.distanceTo(controls.target) / fitRadius;
+  placeCamera(v === 'back' ? Math.PI : 0, dist);
+}
+function zoom(d) {
+  if (!center) return;
+  const off = camera.position.clone().sub(controls.target);
+  const len = THREE.MathUtils.clamp(off.length() * (1 - d * 0.6), controls.minDistance, controls.maxDistance);
+  camera.position.copy(controls.target).add(off.setLength(len));
+  controls.update();
+}
+
+function loop() {
+  raf = requestAnimationFrame(loop);
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+async function show() {
+  visible = true;
+  try {
+    if (!renderer) setLoading(true, 'Loading 3D model…');
+    await init();
+    if (!raf) loop();
+    resize();
+    if (!currentUrl) setLoading(true, 'Loading 3D model…');
+    await loadModel();
+    setLoading(false);
+  } catch (e) {
+    console.error('3D load error:', e);
+    setLoading(true, 'Could not load the 3D model (' + (e && e.message || e) + ').', true);
+  }
+}
+function hide() {
+  visible = false;
+  if (raf) { cancelAnimationFrame(raf); raf = null; }
+}
+// Reload when design choices point to a different model file
+function refresh() { if (visible) show(); }
+
+window.tt3d = { show, hide, refresh, face, zoom, reset };
+if (typeof updatePreview === 'function') {
+  const _up = updatePreview;
+  window.updatePreview = updatePreview = function () { const r = _up.apply(this, arguments); refresh(); return r; };
+}
+if (window._pending3D) { window._pending3D = false; show(); }
+</script>
 
 </body>
 </html>
