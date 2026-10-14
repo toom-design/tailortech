@@ -2171,7 +2171,7 @@ function captureTechPackImage() {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.7</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.8</div>
 
 
 <!-- ═══════════════ 3D PREVIEW (three.js + glTF) ═══════════════ -->
@@ -2335,6 +2335,10 @@ function fabricMaterial(key) {
 const FABRIC_BASE = 'https://raw.githubusercontent.com/toom-design/fabrics/main/webp/';
 const FABRIC_ROOT = 'https://raw.githubusercontent.com/toom-design/fabrics/main/';   // also checked
 const NORMAL_STRENGTH = 1.5;
+// Colour sources. For now: colour only from the sheet's ColorHex + the knit structure (normal map).
+// Flip these to true to let fabric images drive the colour again.
+const USE_TILE_IMAGE = false;        // <CODE>_tile.webp
+const USE_FACE_PHOTO = false;        // patch cut from <CODE>_face photo
 // Shared surface textures: one normal map reused by every fabric of that kind
 // (used when there's no <CODE>_normal.webp). Size applies if the sheet's TileSize_cm is empty.
 const SHARED_NORMALS = [
@@ -2427,7 +2431,7 @@ function loadFabricMaps(info) {
 
     let map = null, normal = null, source = 'default colour', normalSrc = '';
     const [tile, nrm] = info.code
-      ? await Promise.allSettled([find(info.code + '_tile.webp'), find(info.code + '_normal.webp')])
+      ? await Promise.allSettled([USE_TILE_IMAGE ? find(info.code + '_tile.webp') : Promise.reject(), find(info.code + '_normal.webp')])
       : [{ status: 'rejected' }, { status: 'rejected' }];
 
     // Normal map: own file, else the shared one for this kind of fabric
@@ -2441,8 +2445,8 @@ function loadFabricMaps(info) {
     }
 
     // Colour: _tile → face photo → ColorHex → default
-    if (tile.status === 'fulfilled') { map = toTexture(tile.value, tileCm, true); source = info.code + '_tile'; }
-    if (!map && info.face) {
+    if (USE_TILE_IMAGE && tile.status === 'fulfilled') { map = toTexture(tile.value, tileCm, true); source = info.code + '_tile'; }
+    if (USE_FACE_PHOTO && !map && info.face) {
       try { map = toTexture(photoToTile(await loadImg(info.face)), DEFAULT_TILE_CM, true); source = 'face photo'; }
       catch (e) { console.warn('3D fabric: face photo failed', e); }
     }
