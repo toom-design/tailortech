@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -122,11 +121,17 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 .pill.selected .pill-extra-price, .icon-card.selected .icon-card-extra-price { color: rgba(250,250,248,0.6); }
 
 /* Fabric grid */
+/* Materials: icon sits beside the label; banner, search and fabric cards span the full card width */
+#panel-materials .section { display: block; }
+#panel-materials .section-icon { position: absolute; top: 20px; left: 22px; }
+#panel-materials .section-label { padding-left: 56px; min-height: 40px; margin: 0 0 16px; }
+
 /* Narrow panel: drop icon tiles and tighten spacing */
 .config-panel { container-type: inline-size; }
 @container (max-width: 520px) {
   .section { padding: 16px; gap: 0; }
   .section-icon { display: none; }
+  #panel-materials .section-label { padding-left: 0; min-height: 0; }
   .config-body { padding: 14px 12px 20px; }
   .fabric-hero { padding: 24px 20px 20px; min-height: 0; }
   .fabric-hero-quote { font-size: 21px; }
@@ -2114,7 +2119,7 @@ function captureTechPackImage() {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.5.1</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.5.2</div>
 
 </body>
 </html>
