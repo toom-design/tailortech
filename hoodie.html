@@ -588,6 +588,14 @@ body:not(.tt-debug) #s3d-parts { display: none !important; }
 .footer-next { font-size: 10.5px !important; letter-spacing: 0.2em !important; font-weight: 500 !important; padding: 15px 26px !important; }
 .footer-price-label { font-size: 8.5px !important; letter-spacing: 0.22em !important; }
 .footer-price-amount { font-size: 24px !important; font-weight: 500 !important; }
+
+/* v1.6.0 — "not in 3D yet" note, info-card style, just above Front / Back */
+.s3d-note { position: absolute; left: 50%; bottom: 84px; transform: translateX(-50%); z-index: 6; width: max-content; max-width: min(86%, 560px);
+  display: flex; align-items: center; gap: 12px; padding: 12px 18px 12px 12px; pointer-events: none;
+  background: #F3F8F6; border: 1px solid #D6EBE5; border-radius: 12px; box-shadow: 0 4px 14px rgba(26,25,22,0.05);
+  font-size: 12px; line-height: 1.45; letter-spacing: 0.01em; color: #6E6C68; }
+.s3d-note-ic { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--tt-turq); color: var(--tt-turq);
+  display: flex; align-items: center; justify-content: center; font-family: Georgia, serif; font-style: italic; font-size: 13px; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -1026,13 +1034,13 @@ function initPreview() {
   setImg('img-base', urls.base(state.fit));
   setImg('img-sleeve', urls.sleeve(state.sleeve));
   setImg('img-style', urls.style(state.style, state.zipTrim, state.side));
-  // Zipper, pocket, and cuff only exist for the front view.
+  // Zipper and pocket only exist for the front view; the cuff image is shared by front and back.
   var isFront = state.side !== 'back';
   var isHoodStyle = (state.style === '2-piece-hood' || state.style === '3-piece-hood');
   var showZipper = isFront && (isHoodStyle && state.hoodClosure === 'zip-up');
   setImg('img-zipper', showZipper ? urls.zipper() : '');
   setImg('img-pocket', isFront ? urls.pocket(state.pocket) : '');
-  setImg('img-cuff', isFront ? urls.cuff(state.cuff) : '');
+  setImg('img-cuff', urls.cuff(state.cuff));   // same cuff image for front and back
 }
 
 function preloadAll() {
@@ -2231,7 +2239,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.5.9</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.1</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -2764,12 +2772,12 @@ function showMissing(list) {
   let el = document.getElementById('s3d-missing');
   if (!el) {
     el = document.createElement('div'); el.id = 's3d-missing';
-    el.style.cssText = 'position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:6;max-width:80%;text-align:center;' +
-      'font-size:11px;letter-spacing:0.02em;color:var(--ink-mid);background:rgba(255,255,255,0.92);border:1px solid var(--border);' +
-      'border-radius:100px;padding:7px 16px;pointer-events:none;';
+    el.className = 's3d-note';
     document.getElementById('stage-3d').appendChild(el);
   }
-  el.textContent = list.length ? 'Not in 3D yet: ' + list.join(', ') + ' — preview shows the closest available' : '';
+  el.innerHTML = list.length
+    ? '<span class="s3d-note-ic">i</span><span>Not in 3D yet: ' + list.join(', ') + '. The preview shows the closest available version.</span>'
+    : '';
   el.style.display = list.length ? '' : 'none';
 }
 
