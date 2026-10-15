@@ -387,7 +387,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 .config-body { padding: 20px 20px 28px; display: flex; flex-direction: column; gap: 12px; background: var(--white); flex: 1 0 auto; }
 #panel-measurements { padding: 0 !important; flex: 1 1 0; min-height: 0; overflow: hidden; background: var(--white); }
 /* ── 3D preview ── */
-#stage-3d { position: absolute; inset: 0; display: none; }
+#stage-3d { position: absolute; inset: 0; display: none; background: radial-gradient(120% 90% at 50% 35%, #F1F0EE 0%, #E3E2DF 60%, #D6D5D1 100%); }
 #stage-3d canvas { display: block; width: 100% !important; height: 100% !important; outline: none; cursor: grab; touch-action: none; }
 #stage-3d canvas:active { cursor: grabbing; }
 .s3d-loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; font-size: 10px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-light); background: #fff; z-index: 5; transition: opacity 0.4s; }
@@ -1266,7 +1266,6 @@ async function renderFabricGrids() {
     } else {
       mainGrid.innerHTML = '';
       fabrics.forEach((f, i) => mainGrid.appendChild(buildFabricCard(f, 'main', i === 0)));
-      if (window.tt3d && window.tt3d.syncFabric) window.tt3d.syncFabric();   // 3D picks up the pre-selected fabric
       compGrid.innerHTML = '';
       fabrics.forEach((f, i) => compGrid.appendChild(buildFabricCard(f, 'comp', false)));
     }
@@ -2153,7 +2152,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.5.3</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.5.4</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -2545,13 +2544,14 @@ async function init() {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.75;
+  renderer.toneMappingExposure = 0.62;
   host.insertBefore(renderer.domElement, host.firstChild);
 
   scene = new THREE.Scene();
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
-  const key = new THREE.DirectionalLight(0xffffff, 0.8); key.position.set(1, 2, 2); scene.add(key);
+  const key = new THREE.DirectionalLight(0xffffff, 1.6); key.position.set(1.6, 2.2, 1.4); scene.add(key);   // side key light: brings out folds on light fabrics
+  const rim = new THREE.DirectionalLight(0xffffff, 0.5); rim.position.set(-1.5, 1.2, -1.8); scene.add(rim);
 
   camera = new THREE.PerspectiveCamera(30, 1, 0.01, 100);
   controls = new OrbitControls(camera, renderer.domElement);
@@ -2668,7 +2668,7 @@ async function loadModel() {
     placeCamera(Math.atan2(off.x, off.z));
   }
   buildPartButtons(mods.join(' + '));
-  await setFabric(fabricInfo || selectedFabricInfo());
+  await setFabric(fabricInfo);   // stays white until the customer picks a fabric
 }
 
 // Small note over the 3D view for choices that don't have a 3D piece yet
@@ -2686,7 +2686,7 @@ function showMissing(list) {
 }
 
 // One material per part group, so contrast parts (cuffs, collar…) can get their own fabric later
-const FABRIC = { color: 0x1c1c1c, roughness: 0.92 };   // Black jersey
+const FABRIC = { color: 0xEDEAE4, roughness: 0.9 };    // default: soft off-white until a fabric is picked
 const partMaterials = {};
 function fabricMaterial(key) {
   if (!partMaterials[key]) {
@@ -2714,7 +2714,9 @@ const USE_FACE_PHOTO = false;        // patch cut from <CODE>_face photo
 // Shared surface textures: one normal map reused by every fabric of that kind
 // (used when there's no <CODE>_normal.webp). Size applies if the sheet's TileSize_cm is empty.
 // zfab: CLO fabric file read directly (normal map + real tile size); file: plain image fallback.
-const SHARED_NORMALS = [
+// Fabric structure (normal maps) is switched off for now — colour only. Set to true to bring it back.
+const USE_STRUCTURE = false;
+const SHARED_NORMALS = !USE_STRUCTURE ? [] : [
   { test: /^JRS-|jersey/i, zfab: 'jersey_structure.zfab', file: 'jersey_texture.webp', tileCm: [4, 4.3] },
 ];         // knit relief; black fabric needs a bit more to read
 const DEFAULT_TILE_CM = 8;
@@ -2895,7 +2897,7 @@ function loadFabricMaps(info) {
 
     let map = null, normal = null, source = 'default colour', normalSrc = '';
     const [tile, nrm] = info.code
-      ? await Promise.allSettled([USE_TILE_IMAGE ? find(info.code + '_tile.webp') : Promise.reject(), find(info.code + '_normal.webp')])
+      ? await Promise.allSettled([USE_TILE_IMAGE ? find(info.code + '_tile.webp') : Promise.reject(), USE_STRUCTURE ? find(info.code + '_normal.webp') : Promise.reject()])
       : [{ status: 'rejected' }, { status: 'rejected' }];
 
     // Normal map: own file, else the shared one for this kind of fabric
@@ -3038,7 +3040,6 @@ function hide() {
 function refresh() { if (visible) show(); }
 
 window.tt3d = { show, hide, refresh, face, zoom, reset, setFabric, syncFabric: () => setFabric(selectedFabricInfo()) };
-if (document.querySelector('#fabric-main-grid .fabric-card.selected')) setFabric(selectedFabricInfo());
 if (typeof selectFabric === 'function') {
   const _sf = selectFabric;
   window.selectFabric = selectFabric = function (el, group) {
