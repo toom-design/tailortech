@@ -2153,7 +2153,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.5.1</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.5.2</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -2441,27 +2441,40 @@ const MODEL_BASE = 'https://raw.githubusercontent.com/toom-design/tailortech-hoo
 // All exports come from the same CLO project, so the pieces line up in the same space.
 // To add a variant: export it from CLO, upload it, and add a module + a line in modulesFor().
 const MODULES = {
-  body:            { file: 'SWEATSHIRT2', pieces: ['Pattern_1301135', 'Pattern_1299746', 'Pattern_1302524', 'Pattern_1302525', 'Pattern_1303223', 'Pattern_1303224', 'Pattern_1303225'] },
-  collar_crewneck: { file: 'SWEATSHIRT2', pieces: ['Pattern_1303292'] },
-  hood_3piece:     { file: 'SWEATSHIRT1', pieces: ['Pattern_1724221', 'Pattern_1724222', 'Pattern_1725890', 'Pattern_1303292'] },
-  pocket_kangaroo: { file: 'SWEATSHIRT2', pieces: ['Pattern_2901679'] },
-  pocket_welt:     { file: 'SWEATSHIRT1', pieces: ['Pattern_3171371', 'Pattern_3171373'] },
+  // Regular (set-in) sleeve — SWEATSHIRT1
+  body_setin:      { file: 'SWEATSHIRT1', pieces: ['Pattern_1301135', 'Pattern_1299746', 'Pattern_1302524', 'Pattern_1302525', 'Pattern_1303224', 'Pattern_1303225'] },
+  collar_setin:    { file: 'SWEATSHIRT1', pieces: ['Pattern_1303292'] },
+  // Raglan sleeve — SWEATSHIRT3 (3-piece hood, kangaroo) and SWEATSHIRT4 (crewneck, welt)
+  body_raglan:     { file: 'SWEATSHIRT3', pieces: ['Pattern_5082341', 'Pattern_5078874', 'Pattern_5080283', 'Pattern_5081312', 'Pattern_1303224', 'Pattern_1303225', 'Pattern_1303226', 'Pattern_1303227'] },
+  collar_raglan:   { file: 'SWEATSHIRT4', pieces: ['Pattern_1303292'] },
+  hood3_raglan:    { file: 'SWEATSHIRT3', pieces: ['Pattern_1724221', 'Pattern_1724222', 'Pattern_1725890'] },
+  kangaroo_raglan: { file: 'SWEATSHIRT3', pieces: ['Pattern_2901679'] },
+  welt_raglan:     { file: 'SWEATSHIRT4', pieces: ['Pattern_3171371', 'Pattern_3171373'] },
 };
+// Which pieces exist for each body. Collars, hoods and pockets are cut to fit one body,
+// so they're only combined with the body they were made for.
+const BODY_SETS = {
+  regular: { body: 'body_setin',  crewneck: 'collar_setin',  '3-piece-hood': null,           kangaroo: null,              welt: null },
+  raglan:  { body: 'body_raglan', crewneck: 'collar_raglan', '3-piece-hood': 'hood3_raglan', kangaroo: 'kangaroo_raglan', welt: 'welt_raglan' },
+};
+const SLEEVE_NAME = { regular: 'regular sleeve', raglan: 'raglan sleeve' };
 // Returns the modules for the current design + the choices that have no 3D piece yet.
 function modulesFor(st) {
-  const mods = ['body'], missing = [];
-  // Style
-  if (st.style === 'crewneck') mods.push('collar_crewneck');
-  else if (st.style === '3-piece-hood' && st.hoodClosure !== 'zip-up') mods.push('hood_3piece');
-  else if (st.style === '3-piece-hood') { mods.push('hood_3piece'); missing.push('Zip-up closure'); }
-  else { mods.push('collar_crewneck'); missing.push(st.style === '2-piece-hood' ? '2-Piece Hood' : st.style === 'quarterzip' ? 'Quarterzip' : st.style); }
+  const sleeve = BODY_SETS[st.sleeve] ? st.sleeve : 'regular';
+  const set = BODY_SETS[sleeve], mods = [set.body], missing = [];
+  const styleName = { crewneck: 'Crewneck', '2-piece-hood': '2-Piece Hood', '3-piece-hood': '3-Piece Hood', quarterzip: 'Quarterzip' }[st.style] || st.style;
+  // Style (falls back to the crewneck collar of the same body)
+  if (set[st.style]) mods.push(set[st.style]);
+  else { if (set.crewneck) mods.push(set.crewneck); missing.push(styleName + ' with ' + SLEEVE_NAME[sleeve]); }
+  if (st.style === '3-piece-hood' && st.hoodClosure === 'zip-up') missing.push('Zip-up closure');
   // Pocket
-  if (st.pocket === 'kangaroo') mods.push('pocket_kangaroo');
-  else if (st.pocket === 'welt') mods.push('pocket_welt');
-  else if (st.pocket !== 'none') missing.push(st.pocket === 'zipper' ? 'Zipper pocket' : st.pocket);
-  // Not modelled yet: fit, sleeve and cuff variants (shown as Regular / set-in / Rib)
+  const pocketName = { kangaroo: 'Kangaroo pocket', welt: 'Welt pocket', zipper: 'Zipper pocket' }[st.pocket] || st.pocket;
+  if (st.pocket !== 'none') {
+    if (set[st.pocket]) mods.push(set[st.pocket]);
+    else missing.push(pocketName + ' with ' + SLEEVE_NAME[sleeve]);
+  }
+  // Not modelled yet
   if (st.fit && st.fit !== 'regular') missing.push('Oversized fit');
-  if (st.sleeve && st.sleeve !== 'regular') missing.push('Raglan sleeve');
   if (st.cuff && st.cuff !== 'rib') missing.push('Self-elastic cuff');
   return { mods, missing };
 }
@@ -2471,6 +2484,9 @@ function modelCandidates() { return [...new Set(modulesFor(typeof state !== 'und
 const PART_BY_MESH = {
   Pattern_1301135: 'front',   Pattern_1299746: 'back',
   Pattern_1302524: 'sleeves', Pattern_1302525: 'sleeves',
+  Pattern_5082341: 'front',   Pattern_5078874: 'back',          // raglan body
+  Pattern_5080283: 'sleeves', Pattern_5081312: 'sleeves',
+  Pattern_1303226: 'hem',     Pattern_1303227: 'hem',
   Pattern_1303292: 'collar',  Pattern_1303223: 'hem',
   Pattern_1303224: 'cuff',    Pattern_1303225: 'cuff',
   Pattern_1724221: 'hood',    Pattern_1724222: 'hood',    Pattern_1725890: 'hood',
