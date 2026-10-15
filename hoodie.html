@@ -631,6 +631,12 @@ button[onclick="handleAddToCart()"]:hover { background: rgba(74,22,79,0.06) !imp
 .fabric-card.selected { background: var(--tt-purple) !important; border-color: var(--tt-purple) !important; box-shadow: none !important; }
 .fabric-card.selected .fname, .fabric-card.selected .fcode, .fabric-card.selected .fgsm, .fabric-card.selected .fcomp { color: #fff !important; }
 .fabric-card.selected .fcode, .fabric-card.selected .fgsm, .fabric-card.selected .fcomp { opacity: 0.72; }
+
+/* v1.6.4 — quote banner: solid optic black, quote on one line */
+.fabric-hero { background: #000 !important; background-image: none !important; min-height: 0 !important; padding: 26px 28px 22px !important; }
+.fabric-hero::before, .fabric-hero::after { content: none !important; display: none !important; }
+.fabric-hero-quote { font-size: clamp(15px, 2.1vw, 22px) !important; white-space: nowrap; line-height: 1.2 !important; }
+.fabric-hero-attr { margin-top: 10px !important; }
 </style>
 </head>
 <body>
@@ -837,7 +843,7 @@ button[onclick="handleAddToCart()"]:hover { background: rgba(74,22,79,0.06) !imp
       <div class="section">
         <div class="section-label">Main Fabric</div>
         <div class="fabric-hero">
-          <blockquote class="fabric-hero-quote">Any color you want,<br>as long as it&rsquo;s black.</blockquote>
+          <blockquote class="fabric-hero-quote">Any color you want, as long as it&rsquo;s black.</blockquote>
           <div class="fabric-hero-attr">&mdash; Henry Ford, and, for now, us too.</div>
         </div>
         <div class="fabric-search-row">
@@ -2282,7 +2288,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.3</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.4</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -2570,9 +2576,12 @@ const MODEL_BASE = 'https://raw.githubusercontent.com/toom-design/tailortech-hoo
 // All exports come from the same CLO project, so the pieces line up in the same space.
 // To add a variant: export it from CLO, upload it, and add a module + a line in modulesFor().
 const MODULES = {
-  // Regular (set-in) sleeve — SWEATSHIRT1
-  body_setin:      { file: 'SWEATSHIRT1', pieces: ['Pattern_1301135', 'Pattern_1299746', 'Pattern_1302524', 'Pattern_1302525', 'Pattern_1303224', 'Pattern_1303225'] },
-  collar_setin:    { file: 'SWEATSHIRT1', pieces: ['Pattern_1303292'] },
+  // Regular (set-in) sleeve — SWEATSHIRT2 (body, crewneck, welt) and SWEATSHIRT1 (3-piece hood, kangaroo)
+  body_setin:      { file: 'SWEATSHIRT2', pieces: ['Pattern_1301135', 'Pattern_1299746', 'Pattern_1302524', 'Pattern_1302525', 'Pattern_1303224', 'Pattern_1303225', 'Pattern_1303226', 'Pattern_1303227'] },
+  collar_setin:    { file: 'SWEATSHIRT2', pieces: ['Pattern_1303292'] },
+  hood3_setin:     { file: 'SWEATSHIRT1', pieces: ['Pattern_1724221', 'Pattern_1724222', 'Pattern_1725890'] },
+  kangaroo_setin:  { file: 'SWEATSHIRT1', pieces: ['Pattern_2901679'] },
+  welt_setin:      { file: 'SWEATSHIRT2', pieces: ['Pattern_3171371', 'Pattern_3171373'] },
   // Raglan sleeve — SWEATSHIRT3 (body with clean fabric-structure layout, 3-piece hood, kangaroo) and SWEATSHIRT4 (crewneck, welt)
   body_raglan:     { file: 'SWEATSHIRT3', pieces: ['Pattern_5082341', 'Pattern_5078874', 'Pattern_6010390', 'Pattern_6010391', 'Pattern_1303224', 'Pattern_1303225', 'Pattern_1303226', 'Pattern_1303227'] },
   collar_raglan:   { file: 'SWEATSHIRT4', pieces: ['Pattern_1303292'] },
@@ -2583,7 +2592,7 @@ const MODULES = {
 // Which pieces exist for each body. Collars, hoods and pockets are cut to fit one body,
 // so they're only combined with the body they were made for.
 const BODY_SETS = {
-  regular: { body: 'body_setin',  crewneck: 'collar_setin',  '3-piece-hood': null,           kangaroo: null,              welt: null },
+  regular: { body: 'body_setin',  crewneck: 'collar_setin',  '3-piece-hood': 'hood3_setin',  kangaroo: 'kangaroo_setin',  welt: 'welt_setin' },
   raglan:  { body: 'body_raglan', crewneck: 'collar_raglan', '3-piece-hood': 'hood3_raglan', kangaroo: 'kangaroo_raglan', welt: 'welt_raglan' },
 };
 const SLEEVE_NAME = { regular: 'regular sleeve', raglan: 'raglan sleeve' };
