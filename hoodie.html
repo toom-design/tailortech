@@ -387,7 +387,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 .config-body { padding: 20px 20px 28px; display: flex; flex-direction: column; gap: 12px; background: var(--white); flex: 1 0 auto; }
 #panel-measurements { padding: 0 !important; flex: 1 1 0; min-height: 0; overflow: hidden; background: var(--white); }
 /* ── 3D preview ── */
-#stage-3d { position: absolute; inset: 0; display: none; background: radial-gradient(120% 90% at 50% 35%, #F1F0EE 0%, #E3E2DF 60%, #D6D5D1 100%); }
+#stage-3d { position: absolute; inset: 0; display: none; background: #e3e3e3; }
 #stage-3d canvas { display: block; width: 100% !important; height: 100% !important; outline: none; cursor: grab; touch-action: none; }
 #stage-3d canvas:active { cursor: grabbing; }
 .s3d-loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; font-size: 10px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-light); background: #fff; z-index: 5; transition: opacity 0.4s; }
@@ -2152,7 +2152,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.5.4</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.5.5</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -2544,14 +2544,21 @@ async function init() {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.62;
+  renderer.toneMappingExposure = 0.95;
   host.insertBefore(renderer.domElement, host.firstChild);
 
   scene = new THREE.Scene();
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
-  const key = new THREE.DirectionalLight(0xffffff, 1.6); key.position.set(1.6, 2.2, 1.4); scene.add(key);   // side key light: brings out folds on light fabrics
-  const rim = new THREE.DirectionalLight(0xffffff, 0.5); rim.position.set(-1.5, 1.2, -1.8); scene.add(rim);
+  // Studio rig: low ambient + strong raking key from the side (shows folds and seams), soft fill, back rim.
+  // The rig turns with the camera, so the garment is lit the same way from every angle.
+  seamMat = new THREE.LineBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.55 });
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x707070, 0.2));
+  [[3.2, 2.6, 1.6, 1.6], [0.45, -2.4, 0.8, 1.8], [1.4, -1.2, 2.2, -2.4]].forEach(([i, x, y, z]) => {
+    const l = new THREE.DirectionalLight(0xffffff, i);
+    l.userData.base = new THREE.Vector3(x, y, z);
+    scene.add(l); scene.add(l.target); rig.push(l);
+  });
 
   camera = new THREE.PerspectiveCamera(30, 1, 0.01, 100);
   controls = new OrbitControls(camera, renderer.domElement);
@@ -2641,6 +2648,7 @@ async function loadModel() {
     m.applyMatrix4(mesh.matrixWorld);                       // place it exactly where it sat in its file
     m.userData.origMaterial = mesh.material;
     m.material = fabricMaterial(partKey);
+    if (!/^topstitch/i.test(mesh.name)) m.add(new THREE.LineSegments(seamGeometry(mesh.geometry), seamMat));
     modelRoot.add(m);
     (parts[partKey] = parts[partKey] || { label, meshes: [], visible: true }).meshes.push(m);
   };
@@ -2690,7 +2698,8 @@ const FABRIC = { color: 0xEDEAE4, roughness: 0.9 };    // default: soft off-whit
 const partMaterials = {};
 function fabricMaterial(key) {
   if (!partMaterials[key]) {
-    partMaterials[key] = new THREE.MeshStandardMaterial({
+    partMaterials[key] = new THREE.MeshPhysicalMaterial({
+      sheen: 1, sheenRoughness: 0.7, envMapIntensity: 0.12,     // soft cotton sheen; low env so the key light shapes the folds
       color: FABRIC.color, roughness: FABRIC.roughness, metalness: 0,
       side: THREE.DoubleSide,                        // single-layer cloth: inside visible when a panel is hidden
     });
@@ -2730,7 +2739,36 @@ function applyFabricTo(mat) {
   if (mat.normalMap) mat.normalScale.set(NORMAL_STRENGTH, NORMAL_STRENGTH);
   if (m && m.map) mat.color.set(0xb0b0b0);       // slight darkening: studio light lifts photo colours
   else mat.color.set(m && m.color ? m.color : FABRIC.color);
+  if (mat.sheenColor) mat.sheenColor.copy(mat.color).lerp(new THREE.Color(0xffffff), 0.35);
+  if (seamMat) seamMat.color.copy(mat.color).multiplyScalar(0.55);     // seam lines follow the fabric colour
   mat.needsUpdate = true;
+}
+
+// ── Seam lines: the open edges of each pattern piece, drawn as a fine darker line ──
+let seamMat = null;   // created in init (three.js loads on demand)
+const seamGeoCache = new WeakMap();
+function seamGeometry(geo) {
+  if (seamGeoCache.has(geo)) return seamGeoCache.get(geo);
+  const idx = geo.index, pos = geo.attributes.position;
+  const vid = new Map(), remap = new Int32Array(pos.count);           // weld by position (UV splits aren't edges)
+  for (let i = 0; i < pos.count; i++) {
+    const k = Math.round(pos.getX(i) * 1e4) + ',' + Math.round(pos.getY(i) * 1e4) + ',' + Math.round(pos.getZ(i) * 1e4);
+    if (!vid.has(k)) vid.set(k, i); remap[i] = vid.get(k);
+  }
+  const cnt = new Map(), n = idx ? idx.count : pos.count, get = i => remap[idx ? idx.getX(i) : i];
+  for (let t = 0; t < n; t += 3) {
+    const a = get(t), b = get(t + 1), c = get(t + 2);
+    for (const [u, v] of [[a, b], [b, c], [c, a]]) { const k = u < v ? u + '_' + v : v + '_' + u; cnt.set(k, (cnt.get(k) || 0) + 1); }
+  }
+  const pts = [];
+  cnt.forEach((c, k) => {
+    if (c !== 1) return;
+    const [u, v] = k.split('_').map(Number);
+    pts.push(pos.getX(u), pos.getY(u), pos.getZ(u), pos.getX(v), pos.getY(v), pos.getZ(v));
+  });
+  const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+  seamGeoCache.set(geo, lg);
+  return lg;
 }
 
 function loadImg(url) {
@@ -3004,9 +3042,19 @@ function zoom(d) {
   controls.update();
 }
 
+const rig = [];
+let _q = null, _up = null;
+function updateRig() {
+  if (!center) return;
+  if (!_q) { _q = new THREE.Quaternion(); _up = new THREE.Vector3(0, 1, 0); }
+  const off = camera.position.clone().sub(controls.target);
+  _q.setFromAxisAngle(_up, Math.atan2(off.x, off.z));
+  rig.forEach(l => { l.position.copy(l.userData.base).applyQuaternion(_q).add(center); l.target.position.copy(center); });
+}
 function loop() {
   raf = requestAnimationFrame(loop);
   controls.update();
+  updateRig();
   renderer.render(scene, camera);
 }
 
