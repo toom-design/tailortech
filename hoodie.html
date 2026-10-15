@@ -2152,7 +2152,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.5.5</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.5.6</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -2694,7 +2694,7 @@ function showMissing(list) {
 }
 
 // One material per part group, so contrast parts (cuffs, collar…) can get their own fabric later
-const FABRIC = { color: 0xEDEAE4, roughness: 0.9 };    // default: soft off-white until a fabric is picked
+const FABRIC = { color: 0x8E8C88, roughness: 0.9 };    // default: mid grey (shows seams best) until a fabric is picked
 const partMaterials = {};
 function fabricMaterial(key) {
   if (!partMaterials[key]) {
