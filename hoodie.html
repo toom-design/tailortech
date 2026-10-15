@@ -514,9 +514,84 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 .pill-extra-price, .icon-card-extra-price { color: var(--ink-faint); font-weight: 400; margin-left: 6px; }
 .pill.selected .pill-extra-price, .icon-card.selected .icon-card-extra-price { color: rgba(250,250,248,0.6); }
 .fabric-card .fc-body { align-items: stretch; text-align: left; }
+
+/* ═════════ v1.5.8 — brand styling: turquoise / purple / grey ═════════ */
+:root { --tt-turq: #4dbfab; --tt-purple: #4a164f; --tt-grey: #e3e3e3; }
+
+/* Preview panel: grey from top to bottom */
+.preview-panel, .preview-panel .avatar-stage, .preview-panel .stage-viewport, #stage-3d { background: var(--tt-grey) !important; }
+.preview-panel .view-bar { background: transparent !important; border-top: none !important; padding: 14px 20px 20px; }
+.preview-panel .view-toggle { padding: 18px 20px 6px; }
+
+/* Technical / 3D View and Front / Back: pill segmented control */
+.view-toggle, .view-bar { gap: 0; }
+.view-toggle > .view-btn:first-child, .view-bar > .view-bar-btn:first-child { margin-left: 0; }
+.view-toggle, .view-bar { --seg-pad: 4px; }
+.view-toggle { justify-content: center; }
+.view-toggle::before, .view-bar::before { content: none; }
+.view-btn, .view-bar-btn {
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+  padding: 12px 34px; border: none !important; border-radius: 999px !important; background: transparent; color: #6E6C68;
+  cursor: pointer; transition: background 0.2s, color 0.2s;
+}
+.view-btn.active, .view-bar-btn.active { background: var(--tt-purple) !important; color: #fff !important; }
+.view-btn:not(.active):hover, .view-bar-btn:not(.active):hover { color: var(--tt-purple); }
+.seg-wrap { display: inline-flex; padding: 4px; background: #fff; border: 1px solid rgba(26,25,22,0.08); border-radius: 999px; box-shadow: 0 6px 18px rgba(26,25,22,0.08); }
+
+/* Section tabs: centred, equal width, bar underneath (turquoise = active) */
+.tabs { display: flex !important; gap: 10px; padding: 0 20px !important; border-bottom: 1px solid var(--border); }
+.tab {
+  flex: 1 1 0; min-width: 0; margin: 0 !important; padding: 20px 4px 18px !important; position: relative;
+  text-align: center; white-space: normal !important; line-height: 1.35; font-size: 10.5px !important; letter-spacing: 0.12em !important;
+  border-bottom: none !important; color: #B5B3AE;
+}
+.tab::after { content: ''; position: absolute; left: 0; right: 0; bottom: 8px; height: 3px; border-radius: 3px; background: var(--tt-grey); transition: background 0.25s; }
+.tab.active { color: var(--ink) !important; font-weight: 600; }
+.tab.active::after { background: var(--tt-turq); }
+.tab:not(.active):hover { color: var(--ink-mid); }
+
+/* Option buttons: rounded rectangles, purple when selected with a check */
+.pill-group { gap: 10px; }
+.pill {
+  font-family: 'Jost', sans-serif; font-size: 13px; font-weight: 500; letter-spacing: 0.01em;
+  padding: 13px 22px; border-radius: 8px !important; background: #fff; color: var(--ink);
+  border: 1px solid rgba(26,25,22,0.16); display: inline-flex; align-items: center; gap: 8px;
+}
+.pill:hover { border-color: var(--tt-purple); color: var(--tt-purple); }
+.pill.selected { background: var(--tt-purple) !important; border-color: var(--tt-purple) !important; color: #fff !important; font-weight: 600; }
+.pill.selected .pill-extra-price { color: rgba(255,255,255,0.65); }
+/* "Coming soon" (unavailable) choice: soft grey */
+.section--inactive .pill-group { opacity: 1 !important; }
+.pill[disabled].selected { background: var(--tt-grey) !important; border-color: var(--tt-grey) !important; color: #fff !important; }
+
+/* v1.5.9 — 3D/drawing fills the whole preview; buttons float over it */
+.preview-panel { position: relative; }
+.preview-panel .view-toggle { position: absolute; top: 0; left: 0; right: 0; z-index: 60; pointer-events: none; padding: 18px 20px 0 !important; }
+.preview-panel .view-bar { position: absolute; bottom: 0; left: 0; right: 0; z-index: 60; pointer-events: none; padding: 0 20px 22px !important; }
+.preview-panel .seg-wrap { pointer-events: auto; }
+.preview-panel .avatar-stage { flex: 1 1 auto; height: 100%; }
+.zoom-controls, .zoom-btns { top: 80px !important; }
+/* Body-part test panel: hidden (add ?debug to the page address to show it) */
+body:not(.tt-debug) #s3d-parts { display: none !important; }
+/* Next-step button in the same style as the toggles */
+.footer-next { background: var(--tt-purple) !important; border-radius: 999px !important; letter-spacing: 0.16em; }
+.footer-next:hover { opacity: 0.9; }
+
+/* v1.5.9 — quieter, more refined type scale */
+.view-btn, .view-bar-btn { font-size: 9.5px !important; letter-spacing: 0.2em !important; padding: 10px 28px !important; font-weight: 500 !important; }
+.seg-wrap { padding: 3px !important; }
+.tab { font-size: 9.5px !important; letter-spacing: 0.16em !important; font-weight: 500 !important; }
+.tab.active { font-weight: 600 !important; }
+.section-label { font-size: 10px !important; letter-spacing: 0.2em !important; }
+.pill { font-size: 12px !important; padding: 11px 18px !important; font-weight: 400 !important; }
+.pill.selected { font-weight: 500 !important; }
+.footer-next { font-size: 10.5px !important; letter-spacing: 0.2em !important; font-weight: 500 !important; padding: 15px 26px !important; }
+.footer-price-label { font-size: 8.5px !important; letter-spacing: 0.22em !important; }
+.footer-price-amount { font-size: 24px !important; font-weight: 500 !important; }
 </style>
 </head>
 <body>
+<script>if (/[?&]debug\b/.test(location.search)) document.body.classList.add('tt-debug');</script>
 
 
  
@@ -561,8 +636,10 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 
     <!-- TECHNICAL / 3D toggle -->
     <div class="view-toggle">
-      <button class="view-btn active" id="btn-technical" onclick="setTechView('technical')">Technical</button>
-      <button class="view-btn" id="btn-3d" onclick="setTechView('3d')">3D</button>
+      <div class="seg-wrap">
+        <button class="view-btn active" id="btn-technical" onclick="setTechView('technical')">Technical</button>
+        <button class="view-btn" id="btn-3d" onclick="setTechView('3d')">3D View</button>
+      </div>
     </div>
 
     <!-- STAGE -->
@@ -602,8 +679,10 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 
     <!-- FRONT / BACK toggle -->
     <div class="view-bar" id="shirt-view-bar">
-      <button class="view-bar-btn active" id="btn-front" onclick="setFrontBack('front')">Front</button>
-      <button class="view-bar-btn" id="btn-back" onclick="setFrontBack('back')">Back</button>
+      <div class="seg-wrap">
+        <button class="view-bar-btn active" id="btn-front" onclick="setFrontBack('front')">Front</button>
+        <button class="view-bar-btn" id="btn-back" onclick="setFrontBack('back')">Back</button>
+      </div>
     </div>
 
     <!-- MEASUREMENT AVATAR — shown instead of shirt when Measurements tab is active -->
@@ -2152,7 +2231,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.5.7</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.5.9</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -3030,7 +3109,7 @@ function buildPartButtons(fileName) {
 }
 
 function placeCamera(azimuth, distMul) {
-  const d = fitRadius * (distMul || 3.1);
+  const d = fitRadius * (distMul || 3.7);   // leaves room for the floating buttons
   camera.position.set(center.x + Math.sin(azimuth) * d, center.y + fitRadius * 0.15, center.z + Math.cos(azimuth) * d);
   controls.target.copy(center);
   controls.update();
