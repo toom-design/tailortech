@@ -2152,7 +2152,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.5.6</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.5.7</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -2647,7 +2647,8 @@ async function loadModel() {
     m.position.set(0, 0, 0); m.quaternion.identity(); m.scale.set(1, 1, 1);
     m.applyMatrix4(mesh.matrixWorld);                       // place it exactly where it sat in its file
     m.userData.origMaterial = mesh.material;
-    m.material = fabricMaterial(partKey);
+    const fileNormal = !/^topstitch/i.test(mesh.name) && mesh.material && mesh.material.normalMap ? mesh.material.normalMap : null;
+    m.material = fabricMaterial(partKey, fileNormal);
     if (!/^topstitch/i.test(mesh.name)) m.add(new THREE.LineSegments(seamGeometry(mesh.geometry), seamMat));
     modelRoot.add(m);
     (parts[partKey] = parts[partKey] || { label, meshes: [], visible: true }).meshes.push(m);
@@ -2696,14 +2697,19 @@ function showMissing(list) {
 // One material per part group, so contrast parts (cuffs, collar…) can get their own fabric later
 const FABRIC = { color: 0x8E8C88, roughness: 0.9 };    // default: mid grey (shows seams best) until a fabric is picked
 const partMaterials = {};
-function fabricMaterial(key) {
+// Fabric structure exported from CLO (normal map inside the .glb, per piece) — read straight from the file.
+// CLO bakes it quite faint, so it's boosted here; raise/lower to taste (1 = exactly as exported).
+const FILE_NORMAL_STRENGTH = 1.5;
+function fabricMaterial(partKey, fileNormal) {
+  const key = partKey + (fileNormal ? '|' + fileNormal.uuid : '');
   if (!partMaterials[key]) {
     partMaterials[key] = new THREE.MeshPhysicalMaterial({
       sheen: 1, sheenRoughness: 0.7, envMapIntensity: 0.12,     // soft cotton sheen; low env so the key light shapes the folds
       color: FABRIC.color, roughness: FABRIC.roughness, metalness: 0,
       side: THREE.DoubleSide,                        // single-layer cloth: inside visible when a panel is hidden
     });
-    partMaterials[key].name = 'fabric_' + key;
+    partMaterials[key].name = 'fabric_' + partKey;
+    partMaterials[key].userData.fileNormal = fileNormal || null;
     applyFabricTo(partMaterials[key]);
   }
   return partMaterials[key];
@@ -2735,8 +2741,9 @@ const mapCache = {};
 function applyFabricTo(mat) {
   const m = fabricMaps;
   mat.map = m ? m.map : null;
-  mat.normalMap = m && m.normal ? m.normal : null;
-  if (mat.normalMap) mat.normalScale.set(NORMAL_STRENGTH, NORMAL_STRENGTH);
+  const own = mat.userData.fileNormal;
+  mat.normalMap = own || (m && m.normal ? m.normal : null);
+  if (mat.normalMap) { const k = own ? FILE_NORMAL_STRENGTH : NORMAL_STRENGTH; mat.normalScale.set(k, k); }
   if (m && m.map) mat.color.set(0xb0b0b0);       // slight darkening: studio light lifts photo colours
   else mat.color.set(m && m.color ? m.color : FABRIC.color);
   if (mat.sheenColor) mat.sheenColor.copy(mat.color).lerp(new THREE.Color(0xffffff), 0.35);
