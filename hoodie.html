@@ -625,6 +625,12 @@ body:not(.tt-debug) #s3d-parts { display: none !important; }
 #summary-rows { font-size: 12px; }
 button[onclick="handleAddToCart()"] { border-radius: 999px !important; border: 1px solid var(--tt-purple) !important; color: var(--tt-purple) !important; background: transparent !important; font-size: 10.5px !important; letter-spacing: 0.2em !important; padding: 14px 16px !important; }
 button[onclick="handleAddToCart()"]:hover { background: rgba(74,22,79,0.06) !important; }
+
+/* v1.6.3 — selected fabric card = purple, like the design option buttons; no check badge */
+.fc-check { display: none !important; }
+.fabric-card.selected { background: var(--tt-purple) !important; border-color: var(--tt-purple) !important; box-shadow: none !important; }
+.fabric-card.selected .fname, .fabric-card.selected .fcode, .fabric-card.selected .fgsm, .fabric-card.selected .fcomp { color: #fff !important; }
+.fabric-card.selected .fcode, .fabric-card.selected .fgsm, .fabric-card.selected .fcomp { opacity: 0.72; }
 </style>
 </head>
 <body>
@@ -846,17 +852,16 @@ button[onclick="handleAddToCart()"]:hover { background: rgba(74,22,79,0.06) !imp
         </div>
       </div>
 
-      <!-- CONTRAST FABRIC — optional, cuff & pocket -->
+      <!-- CONTRAST FABRIC — cuff (preselected); fabrics tagged "cuff" in the sheet -->
       <div class="section">
         <div class="section-label">Contrast Fabric</div>
-        <p class="comp-hint">Select parts to use a contrast fabric. Leave unchecked to use the main fabric throughout.</p>
+        <p class="comp-hint">Cuffs are made in a contrast fabric. Deselect to use the main fabric throughout.</p>
 
         <div class="comp-parts-row" style="margin-bottom:0;">
-          <button class="comp-part-btn" id="comp-part-cuff"    onclick="toggleCompPart(this,'cuff')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M8 4l-5 4 2.5 3.5L8 10.5V20h8v-9.5l2.5 1L21 8l-5-4c-.8 2-2.2 3-4 3S8.8 6 8 4z"/><path d="M3.6 8.8l2.6 3.4M20.4 8.8l-2.6 3.4" stroke-width="2.4"/></svg>Cuff</button>
-          <button class="comp-part-btn" id="comp-part-pocket"  onclick="toggleCompPart(this,'pocket')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M8 4l-5 4 2.5 3.5L8 10.5V20h8v-9.5l2.5 1L21 8l-5-4c-.8 2-2.2 3-4 3S8.8 6 8 4z"/><path d="M8.5 13.5h7l1 4h-9z" stroke-width="2"/></svg>Pocket</button>
+          <button class="comp-part-btn selected" id="comp-part-cuff"    onclick="toggleCompPart(this,'cuff')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M8 4l-5 4 2.5 3.5L8 10.5V20h8v-9.5l2.5 1L21 8l-5-4c-.8 2-2.2 3-4 3S8.8 6 8 4z"/><path d="M3.6 8.8l2.6 3.4M20.4 8.8l-2.6 3.4" stroke-width="2.4"/></svg>Cuff</button>
         </div>
 
-        <div id="comp-fabric-body" style="display:none;margin-top:16px;">
+        <div id="comp-fabric-body" style="margin-top:16px;">
           <div class="fabric-search-row">
             <svg class="fabric-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
             <input class="fabric-search" type="text" placeholder="Search fabrics…" oninput="filterFabrics(this.value,'comp')">
@@ -1260,7 +1265,7 @@ function toggleFabricDetails(btn, event) {
 function toggleCompPart(el, part) {
   el.classList.toggle('selected');
   const cuff   = document.getElementById('comp-part-cuff')?.classList.contains('selected');
-  const pocket = document.getElementById('comp-part-pocket')?.classList.contains('selected');
+  const pocket = false;
   const body   = document.getElementById('comp-fabric-body');
   if (body) body.style.display = (cuff || pocket) ? '' : 'none';
 }
@@ -1387,7 +1392,9 @@ async function renderFabricGrids() {
       mainGrid.innerHTML = '';
       fabrics.forEach((f, i) => mainGrid.appendChild(buildFabricCard(f, 'main', i === 0)));
       compGrid.innerHTML = '';
-      fabrics.forEach((f, i) => compGrid.appendChild(buildFabricCard(f, 'comp', false)));
+      const cuffFabrics = (await _loadAllFabrics()).filter(r => hasGarmentTag(r['Garments'], 'cuff'));
+      if (!cuffFabrics.length) compGrid.innerHTML = '<div class="fabric-error">No cuff fabrics found. Add "cuff" to the Garments column in your sheet.</div>';
+      cuffFabrics.forEach((f, i) => compGrid.appendChild(buildFabricCard(f, 'comp', i === 0)));
     }
   } catch (err) {
     console.error('Fabric load error:', err);
@@ -2275,7 +2282,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.2</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.3</div>
 
 <!-- Firebase -->
 <script type="module">
