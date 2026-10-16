@@ -671,6 +671,10 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
 .price-tag { align-self: center; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: #fff; background: #4a164f; padding: 4px 7px; border-radius: 4px; line-height: 1; }
 
 /* ── T-shirt only ── */
+/* A single option that isn't available yet: shown, greyed, with a "Coming soon" tag */
+.pill.pill--soon[disabled]:not(.selected) { display: inline-flex !important; align-items: center; gap: 8px; background: #fff !important; border: 1px dashed var(--border-mid) !important; color: var(--ink-faint) !important; cursor: not-allowed; }
+.pill.pill--soon:hover { color: var(--ink-faint) !important; border-color: var(--border-mid) !important; }
+.pill-soon-tag { font-size: 7.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; padding: 2px 6px; border-radius: 999px; background: rgba(77,191,171,0.14); color: #2f8f7f; }
 .section--inactive .pill[disabled].selected { background: #fff !important; border-color: var(--border-mid) !important; color: var(--ink-light) !important; font-weight: 500; opacity: 1 !important; }
 /* Options without live images yet — shown but inactive */
 .section--inactive .pill[disabled] { cursor: not-allowed; }
@@ -817,12 +821,11 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
         </div>
       </div>
 
-      <div class="section section--inactive" aria-disabled="true">
+      <div class="section">
         <div class="section-label">Sleeve Length</div>
         <div class="pill-group">
-          <button disabled class="pill selected" onclick="selectSleeveLength(this,'short')">Short Sleeve</button>
-          <button disabled class="pill"          onclick="selectSleeveLength(this,'long')">Long Sleeve</button>
-          <button disabled class="pill"          onclick="selectSleeveLength(this,'sleeveless')">Sleeveless</button>
+          <button class="pill selected" onclick="selectSleeveLength(this,'short')">Short Sleeve</button>
+          <button class="pill pill--soon" disabled aria-disabled="true" title="Coming soon">Long Sleeve<span class="pill-soon-tag">Coming soon</span></button>
         </div>
       </div>
 
@@ -2575,7 +2578,7 @@ function captureTechPackImage() {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.4</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.5</div>
 
 
 <!-- ═══════════════ 3D PREVIEW (three.js + glTF) ═══════════════ -->
