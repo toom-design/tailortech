@@ -256,6 +256,13 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
   border: 1px solid var(--border); border-radius: 2px; color: var(--ink-faint);
   vertical-align: 1px;
 }
+
+/* Discount: old price crossed out, new price + tag */
+.price-display-amount.has-discount { display: flex; align-items: baseline; flex-wrap: nowrap; gap: 8px; white-space: nowrap; }
+@media (max-width: 520px) { .price-display-amount.has-discount { flex-wrap: wrap; gap: 3px 6px; } .price-tag { font-size: 9px; padding: 3px 5px; order: 2; } .price-old { order: 3; flex-basis: 100%; font-size: 12px; } }
+.price-old { font-size: 0.55em; font-weight: 400; color: var(--ink-light); text-decoration: line-through; text-decoration-thickness: 1px; }
+.price-new { color: #4a164f; }
+.price-tag { align-self: center; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: #fff; background: #4a164f; padding: 4px 7px; border-radius: 4px; line-height: 1; }
 </style>
 </head>
 <body>
@@ -1790,9 +1797,19 @@ function updatePriceBar() {
     var extras = calculateOptionsExtra();
 
     var total = base + fabricCost + extras;
-    text = '€' + total.toFixed(2).replace(/\.00$/, '');
+    var fmt = function(n){ return '€' + n.toFixed(2).replace(/\.00$/, ''); };
+    text = fmt(total);
+    // Discount from the PRICE MATRIX (BASE PRICING → "Discount %"): old price crossed out, new price shown
+    var disc = Number(_pricing.discountPercent) || 0;
+    if (disc > 0 && total > 0) {
+      var now = Math.round(total * (1 - disc / 100) * 100) / 100;
+      var html = '<span class="price-new">' + fmt(now) + '</span><span class="price-old">' + fmt(total) + '</span>' +
+                 '<span class="price-tag">−' + String(disc).replace(/\.0+$/, '') + '%</span>';
+      amounts.forEach(function(el){ el.innerHTML = html; el.classList.add('has-discount'); el.setAttribute('aria-label', 'Now ' + fmt(now) + ', was ' + fmt(total)); });
+      return;
+    }
   }
-  amounts.forEach(function(el){ el.textContent = text; });
+  amounts.forEach(function(el){ el.textContent = text; el.classList.remove('has-discount'); el.removeAttribute('aria-label'); });
 }
 
 // Price bar is now a sticky footer inside the config panel — these are kept as no-ops
@@ -2171,7 +2188,7 @@ function captureTechPackImage() {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.1</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.2</div>
 
 
 <!-- ═══════════════ 3D PREVIEW (three.js + glTF) ═══════════════ -->
