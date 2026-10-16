@@ -432,7 +432,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 /* Materials: icon sits beside the label; banner, search and fabric cards span the full card width */
 #panel-materials .section { display: block; }
 #panel-materials .section-icon { position: absolute; top: 20px; left: 22px; }
-#panel-materials .section-label { padding-left: 56px; min-height: 40px; margin: 0 0 16px; }
+#panel-materials .section-label { margin: 0 0 16px; }
 
 /* Narrow panel: drop icon tiles and tighten spacing */
 .config-panel { container-type: inline-size; }
@@ -1876,11 +1876,7 @@ function decorateSections() {
     var main = document.createElement('div');
     main.className = 'section-main';
     while (section.firstChild) main.appendChild(section.firstChild);
-    var icon = document.createElement('div');
-    icon.className = 'section-icon';
-    icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + (SECTION_ICONS[key] || '<circle cx="12" cy="12" r="3"/>') + '</svg>';
-    section.appendChild(icon);
-    section.appendChild(main);
+    section.appendChild(main);   // section icons removed (v1.7.6)
   });
 }
 
@@ -2347,7 +2343,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.5</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.6</div>
 
 <!-- Firebase -->
 <script type="module">
