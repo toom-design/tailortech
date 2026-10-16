@@ -2319,7 +2319,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.1</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.2</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -2891,6 +2891,7 @@ const partMaterials = {};
 // Fabric structure exported from CLO (normal map inside the .glb, per piece) — read straight from the file.
 // CLO bakes it quite faint, so it's boosted here; raise/lower to taste (1 = exactly as exported).
 const FILE_NORMAL_STRENGTH = 1.5;
+const DARK_MIN_L = 0.06;    // darkest display lightness (HSL); #1C1C1C ≈ 0.11, pure #000 is lifted to this
 // Zipper tape, teeth and slider: dark gunmetal, independent of the fabric colour
 let _zipMat = null;
 function zipMaterial() {
@@ -2943,8 +2944,18 @@ function applyFabricTo(mat) {
   if (mat.normalMap) { const k = own ? FILE_NORMAL_STRENGTH : NORMAL_STRENGTH; mat.normalScale.set(k, k); }
   if (m && m.map) mat.color.set(0xb0b0b0);       // slight darkening: studio light lifts photo colours
   else mat.color.set(m && m.color ? m.color : FABRIC.color);
-  if (mat.sheenColor) mat.sheenColor.copy(mat.color).lerp(new THREE.Color(0xffffff), 0.12);
-  if (seamMat) seamMat.color.copy(mat.color).multiplyScalar(0.55);     // seam lines follow the fabric colour
+  // Dark fabrics: real black cotton reads as deep charcoal with a soft fuzzy sheen on the folds.
+  // Lift very dark colours slightly for display, raise the sheen, and draw seams lighter (not darker).
+  const hsl = {}; mat.color.getHSL(hsl);
+  const dark = Math.max(0, Math.min(1, (0.28 - hsl.l) / 0.2));          // 0 for mid/light colours → 1 for near-black
+  if (hsl.l < DARK_MIN_L) mat.color.setHSL(hsl.h, hsl.s, DARK_MIN_L);
+  mat.sheen = 0.4 + 0.12 * dark;
+  mat.sheenRoughness = 0.95 - 0.15 * dark;
+  if (mat.sheenColor) mat.sheenColor.copy(mat.color).lerp(new THREE.Color(0xffffff), 0.12 + 0.06 * dark);
+  if (seamMat) {
+    if (dark > 0) { seamMat.color.copy(mat.color).lerp(new THREE.Color(0xffffff), 0.1 + 0.08 * dark); seamMat.opacity = 0.6; }
+    else { seamMat.color.copy(mat.color).multiplyScalar(0.55); seamMat.opacity = 0.55; }
+  }
   mat.needsUpdate = true;
 }
 
