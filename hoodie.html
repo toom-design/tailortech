@@ -802,14 +802,6 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
         </div>
       </div>
 
-      <!-- ZIP TRIM — only relevant when Style is Quarterzip -->
-      <div class="section" id="section-zip-trim" style="display:none;">
-        <div class="section-label">Zip Trim</div>
-        <div class="pill-group">
-          <button class="pill selected" onclick="selectZipTrim(this,'rib')">Rib</button>
-          <button class="pill"          onclick="selectZipTrim(this,'self')">Self Fabric</button>
-        </div>
-      </div>
 
       <!-- SLEEVE -->
       <div class="section">
@@ -1013,7 +1005,7 @@ const state = {
   fit: 'regular',       // regular / oversized
   style: 'crewneck',    // crewneck / 3-piece-hood / quarterzip
   hoodClosure: 'overhead', // overhead / zip-up — only relevant when style is a hood style
-  zipTrim: 'rib',       // rib / self — only relevant when style === 'quarterzip'
+  zipTrim: 'rib',       // quarterzip trim is always rib (choice removed)
   sleeve: 'regular',    // regular / raglan
   pocket: 'kangaroo',   // kangaroo / welt / zipper / none
   cuff: 'rib',          // rib / self-elastic
@@ -1136,9 +1128,6 @@ function selectStyle(el, v) {
   el.classList.add('selected');
   state.style = v;
   const isHoodStyle = (v === '2-piece-hood' || v === '3-piece-hood');
-  // The rib/self trim sub-choice only makes sense for Quarterzip.
-  const trimSection = document.getElementById('section-zip-trim');
-  if (trimSection) trimSection.style.display = (v === 'quarterzip') ? '' : 'none';
   // Overhead/Zip-Up only makes sense for the two hood styles.
   const closureSection = document.getElementById('section-hood-closure');
   if (closureSection) closureSection.style.display = isHoodStyle ? '' : 'none';
@@ -2293,7 +2282,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.6</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.8</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -2596,12 +2585,17 @@ const MODULES = {
   hood3_raglan:    { file: 'SWEATSHIRT3', pieces: ['Pattern_1724221', 'Pattern_1724222', 'Pattern_1725890'] },
   kangaroo_raglan: { file: 'SWEATSHIRT3', pieces: ['Pattern_2901679'] },
   welt_raglan:     { file: 'SWEATSHIRT4', pieces: ['Pattern_3171371', 'Pattern_3171373'] },
+  // Quarterzip, raglan sleeve — SWEATSHIRT6 (front panel with zip opening, so the whole body comes from it).
+  // noStructure: this export's structure image has overlapping pieces, so its fabric structure is skipped.
+  body_raglan_qz:  { file: 'SWEATSHIRT6', noStructure: true, pieces: ['Pattern_5082341', 'Pattern_5078874', 'Pattern_6010390', 'Pattern_6010391', 'Pattern_1303224', 'Pattern_1303225', 'Pattern_1303226', 'Pattern_1303227'] },
+  qz_raglan:       { file: 'SWEATSHIRT6', noStructure: true, pieces: ['Pattern_1303294'], match: /^zipper/i },
+  kangaroo_raglan_qz: { file: 'SWEATSHIRT6', noStructure: true, pieces: ['Pattern_2901679'] },
 };
 // Which pieces exist for each body. Collars, hoods and pockets are cut to fit one body,
 // so they're only combined with the body they were made for.
 const BODY_SETS = {
   regular: { body: 'body_setin',  crewneck: 'collar_setin',  '3-piece-hood': 'hood3_setin',  kangaroo: 'kangaroo_setin',  welt: 'welt_setin', quarterzip: 'qz_setin', bodyFor: { quarterzip: 'body_setin_qz' } },
-  raglan:  { body: 'body_raglan', crewneck: 'collar_raglan', '3-piece-hood': 'hood3_raglan', kangaroo: 'kangaroo_raglan', welt: 'welt_raglan' },
+  raglan:  { body: 'body_raglan', crewneck: 'collar_raglan', '3-piece-hood': 'hood3_raglan', kangaroo: 'kangaroo_raglan', welt: 'welt_raglan', quarterzip: 'qz_raglan', bodyFor: { quarterzip: 'body_raglan_qz' }, pocketFor: { quarterzip: { kangaroo: 'kangaroo_raglan_qz' } } },
 };
 const SLEEVE_NAME = { regular: 'regular sleeve', raglan: 'raglan sleeve' };
 // Returns the modules for the current design + the choices that have no 3D piece yet.
@@ -2613,11 +2607,11 @@ function modulesFor(st) {
   if (set[st.style]) mods.push(set[st.style]);
   else { if (set.crewneck) mods.push(set.crewneck); missing.push(styleName + ' with ' + SLEEVE_NAME[sleeve]); }
   if (st.style === '3-piece-hood' && st.hoodClosure === 'zip-up') missing.push('Zip-up closure');
-  if (st.style === 'quarterzip' && set.quarterzip && st.zipTrim === 'self') missing.push('Self-fabric zip trim');
   // Pocket
   const pocketName = { kangaroo: 'Kangaroo pocket', welt: 'Welt pocket', zipper: 'Zipper pocket' }[st.pocket] || st.pocket;
   if (st.pocket !== 'none') {
-    if (set[st.pocket]) mods.push(set[st.pocket]);
+    const pk = (set.pocketFor && set.pocketFor[st.style] && set.pocketFor[st.style][st.pocket]) || set[st.pocket];
+    if (pk) mods.push(pk);
     else missing.push(pocketName + ' with ' + SLEEVE_NAME[sleeve]);
   }
   // Not modelled yet
@@ -2790,12 +2784,12 @@ async function loadModel() {
   if (shadow) scene.remove(shadow);
   modelRoot = new THREE.Group();
   parts = {};
-  const add = (mesh, partKey, label) => {
+  const add = (mesh, partKey, label, noStructure) => {
     const m = mesh.clone();                                 // shares geometry with the loaded file
     m.position.set(0, 0, 0); m.quaternion.identity(); m.scale.set(1, 1, 1);
     m.applyMatrix4(mesh.matrixWorld);                       // place it exactly where it sat in its file
     m.userData.origMaterial = mesh.material;
-    const fileNormal = !/^topstitch/i.test(mesh.name) && mesh.material && mesh.material.normalMap ? mesh.material.normalMap : null;
+    const fileNormal = !noStructure && !/^topstitch/i.test(mesh.name) && mesh.material && mesh.material.normalMap ? mesh.material.normalMap : null;
     m.material = partKey === 'zip' ? zipMaterial() : fabricMaterial(partKey, fileNormal);
     if (!/^topstitch/i.test(mesh.name)) m.add(new THREE.LineSegments(seamGeometry(mesh.geometry), seamMat));
     modelRoot.add(m);
@@ -2807,8 +2801,8 @@ async function loadModel() {
     ids.forEach(pieceId => {
       (idx[mod.file][pieceId] || []).forEach(entry => {
         const r = classify(entry.mesh);
-        add(entry.mesh, r.key, r.label);
-        entry.stitches.forEach(stc => add(stc, r.key, r.label));
+        add(entry.mesh, r.key, r.label, mod.noStructure);
+        entry.stitches.forEach(stc => add(stc, r.key, r.label, mod.noStructure));
       });
     });
   });
