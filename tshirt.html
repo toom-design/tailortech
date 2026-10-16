@@ -1099,6 +1099,7 @@ function switchTab(btn, panelId) {
 
   var isMeas = (panelId === 'panel-measurements');
   document.getElementById('main-app').classList.toggle('measurements-active', isMeas);
+  if (isMeas && window.measRefreshFigure) window.measRefreshFigure();
 
   var viewToggle  = document.querySelector('.view-toggle');
   var avatarStage = document.getElementById('stage-viewport') && document.getElementById('stage-viewport').closest('.avatar-stage');
@@ -1679,20 +1680,30 @@ function showFeedback(msg, color) {
 
   var SHEETS_API  = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
   var RAW_BASE    = 'https://raw.githubusercontent.com/toom-design/measurements/main/';
-  var FRONT_IMG   = RAW_BASE + 'MEASUREMENTS_front.png';
+  // Figure follows the Gender choice in Design (male / female diagrams in the measurements repo)
+  var FRONT_IMGS  = { M: 'MEASUREMENTS_2front_M.webp', F: 'MEASUREMENTS_2front_F.webp' };
+  var FIELD_IMG_F = {};          // female diagrams — read from the measurements page
+  function measGender() {
+    try { if (typeof state !== 'undefined' && state && state.gender) return /^f/i.test(state.gender) ? 'F' : 'M'; } catch (e) {}
+    var sec = Array.prototype.find.call(document.querySelectorAll('.section'), function(s){ var l = s.querySelector('.section-label'); return l && /^gender$/i.test(l.textContent.trim()); });
+    var sel = sec && sec.querySelector('.pill.selected');
+    return sel && /^f/i.test(sel.textContent.trim()) ? 'F' : 'M';
+  }
+  function frontBodyImg() { return RAW_BASE + encodeURIComponent(FRONT_IMGS[measGender()]); }
+  function fieldImgName(key) { return (measGender() === 'F' && FIELD_IMG_F[key]) || FIELD_IMG[key]; }
   var MEAS_URL    = 'https://tailortech.toom.design/measurements';
 
   // T-shirt-specific fallback field definitions
   var FALLBACK_FIELD_IMG = {
-    'height':        'MEASUREMENTS_Height.png',
-    'chestGirth':    'MEASUREMENTS_Chest girth.png',
-    'waistGirth':    'MEASUREMENTS_Waist girth.png',
-    'hipGirth':      'MEASUREMENTS_Hip girth.png',
-    'neckGirth':     'MEASUREMENTS_Neck girth.png',
-    'bicepGirth':    'MEASUREMENTS_Bicep girth.png',
-    'shoulderWidth': 'MEASUREMENTS_Shoulder width.png',
-    'sleeveLen':     'MEASUREMENTS_Sleeve length.png',
-    'bodyLength':    'MEASUREMENTS_Body length.png',
+    'height':        'MEASUREMENTS_2Height_M.webp',
+    'chestGirth':    'MEASUREMENTS_2Chest girth_M.webp',
+    'waistGirth':    'MEASUREMENTS_2Waist girth_M.webp',
+    'hipGirth':      'MEASUREMENTS_2Hip girth_M.webp',
+    'neckGirth':     'MEASUREMENTS_2Neck girth_M.webp',
+    'bicepGirth':    'MEASUREMENTS_2Bicep girth_M.webp',
+    'shoulderWidth': 'MEASUREMENTS_2Shoulder width_M.webp',
+    'sleeveLen':     'MEASUREMENTS_2Sleeve length_M.webp',
+    'bodyLength':    'MEASUREMENTS_2Body length_M.webp',
   };
 
   // T-shirt volumetric and linear fields
@@ -1719,13 +1730,13 @@ function showFeedback(msg, color) {
   // Source of truth is GARMENT_MEAS.tshirt on the measurements page; this is the fallback.
   var FALLBACK_GARMENT = {
     name:  'T-shirt',
-    front: 'MEASUREMENTS_t-shirt_front.webp',   // file name in the measurements repo (or a full URL)
+    front: 'MEASUREMENTS_2t-shirt_front.webp',  // not uploaded yet — chest diagram shown until then
     hint:  'Lay a T-shirt that fits you well flat on a table and measure it.',
     fields: [
-      ['garmentTshirtChest',    'Chest (cm)',    'MEASUREMENTS_t-shirt_chest.webp'],
-      ['garmentTshirtLength',   'Length (cm)',   'MEASUREMENTS_t-shirt_length.webp'],
-      ['garmentTshirtShoulder', 'Shoulder (cm)', 'MEASUREMENTS_t-shirt_shoulder.webp'],
-      ['garmentTshirtSleeve',   'Sleeve (cm)',   'MEASUREMENTS_t-shirt_sleeve.webp'],
+      ['garmentTshirtChest',    'Chest (cm)',    'MEASUREMENTS_2t-shirt_chest.webp'],
+      ['garmentTshirtLength',   'Length (cm)',   'MEASUREMENTS_2t-shirt_length.webp'],
+      ['garmentTshirtShoulder', 'Shoulder (cm)', 'MEASUREMENTS_2t-shirt_shoulder.webp'],
+      ['garmentTshirtSleeve',   'Sleeve (cm)',   'MEASUREMENTS_2t-shirt_sleeve.webp'],
     ]
   };
   var GARMENT = FALLBACK_GARMENT;
@@ -1751,9 +1762,18 @@ function showFeedback(msg, color) {
         if (fiMatch) {
           try { FIELD_IMG = (new Function('return ' + fiMatch[1]))(); } catch(e) {}
         }
+        // Everything about the diagrams comes from the measurements page — edit images there only
+        var rb = html.match(/var RAW_BASE\s*=\s*'([^']+)'/);
+        if (rb) RAW_BASE = rb[1];
+        var fr = html.match(/var FRONT_IMGS\s*=\s*(\{[\s\S]*?\});/);
+        if (fr) { try { FRONT_IMGS = (new Function('return ' + fr[1]))(); } catch(e) {} }
+        var fiF = html.match(/var FIELD_IMG_F\s*=\s*(\{[\s\S]*?\});/);
+        if (fiF) {
+          try { FIELD_IMG_F = (new Function('return ' + fiF[1]))(); } catch(e) {}
+        }
         var volMatch = html.match(/const VOL\s*=\s*(\[[\s\S]*?\]);/);
         var linMatch = html.match(/const LIN\s*=\s*(\[[\s\S]*?\]);/);
-        var gsMatch = html.match(/tshirt\s*:\s*new Set\(\[([\s\S]*?)\]\)/);
+        var gsMatch = html.match(/\btshirt\s*:\s*new Set\(\[([\s\S]*?)\]\)/);
         var tshirtKeys = null;
         if (gsMatch) {
           try {
@@ -1792,7 +1812,7 @@ function showFeedback(msg, color) {
   }
 
   function frontImg() {
-    return _measSource === 'garment' ? (/^https?:/.test(GARMENT.front) ? GARMENT.front : RAW_BASE + encodeURIComponent(GARMENT.front)) : FRONT_IMG;
+    return _measSource === 'garment' ? (/^https?:/.test(GARMENT.front) ? GARMENT.front : RAW_BASE + encodeURIComponent(GARMENT.front)) : frontBodyImg();
   }
   function garmentImg(key) {
     var f = GARMENT.fields.find(function(x){ return x[0] === key; });
@@ -1813,17 +1833,21 @@ function showFeedback(msg, color) {
         _diagLabel.style.opacity = labelText ? '1' : '0';
       };
       _diagImg.onerror = function() {
-        _diagImg.src = FRONT_IMG; _diagLabel.style.opacity = '0'; _diagActive = FRONT_IMG;
+        var g0 = GARMENT.fields.length ? RAW_BASE + encodeURIComponent(GARMENT.fields[0][2]) : null; var fb = (_measSource === 'garment' && g0 && _diagActive !== g0) ? g0 : frontBodyImg(); _diagImg.onerror = null; _diagImg.src = fb; _diagLabel.style.opacity = '0'; _diagActive = fb;
       };
       _diagImg.src = url;
     }, 200);
   }
 
+  window.measRefreshFigure = function() {
+    if (!_diagImg) { initMeasDiag(); return; }
+    _diagActive = null; window.measFocusField('', null);
+  };
   window.measFocusField = function(label, key) {
     if (!_diagImg) initMeasDiag();
     var gImg = key ? garmentImg(key) : null;
     if (gImg) showMeasDiagImage(RAW_BASE + encodeURIComponent(gImg), label);
-    else if (key && FIELD_IMG[key]) showMeasDiagImage(RAW_BASE + encodeURIComponent(FIELD_IMG[key]), label);
+    else if (key && fieldImgName(key)) showMeasDiagImage(RAW_BASE + encodeURIComponent(fieldImgName(key)), label);
     else showMeasDiagImage(frontImg(), '');
   };
 
@@ -2038,7 +2062,7 @@ function showFeedback(msg, color) {
   };
 
   function boot() {
-    loadFieldDefs().then(function() { buildFields(); });
+    loadFieldDefs().then(function() { buildFields(); if (_diagImg) { _diagActive = null; window.measFocusField('', null); } });
   }
 
   if (document.readyState === 'loading') {
@@ -2578,7 +2602,7 @@ function captureTechPackImage() {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.5</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.7</div>
 
 
 <!-- ═══════════════ 3D PREVIEW (three.js + glTF) ═══════════════ -->
