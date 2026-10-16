@@ -840,9 +840,9 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
       <div class="section">
         <div class="section-label">Front Pocket</div>
         <div class="pill-group">
-          <button class="pill selected" onclick="selectPocket(this,'kangaroo')">Kangaroo</button>
+          <button class="pill selected" onclick="selectPocket(this,'none')">None</button>
+          <button class="pill"          onclick="selectPocket(this,'kangaroo')">Kangaroo</button>
           <button class="pill"          onclick="selectPocket(this,'welt')">Welt</button>
-          <button class="pill"          onclick="selectPocket(this,'none')">None</button>
         </div>
       </div>
 
@@ -1038,7 +1038,7 @@ const state = {
   hoodClosure: 'overhead', // overhead / zip-up — only relevant when style is a hood style
   zipTrim: 'rib',       // quarterzip trim is always rib (choice removed)
   sleeve: 'regular',    // regular / raglan
-  pocket: 'kangaroo',   // kangaroo / welt / zipper / none
+  pocket: 'none',       // none / kangaroo / welt
   cuff: 'rib',          // rib / self-elastic
   side: 'front',
   zoom: 1.5,
@@ -1699,11 +1699,13 @@ function discoverSectionConfigMap() {
     });
     if (!buttonLabels.length) return;
 
-    var bestConfig = null;
+    // Pick the configuration that shares the most option names with this section's buttons
+    // (not all have to match — e.g. Style's "3-Piece Hood" lives under NECK in the sheet).
+    var bestConfig = null, bestHits = 0;
     for (var i = 0; i < configEntries.length; i++) {
       var entry = configEntries[i];
-      var allMatch = buttonLabels.every(function(bl){ return entry.values.indexOf(bl) !== -1; });
-      if (allMatch) { bestConfig = entry.name; break; }
+      var hits = buttonLabels.filter(function(bl){ return entry.values.indexOf(bl) !== -1; }).length;
+      if (hits > bestHits) { bestHits = hits; bestConfig = entry.name; }
     }
     if (bestConfig) map[lbl.textContent.trim()] = bestConfig;
   });
@@ -1717,9 +1719,18 @@ function discoverSectionConfigMap() {
 function lookupOptionPrice(configName, optionText) {
   if (!_pricing || !_pricing.configurations || !_pricing.configurations[configName]) return 0;
   var target = normalizeOptionText(optionText);
-  var match = _pricing.configurations[configName].find(function(opt){
-    return normalizeOptionText(opt.value) === target;
-  });
+  var find = function(name) {
+    return (_pricing.configurations[name] || []).find(function(opt){ return normalizeOptionText(opt.value) === target; });
+  };
+  var match = find(configName);
+  if (!match) {
+    // Not in the section's own column → look in columns no website section uses (e.g. NECK → "3-piece hood")
+    var used = Object.keys(_sectionConfigMap).map(function(k){ return _sectionConfigMap[k]; });
+    Object.keys(_pricing.configurations).some(function(name) {
+      if (used.indexOf(name) !== -1) return false;
+      match = find(name); return !!match;
+    });
+  }
   return match ? match.price : 0;
 }
 
@@ -2336,7 +2347,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.4</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.5</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -2658,18 +2669,23 @@ const MODULES = {
   // Zip-up hood, raglan sleeve — SWEATSHIRT8 (front split in two halves with a full-length zip; split kangaroo pocket).
   // The hood itself still comes from SWEATSHIRT3 (same raglan neckline). Its stand collar (Pattern_1303294) isn't used under a hood.
   body_raglan_zip: { file: 'SWEATSHIRT8', pieces: ['Pattern_5082342', 'Pattern_5082343', 'Pattern_5078874', 'Pattern_6010390', 'Pattern_6010391',
-                     'Pattern_1303228', 'Pattern_1303229', 'Pattern_11393553', 'Pattern_11393554',
-                     'Pattern_1303230', 'Pattern_1303231', 'Pattern_11393555', 'Pattern_11393556',
-                     'Pattern_1303227', 'Pattern_11393552', 'Pattern_11393557'] },
+] },
   zip_raglan:      { file: 'SWEATSHIRT8', pieces: [], match: /^zipper/i },
   kangaroo_raglan_zip: { file: 'SWEATSHIRT8', pieces: ['Pattern_2901680', 'Pattern_2901681'] },
+  // Cuff + hem trims. Rib trim comes with each body file; these are swapped in when needed.
+  // Self-elastic (gathered cuffs + gathered hem, double layer) — SWEATSHIRT8, fits every body (same avatar pose).
+  trim_elastic:    { file: 'SWEATSHIRT8', trim: true, pieces: ['Pattern_1303228', 'Pattern_1303229', 'Pattern_11393553', 'Pattern_11393554',
+                     'Pattern_1303230', 'Pattern_1303231', 'Pattern_11393555', 'Pattern_11393556',
+                     'Pattern_1303227', 'Pattern_11393552', 'Pattern_11393557'] },
+  // Rib cuffs + rib hem for the zip-up body (SWEATSHIRT8 only has the self-elastic ones)
+  trim_rib_raglan: { file: 'SWEATSHIRT3', trim: true, pieces: ['Pattern_1303224', 'Pattern_1303225', 'Pattern_1303226', 'Pattern_1303227'] },
 };
 // Which pieces exist for each body. Collars, hoods and pockets are cut to fit one body,
 // so they're only combined with the body they were made for.
 const BODY_SETS = {
   regular: { body: 'body_setin',  crewneck: 'collar_setin',  '3-piece-hood': 'hood3_setin',  kangaroo: 'kangaroo_setin',  welt: 'welt_setin', quarterzip: 'qz_setin', bodyFor: { quarterzip: 'body_setin_qz' } },
   raglan:  { body: 'body_raglan', crewneck: 'collar_raglan', '3-piece-hood': 'hood3_raglan', kangaroo: 'kangaroo_raglan', welt: 'welt_raglan', quarterzip: 'qz_raglan', bodyFor: { quarterzip: 'body_raglan_qz' }, pocketFor: { quarterzip: { kangaroo: 'kangaroo_raglan_qz' } },
-             zipUp: { body: 'body_raglan_zip', zip: 'zip_raglan', pockets: { kangaroo: 'kangaroo_raglan_zip' } } },
+             zipUp: { body: 'body_raglan_zip', zip: 'zip_raglan', ribTrim: 'trim_rib_raglan', pockets: { kangaroo: 'kangaroo_raglan_zip' } } },
 };
 const SLEEVE_NAME = { regular: 'regular sleeve', raglan: 'raglan sleeve' };
 // Returns the modules for the current design + the choices that have no 3D piece yet.
@@ -2680,6 +2696,9 @@ function modulesFor(st) {
   const zipUp = st.style === '3-piece-hood' && st.hoodClosure === 'zip-up' ? set.zipUp : null;
   const mods = [zipUp ? zipUp.body : ((set.bodyFor && set.bodyFor[st.style]) || set.body)];
   if (zipUp) mods.push(zipUp.zip);
+  // Cuff + hem: self-elastic replaces the body's own rib trim; the zip-up body has no rib trim of its own.
+  if (st.cuff === 'self-elastic') mods.push('trim_elastic');
+  else if (zipUp && zipUp.ribTrim) mods.push(zipUp.ribTrim);
   const styleName = { crewneck: 'Crewneck', '2-piece-hood': '2-Piece Hood', '3-piece-hood': '3-Piece Hood', quarterzip: 'Quarterzip' }[st.style] || st.style;
   // Style (falls back to the crewneck collar of the same body)
   if (set[st.style]) mods.push(set[st.style]);
@@ -2694,7 +2713,6 @@ function modulesFor(st) {
   }
   // Not modelled yet
   if (st.fit && st.fit !== 'regular') missing.push('Oversized fit');
-  if (st.cuff && st.cuff !== 'rib') missing.push('Self-elastic cuff');
   return { mods, missing };
 }
 function modelCandidates() { return [...new Set(modulesFor(typeof state !== 'undefined' ? state : {}).mods.map(m => MODULES[m].file))]; }
@@ -2879,9 +2897,12 @@ async function loadModel() {
     modelRoot.add(m);
     (parts[partKey] = parts[partKey] || { label, meshes: [], visible: true }).meshes.push(m);
   };
+  // When a trim module is used, the bodies' own rib cuffs/hem are left out
+  const hasTrim = mods.some(m => MODULES[m].trim);
+  const RIB_TRIM_IDS = ['Pattern_1303224', 'Pattern_1303225', 'Pattern_1303226', 'Pattern_1303227'];
   mods.forEach(modName => {
     const mod = MODULES[modName];
-    const ids = mod.pieces.concat(mod.match ? Object.keys(idx[mod.file]).filter(n => mod.match.test(n) && !mod.pieces.includes(n)) : []);
+    const ids = mod.pieces.filter(id => mod.trim || !hasTrim || !RIB_TRIM_IDS.includes(id)).concat(mod.match ? Object.keys(idx[mod.file]).filter(n => mod.match.test(n) && !mod.pieces.includes(n)) : []);
     ids.forEach(pieceId => {
       (idx[mod.file][pieceId] || []).forEach(entry => {
         const r = classify(entry.mesh);
