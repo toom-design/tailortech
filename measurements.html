@@ -381,7 +381,7 @@ var RAW_BASE   = 'https://raw.githubusercontent.com/toom-design/measurements/mai
 var FRONT_IMGS = { M: 'MEASUREMENTS_2front_M.webp', F: 'MEASUREMENTS_2front_F.webp' };
 var FRONT_IMG  = RAW_BASE + encodeURIComponent(FRONT_IMGS.M);
 
-// Male diagrams. Keep this exact shape (`var FIELD_IMG = {` … `};`) — the configurators read it.
+// Male diagrams. The garment configurators read this list (and the female one below) straight from this page.
 var FIELD_IMG = {
   'height':                  'MEASUREMENTS_2Height_M.webp',
   'bustGirth':               'MEASUREMENTS_2Bust girth_M.webp',
@@ -436,8 +436,8 @@ const GARMENT_SETS = {
   trousers: new Set(['height','pantWaist','hipGirth','kneeGirth','calfGirth','outsideLegLength','rise']),
 };
 // ── Garment measurements (measure a garment that already fits) ───
-// Casual garments only. Read by the garment configurators too — keep this
-// exact shape: `var GARMENT_MEAS = {` … closing `};` on its own line.
+// Casual garments only. Read by the garment configurators too — keep the
+// closing brace of this block on its own line.
 // Each field: [key, label, diagram image in the measurements repo].
 var GARMENT_MEAS = {
   tshirt: {
