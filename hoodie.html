@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Hoodie</title>
 <script type="importmap">
 { "imports": {
@@ -637,6 +637,14 @@ button[onclick="handleAddToCart()"]:hover { background: rgba(74,22,79,0.06) !imp
 .fabric-hero::before, .fabric-hero::after { content: none !important; display: none !important; }
 .fabric-hero-quote { font-size: clamp(15px, 2.1vw, 22px) !important; white-space: nowrap; line-height: 1.2 !important; }
 .fabric-hero-attr { margin-top: 10px !important; }
+
+/* v1.6.6 — iPad/iPhone Safari: 100vh includes the browser bars, which pushed the bottom
+   (Front/Back, price, next button) off screen. Use the dynamic viewport height instead. */
+html { height: 100%; }
+body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
+.app { min-height: 0; }
+.preview-panel .view-bar { padding-bottom: max(22px, env(safe-area-inset-bottom)) !important; }
+.config-footer { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
 </style>
 </head>
 <body>
@@ -780,7 +788,6 @@ button[onclick="handleAddToCart()"]:hover { background: rgba(74,22,79,0.06) !imp
         <div class="section-label">Style</div>
         <div class="pill-group">
           <button class="pill selected" onclick="selectStyle(this,'crewneck')">Crewneck</button>
-          <button class="pill"          onclick="selectStyle(this,'2-piece-hood')">2-Piece Hood</button>
           <button class="pill"          onclick="selectStyle(this,'3-piece-hood')">3-Piece Hood</button>
           <button class="pill"          onclick="selectStyle(this,'quarterzip')">Quarterzip</button>
         </div>
@@ -819,7 +826,6 @@ button[onclick="handleAddToCart()"]:hover { background: rgba(74,22,79,0.06) !imp
         <div class="pill-group">
           <button class="pill selected" onclick="selectPocket(this,'kangaroo')">Kangaroo</button>
           <button class="pill"          onclick="selectPocket(this,'welt')">Welt</button>
-          <button class="pill"          onclick="selectPocket(this,'zipper')">Zipper</button>
           <button class="pill"          onclick="selectPocket(this,'none')">None</button>
         </div>
       </div>
@@ -1005,7 +1011,7 @@ const BASE = 'https://raw.githubusercontent.com/toom-design/tailortech-hoodie/ma
 const state = {
   gender: 'M',
   fit: 'regular',       // regular / oversized
-  style: 'crewneck',    // crewneck / 2-piece-hood / 3-piece-hood / quarterzip
+  style: 'crewneck',    // crewneck / 3-piece-hood / quarterzip
   hoodClosure: 'overhead', // overhead / zip-up — only relevant when style is a hood style
   zipTrim: 'rib',       // rib / self — only relevant when style === 'quarterzip'
   sleeve: 'regular',    // regular / raglan
@@ -1092,12 +1098,11 @@ function preloadAll() {
     urls.base('regular'), urls.base('oversized'),
     urls.sleeve('regular'), urls.sleeve('raglan'),
     urls.style('crewneck', null, 'front'), urls.style('crewneck', null, 'back'),
-    urls.style('2-piece-hood', null, 'front'), urls.style('2-piece-hood', null, 'back'),
     urls.style('3-piece-hood', null, 'front'), urls.style('3-piece-hood', null, 'back'),
     urls.style('quarterzip', 'rib', 'front'), urls.style('quarterzip', 'rib', 'back'),
     urls.style('quarterzip', 'self', 'front'), urls.style('quarterzip', 'self', 'back'),
     urls.zipper(),
-    urls.pocket('kangaroo'), urls.pocket('welt'), urls.pocket('zipper'),
+    urls.pocket('kangaroo'), urls.pocket('welt'),
     urls.cuff('rib'), urls.cuff('self-elastic'),
   ];
   let done = 0;
@@ -2288,7 +2293,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.4</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.6</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -2582,6 +2587,9 @@ const MODULES = {
   hood3_setin:     { file: 'SWEATSHIRT1', pieces: ['Pattern_1724221', 'Pattern_1724222', 'Pattern_1725890'] },
   kangaroo_setin:  { file: 'SWEATSHIRT1', pieces: ['Pattern_2901679'] },
   welt_setin:      { file: 'SWEATSHIRT2', pieces: ['Pattern_3171371', 'Pattern_3171373'] },
+  // Quarterzip, regular sleeve — SWEATSHIRT5 (its front panel has the zip opening, so the whole body comes from it)
+  body_setin_qz:   { file: 'SWEATSHIRT5', pieces: ['Pattern_1301135', 'Pattern_1299746', 'Pattern_1302524', 'Pattern_1302525', 'Pattern_1303224', 'Pattern_1303225', 'Pattern_1303226', 'Pattern_1303227'] },
+  qz_setin:        { file: 'SWEATSHIRT5', pieces: ['Pattern_1303294'], match: /^zipper/i },
   // Raglan sleeve — SWEATSHIRT3 (body with clean fabric-structure layout, 3-piece hood, kangaroo) and SWEATSHIRT4 (crewneck, welt)
   body_raglan:     { file: 'SWEATSHIRT3', pieces: ['Pattern_5082341', 'Pattern_5078874', 'Pattern_6010390', 'Pattern_6010391', 'Pattern_1303224', 'Pattern_1303225', 'Pattern_1303226', 'Pattern_1303227'] },
   collar_raglan:   { file: 'SWEATSHIRT4', pieces: ['Pattern_1303292'] },
@@ -2592,19 +2600,20 @@ const MODULES = {
 // Which pieces exist for each body. Collars, hoods and pockets are cut to fit one body,
 // so they're only combined with the body they were made for.
 const BODY_SETS = {
-  regular: { body: 'body_setin',  crewneck: 'collar_setin',  '3-piece-hood': 'hood3_setin',  kangaroo: 'kangaroo_setin',  welt: 'welt_setin' },
+  regular: { body: 'body_setin',  crewneck: 'collar_setin',  '3-piece-hood': 'hood3_setin',  kangaroo: 'kangaroo_setin',  welt: 'welt_setin', quarterzip: 'qz_setin', bodyFor: { quarterzip: 'body_setin_qz' } },
   raglan:  { body: 'body_raglan', crewneck: 'collar_raglan', '3-piece-hood': 'hood3_raglan', kangaroo: 'kangaroo_raglan', welt: 'welt_raglan' },
 };
 const SLEEVE_NAME = { regular: 'regular sleeve', raglan: 'raglan sleeve' };
 // Returns the modules for the current design + the choices that have no 3D piece yet.
 function modulesFor(st) {
   const sleeve = BODY_SETS[st.sleeve] ? st.sleeve : 'regular';
-  const set = BODY_SETS[sleeve], mods = [set.body], missing = [];
+  const set = BODY_SETS[sleeve], mods = [(set.bodyFor && set.bodyFor[st.style]) || set.body], missing = [];
   const styleName = { crewneck: 'Crewneck', '2-piece-hood': '2-Piece Hood', '3-piece-hood': '3-Piece Hood', quarterzip: 'Quarterzip' }[st.style] || st.style;
   // Style (falls back to the crewneck collar of the same body)
   if (set[st.style]) mods.push(set[st.style]);
   else { if (set.crewneck) mods.push(set.crewneck); missing.push(styleName + ' with ' + SLEEVE_NAME[sleeve]); }
   if (st.style === '3-piece-hood' && st.hoodClosure === 'zip-up') missing.push('Zip-up closure');
+  if (st.style === 'quarterzip' && set.quarterzip && st.zipTrim === 'self') missing.push('Self-fabric zip trim');
   // Pocket
   const pocketName = { kangaroo: 'Kangaroo pocket', welt: 'Welt pocket', zipper: 'Zipper pocket' }[st.pocket] || st.pocket;
   if (st.pocket !== 'none') {
@@ -2626,7 +2635,7 @@ const PART_BY_MESH = {
   Pattern_5080283: 'sleeves', Pattern_5081312: 'sleeves',
   Pattern_6010390: 'sleeves', Pattern_6010391: 'sleeves',
   Pattern_1303226: 'hem',     Pattern_1303227: 'hem',
-  Pattern_1303292: 'collar',  Pattern_1303223: 'hem',
+  Pattern_1303292: 'collar',  Pattern_1303294: 'collar',  Pattern_1303223: 'hem',
   Pattern_1303224: 'cuff',    Pattern_1303225: 'cuff',
   Pattern_1724221: 'hood',    Pattern_1724222: 'hood',    Pattern_1725890: 'hood',
   Pattern_2901679: 'pocket',  Pattern_3171371: 'pocket',  Pattern_3171373: 'pocket',
@@ -2787,14 +2796,15 @@ async function loadModel() {
     m.applyMatrix4(mesh.matrixWorld);                       // place it exactly where it sat in its file
     m.userData.origMaterial = mesh.material;
     const fileNormal = !/^topstitch/i.test(mesh.name) && mesh.material && mesh.material.normalMap ? mesh.material.normalMap : null;
-    m.material = fabricMaterial(partKey, fileNormal);
+    m.material = partKey === 'zip' ? zipMaterial() : fabricMaterial(partKey, fileNormal);
     if (!/^topstitch/i.test(mesh.name)) m.add(new THREE.LineSegments(seamGeometry(mesh.geometry), seamMat));
     modelRoot.add(m);
     (parts[partKey] = parts[partKey] || { label, meshes: [], visible: true }).meshes.push(m);
   };
   mods.forEach(modName => {
     const mod = MODULES[modName];
-    mod.pieces.forEach(pieceId => {
+    const ids = mod.pieces.concat(mod.match ? Object.keys(idx[mod.file]).filter(n => mod.match.test(n) && !mod.pieces.includes(n)) : []);
+    ids.forEach(pieceId => {
       (idx[mod.file][pieceId] || []).forEach(entry => {
         const r = classify(entry.mesh);
         add(entry.mesh, r.key, r.label);
@@ -2839,6 +2849,12 @@ const partMaterials = {};
 // Fabric structure exported from CLO (normal map inside the .glb, per piece) — read straight from the file.
 // CLO bakes it quite faint, so it's boosted here; raise/lower to taste (1 = exactly as exported).
 const FILE_NORMAL_STRENGTH = 1.5;
+// Zipper tape, teeth and slider: dark gunmetal, independent of the fabric colour
+let _zipMat = null;
+function zipMaterial() {
+  if (!_zipMat) _zipMat = new THREE.MeshStandardMaterial({ color: 0x2b2b2e, metalness: 0.6, roughness: 0.38, side: THREE.DoubleSide, envMapIntensity: 0.6 });
+  return _zipMat;
+}
 function fabricMaterial(partKey, fileNormal) {
   const key = partKey + (fileNormal ? '|' + fileNormal.uuid : '');
   if (!partMaterials[key]) {
