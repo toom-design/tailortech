@@ -1534,12 +1534,12 @@ async function handleOrderNow() {
   try {
     await ensurePersonId();
     var techPackUrl = await getOrCaptureSilhouette();
-    var res = await _saveViaIframe('Pending', { 'tech pack': techPackUrl });
-    toast('Order placed — #' + (res && res.orderNumber ? res.orderNumber : '') + ' — going to checkout…');
+    var res = await _saveViaIframe('Pending', { 'tech pack': techPackUrl, 'Request Type': 'Garment Request' });
+    toast('Request sent — #' + (res && res.orderNumber ? res.orderNumber : '') + ' — we\'ll be in touch shortly.');
     setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/checkout'; }, 1800);
   } catch(e) {
     console.error('handleOrderNow:', e);
-    toast('Could not place order: ' + e.message, 'err');
+    toast('Could not send your request: ' + e.message, 'err');
     if (btn) { btn.disabled = false; btn.style.opacity = ''; }
   }
 }
@@ -2319,7 +2319,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.9</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.0</div>
 
 <!-- Firebase -->
 <script type="module">
