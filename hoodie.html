@@ -2319,7 +2319,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.0</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.1</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -2394,10 +2394,24 @@ function goToAuth() {
 // own layer IDs and state fields.
 function slug(v) { return String(v == null ? '' : v).trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'x'; }
 
+// Hoodie tech-pack key — one cached image per front-view combination.
+// (Was copied from the shirt and used shirt fields, so every hoodie shared one blank image.)
 function buildSilhouetteKey() {
   var s = state;
-  return 'SH_gender-' + slug(s.gender) + '_fit-' + slug(s.fit) +
-    '_placket-' + slug(s.placket) + '_collar-' + slug(s.collar) + '_cuffs-' + slug(s.cuffs);
+  var zip = (s.style === '3-piece-hood' && s.hoodClosure === 'zip-up') ? 'zip' : 'nozip';
+  return 'HD_fit-' + slug(s.fit) + '_style-' + slug(s.style) + '_closure-' + zip +
+    '_sleeve-' + slug(s.sleeve) + '_pocket-' + slug(s.pocket) + '_cuff-' + slug(s.cuff);
+}
+// Front-view layer images for the current design, bottom to top (same stack as the preview).
+function techPackLayerUrls() {
+  var s = state, list = [];
+  list.push(urls.base(s.fit));
+  list.push(urls.sleeve(s.sleeve));
+  list.push(urls.style(s.style, s.zipTrim, 'front'));
+  if (s.style === '3-piece-hood' && s.hoodClosure === 'zip-up') list.push(urls.zipper());
+  var pk = urls.pocket(s.pocket); if (pk) list.push(pk);
+  var cf = urls.cuff(s.cuff); if (cf) list.push(cf);
+  return list.filter(Boolean);
 }
 
 function drawImageContain(ctx, img, boxW, boxH) {
@@ -2416,31 +2430,28 @@ function drawImageContain(ctx, img, boxW, boxH) {
 
 function captureTechPackImage() {
   return new Promise(function(resolve, reject) {
-    var layerIds = ['img-fit','img-placket','img-collar','img-cuffs'];
     var W = 760, H = 1160;
     var canvas = document.createElement('canvas');
     canvas.width = W; canvas.height = H;
     var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
 
-    var toDraw = layerIds
-      .map(function(id){ return document.getElementById(id); })
-      .filter(function(el){ return el && el.src && el.style.opacity !== '0'; });
+    var srcs = techPackLayerUrls();
+    if (!srcs.length) { reject(new Error('No tech-pack layers')); return; }
 
-    if (toDraw.length === 0) { resolve(canvas.toDataURL('image/png')); return; }
-
-    var loaded = 0, failed = false;
-    toDraw.forEach(function(el) {
-      var img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = function() {
-        if (failed) return;
-        drawImageContain(ctx, img, W, H);
-        loaded++;
-        if (loaded === toDraw.length) resolve(canvas.toDataURL('image/png'));
-      };
-      img.onerror = function(){ failed = true; reject(new Error('Failed to load layer: ' + el.id)); };
-      img.src = el.src;
-    });
+    // Load all layers first, then draw them in stacking order.
+    Promise.all(srcs.map(function(src) {
+      return new Promise(function(res, rej) {
+        var img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = function(){ res(img); };
+        img.onerror = function(){ rej(new Error('Failed to load layer: ' + src)); };
+        img.src = src;
+      });
+    })).then(function(imgs) {
+      imgs.forEach(function(img){ drawImageContain(ctx, img, W, H); });
+      resolve(canvas.toDataURL('image/png'));
+    }).catch(reject);
   });
 }
 
@@ -2732,8 +2743,8 @@ async function init() {
   // Studio rig: low ambient + strong raking key from the side (shows folds and seams), soft fill, back rim.
   // The rig turns with the camera, so the garment is lit the same way from every angle.
   seamMat = new THREE.LineBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.55 });
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x707070, 0.2));
-  [[3.2, 2.6, 1.6, 1.6], [0.45, -2.4, 0.8, 1.8], [1.4, -1.2, 2.2, -2.4]].forEach(([i, x, y, z]) => {
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8a8a, 0.55));
+  [[2.2, 2.6, 1.6, 1.6], [0.6, -2.4, 0.8, 1.8], [0.9, -1.2, 2.2, -2.4]].forEach(([i, x, y, z]) => {
     const l = new THREE.DirectionalLight(0xffffff, i);
     l.userData.base = new THREE.Vector3(x, y, z);
     scene.add(l); scene.add(l.target); rig.push(l);
@@ -2875,7 +2886,7 @@ function showMissing(list) {
 }
 
 // One material per part group, so contrast parts (cuffs, collar…) can get their own fabric later
-const FABRIC = { color: 0x8E8C88, roughness: 0.9 };    // default: mid grey (shows seams best) until a fabric is picked
+const FABRIC = { color: 0x8E8C88, roughness: 1.0 };    // default: mid grey (shows seams best) until a fabric is picked
 const partMaterials = {};
 // Fabric structure exported from CLO (normal map inside the .glb, per piece) — read straight from the file.
 // CLO bakes it quite faint, so it's boosted here; raise/lower to taste (1 = exactly as exported).
@@ -2890,7 +2901,7 @@ function fabricMaterial(partKey, fileNormal) {
   const key = partKey + (fileNormal ? '|' + fileNormal.uuid : '');
   if (!partMaterials[key]) {
     partMaterials[key] = new THREE.MeshPhysicalMaterial({
-      sheen: 1, sheenRoughness: 0.7, envMapIntensity: 0.12,     // soft cotton sheen; low env so the key light shapes the folds
+      sheen: 0.4, sheenRoughness: 0.95, specularIntensity: 0.08, envMapIntensity: 0.25,
       color: FABRIC.color, roughness: FABRIC.roughness, metalness: 0,
       side: THREE.DoubleSide,                        // single-layer cloth: inside visible when a panel is hidden
     });
@@ -2932,7 +2943,7 @@ function applyFabricTo(mat) {
   if (mat.normalMap) { const k = own ? FILE_NORMAL_STRENGTH : NORMAL_STRENGTH; mat.normalScale.set(k, k); }
   if (m && m.map) mat.color.set(0xb0b0b0);       // slight darkening: studio light lifts photo colours
   else mat.color.set(m && m.color ? m.color : FABRIC.color);
-  if (mat.sheenColor) mat.sheenColor.copy(mat.color).lerp(new THREE.Color(0xffffff), 0.35);
+  if (mat.sheenColor) mat.sheenColor.copy(mat.color).lerp(new THREE.Color(0xffffff), 0.12);
   if (seamMat) seamMat.color.copy(mat.color).multiplyScalar(0.55);     // seam lines follow the fabric colour
   mat.needsUpdate = true;
 }
