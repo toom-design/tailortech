@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>T-Shirt</title>
 <script type="importmap">
 { "imports": {
@@ -15,26 +15,379 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --cream: #F0EDE6; --cream-dark: #E5E1D8; --cream-mid: #EBE7DF;
-  --ink: #1A1916; --ink-mid: #4A4844; --ink-light: #8A8880; --ink-faint: #C0BDB8;
-  --white: #FAFAF8; --border: rgba(26,25,22,0.12); --border-mid: rgba(26,25,22,0.22);
+  --cream: #F0EDE6;
+  --cream-dark: #E5E1D8;
+  --cream-mid: #EBE7DF;
+  --ink: #1A1916;
+  --ink-mid: #4A4844;
+  --ink-light: #8A8880;
+  --ink-faint: #C0BDB8;
+  --white: #FAFAF8;
+  --border: rgba(26,25,22,0.12);
+  --border-mid: rgba(26,25,22,0.22);
 }
 body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 .app { display: flex; width: 100%; flex: 1; overflow: hidden; min-height: 0; }
 
-/* ── PREVIEW PANEL ── */
-.preview-panel { flex: 1; background: #ffffff; border-right: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; overflow: hidden; transition: flex 0.35s cubic-bezier(0.4,0,0.2,1); }
-.view-toggle { display: flex; padding: 16px 20px 0; justify-content: center; flex-shrink: 0; }
-.view-btn { font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; padding: 8px 28px; border: 1px solid var(--border-mid); background: transparent; color: var(--ink-light); cursor: pointer; transition: all 0.2s; }
-.view-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+/* ── LEFT PANEL ── */
+.preview-panel {
+  flex: 3;
+  background: #ffffff;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  transition: flex 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* MEASUREMENTS ACTIVE — swap to 2:3 */
+.app.measurements-active .preview-panel { flex: 2; background: var(--white); }
+.app.measurements-active .config-panel  { flex: 3; }
+.app.measurements-active #meas-avatar-panel { display: flex !important; }
+
+/* view toggle at top */
+.view-toggle { display: flex; padding: 16px 20px 0; justify-content: center; gap: 0; flex-shrink: 0; }
+.view-btn {
+  font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600;
+  letter-spacing: 0.13em; padding: 8px 28px;
+  border: 1px solid var(--border-mid); background: transparent;
+  color: var(--ink-light); cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+}
 .view-btn:first-child { border-radius: 2px 0 0 2px; border-right: none; }
 .view-btn:last-child  { border-radius: 0 2px 2px 0; }
-.avatar-stage { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.layer-stack { position: relative; width: 380px; height: 580px; flex-shrink: 0; transform-origin: center center; transition: transform 0.6s cubic-bezier(0.4,0,0.2,1); }
+.view-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+
+/* stage — fills remaining space */
+.avatar-stage {
+  flex: 1; position: relative;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; background: #ffffff;
+}
+
+/* zoom */
+.zoom-controls { position: absolute; top: 14px; right: 14px; display: flex; flex-direction: column; gap: 4px; z-index: 10; }
+.zoom-btn {
+  width: 28px; height: 28px; border: 1px solid var(--border-mid);
+  background: var(--white); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 15px; color: var(--ink-mid); font-weight: 300; line-height: 1;
+}
+.zoom-btn:hover { background: var(--cream-mid); }
+
+/* layer stack — viewport into which we pan/zoom */
+.stage-viewport {
+  position: relative;
+  width: 100%; height: 100%;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.layer-stack {
+  position: relative;
+  width: 420px; height: 620px;
+  flex-shrink: 0;
+  transform-origin: center center;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
 .layer-stack .layer { position: absolute; inset: 0; }
 .layer-stack .layer img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+/* loading */
+.loading-overlay {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px; z-index: 20;
+  background: #ffffff; transition: opacity 0.5s;
+}
+.loading-overlay.done { opacity: 0; pointer-events: none; }
+.spinner { width: 22px; height: 22px; border: 2px solid var(--ink-faint); border-top-color: var(--ink); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-overlay span { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-light); font-weight: 500; }
+
+/* front / back toggle bar */
+.view-bar {
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 12px 20px 16px; gap: 0;
+  border-top: 1px solid var(--border);
+  background: #ffffff;
+}
+.view-bar-btn {
+  font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600;
+  letter-spacing: 0.13em; padding: 7px 28px;
+  border: 1px solid var(--border-mid); background: transparent;
+  color: var(--ink-light); cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+}
+.view-bar-btn:first-child { border-radius: 2px 0 0 2px; border-right: none; }
+.view-bar-btn:last-child  { border-radius: 0 2px 2px 0; }
+.view-bar-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+
+/* ── RIGHT PANEL ── */
+.config-panel { flex: 2; background: var(--white); overflow-y: auto; min-height: 0; position: relative; display: flex; flex-direction: column; transition: flex 0.35s cubic-bezier(0.4,0,0.2,1); }
+
+
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  padding: 0 28px; position: sticky; top: 0; background: var(--white); z-index: 20;
+}
+.tab {
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 18px 0; margin-right: 24px;
+  border: none; background: none; color: var(--ink-faint); cursor: pointer;
+  border-bottom: 1.5px solid transparent; margin-bottom: -1px;
+  transition: color 0.2s, border-color 0.2s; white-space: nowrap;
+}
+.tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+
+.config-body { padding: 28px 28px 48px; display: flex; flex-direction: column; }
+#panel-measurements { padding: 0 !important; flex: 1; min-height: 0; overflow: hidden; }
+.section { padding: 22px 0; border-bottom: 1px solid var(--border); }
+.section:last-child { border-bottom: none; }
+.section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink); margin-bottom: 14px; }
+
+/* pills */
+.pill-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill {
+  font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 400;
+  letter-spacing: 0.03em; padding: 7px 16px;
+  border: 1px solid var(--border-mid); border-radius: 100px;
+  background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s;
+}
+.pill:hover { border-color: var(--ink); color: var(--ink); }
+.pill.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
+
+/* card grids */
+.card-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.card-grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+
+.option-card {
+  border: 1px solid var(--border); border-radius: 6px;
+  background: #ffffff; padding: 10px 6px 8px;
+  cursor: pointer; display: flex; flex-direction: column;
+  align-items: center; gap: 6px; transition: all 0.15s;
+}
+.option-card:hover { border-color: var(--ink-mid); }
+.option-card.selected { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.option-card .thumb { width: 58px; height: 48px; object-fit: contain; display: block; opacity: 0.75; transition: opacity 0.15s; }
+.card-grid-5 .option-card .thumb { width: 44px; height: 44px; }
+.option-card.selected .thumb { opacity: 1; }
+.option-card .cname { font-size: 10px; letter-spacing: 0.04em; color: var(--ink-light); text-align: center; font-weight: 400; }
+.option-card.selected .cname { color: var(--ink); font-weight: 500; }
+
+/* ── MATERIALS ── */
+.sub-label { font-size: 11px; color: var(--ink-light); letter-spacing: 0.04em; margin-bottom: 12px; }
+
+.fabric-search-row { margin-bottom: 12px; }
+.fabric-search {
+  width: 100%; padding: 8px 12px; font-family: 'Jost', sans-serif; font-size: 12px;
+  border: 1px solid var(--border-mid); border-radius: 4px; background: var(--white);
+  color: var(--ink); outline: none; transition: border-color 0.15s;
+}
+.fabric-search:focus { border-color: var(--ink); }
+
+.fabric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+
+/* ── Rich fabric cards from Google Sheet ── */
+.fabric-card {
+  border: 1px solid var(--border); border-radius: 6px; background: #fff;
+  cursor: pointer; display: flex; flex-direction: column;
+  transition: all 0.15s; overflow: hidden; position: relative;
+}
+.fabric-card:hover { border-color: var(--ink-mid); }
+.fabric-card.selected { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+
+/* square image with padding */
+.fabric-card .fc-images {
+  display: flex; align-items: center; justify-content: center;
+  padding: 14px 14px 10px; flex-shrink: 0;
+}
+.fabric-card .fc-img {
+  width: 100%; aspect-ratio: 1 / 1; object-fit: cover;
+  display: block; background: var(--cream-mid); border-radius: 2px;
+}
+.fabric-card .fc-img.fc-img-back { display: none; }
+.fabric-card .fc-img-label { display: none; }
+
+/* text section — centred */
+.fabric-card .fc-body { padding: 0 10px 14px; display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; }
+.fname { font-size: 12px; font-weight: 600; color: var(--ink); letter-spacing: 0.02em; line-height: 1.3; }
+.fcode { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.06em; }
+.fcomp { font-size: 10px; color: var(--ink-light); letter-spacing: 0.01em; line-height: 1.4; margin-top: 1px; }
+
+/* details toggle — hidden for clean card look */
+.fc-details-toggle { display: none; }
+
+/* expandable details drawer */
+.fc-details-drawer {
+  display: none; border-top: 1px solid var(--border);
+  padding: 8px 8px 9px; background: var(--cream-mid);
+  grid-template-columns: 1fr 1fr; gap: 4px 8px;
+  pointer-events: none;
+}
+.fc-details-drawer.open { display: grid; pointer-events: auto; }
+.fc-detail-item { display: flex; flex-direction: column; gap: 1px; }
+.fc-detail-label { font-size: 8px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; color: var(--ink-light); }
+.fc-detail-val   { font-size: 10px; color: var(--ink); font-weight: 400; }
+
+/* loading / error states */
+.fabric-loading {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: 10px;
+  padding: 20px 0; color: var(--ink-light); font-size: 11px; letter-spacing: 0.06em;
+}
+.fabric-error {
+  grid-column: 1 / -1; padding: 14px 12px; font-size: 11px; color: #b04040;
+  background: #fdf2f2; border: 1px solid #e8c0c0; border-radius: 4px;
+}
+
+/* fallback swatch for when images fail */
+.swatch { width: 100%; aspect-ratio: 1 / 1; border-radius: 2px; flex-shrink: 0; }
+
+/* ── Tuxedo Bib fabric section ── */
+#section-tuxedo-bib { display: none; }
+#section-tuxedo-bib.visible { display: block; }
+
+/* ── Complementary fabric parts toggle ── */
+.comp-parts-row {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.comp-part-btn {
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 100px;
+  background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s;
+}
+.comp-part-btn:hover { border-color: var(--ink); color: var(--ink); }
+.comp-part-btn.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
+
+/* Comp section hint */
+.comp-hint {
+  font-size: 11px; color: var(--ink-light); letter-spacing: 0.03em;
+  margin-bottom: 12px; line-height: 1.5;
+}
+
+/* Button material row */
+.btn-material-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.btn-material {
+  font-family: 'Jost', sans-serif; display: flex; align-items: center; gap: 8px;
+  padding: 10px 18px; border: 1px solid var(--border-mid); border-radius: 6px;
+  background: #fff; cursor: pointer; transition: all 0.15s;
+}
+.btn-material:hover { border-color: var(--ink); }
+.btn-material.selected { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.bm-name { font-size: 13px; font-weight: 500; color: var(--ink); letter-spacing: 0.02em; text-transform: uppercase; }
+.bm-price { font-size: 11px; color: var(--ink-light); letter-spacing: 0.04em; }
+.btn-material.selected .bm-price { color: var(--ink-mid); }
+
+/* Button size row */
+.btn-size-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+.btn-size {
+  font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 500;
+  letter-spacing: 0.04em; padding: 7px 14px;
+  border: 1px solid var(--border-mid); border-radius: 5px;
+  background: #fff; color: var(--ink-mid); cursor: pointer; transition: all 0.15s;
+  min-width: 48px; text-align: center;
+}
+.btn-size:hover { border-color: var(--ink); color: var(--ink); }
+.btn-size.selected { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); color: var(--ink); }
+
+/* Button stitch grid — 3 cols, larger cards */
+.btn-stitch-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.btn-stitch-card {
+  border: 1px solid var(--border); border-radius: 6px; background: #ffffff;
+  padding: 20px 12px 12px; cursor: pointer; display: flex; flex-direction: column;
+  align-items: center; gap: 10px; transition: all 0.15s;
+}
+.btn-stitch-card:hover { border-color: var(--ink-mid); }
+.btn-stitch-card.selected { border-color: var(--ink); background: var(--cream-dark); box-shadow: inset 0 0 0 1px var(--ink); }
+.stitch-icon { width: 64px; height: 64px; background: #fff; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+.btn-stitch-card .cname { font-size: 12px; }
+
+/* Measurements */
+.measure-grid { display: flex; flex-direction: column; gap: 0; }
+.measure-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.measure-row:last-child { border-bottom: none; }
+.measure-row label { font-size: 13px; color: var(--ink-mid); font-weight: 400; letter-spacing: 0.02em; }
+.measure-input-wrap { display: flex; align-items: center; gap: 6px; }
+.measure-input {
+  font-family: 'Jost', sans-serif; font-size: 13px; width: 72px; padding: 6px 10px;
+  border: 1px solid var(--border-mid); border-radius: 4px; text-align: right;
+  background: #fff; color: var(--ink); outline: none; transition: border-color 0.15s;
+}
+.measure-input:focus { border-color: var(--ink); }
+.measure-unit { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.06em; width: 20px; }
+
+/* Loading measurements notification */
+#meas-loading-notif {
+  display: none;
+  align-items: center; gap: 8px;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  border-radius: 2px;
+  background: rgba(109,70,180,0.08);
+  border: 1px solid rgba(109,70,180,0.22);
+  font-size: 11px; font-weight: 500; letter-spacing: 0.06em;
+  color: #6d46b4;
+}
+#meas-loading-notif.visible { display: flex; }
+.meas-notif-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  border: 1.5px solid rgba(109,70,180,0.35);
+  border-top-color: #6d46b4;
+  animation: spin 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
+/* Submit button */
+.submit-btn {
+  font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  width: 100%; padding: 14px 24px;
+  background: var(--ink); color: var(--white);
+  border: none; border-radius: 3px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: opacity 0.2s;
+}
+.submit-btn:hover { opacity: 0.85; }
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Nav ── */
+.nav {
+  height: 52px; background: var(--white); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 28px; gap: 16px;
+  position: sticky; top: 0; z-index: 100;
+}
+.nav-brand {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.20em;
+  text-transform: uppercase; color: var(--ink); margin-right: auto; text-decoration: none;
+}
+.nav-btn {
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 2px;
+  background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
+}
+.nav-btn:hover { background: var(--cream-mid); color: var(--ink); }
+.nav-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--ink); color: var(--white);
+  font-size: 11px; font-weight: 600; letter-spacing: 0;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; flex-shrink: 0;
+  border: none; padding: 0; cursor: pointer;
+  -webkit-appearance: none;
+}
+.nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
+/* ═════════ v1.5.0 — ported from T-Shirt configurator ═════════ */
+.preview-panel { flex: 1; }
+.config-panel { flex: 1; }
+.config-body { padding: 20px 20px 28px; display: flex; flex-direction: column; gap: 12px; background: var(--white); flex: 1 0 auto; }
+#panel-measurements { padding: 0 !important; flex: 1 1 0; min-height: 0; overflow: hidden; background: var(--white); }
 /* ── 3D preview ── */
-#stage-3d { position: absolute; inset: 0; display: none; }
+#stage-3d { position: absolute; inset: 0; display: none; background: #e3e3e3; }
 #stage-3d canvas { display: block; width: 100% !important; height: 100% !important; outline: none; cursor: grab; touch-action: none; }
 #stage-3d canvas:active { cursor: grabbing; }
 .s3d-loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; font-size: 10px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-light); background: #fff; z-index: 5; transition: opacity 0.4s; }
@@ -47,45 +400,6 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 .s3d-part-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
 .s3d-part-btn.active::before { background: currentColor; }
 .s3d-model-name { font-size: 9px; color: var(--ink-faint); letter-spacing: 0.02em; padding: 4px 2px 0; max-width: 150px; word-break: break-all; }
-.zoom-btns { position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 4px; z-index: 50; }
-.zoom-btn { width: 28px; height: 28px; border: 1px solid var(--border-mid); background: var(--white); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; color: var(--ink-mid); }
-.view-bar { flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 12px 20px; gap: 0; border-top: 1px solid var(--border); }
-.view-bar-btn { font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; padding: 7px 28px; border: 1px solid var(--border-mid); background: transparent; color: var(--ink-light); cursor: pointer; transition: all 0.2s; }
-.view-bar-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
-.view-bar-btn:first-child { border-radius: 2px 0 0 2px; border-right: none; }
-.view-bar-btn:last-child  { border-radius: 0 2px 2px 0; }
-
-/* ── Measurements active — swap preview/config ratio ── */
-.app.measurements-active .preview-panel { flex: 2; background: var(--white); }
-.app.measurements-active .config-panel  { flex: 3; }
-.app.measurements-active #meas-avatar-panel { display: flex !important; }
-
-/* ── CONFIG PANEL ── */
-.config-panel { flex: 1; background: var(--white); overflow-y: auto; min-height: 0; position: relative; display: flex; flex-direction: column; transition: flex 0.35s cubic-bezier(0.4,0,0.2,1); }
-.tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 28px; position: sticky; top: 0; background: var(--white); z-index: 20; }
-.tab { font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; padding: 18px 0; margin-right: 24px; border: none; background: none; color: var(--ink-faint); cursor: pointer; border-bottom: 1.5px solid transparent; margin-bottom: -1px; transition: color 0.2s, border-color 0.2s; white-space: nowrap; }
-.tab.active { color: var(--ink); border-bottom-color: var(--ink); }
-.config-body { padding: 20px 20px 28px; display: flex; flex-direction: column; gap: 12px; background: var(--white); flex: 1 0 auto; }
-#panel-measurements { padding: 0 !important; flex: 1 1 0; min-height: 0; overflow: hidden; background: var(--white); }
-
-/* Measure-from switch */
-.meas-source-switch { display:inline-flex; border:1px solid var(--border-mid); border-radius:2px; padding:3px; background:var(--white); }
-.meas-source-btn { font-family:'Jost',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; padding:9px 14px; border:none; border-radius:1px; background:transparent; color:var(--ink-mid); cursor:pointer; transition:background 0.15s,color 0.15s; }
-.meas-source-btn[aria-pressed="true"] { background:var(--ink); color:var(--white); }
-
-/* Loading measurements notification */
-#meas-loading-notif {
-  display: none; align-items: center; gap: 8px; margin-bottom: 16px;
-  padding: 8px 12px; border-radius: 2px;
-  background: rgba(109,70,180,0.08); border: 1px solid rgba(109,70,180,0.22);
-  font-size: 11px; font-weight: 500; letter-spacing: 0.06em; color: #6d46b4;
-}
-#meas-loading-notif.visible { display: flex; }
-.meas-notif-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  border: 1.5px solid rgba(109,70,180,0.35); border-top-color: #6d46b4;
-  animation: spin 0.75s linear infinite; flex-shrink: 0;
-}
 /* ── Framed section cards ── */
 .section { position: relative; display: flex; align-items: flex-start; gap: 16px; padding: 20px 22px; margin: 0; background: var(--white); border: 1px solid var(--border); border-radius: 12px; transition: border-color 0.2s; }
 .section:hover { border-color: var(--border-mid); }
@@ -110,41 +424,15 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 @media (max-width: 520px) { .footer-price-amount { font-size: 22px; } .footer-next { padding: 15px 18px; min-width: 0; } }
 .sub-label { font-size: 11px; color: var(--ink-light); margin-bottom: 10px; letter-spacing: 0.02em; }
 
+.section:last-child { border-bottom: 1px solid var(--border); }
 /* Pills */
-.pill-group { display: flex; flex-wrap: wrap; gap: 8px; }
-
-/* ── Icon cards ── */
-.icon-card-group { display: flex; flex-wrap: wrap; gap: 10px; }
-.icon-card {
-  position: relative; display: flex; flex-direction: column; align-items: center;
-  gap: 10px; padding: 14px 12px 12px; min-width: 100px; max-width: 120px;
-  background: var(--white); border: 1.5px solid var(--border-mid); border-radius: 4px;
-  cursor: pointer; transition: border-color 0.15s, background 0.15s;
-  font-family: 'Jost', sans-serif;
-}
-.icon-card:hover { background: var(--cream-mid); }
-.icon-card.selected { border-color: var(--ink); background: var(--white); }
-.icon-card.selected::after {
-  content: '✓'; position: absolute; top: 7px; right: 8px;
-  width: 18px; height: 18px; background: var(--ink); color: var(--white);
-  border-radius: 50%; font-size: 10px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center; line-height: 18px; text-align: center;
-}
-.icon-card img { width: 72px; height: 72px; object-fit: contain; }
-.icon-card-label { font-size: 10px; font-weight: 500; color: var(--ink); text-align: center; line-height: 1.4; letter-spacing: 0.02em; }
-.icon-card.disabled { opacity: 0.45; cursor: default; pointer-events: none; }
-.icon-card-soon { font-size: 9px; color: var(--ink-light); margin-top: -4px; }
 .pill { font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 500; padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 50px; background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s; }
 .pill:hover { border-color: var(--ink); color: var(--ink); }
 .pill.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
-.pill-extra-price, .icon-card-extra-price { color: var(--ink-faint); font-weight: 400; margin-left: 6px; }
-.pill.selected .pill-extra-price, .icon-card.selected .icon-card-extra-price { color: rgba(250,250,248,0.6); }
-
-/* Fabric grid */
 /* Materials: icon sits beside the label; banner, search and fabric cards span the full card width */
 #panel-materials .section { display: block; }
 #panel-materials .section-icon { position: absolute; top: 20px; left: 22px; }
-#panel-materials .section-label { padding-left: 56px; min-height: 40px; margin: 0 0 16px; }
+#panel-materials .section-label { margin: 0 0 16px; }
 
 /* Narrow panel: drop icon tiles and tighten spacing */
 .config-panel { container-type: inline-size; }
@@ -223,39 +511,157 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 .comp-part-btn { font-family: 'Jost', sans-serif; font-size: 13px; font-weight: 400; letter-spacing: 0.02em; padding: 14px 24px 14px 20px; border: 1px solid var(--border); border-radius: 100px; background: var(--white); color: var(--ink); cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 12px; }
 .comp-part-btn:hover { border-color: var(--ink); color: var(--ink); }
 .comp-part-btn.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
-.comp-hint { font-size: 11px; color: var(--ink-light); letter-spacing: 0.03em; margin-bottom: 12px; line-height: 1.5; }
-.swatch { width: 100%; aspect-ratio: 1 / 1; border-radius: 2px; flex-shrink: 0; }
+.pill-extra-price, .icon-card-extra-price { color: var(--ink-faint); font-weight: 400; margin-left: 6px; }
+.pill.selected .pill-extra-price, .icon-card.selected .icon-card-extra-price { color: rgba(250,250,248,0.6); }
+.fabric-card .fc-body { align-items: stretch; text-align: left; }
+
+/* ═════════ v1.5.8 — brand styling: turquoise / purple / grey ═════════ */
+:root { --tt-turq: #4dbfab; --tt-purple: #4a164f; --tt-grey: #e3e3e3; }
+
+/* Preview panel: grey from top to bottom */
+.preview-panel, .preview-panel .avatar-stage, .preview-panel .stage-viewport, #stage-3d { background: var(--tt-grey) !important; }
+.preview-panel .view-bar { background: transparent !important; border-top: none !important; padding: 14px 20px 20px; }
+.preview-panel .view-toggle { padding: 18px 20px 6px; }
+
+/* Technical / 3D View and Front / Back: pill segmented control */
+.view-toggle, .view-bar { gap: 0; }
+.view-toggle > .view-btn:first-child, .view-bar > .view-bar-btn:first-child { margin-left: 0; }
+.view-toggle, .view-bar { --seg-pad: 4px; }
+.view-toggle { justify-content: center; }
+.view-toggle::before, .view-bar::before { content: none; }
+.view-btn, .view-bar-btn {
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+  padding: 12px 34px; border: none !important; border-radius: 999px !important; background: transparent; color: #6E6C68;
+  cursor: pointer; transition: background 0.2s, color 0.2s;
+}
+.view-btn.active, .view-bar-btn.active { background: var(--tt-purple) !important; color: #fff !important; }
+.view-btn:not(.active):hover, .view-bar-btn:not(.active):hover { color: var(--tt-purple); }
+.seg-wrap { display: inline-flex; padding: 4px; background: #fff; border: 1px solid rgba(26,25,22,0.08); border-radius: 999px; box-shadow: 0 6px 18px rgba(26,25,22,0.08); }
+
+/* Section tabs: centred, equal width, bar underneath (turquoise = active) */
+.tabs { display: flex !important; gap: 10px; padding: 0 20px !important; border-bottom: 1px solid var(--border); }
+.tab {
+  flex: 1 1 0; min-width: 0; margin: 0 !important; padding: 20px 4px 18px !important; position: relative;
+  text-align: center; white-space: normal !important; line-height: 1.35; font-size: 10.5px !important; letter-spacing: 0.12em !important;
+  border-bottom: none !important; color: #B5B3AE;
+}
+.tab::after { content: ''; position: absolute; left: 0; right: 0; bottom: 8px; height: 3px; border-radius: 3px; background: var(--tt-grey); transition: background 0.25s; }
+.tab.active { color: var(--ink) !important; font-weight: 600; }
+.tab.active::after { background: var(--tt-turq); }
+.tab:not(.active):hover { color: var(--ink-mid); }
+
+/* Option buttons: rounded rectangles, purple when selected with a check */
+.pill-group { gap: 10px; }
+.pill {
+  font-family: 'Jost', sans-serif; font-size: 13px; font-weight: 500; letter-spacing: 0.01em;
+  padding: 13px 22px; border-radius: 8px !important; background: #fff; color: var(--ink);
+  border: 1px solid rgba(26,25,22,0.16); display: inline-flex; align-items: center; gap: 8px;
+}
+.pill:hover { border-color: var(--tt-purple); color: var(--tt-purple); }
+.pill.selected { background: var(--tt-purple) !important; border-color: var(--tt-purple) !important; color: #fff !important; font-weight: 600; }
+.pill.selected .pill-extra-price { color: rgba(255,255,255,0.65); }
+/* "Coming soon" (unavailable) choice: soft grey */
+.section--inactive .pill-group { opacity: 1 !important; }
+.pill[disabled].selected { background: var(--tt-grey) !important; border-color: var(--tt-grey) !important; color: #fff !important; }
+
+/* v1.5.9 — 3D/drawing fills the whole preview; buttons float over it */
+.preview-panel { position: relative; }
+.preview-panel .view-toggle { position: absolute; top: 0; left: 0; right: 0; z-index: 60; pointer-events: none; padding: 18px 20px 0 !important; }
+.preview-panel .view-bar { position: absolute; bottom: 0; left: 0; right: 0; z-index: 60; pointer-events: none; padding: 0 20px 22px !important; }
+.preview-panel .seg-wrap { pointer-events: auto; }
+.preview-panel .avatar-stage { flex: 1 1 auto; height: 100%; }
+.zoom-controls, .zoom-btns { top: 80px !important; }
+/* Body-part test panel: hidden (add ?debug to the page address to show it) */
+body:not(.tt-debug) #s3d-parts { display: none !important; }
+/* Next-step button in the same style as the toggles */
+.footer-next { background: var(--tt-purple) !important; border-radius: 999px !important; letter-spacing: 0.16em; }
+.footer-next:hover { opacity: 0.9; }
+
+/* v1.5.9 — quieter, more refined type scale */
+.view-btn, .view-bar-btn { font-size: 9.5px !important; letter-spacing: 0.2em !important; padding: 10px 28px !important; font-weight: 500 !important; }
+.seg-wrap { padding: 3px !important; }
+.tab { font-size: 9.5px !important; letter-spacing: 0.16em !important; font-weight: 500 !important; }
+.tab.active { font-weight: 600 !important; }
+.section-label { font-size: 10px !important; letter-spacing: 0.2em !important; }
+.pill { font-size: 12px !important; padding: 11px 18px !important; font-weight: 400 !important; }
+.pill.selected { font-weight: 500 !important; }
+.footer-next { font-size: 10.5px !important; letter-spacing: 0.2em !important; font-weight: 500 !important; padding: 15px 26px !important; }
+.footer-price-label { font-size: 8.5px !important; letter-spacing: 0.22em !important; }
+.footer-price-amount { font-size: 24px !important; font-weight: 500 !important; }
+
+/* v1.6.0 — "not in 3D yet" note, info-card style, just above Front / Back */
+.s3d-note { position: absolute; left: 50%; bottom: 84px; transform: translateX(-50%); z-index: 6; width: max-content; max-width: min(86%, 560px);
+  display: flex; align-items: center; gap: 12px; padding: 12px 18px 12px 12px; pointer-events: none;
+  background: #F3F8F6; border: 1px solid #D6EBE5; border-radius: 12px; box-shadow: 0 4px 14px rgba(26,25,22,0.05);
+  font-size: 12px; line-height: 1.45; letter-spacing: 0.01em; color: #6E6C68; }
+.s3d-note-ic { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--tt-turq); color: var(--tt-turq);
+  display: flex; align-items: center; justify-content: center; font-family: Georgia, serif; font-style: italic; font-size: 13px; font-weight: 600; }
+
+/* v1.6.2 — Materials / Measurements / Summary in the same style as Design */
+/* Materials */
+.comp-part-btn { border-radius: 8px !important; padding: 11px 18px 11px 14px !important; font-size: 12px !important; border: 1px solid rgba(26,25,22,0.16) !important; background: #fff !important; }
+.comp-part-btn:hover { border-color: var(--tt-purple) !important; color: var(--tt-purple) !important; }
+.comp-part-btn.selected { background: var(--tt-purple) !important; border-color: var(--tt-purple) !important; color: #fff !important; }
+.fabric-card { border-radius: 10px !important; }
+.fabric-card:hover { border-color: rgba(74,22,79,0.45) !important; }
+.fabric-card.selected { border-color: var(--tt-purple) !important; box-shadow: inset 0 0 0 1px var(--tt-purple) !important; }
+.fc-check { background: var(--tt-purple) !important; color: #fff !important; }
+.fabric-search { border-radius: 8px !important; }
+.fabric-search:focus { border-color: var(--tt-purple) !important; }
+.comp-hint { font-size: 11.5px !important; }
 
 /* Measurements */
-.measure-grid { display: flex; flex-direction: column; gap: 10px; }
-.measure-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.measure-row label { font-size: 12px; font-weight: 500; color: var(--ink-mid); min-width: 110px; letter-spacing: 0.02em; }
-.measure-input-wrap { display: flex; align-items: center; gap: 6px; }
-.measure-input { width: 80px; padding: 7px 10px; font-family: 'Jost', sans-serif; font-size: 13px; border: 1px solid var(--border-mid); border-radius: 2px; background: var(--white); color: var(--ink); text-align: right; outline: none; }
-.measure-unit { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.04em; width: 20px; }
+#meas-form-scroll { padding: 20px 20px 28px !important; display: block; }
+#meas-form { display: flex; flex-direction: column; gap: 12px; }
+#meas-form .section { margin: 0; }
+.meas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+#panel-measurements label, #meas-form label { font-size: 8.5px !important; letter-spacing: 0.16em !important; font-weight: 500 !important; color: #8A8880 !important; }
+#meas-form input, #meas-form select { border-radius: 8px !important; border: 1px solid rgba(26,25,22,0.16) !important; background: #fff !important; padding: 10px 12px !important; font-size: 12px !important; transition: border-color 0.15s; }
+#meas-form input:focus, #meas-form select:focus { outline: none; border-color: var(--tt-purple) !important; box-shadow: 0 0 0 3px rgba(74,22,79,0.08); }
+#meas-form input[readonly] { background: #F7F6F4 !important; color: #8A8880 !important; }
+#meas-avatar-panel { background: var(--tt-grey) !important; }
 
-/* Submit */
-.submit-btn { width: 100%; padding: 14px 24px; font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; background: var(--ink); color: var(--white); border: none; border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; }
-.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+/* Summary */
+#summary-rows { font-size: 12px; }
+button[onclick="handleAddToCart()"] { border-radius: 999px !important; border: 1px solid var(--tt-purple) !important; color: var(--tt-purple) !important; background: transparent !important; font-size: 10.5px !important; letter-spacing: 0.2em !important; padding: 14px 16px !important; }
+button[onclick="handleAddToCart()"]:hover { background: rgba(74,22,79,0.06) !important; }
 
-/* ── Nav ── */
-.nav { height: 52px; background: var(--white); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 28px; gap: 16px; position: sticky; top: 0; z-index: 100; }
-.nav-brand { font-size: 12px; font-weight: 600; letter-spacing: 0.20em; text-transform: uppercase; color: var(--ink); margin-right: auto; text-decoration: none; }
-.nav-btn { font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.10em; text-transform: uppercase; padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 2px; background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
-.nav-btn:hover { background: var(--cream-mid); color: var(--ink); }
-.nav-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: var(--white); font-size: 11px; font-weight: 600; letter-spacing: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; border: none; padding: 0; cursor: pointer; -webkit-appearance: none; }
-.nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
-@keyframes spin{to{transform:rotate(360deg)}}
+/* v1.6.3 — selected fabric card = purple, like the design option buttons; no check badge */
+.fc-check { display: none !important; }
+.fabric-card.selected { background: var(--tt-purple) !important; border-color: var(--tt-purple) !important; box-shadow: none !important; }
+.fabric-card.selected .fname, .fabric-card.selected .fcode, .fabric-card.selected .fgsm, .fabric-card.selected .fcomp { color: #fff !important; }
+.fabric-card.selected .fcode, .fabric-card.selected .fgsm, .fabric-card.selected .fcomp { opacity: 0.72; }
 
-/* ── Options without live images yet — shown but inactive ── */
-.section--inactive .pill-group { opacity: 0.38; pointer-events: none; }
-.section--inactive .pill[disabled] { cursor: not-allowed; }
-.section--inactive .section-label::after {
-  content: 'Coming soon'; margin-left: 10px; padding: 2px 7px;
-  font-size: 8px; font-weight: 600; letter-spacing: 0.14em;
-  border: 1px solid var(--border); border-radius: 2px; color: var(--ink-faint);
-  vertical-align: 1px;
-}
+/* v1.6.4 — quote banner: solid optic black, quote on one line */
+.fabric-hero { background: #000 !important; background-image: none !important; min-height: 0 !important; padding: 26px 28px 22px !important; }
+.fabric-hero::before, .fabric-hero::after { content: none !important; display: none !important; }
+.fabric-hero-quote { font-size: clamp(15px, 2.1vw, 22px) !important; white-space: nowrap; line-height: 1.2 !important; }
+.fabric-hero-attr { margin-top: 10px !important; }
+
+/* v1.6.6 — iPad/iPhone Safari: 100vh includes the browser bars, which pushed the bottom
+   (Front/Back, price, next button) off screen. Use the dynamic viewport height instead. */
+html { height: 100%; }
+body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
+.app { min-height: 0; }
+.preview-panel .view-bar { padding-bottom: max(22px, env(safe-area-inset-bottom)) !important; }
+.config-footer { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+
+/* v1.6.9 — Request My Garment info "i" + mint tooltip */
+.config-footer { position: sticky; }
+.req-info { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; margin-left: -2px; border-radius: 50%;
+  border: 1.2px solid rgba(255,255,255,0.75); color: #fff; font-family: Georgia, serif; font-style: italic; font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0; text-transform: none; cursor: help; flex-shrink: 0; transition: background 0.15s, border-color 0.15s; }
+.req-info:hover, .req-info:focus-visible { background: var(--tt-turq); border-color: var(--tt-turq); outline: none; }
+.req-tip { position: absolute; right: 20px; bottom: calc(100% + 10px); width: min(360px, calc(100% - 40px)); z-index: 80;
+  display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px 14px 12px;
+  background: #F3F8F6; border: 1px solid #D6EBE5; border-radius: 12px; box-shadow: 0 10px 28px rgba(26,25,22,0.12);
+  font-size: 12px; line-height: 1.55; color: #5E5C58; letter-spacing: 0.01em;
+  opacity: 0; transform: translateY(6px); pointer-events: none; transition: opacity 0.18s, transform 0.18s; }
+.req-tip.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.req-tip::after { content: ''; position: absolute; right: 95px; bottom: -6px; width: 10px; height: 10px; background: #F3F8F6;
+  border-right: 1px solid #D6EBE5; border-bottom: 1px solid #D6EBE5; transform: rotate(45deg); }
+.req-tip-ic { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--tt-turq); color: var(--tt-turq);
+  display: flex; align-items: center; justify-content: center; font-family: Georgia, serif; font-style: italic; font-size: 12px; font-weight: 600; margin-top: 1px; }
 
 /* Discount: old price crossed out, new price + tag */
 .price-display-amount.has-discount { display: flex; align-items: baseline; flex-wrap: nowrap; gap: 8px; white-space: nowrap; }
@@ -263,9 +669,26 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 .price-old { font-size: 0.55em; font-weight: 400; color: var(--ink-light); text-decoration: line-through; text-decoration-thickness: 1px; }
 .price-new { color: #4a164f; }
 .price-tag { align-self: center; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: #fff; background: #4a164f; padding: 4px 7px; border-radius: 4px; line-height: 1; }
+
+/* ── T-shirt only ── */
+.section--inactive .pill[disabled].selected { background: #fff !important; border-color: var(--border-mid) !important; color: var(--ink-light) !important; font-weight: 500; opacity: 1 !important; }
+/* Options without live images yet — shown but inactive */
+.section--inactive .pill[disabled] { cursor: not-allowed; }
+.section--inactive .section-label::after {
+  content: 'Coming soon'; margin-left: 10px; padding: 2px 7px;
+  font-size: 8px; font-weight: 600; letter-spacing: 0.14em;
+  border: 1px solid var(--border); border-radius: 999px; color: var(--ink-faint);
+}
+/* Measure from: same pill switch as the view toggles */
+.meas-source-switch { display: inline-flex; padding: 3px; background: #fff; border: 1px solid rgba(26,25,22,0.12); border-radius: 999px; }
+.meas-source-btn { font-family: 'Jost', sans-serif; font-size: 9.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; padding: 9px 18px; border: none; border-radius: 999px; background: transparent; color: var(--ink-mid); cursor: pointer; transition: background 0.15s, color 0.15s; }
+.meas-source-btn:not([aria-pressed="true"]):hover { color: var(--tt-purple); }
+.meas-source-btn[aria-pressed="true"] { background: var(--tt-purple); color: #fff; }
+#meas-body-fields, #meas-garment-fields:not([style*="none"]) { display: flex; flex-direction: column; gap: 12px; }
 </style>
 </head>
 <body>
+<script>if (/[?&]debug\b/.test(location.search)) document.body.classList.add('tt-debug');</script>
 
 <nav class="nav" style="position:relative;">
  <a class="nav-brand" href="https://tailortech.toom.design/">
@@ -301,19 +724,22 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
   <!-- ══ PREVIEW PANEL ══ -->
   <div class="preview-panel">
     <div class="view-toggle">
-      <button class="view-btn active" onclick="setView('technical',this)">Technical</button>
-      <button class="view-btn" onclick="setView('3d',this)">3D</button>
+      <div class="seg-wrap">
+        <button class="view-btn active" id="btn-technical" onclick="setView('technical',this)">Technical</button>
+      <button class="view-btn" id="btn-3d" onclick="setView('3d',this)">3D View</button>
+        </div>
     </div>
     <div class="avatar-stage">
-      <div class="zoom-btns">
-        <button class="zoom-btn" onclick="manualZoom(0.25)" title="Zoom in">+</button>
-        <button class="zoom-btn" onclick="manualZoom(-0.25)" title="Zoom out">−</button>
+      <div class="zoom-controls">
+        <button class="zoom-btn" onclick="manualZoom(0.15)" title="Zoom in">+</button>
+        <button class="zoom-btn" onclick="manualZoom(-0.15)" title="Zoom out">−</button>
         <button class="zoom-btn" onclick="resetZoom()" title="Reset">↻</button>
       </div>
-      <div id="stage-viewport" style="position:relative;width:100%;height:100%;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+      <div class="stage-viewport" id="stage-viewport">
         <div class="layer-stack" id="layer-stack">
-          <div id="loading-overlay" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20;background:#fff;transition:opacity 0.5s;">
-            <div style="width:22px;height:22px;border:2px solid #C0BDB8;border-top-color:#1A1916;border-radius:50%;animation:spin 0.7s linear infinite;"></div>
+          <div class="loading-overlay" id="loading-overlay">
+            <div class="spinner"></div>
+            <span>Loading</span>
           </div>
           <div class="layer"><img id="img-base"     src="" alt=""></div>
           <div class="layer"><img id="img-sleeve"   src="" alt=""></div>
@@ -337,8 +763,10 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
       </div>
     </div>
     <div class="view-bar">
-      <button class="view-bar-btn active" onclick="setFrontBack('front',this)">Front</button>
-      <button class="view-bar-btn" onclick="setFrontBack('back',this)">Back</button>
+      <div class="seg-wrap">
+        <button class="view-bar-btn active" id="btn-front" onclick="setFrontBack('front',this)">Front</button>
+        <button class="view-bar-btn" id="btn-back" onclick="setFrontBack('back',this)">Back</button>
+        </div>
     </div>
 
     <!-- MEASUREMENT AVATAR — shown instead of the t-shirt when Measurements tab is active -->
@@ -379,14 +807,6 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
         </div>
       </div>
 
-      <div class="section section--inactive" aria-disabled="true">
-        <div class="section-label">Length</div>
-        <div class="pill-group">
-          <button disabled class="pill selected" onclick="selectPillInGroup(this)">Regular</button>
-          <button disabled class="pill"          onclick="selectPillInGroup(this)">Cropped</button>
-          <button disabled class="pill"          onclick="selectPillInGroup(this)">Longline</button>
-        </div>
-      </div>
 
       <div class="section">
         <div class="section-label">Neckline</div>
@@ -414,47 +834,10 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
         </div>
       </div>
 
-      <div class="section section--inactive" aria-disabled="true">
-        <div class="section-label">Cuff Style</div>
-        <div class="pill-group">
-          <button disabled class="pill selected" onclick="selectPillInGroup(this)">Plain</button>
-          <button disabled class="pill"          onclick="selectPillInGroup(this)">Ribbed</button>
-        </div>
-      </div>
 
-      <div class="section section--inactive" aria-disabled="true">
-        <div class="section-label">Chest Pocket</div>
-        <div class="pill-group">
-          <button disabled class="pill selected" onclick="selectPillInGroup(this)">None</button>
-          <button disabled class="pill"          onclick="selectPillInGroup(this)">Patch Pocket</button>
-          <button disabled class="pill"          onclick="selectPillInGroup(this)">Welt Pocket</button>
-        </div>
-      </div>
 
-      <div class="section section--inactive" aria-disabled="true">
-        <div class="section-label">Hem Finish</div>
-        <div class="pill-group">
-          <button disabled class="pill selected" onclick="selectPillInGroup(this)">Straight Hem</button>
-          <button disabled class="pill"          onclick="selectPillInGroup(this)">Curved Hem</button>
-          <button disabled class="pill"          onclick="selectPillInGroup(this)">Ribbed Hem</button>
-        </div>
-      </div>
 
-      <div class="section section--inactive" aria-disabled="true">
-        <div class="section-label">Neck Rib</div>
-        <div class="pill-group">
-          <button disabled class="pill selected" onclick="selectPillInGroup(this)">Self Fabric</button>
-          <button disabled class="pill"          onclick="selectPillInGroup(this)">Contrast Rib</button>
-        </div>
-      </div>
 
-      <div class="section section--inactive" aria-disabled="true" >
-        <div class="section-label">Side Slits</div>
-        <div class="pill-group">
-          <button disabled class="pill selected" onclick="selectSideSlit(this, false)">None</button>
-          <button disabled class="pill"          onclick="selectSideSlit(this, true)">Side Slits</button>
-        </div>
-      </div>
 
 
     </div><!-- /panel-design -->
@@ -465,7 +848,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
       <div class="section">
         <div class="section-label">Main Fabric</div>
         <div class="fabric-hero">
-          <blockquote class="fabric-hero-quote">Any color you want,<br>as long as it&rsquo;s black.</blockquote>
+          <blockquote class="fabric-hero-quote">Any color you want, as long as it&rsquo;s black.</blockquote>
           <div class="fabric-hero-attr">&mdash; Henry Ford, and, for now, us too.</div>
         </div>
         <div class="fabric-search-row">
@@ -474,7 +857,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
         </div>
         <div class="fabric-grid" id="fabric-main-grid">
           <div class="fabric-loading">
-            <div style="width:18px;height:18px;border:2px solid var(--ink-faint);border-top-color:var(--ink);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;"></div>
+            <div class="spinner"></div>
             <span>Loading fabrics…</span>
           </div>
         </div>
@@ -494,7 +877,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
           </div>
           <div class="fabric-grid" id="fabric-comp-grid">
             <div class="fabric-loading">
-              <div style="width:18px;height:18px;border:2px solid var(--ink-faint);border-top-color:var(--ink);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;"></div>
+              <div class="spinner"></div>
               <span>Loading fabrics…</span>
             </div>
           </div>
@@ -505,40 +888,42 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
     </div><!-- /panel-materials -->
 
     <!-- MEASUREMENTS PANEL -->
-    <div class="config-body" id="panel-measurements" style="display:none;">
+    <div class="config-body" id="panel-measurements" style="display:none;padding:0;">
 
-      <div style="display:flex;flex:1;min-height:0;overflow:hidden;">
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0;overflow:hidden;height:100%;">
 
-        <div style="flex:1;overflow-y:auto;padding:28px 28px 48px;display:flex;flex-direction:column;">
+        <div style="flex:1;overflow-y:auto;padding:28px 28px 16px;" id="meas-form-scroll">
 
-          <!-- Version selector — shown only when saved records exist -->
-          <div id="meas-version-row" style="display:none;margin-bottom:20px;">
-            <div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:6px;">Saved Measurements</div>
-            <select id="meas-version-select" onchange="measLoadVersion(this.value)" style="width:100%;padding:8px 10px;font-family:'Jost',sans-serif;font-size:12px;border:1px solid var(--border-mid);border-radius:2px;color:var(--ink);background:var(--white);outline:none;cursor:pointer;"></select>
-          </div>
-
-          <form id="meas-form" onsubmit="return false;">
+          <form id="meas-form" onsubmit="return false;" novalidate>
             <input type="hidden" id="mf-email" name="email">
             <input type="hidden" id="mf-personId" name="personId">
 
-            <!-- Loading measurements notification -->
-            <div id="meas-loading-notif">
-              <span class="meas-notif-dot"></span>
-              Loading measurements…
-            </div>
+            <div class="section meas-card">
+              <div class="section-label">Your Details</div>
 
-            <!-- Measure from: body or a garment that fits -->
-            <div style="margin-bottom:24px;">
-              <div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:8px;">Measure from</div>
-              <div class="meas-source-switch" role="group" aria-label="Measure from">
-                <button type="button" class="meas-source-btn" data-source="body" aria-pressed="true" onclick="measSetSource('body')">My body</button>
-                <button type="button" class="meas-source-btn" data-source="garment" aria-pressed="false" onclick="measSetSource('garment')">A garment that fits me</button>
+              <div id="meas-version-row" style="display:none;margin-bottom:20px;">
+            <label style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:5px;display:block;">Saved Version</label>
+            <select id="meas-version-select" onchange="measLoadVersion(this.value)" style="width:100%;padding:8px 10px;font-family:'Jost',sans-serif;font-size:12px;border:1px solid var(--border-mid);border-radius:2px;color:var(--ink);background:var(--white);outline:none;cursor:pointer;"></select>
+          </div>
+
+              <!-- Loading measurements notification -->
+              <div id="meas-loading-notif">
+                <span class="meas-notif-dot"></span>
+                Loading measurements…
               </div>
-              <p id="meas-source-hint" style="font-size:11px;color:var(--ink-light);margin-top:8px;line-height:1.5;"></p>
-            </div>
 
-            <div id="meas-body-fields">
-            <div style="margin-bottom:20px;">
+              <!-- Measure from: body or a garment that fits -->
+              <div style="margin-bottom:4px;">
+                <label style="display:block;margin-bottom:8px;">Measure from</label>
+                <div class="meas-source-switch" role="group" aria-label="Measure from">
+                  <button type="button" class="meas-source-btn" data-source="body" aria-pressed="true" onclick="measSetSource('body')">My body</button>
+                  <button type="button" class="meas-source-btn" data-source="garment" aria-pressed="false" onclick="measSetSource('garment')">A garment that fits me</button>
+                </div>
+                <p id="meas-source-hint" style="font-size:11px;color:var(--ink-light);margin-top:10px;line-height:1.5;"></p>
+              </div>
+
+              <div id="meas-body-height" style="margin-top:16px;">
+              <div style="margin-bottom:20px;">
               <div style="display:flex;flex-direction:column;max-width:200px;">
                 <label style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:5px;">Height</label>
                 <div style="position:relative;">
@@ -547,32 +932,31 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
                 </div>
               </div>
             </div>
-
-            <div style="font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-light);padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px;display:flex;align-items:center;gap:7px;">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4v10l-9 4-9-4V7z"/></svg>
-              Volumetric Measurements
+              </div>
             </div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:20px;" id="meas-grid-vol"></div>
 
-            <div style="font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-light);padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px;display:flex;align-items:center;gap:7px;">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20M2 7l2 5-2 5M22 7l-2 5 2 5"/></svg>
-              Linear Measurements
-            </div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;" id="meas-grid-lin"></div>
+            <div id="meas-body-fields">
+              <div class="section meas-card">
+                <div class="section-label">Volumetric Measurements</div>
+                <div class="meas-grid" id="meas-grid-vol"></div>
+              </div>
+              <div class="section meas-card">
+                <div class="section-label">Linear Measurements</div>
+                <div class="meas-grid" id="meas-grid-lin"></div>
+              </div>
             </div><!-- /meas-body-fields -->
 
             <div id="meas-garment-fields" style="display:none;">
-              <div style="font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-light);padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px;display:flex;align-items:center;gap:7px;">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3l-5 4 3 4 2-1v11h8V10l2 1 3-4-5-4c-.5 1.5-2 2.5-4 2.5S8.5 4.5 8 3z"/></svg>
-                T-shirt Measurements
+              <div class="section meas-card">
+                <div class="section-label">T-shirt Measurements</div>
+                <div class="meas-grid" id="meas-grid-garment"></div>
               </div>
-              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;" id="meas-grid-garment"></div>
             </div>
 
           </form>
 
           <!-- Save / Continue button (driven by footer) -->
-          <div style="margin-top:10px;padding-top:20px;border-top:1px solid var(--border);display:none;justify-content:flex-end;padding-bottom:8px;">
+          <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border);display:none;justify-content:flex-end;padding-bottom:8px;">
             <button type="button" onclick="measPrimaryAction(event)" id="meas-save-btn" style="font-family:'Jost',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:14px 24px;background:var(--ink);color:var(--white);border:none;border-radius:3px;cursor:pointer;display:inline-flex;align-items:center;gap:10px;">
               <span id="meas-save-lbl">Continue to Summary</span>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="5,2 10,7 5,12"/></svg>
@@ -1084,15 +1468,15 @@ function collectConfig() {
     // ── Design ────────────────────────────────────────────────────
     'GENDER':            sectionPill('Gender'),
     'FIT':                sectionPill('Fit'),
-    'LENGTH':             sectionPill('Length'),
+    'LENGTH':             'Regular',   // not offered — standard construction
     'NECKLINE':           sectionPill('Neckline'),
     'SLEEVE LENGTH':      sectionPill('Sleeve Length'),
     'SLEEVE STYLE':       sectionPill('Sleeve Style'),
-    'CUFF STYLE':         sectionPill('Cuff Style'),
-    'CHEST POCKET':       sectionPill('Chest Pocket'),
-    'HEM/FINISH':         sectionPill('Hem Finish'),
-    'NECK RIB':           sectionPill('Neck Rib'),
-    'SIDE DETAIL':        sectionPill('Side Slits'),
+    'CUFF STYLE':         'Plain',   // not offered — standard construction
+    'CHEST POCKET':       'None',   // not offered — standard construction
+    'HEM/FINISH':         'Straight Hem',   // not offered — standard construction
+    'NECK RIB':           'Self Fabric',   // not offered — standard construction
+    'SIDE DETAIL':        'None',   // not offered — standard construction
 
     // ── Materials ─────────────────────────────────────────────────
     'MAIN FABRIC':       selCard ? (selCard.dataset.name || selCard.querySelector('.fname').textContent.trim()) : '',
@@ -1221,15 +1605,9 @@ function buildSummary() {
       rows: [
         ['Garment',        'T-Shirt'],
         ['Fit',            cfg['FIT']],
-        ['Length',         cfg['LENGTH']],
         ['Neckline',       cfg['NECKLINE']],
         ['Sleeve Length',  cfg['SLEEVE LENGTH']],
         ['Sleeve Style',   cfg['SLEEVE STYLE']],
-        ['Cuff Style',     cfg['CUFF STYLE']],
-        ['Chest Pocket',   cfg['CHEST POCKET']],
-        ['Hem Finish',     cfg['HEM/FINISH']],
-        ['Neck Rib',       cfg['NECK RIB']],
-        ['Side Detail',    cfg['SIDE DETAIL']],
       ]
     },
     {
@@ -1486,6 +1864,8 @@ function showFeedback(msg, color) {
     var gf = document.getElementById('meas-garment-fields');
     if (bf) bf.style.display = garment ? 'none' : '';
     if (gf) gf.style.display = garment ? '' : 'none';
+    var bh = document.getElementById('meas-body-height');
+    if (bh) bh.style.display = garment ? 'none' : '';
     var hint = document.getElementById('meas-source-hint');
     if (hint) hint.textContent = garment ? GARMENT.hint : 'Measure your body, or a T-shirt you already own that fits well.';
   }
@@ -1717,11 +2097,13 @@ function discoverSectionConfigMap() {
     });
     if (!buttonLabels.length) return;
 
-    var bestConfig = null;
+    // Pick the configuration that shares the most option names with this section's buttons
+    // (not all have to match — e.g. Style's "3-Piece Hood" lives under NECK in the sheet).
+    var bestConfig = null, bestHits = 0;
     for (var i = 0; i < configEntries.length; i++) {
       var entry = configEntries[i];
-      var allMatch = buttonLabels.every(function(bl){ return entry.values.indexOf(bl) !== -1; });
-      if (allMatch) { bestConfig = entry.name; break; }
+      var hits = buttonLabels.filter(function(bl){ return entry.values.indexOf(bl) !== -1; }).length;
+      if (hits > bestHits) { bestHits = hits; bestConfig = entry.name; }
     }
     if (bestConfig) map[lbl.textContent.trim()] = bestConfig;
   });
@@ -1735,9 +2117,18 @@ function discoverSectionConfigMap() {
 function lookupOptionPrice(configName, optionText) {
   if (!_pricing || !_pricing.configurations || !_pricing.configurations[configName]) return 0;
   var target = normalizeOptionText(optionText);
-  var match = _pricing.configurations[configName].find(function(opt){
-    return normalizeOptionText(opt.value) === target;
-  });
+  var find = function(name) {
+    return (_pricing.configurations[name] || []).find(function(opt){ return normalizeOptionText(opt.value) === target; });
+  };
+  var match = find(configName);
+  if (!match) {
+    // Not in the section's own column → look in columns no website section uses (e.g. NECK → "3-piece hood")
+    var used = Object.keys(_sectionConfigMap).map(function(k){ return _sectionConfigMap[k]; });
+    Object.keys(_pricing.configurations).some(function(name) {
+      if (used.indexOf(name) !== -1) return false;
+      match = find(name); return !!match;
+    });
+  }
   return match ? match.price : 0;
 }
 
@@ -1870,11 +2261,7 @@ function decorateSections() {
     var main = document.createElement('div');
     main.className = 'section-main';
     while (section.firstChild) main.appendChild(section.firstChild);
-    var icon = document.createElement('div');
-    icon.className = 'section-icon';
-    icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + (SECTION_ICONS[key] || '<circle cx="12" cy="12" r="3"/>') + '</svg>';
-    section.appendChild(icon);
-    section.appendChild(main);
+    section.appendChild(main);   // section icons removed
   });
 }
 
@@ -2188,7 +2575,7 @@ function captureTechPackImage() {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.2</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.4</div>
 
 
 <!-- ═══════════════ 3D PREVIEW (three.js + glTF) ═══════════════ -->
@@ -2629,7 +3016,7 @@ function buildPartButtons(fileName) {
 }
 
 function placeCamera(azimuth, distMul) {
-  const d = fitRadius * (distMul || 3.1);
+  const d = fitRadius * (distMul || 4.0);   // leaves room for the floating buttons
   camera.position.set(center.x + Math.sin(azimuth) * d, center.y + fitRadius * 0.15, center.z + Math.cos(azimuth) * d);
   controls.target.copy(center);
   controls.update();
