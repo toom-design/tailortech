@@ -645,6 +645,23 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
 .app { min-height: 0; }
 .preview-panel .view-bar { padding-bottom: max(22px, env(safe-area-inset-bottom)) !important; }
 .config-footer { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+
+/* v1.6.9 — Request My Garment info "i" + mint tooltip */
+.config-footer { position: sticky; }
+.req-info { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; margin-left: -2px; border-radius: 50%;
+  border: 1.2px solid rgba(255,255,255,0.75); color: #fff; font-family: Georgia, serif; font-style: italic; font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0; text-transform: none; cursor: help; flex-shrink: 0; transition: background 0.15s, border-color 0.15s; }
+.req-info:hover, .req-info:focus-visible { background: var(--tt-turq); border-color: var(--tt-turq); outline: none; }
+.req-tip { position: absolute; right: 20px; bottom: calc(100% + 10px); width: min(360px, calc(100% - 40px)); z-index: 80;
+  display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px 14px 12px;
+  background: #F3F8F6; border: 1px solid #D6EBE5; border-radius: 12px; box-shadow: 0 10px 28px rgba(26,25,22,0.12);
+  font-size: 12px; line-height: 1.55; color: #5E5C58; letter-spacing: 0.01em;
+  opacity: 0; transform: translateY(6px); pointer-events: none; transition: opacity 0.18s, transform 0.18s; }
+.req-tip.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.req-tip::after { content: ''; position: absolute; right: 95px; bottom: -6px; width: 10px; height: 10px; background: #F3F8F6;
+  border-right: 1px solid #D6EBE5; border-bottom: 1px solid #D6EBE5; transform: rotate(45deg); }
+.req-tip-ic { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--tt-turq); color: var(--tt-turq);
+  display: flex; align-items: center; justify-content: center; font-family: Georgia, serif; font-style: italic; font-size: 12px; font-weight: 600; margin-top: 1px; }
 </style>
 </head>
 <body>
@@ -988,8 +1005,15 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
         <div class="footer-price-label">Estimated Price</div>
         <div class="footer-price-amount price-display-amount">—</div>
       </div>
+      <div class="req-tip" id="req-tip" role="tooltip">
+        <span class="req-tip-ic">i</span>
+        <span>Ready to bring your design to life? Submit your garment request and we&rsquo;ll get in touch to discuss the next steps. No payment or commitment is required at this stage.</span>
+      </div>
       <button type="button" class="footer-next" id="footer-next" onclick="footerNext(event)">
         <span id="footer-next-lbl">Continue to Materials</span>
+        <span class="req-info" id="req-info" role="button" tabindex="0" aria-label="What does this do?" aria-describedby="req-tip"
+              onclick="event.stopPropagation(); event.preventDefault(); toggleReqTip(true);"
+              onkeydown="if(event.key==='Enter'||event.key===' '){event.stopPropagation();event.preventDefault();toggleReqTip();}">i</span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="5,12 19,12"/><polyline points="13,6 19,12 13,18"/></svg>
       </button>
     </div>
@@ -1770,14 +1794,27 @@ function updateFooter() {
   var lbl = document.getElementById('footer-next-lbl');
   if (!lbl) return;
   var id = activePanelId();
+  var ri = document.getElementById('req-info'); if (ri) ri.style.display = id === 'panel-summary' ? '' : 'none';
+  if (id !== 'panel-summary') toggleReqTip(false);
   if (id === 'panel-design')         lbl.textContent = 'Continue to Materials';
   else if (id === 'panel-materials') lbl.textContent = 'Continue to Measurements';
-  else if (id === 'panel-summary')   lbl.textContent = 'Order Now';
+  else if (id === 'panel-summary')   lbl.textContent = 'Request My Garment';
   else {
     var ml = document.getElementById('meas-save-lbl');
     lbl.textContent = ml ? ml.textContent : 'Continue to Summary';
   }
 }
+// Info "i" on Request My Garment: shows on hover, click/tap toggles it
+function toggleReqTip(force) {
+  var t = document.getElementById('req-tip'); if (!t) return;
+  var on = typeof force === 'boolean' ? force : !t.classList.contains('show');
+  t.classList.toggle('show', on);
+}
+document.addEventListener('click', function(e){ if (!e.target.closest || !e.target.closest('#req-info')) toggleReqTip(false); });
+document.addEventListener('DOMContentLoaded', function(){
+  var i = document.getElementById('req-info');
+  if (i) { i.addEventListener('mouseenter', function(){ toggleReqTip(true); }); i.addEventListener('mouseleave', function(){ toggleReqTip(false); }); }
+});
 function footerNext(e) {
   var id = activePanelId();
   if (id === 'panel-design')         goToMaterials();
@@ -2282,7 +2319,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.8</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.6.9</div>
 
 <!-- Firebase -->
 <script type="module">
