@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TailorTech — Measurements v2.10.1</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Measurements</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -143,6 +143,54 @@ button{cursor:pointer;font-family:inherit}
 #toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--white);font-size:11px;font-weight:500;letter-spacing:0.06em;padding:11px 20px;border-radius:2px;opacity:0;transition:opacity 0.25s,transform 0.25s;pointer-events:none;z-index:9999;white-space:nowrap;}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #toast.err{background:#7a2c2c}
+
+/* ════ v2.11.0 — TailorTech brand styling (same as the configurators) ════ */
+:root{ --tt-turq:#4dbfab; --tt-purple:#4a164f; --tt-grey:#e3e3e3; }
+body{background:var(--white);}
+body{height:100dvh;}
+.diag-panel{background:var(--tt-grey);border-right:none;position:relative;padding:76px 2rem 2rem;}
+.diag-img{mix-blend-mode:multiply;}
+.diag-label{bottom:26px;color:var(--ink-light);font-weight:500;letter-spacing:0.2em;}
+.gender-toggle{position:absolute;top:18px;left:0;right:0;display:flex;justify-content:center;z-index:5;}
+.seg-wrap{display:inline-flex;padding:3px;background:#fff;border:1px solid rgba(26,25,22,0.08);border-radius:999px;box-shadow:0 6px 18px rgba(26,25,22,0.08);}
+.gender-btn,.source-btn{font-family:'Jost',sans-serif;font-size:9.5px;font-weight:500;letter-spacing:0.2em;text-transform:uppercase;padding:10px 26px;border:none;border-radius:999px;background:transparent;color:var(--ink-mid);cursor:pointer;transition:background 0.15s,color 0.15s;}
+.gender-btn[aria-pressed="true"],.source-btn[aria-pressed="true"]{background:var(--tt-purple);color:#fff;}
+.gender-btn:not([aria-pressed="true"]):hover,.source-btn:not([aria-pressed="true"]):hover{color:var(--tt-purple);}
+.form-content{background:var(--white);padding:32px 28px 28px;}
+.form-heading{font-weight:300;font-size:24px;}
+.form-sub{color:var(--ink-light);font-size:11.5px;}
+/* garment filter: same buttons as the configurator options */
+.garment-btns{gap:8px;margin-bottom:20px;}
+.gbtn{font-size:12px;font-weight:400;letter-spacing:0.01em;text-transform:none;padding:10px 18px;border-radius:8px;background:#fff;border:1px solid rgba(26,25,22,0.16);color:var(--ink);}
+.gbtn:hover{background:#fff;border-color:var(--tt-purple);color:var(--tt-purple);}
+.gbtn.active-all,.gbtn.active-sub{background:var(--tt-purple);border-color:var(--tt-purple);color:#fff;font-weight:500;}
+/* framed cards */
+#mform{display:flex;flex-direction:column;gap:12px;}
+.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px 22px;}
+#meas-history.card{margin-top:12px;}
+.sec-gap{display:none !important;}
+.sec-title{font-size:10px;font-weight:600;letter-spacing:0.2em;color:var(--ink);padding:0;border:none;margin:2px 0 16px;}
+.source-row{margin-bottom:18px;}
+.source-row .seg-wrap{box-shadow:none;border-color:rgba(26,25,22,0.12);}
+.source-q{font-size:8.5px;font-weight:500;letter-spacing:0.16em;color:#8A8880;}
+.source-switch{border:none;padding:0;background:none;}
+#wrap-height,#wrap-weight{margin-top:16px;}
+.field-lbl{font-size:8.5px;font-weight:500;letter-spacing:0.16em;color:#8A8880;}
+.field input,.field select{border-radius:8px;border:1px solid rgba(26,25,22,0.16);background:#fff;padding:10px 12px;font-size:12px;}
+.field input:focus,.field select:focus{border-color:var(--tt-purple);box-shadow:0 0 0 3px rgba(74,22,79,0.08);}
+.field input[readonly]{background:#F7F6F4;}
+.grid-3{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
+.info-btn:hover{color:var(--tt-purple);}
+.info-popup{border-radius:8px;}
+#meas-loading-notif{border-radius:8px;background:#F3F8F6;border-color:rgba(77,191,171,0.45);color:#2f6f63;}
+.meas-notif-dot{border-color:rgba(77,191,171,0.35);border-top-color:var(--tt-turq);}
+/* bottom bar: purple pill buttons like the configurator footer */
+.bottom-bar{padding:14px 28px;padding-bottom:max(14px, env(safe-area-inset-bottom));box-shadow:0 -6px 20px rgba(26,25,22,0.07);}
+.btn-save{background:var(--tt-purple);border-radius:999px;font-size:10.5px;letter-spacing:0.2em;font-weight:500;padding:14px 30px;}
+.btn-save:hover{background:var(--tt-purple);opacity:0.9;}
+.btn-reset{border-radius:999px;border-color:rgba(74,22,79,0.4);color:var(--tt-purple);font-size:10.5px;letter-spacing:0.2em;padding:13px 24px;}
+.btn-reset:hover{background:rgba(74,22,79,0.06);color:var(--tt-purple);}
+#toast{border-radius:999px;}
 </style>
 </head>
 <body>
@@ -189,6 +237,12 @@ button{cursor:pointer;font-family:inherit}
 
   <!-- Diagram -->
   <div class="diag-panel" id="diag-panel">
+    <div class="gender-toggle" role="group" aria-label="Figure">
+      <div class="seg-wrap">
+        <button type="button" class="gender-btn" data-g="M" aria-pressed="true" onclick="setGender('M', true)">Male</button>
+        <button type="button" class="gender-btn" data-g="F" aria-pressed="false" onclick="setGender('F', true)">Female</button>
+      </div>
+    </div>
     <div class="diag-img-wrap">
       <img id="diag-img" class="diag-img" src="" alt="">
       <div class="diag-label" id="diag-label" style="opacity:0"></div>
@@ -213,6 +267,11 @@ button{cursor:pointer;font-family:inherit}
         <button class="gbtn" data-filter="trousers" onclick="setFilter('trousers')">Trousers</button>
       </div>
 
+      <form id="mform" onsubmit="handleSubmit(event)" novalidate>
+
+        <div class="card" id="card-details">
+        <div class="sec-title">Your Details</div>
+
       <!-- Measure from: body or garment (only for garments listed in GARMENT_MEAS) -->
       <div class="source-row" id="source-row">
         <div class="source-q">Measure from</div>
@@ -223,13 +282,6 @@ button{cursor:pointer;font-family:inherit}
         <p class="source-hint" id="source-hint"></p>
       </div>
 
-      <form id="mform" onsubmit="handleSubmit(event)" novalidate>
-
-        <!-- Personal info -->
-        <div class="sec-title">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/></svg>
-          Personal Information
-        </div>
         <div class="grid-2">
           <div class="field">
             <label class="field-lbl">Email Address</label>
@@ -267,13 +319,11 @@ button{cursor:pointer;font-family:inherit}
           </div>
         </div>
 
-        <div class="sec-gap"></div>
+        </div><!-- /card-details -->
 
         <!-- Volumetric -->
-        <div id="sec-vol">
-          <div class="sec-title">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4v10l-9 4-9-4V7z"/></svg>
-            Volumetric Measurements
+        <div id="sec-vol" class="card">
+          <div class="sec-title">Volumetric Measurements
           </div>
           <div class="grid-3" id="grid-vol"></div>
         </div>
@@ -281,19 +331,15 @@ button{cursor:pointer;font-family:inherit}
         <div class="sec-gap" id="gap-vol-lin"></div>
 
         <!-- Linear -->
-        <div id="sec-lin">
-          <div class="sec-title">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20M2 7l2 5-2 5M22 7l-2 5 2 5"/></svg>
-            Linear Measurements
+        <div id="sec-lin" class="card">
+          <div class="sec-title">Linear Measurements
           </div>
           <div class="grid-3" id="grid-lin"></div>
         </div>
 
         <!-- Garment measurements -->
-        <div id="sec-garment" style="display:none">
-          <div class="sec-title">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3l-5 4 3 4 2-1v11h8V10l2 1 3-4-5-4c-.5 1.5-2 2.5-4 2.5S8.5 4.5 8 3z"/></svg>
-            <span id="garment-sec-label">Garment Measurements</span>
+        <div id="sec-garment" class="card" style="display:none">
+          <div class="sec-title"><span id="garment-sec-label">Garment Measurements</span>
           </div>
           <div class="grid-3" id="grid-garment"></div>
         </div>
@@ -301,11 +347,8 @@ button{cursor:pointer;font-family:inherit}
       </form>
 
       <!-- Measurement History -->
-      <div id="meas-history" style="display:none;margin-top:48px;padding-bottom:24px">
-        <div style="font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-light);padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:20px;display:flex;align-items:center;gap:7px;">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          Measurement History
-        </div>
+      <div id="meas-history" class="card" style="display:none;">
+        <div class="sec-title">Measurement History</div>
         <div id="meas-history-loading" style="padding:16px 0;color:var(--ink-faint);font-size:12px;letter-spacing:0.04em;">Loading history…</div>
         <div id="meas-history-content"></div>
       </div>
@@ -334,29 +377,54 @@ var SHEETS_API = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwv
 var DASHBOARD  = 'https://tailortech.toom.design/dashboard';
 var LABELS     = {all:'All Measurements',shirt:'Shirt Measurements',tshirt:'T-shirt Measurements',hoodie:'Hoodie Measurements',suit:'Suit Measurements',trousers:'Trousers Measurements'};
 var RAW_BASE   = 'https://raw.githubusercontent.com/toom-design/measurements/main/';
-var FRONT_IMG  = RAW_BASE + 'MEASUREMENTS_front.png';
+// Body diagrams — one set per gender (file names in the measurements repo).
+var FRONT_IMGS = { M: 'MEASUREMENTS_2front_M.webp', F: 'MEASUREMENTS_2front_F.webp' };
+var FRONT_IMG  = RAW_BASE + encodeURIComponent(FRONT_IMGS.M);
 
+// Male diagrams. Keep this exact shape (`var FIELD_IMG = {` … `};`) — the configurators read it.
 var FIELD_IMG = {
-  'height':                  'MEASUREMENTS_Height.png',
-  'bustGirth':               'MEASUREMENTS_Bust girth.png',
-  'calfGirth':               'MEASUREMENTS_Calf girth.png',
-  'hipGirth':                'MEASUREMENTS_Hip girth.png',
-  'kneeGirth':               'MEASUREMENTS_Knee girth.png',
-  'neckBaseGirth':           'MEASUREMENTS_Neck base girth.png',
-  'pantWaist':               'MEASUREMENTS_Pant waist.png',
-  'upperBicepGirth':         'MEASUREMENTS_Upper bicep girth.png',
-  'waistGirth':              'MEASUREMENTS_Waist girth.png',
-  'wristGirth':              'MEASUREMENTS_Wrist girth.png',
-  'outerArmLength':          'MEASUREMENTS_Outer arm length.png',
-  'backNeckToWaist':         'MEASUREMENTS_Back neck point to waist.png',
-  'shoulderLength':          'MEASUREMENTS_Shoulder length.png',
-  'acrossBackShoulderWidth': 'MEASUREMENTS_Across back shoulder width.png',
-  'acrossBackWidth':         'MEASUREMENTS_Across back width.png',
-  'outsideLegLength':        'MEASUREMENTS_Side trousers length.png',
-  'upperArmLength':          'MEASUREMENTS_Upper arm length.png',
-  'waistToHipLength':        'MEASUREMENTS_Waist to hip length.png',
-  'shirtLength':             'MEASUREMENTS_Shirt length.png',
-  'rise':                    'MEASUREMENTS_Rise.png',
+  'height':                  'MEASUREMENTS_2Height_M.webp',
+  'bustGirth':               'MEASUREMENTS_2Bust girth_M.webp',
+  'calfGirth':               'MEASUREMENTS_2Calf girth_M.webp',
+  'hipGirth':                'MEASUREMENTS_2Hip girth_M.webp',
+  'kneeGirth':               'MEASUREMENTS_2Knee girth_M.webp',
+  'neckBaseGirth':           'MEASUREMENTS_2Neck base girth_M.webp',
+  'pantWaist':               'MEASUREMENTS_2Pant waist_M.webp',
+  'upperBicepGirth':         'MEASUREMENTS_2Upper bicep girth_M.webp',
+  'waistGirth':              'MEASUREMENTS_2Waist girth_M.webp',
+  'wristGirth':              'MEASUREMENTS_2Wrist girth_M.webp',
+  'outerArmLength':          'MEASUREMENTS_2Outer arm length_M.webp',
+  'backNeckToWaist':         'MEASUREMENTS_2Back neck point to waist_M.webp',
+  'shoulderLength':          'MEASUREMENTS_2Shoulder length_M.webp',
+  'acrossBackShoulderWidth': 'MEASUREMENTS_2Across back shoulder width_M.webp',
+  'acrossBackWidth':         'MEASUREMENTS_2Across back width_M.webp',
+  'outsideLegLength':        'MEASUREMENTS_2Side trousers length_M.webp',
+  'upperArmLength':          'MEASUREMENTS_2Upper arm length_M.webp',
+  'waistToHipLength':        'MEASUREMENTS_2Waist to hip length_M.webp',
+  'shirtLength':             'MEASUREMENTS_2Shirt length_M.webp',
+  'rise':                    'MEASUREMENTS_2Rise_M.webp',
+};
+// Female diagrams. Any field missing here (e.g. rise) falls back to the male one.
+var FIELD_IMG_F = {
+  'height':                  'MEASUREMENTS_2height_F.webp',
+  'bustGirth':               'MEASUREMENTS_2Bust girth_F.webp',
+  'calfGirth':               'MEASUREMENTS_2Calf girth_F.webp',
+  'hipGirth':                'MEASUREMENTS_2Hip girth_F.webp',
+  'kneeGirth':               'MEASUREMENTS_2Knee girth_F.webp',
+  'neckBaseGirth':           'MEASUREMENTS_2Neck base girth_F.webp',
+  'pantWaist':               'MEASUREMENTS_2Pant waist_F.webp',
+  'upperBicepGirth':         'MEASUREMENTS_2Upper bicep girth_F.webp',
+  'waistGirth':              'MEASUREMENTS_2Waist girth_F.webp',
+  'wristGirth':              'MEASUREMENTS_2Wrist girth_F.webp',
+  'outerArmLength':          'MEASUREMENTS_2Outer arm length_F.webp',
+  'backNeckToWaist':         'MEASUREMENTS_2Back neck point to waist_F.webp',
+  'shoulderLength':          'MEASUREMENTS_2shoulder_F.webp',
+  'acrossBackShoulderWidth': 'MEASUREMENTS_2Across back shoulder width_F.webp',
+  'acrossBackWidth':         'MEASUREMENTS_2Across back width_F.webp',
+  'outsideLegLength':        'MEASUREMENTS_2Side trousers length_F.webp',
+  'upperArmLength':          'MEASUREMENTS_2Upper arm length_F.webp',
+  'waistToHipLength':        'MEASUREMENTS_2Waist to hip length_F.webp',
+  'shirtLength':             'MEASUREMENTS_2Shirt length_F.webp',
 };
 
 const GARMENT_SETS = {
@@ -374,13 +442,13 @@ const GARMENT_SETS = {
 var GARMENT_MEAS = {
   tshirt: {
     name:  'T-shirt',
-    front: 'MEASUREMENTS_t-shirt_front.webp',   // file name in the measurements repo (or a full URL)
+    front: 'MEASUREMENTS_2t-shirt_front.webp',  // not uploaded yet — until then the chest diagram is shown
     hint:  'Lay a T-shirt that fits you well flat on a table and measure it.',
     fields: [
-      ['garmentTshirtChest',    'Chest (cm)',    'MEASUREMENTS_t-shirt_chest.webp'],
-      ['garmentTshirtLength',   'Length (cm)',   'MEASUREMENTS_t-shirt_length.webp'],
-      ['garmentTshirtShoulder', 'Shoulder (cm)', 'MEASUREMENTS_t-shirt_shoulder.webp'],
-      ['garmentTshirtSleeve',   'Sleeve (cm)',   'MEASUREMENTS_t-shirt_sleeve.webp'],
+      ['garmentTshirtChest',    'Chest (cm)',    'MEASUREMENTS_2t-shirt_chest.webp'],
+      ['garmentTshirtLength',   'Length (cm)',   'MEASUREMENTS_2t-shirt_length.webp'],
+      ['garmentTshirtShoulder', 'Shoulder (cm)', 'MEASUREMENTS_2t-shirt_shoulder.webp'],
+      ['garmentTshirtSleeve',   'Sleeve (cm)',   'MEASUREMENTS_2t-shirt_sleeve.webp'],
     ]
   }
 };
@@ -450,6 +518,20 @@ function initDiag() {
   _diagActive = FRONT_IMG;
 }
 
+// ── Gender: picks the male / female diagrams ─────────────────────
+// Order: ?gender=M|F in the address → the client's Gender in the sheet → Male. The toggle overrides both.
+var measGender = 'M', _genderChosen = false, _focusKey = null, _focusLabel = '';
+function normGender(v) { v = String(v || '').trim(); return /^f|^w|^ž/i.test(v) ? 'F' : (/^m/i.test(v) ? 'M' : ''); }
+function fieldImg(key) { return (measGender === 'F' && FIELD_IMG_F[key]) || FIELD_IMG[key]; }
+function setGender(g, byUser) {
+  g = normGender(g) || 'M';
+  if (byUser) _genderChosen = true;
+  measGender = g;
+  FRONT_IMG = RAW_BASE + encodeURIComponent(FRONT_IMGS[g]);
+  document.querySelectorAll('.gender-btn').forEach(function(b){ b.setAttribute('aria-pressed', String(b.dataset.g === g)); });
+  focusField(_focusLabel, _focusKey);   // redraw what's on screen in the new figure
+}
+
 function showDiagImage(url, labelText) {
   if (!_diagImg) return;
   if (url === _diagActive) return;
@@ -462,9 +544,14 @@ function showDiagImage(url, labelText) {
       _diagLabel.style.opacity = labelText ? '1' : '0';
     };
     _diagImg.onerror = function() {
-      _diagImg.src = FRONT_IMG;
+      // Missing image: garment mode falls back to its first diagram, otherwise the body front
+      var gm = GARMENT_MEAS[currentFilter], fb = FRONT_IMG;
+      if (currentSource === 'garment' && gm && gm.fields.length) fb = RAW_BASE + encodeURIComponent(gm.fields[0][2]);
+      if (_diagImg.src === fb || decodeURIComponent(_diagImg.src) === decodeURIComponent(fb)) fb = FRONT_IMG;
+      _diagImg.onerror = null;
+      _diagImg.src = fb;
       _diagLabel.style.opacity = '0';
-      _diagActive = FRONT_IMG;
+      _diagActive = fb;
     };
     _diagImg.src = url;
   }, 200);
@@ -472,10 +559,11 @@ function showDiagImage(url, labelText) {
 
 function focusField(label, key) {
   if (!_diagImg) initDiag();
+  _focusKey = key || null; _focusLabel = label || '';
   if (key && GARMENT_IMG[key]) {
     showDiagImage(RAW_BASE + encodeURIComponent(GARMENT_IMG[key]), label);
-  } else if (key && FIELD_IMG[key]) {
-    showDiagImage(RAW_BASE + encodeURIComponent(FIELD_IMG[key]), label);
+  } else if (key && fieldImg(key)) {
+    showDiagImage(RAW_BASE + encodeURIComponent(fieldImg(key)), label);
   } else {
     showDiagImage(currentFrontImg(), '');
   }
@@ -549,6 +637,7 @@ function setSource(source) {
     b.setAttribute('aria-pressed', String(b.dataset.source === currentSource));
   });
   applyFilter(currentFilter);
+  _focusKey = null; _focusLabel = '';
   showDiagImage(currentFrontImg(), '');
 }
 
@@ -642,6 +731,7 @@ document.addEventListener('click',function(e){
   var params = new URLSearchParams(window.location.search);
   var email  = params.get('email');
   var filter = params.get('garment') || 'all';
+  if (normGender(params.get('gender'))) setGender(params.get('gender'), true);
 
   // Apply garment from URL if provided
   if (filter !== 'all') setFilter(filter);
@@ -713,7 +803,7 @@ function prefillMeasurements(rec){
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v2.10.1</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v2.11.0</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -741,6 +831,7 @@ onAuthStateChanged(_auth, function(user) {
       getClientJSONP(user.email, user.uid, function(res){
         if(res&&res.success&&res.client&&res.client['Person ID']){
           window._currentPersonId=res.client['Person ID'];
+          if(!_genderChosen && normGender(res.client['Gender'])) setGender(res.client['Gender']);
           var pidEl=document.getElementById('f-personId'); if(pidEl&&!pidEl.value){ pidEl.value=res.client['Person ID']; pidEl.readOnly=true; pidEl.style.opacity='0.6'; pidEl.style.cursor='not-allowed'; }
           var el=document.getElementById('dd-pid'); if(el) el.textContent=window._currentPersonId;
         }
