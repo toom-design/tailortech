@@ -2319,7 +2319,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.2</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.3</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -2638,27 +2638,40 @@ const MODULES = {
   body_raglan_qz:  { file: 'SWEATSHIRT6', noStructure: true, pieces: ['Pattern_5082341', 'Pattern_5078874', 'Pattern_6010390', 'Pattern_6010391', 'Pattern_1303224', 'Pattern_1303225', 'Pattern_1303226', 'Pattern_1303227'] },
   qz_raglan:       { file: 'SWEATSHIRT6', noStructure: true, pieces: ['Pattern_1303294'], match: /^zipper/i },
   kangaroo_raglan_qz: { file: 'SWEATSHIRT6', noStructure: true, pieces: ['Pattern_2901679'] },
+  // Zip-up hood, raglan sleeve — SWEATSHIRT8 (front split in two halves with a full-length zip; split kangaroo pocket).
+  // The hood itself still comes from SWEATSHIRT3 (same raglan neckline). Its stand collar (Pattern_1303294) isn't used under a hood.
+  body_raglan_zip: { file: 'SWEATSHIRT8', pieces: ['Pattern_5082342', 'Pattern_5082343', 'Pattern_5078874', 'Pattern_6010390', 'Pattern_6010391',
+                     'Pattern_1303228', 'Pattern_1303229', 'Pattern_11393553', 'Pattern_11393554',
+                     'Pattern_1303230', 'Pattern_1303231', 'Pattern_11393555', 'Pattern_11393556',
+                     'Pattern_1303227', 'Pattern_11393552', 'Pattern_11393557'] },
+  zip_raglan:      { file: 'SWEATSHIRT8', pieces: [], match: /^zipper/i },
+  kangaroo_raglan_zip: { file: 'SWEATSHIRT8', pieces: ['Pattern_2901680', 'Pattern_2901681'] },
 };
 // Which pieces exist for each body. Collars, hoods and pockets are cut to fit one body,
 // so they're only combined with the body they were made for.
 const BODY_SETS = {
   regular: { body: 'body_setin',  crewneck: 'collar_setin',  '3-piece-hood': 'hood3_setin',  kangaroo: 'kangaroo_setin',  welt: 'welt_setin', quarterzip: 'qz_setin', bodyFor: { quarterzip: 'body_setin_qz' } },
-  raglan:  { body: 'body_raglan', crewneck: 'collar_raglan', '3-piece-hood': 'hood3_raglan', kangaroo: 'kangaroo_raglan', welt: 'welt_raglan', quarterzip: 'qz_raglan', bodyFor: { quarterzip: 'body_raglan_qz' }, pocketFor: { quarterzip: { kangaroo: 'kangaroo_raglan_qz' } } },
+  raglan:  { body: 'body_raglan', crewneck: 'collar_raglan', '3-piece-hood': 'hood3_raglan', kangaroo: 'kangaroo_raglan', welt: 'welt_raglan', quarterzip: 'qz_raglan', bodyFor: { quarterzip: 'body_raglan_qz' }, pocketFor: { quarterzip: { kangaroo: 'kangaroo_raglan_qz' } },
+             zipUp: { body: 'body_raglan_zip', zip: 'zip_raglan', pockets: { kangaroo: 'kangaroo_raglan_zip' } } },
 };
 const SLEEVE_NAME = { regular: 'regular sleeve', raglan: 'raglan sleeve' };
 // Returns the modules for the current design + the choices that have no 3D piece yet.
 function modulesFor(st) {
   const sleeve = BODY_SETS[st.sleeve] ? st.sleeve : 'regular';
-  const set = BODY_SETS[sleeve], mods = [(set.bodyFor && set.bodyFor[st.style]) || set.body], missing = [];
+  const set = BODY_SETS[sleeve], missing = [];
+  // Zip-up hood: needs its own body (front cut open for the zip) — only exists where a zip-up export does.
+  const zipUp = st.style === '3-piece-hood' && st.hoodClosure === 'zip-up' ? set.zipUp : null;
+  const mods = [zipUp ? zipUp.body : ((set.bodyFor && set.bodyFor[st.style]) || set.body)];
+  if (zipUp) mods.push(zipUp.zip);
   const styleName = { crewneck: 'Crewneck', '2-piece-hood': '2-Piece Hood', '3-piece-hood': '3-Piece Hood', quarterzip: 'Quarterzip' }[st.style] || st.style;
   // Style (falls back to the crewneck collar of the same body)
   if (set[st.style]) mods.push(set[st.style]);
   else { if (set.crewneck) mods.push(set.crewneck); missing.push(styleName + ' with ' + SLEEVE_NAME[sleeve]); }
-  if (st.style === '3-piece-hood' && st.hoodClosure === 'zip-up') missing.push('Zip-up closure');
+  if (st.style === '3-piece-hood' && st.hoodClosure === 'zip-up' && !zipUp) missing.push('Zip-up closure with ' + SLEEVE_NAME[sleeve]);
   // Pocket
   const pocketName = { kangaroo: 'Kangaroo pocket', welt: 'Welt pocket', zipper: 'Zipper pocket' }[st.pocket] || st.pocket;
   if (st.pocket !== 'none') {
-    const pk = (set.pocketFor && set.pocketFor[st.style] && set.pocketFor[st.style][st.pocket]) || set[st.pocket];
+    const pk = (zipUp && zipUp.pockets && zipUp.pockets[st.pocket]) || (set.pocketFor && set.pocketFor[st.style] && set.pocketFor[st.style][st.pocket]) || set[st.pocket];
     if (pk) mods.push(pk);
     else missing.push(pocketName + ' with ' + SLEEVE_NAME[sleeve]);
   }
@@ -2681,6 +2694,12 @@ const PART_BY_MESH = {
   Pattern_1303224: 'cuff',    Pattern_1303225: 'cuff',
   Pattern_1724221: 'hood',    Pattern_1724222: 'hood',    Pattern_1725890: 'hood',
   Pattern_2901679: 'pocket',  Pattern_3171371: 'pocket',  Pattern_3171373: 'pocket',
+  // SWEATSHIRT8 (zip-up): split front, split hem, double-layer rib cuffs/hem
+  Pattern_5082342: 'front',   Pattern_5082343: 'front',
+  Pattern_2901680: 'pocket',  Pattern_2901681: 'pocket',
+  Pattern_1303228: 'cuff',    Pattern_1303229: 'cuff',    Pattern_11393553: 'cuff',  Pattern_11393554: 'cuff',
+  Pattern_1303230: 'hem',     Pattern_1303231: 'hem',     Pattern_11393555: 'hem',   Pattern_11393556: 'hem',
+  Pattern_11393552: 'hem',    Pattern_11393557: 'hem',
 };
 
 // Part groups — matched against mesh name + material name, first rule wins.
