@@ -2602,7 +2602,7 @@ function captureTechPackImage() {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.7</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.8</div>
 
 
 <!-- ═══════════════ 3D PREVIEW (three.js + glTF) ═══════════════ -->
@@ -2667,13 +2667,21 @@ async function init() {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.75;
+  renderer.toneMappingExposure = 0.95;
   host.insertBefore(renderer.domElement, host.firstChild);
 
   scene = new THREE.Scene();
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
-  const key = new THREE.DirectionalLight(0xffffff, 0.8); key.position.set(1, 2, 2); scene.add(key);
+  // Studio rig (same as the hoodie): low ambient + raking key from the side (shows folds and seams),
+  // soft fill, back rim. The rig turns with the camera, so the garment is lit the same from every angle.
+  seamMat = new THREE.LineBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.55 });
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8a8a, 0.55));
+  [[2.2, 2.6, 1.6, 1.6], [0.6, -2.4, 0.8, 1.8], [0.9, -1.2, 2.2, -2.4]].forEach(([i, x, y, z]) => {
+    const l = new THREE.DirectionalLight(0xffffff, i);
+    l.userData.base = new THREE.Vector3(x, y, z);
+    scene.add(l); scene.add(l.target); rig.push(l);
+  });
 
   camera = new THREE.PerspectiveCamera(30, 1, 0.01, 100);
   controls = new OrbitControls(camera, renderer.domElement);
@@ -2730,6 +2738,7 @@ async function loadModel() {
     // so the viewer draws its own fabric instead. The original stays in userData.origMaterial.
     o.userData.origMaterial = o.material;
     o.material = fabricMaterial(r.key);
+    if (!/^topstitch/i.test(o.name)) o.add(new THREE.LineSegments(seamGeometry(o.geometry), seamMat));
     (parts[r.key] = parts[r.key] || { label: r.label, meshes: [], visible: true }).meshes.push(o);
   });
   scene.add(modelRoot);
@@ -2746,11 +2755,13 @@ async function loadModel() {
 }
 
 // One material per part group, so contrast parts (cuffs, collar…) can get their own fabric later
-const FABRIC = { color: 0x1c1c1c, roughness: 0.92 };   // Black jersey
+const FABRIC = { color: 0x8E8C88, roughness: 1.0 };    // default: mid grey (shows seams best) until a fabric is picked
+const DARK_MIN_L = 0.06;    // darkest display lightness (HSL); #1C1C1C ≈ 0.11, pure #000 is lifted to this
 const partMaterials = {};
 function fabricMaterial(key) {
   if (!partMaterials[key]) {
-    partMaterials[key] = new THREE.MeshStandardMaterial({
+    partMaterials[key] = new THREE.MeshPhysicalMaterial({
+      sheen: 0.4, sheenRoughness: 0.95, specularIntensity: 0.08, envMapIntensity: 0.25,
       color: FABRIC.color, roughness: FABRIC.roughness, metalness: 0,
       side: THREE.DoubleSide,                        // single-layer cloth: inside visible when a panel is hidden
     });
@@ -2788,6 +2799,18 @@ function applyFabricTo(mat) {
   if (mat.normalMap) mat.normalScale.set(NORMAL_STRENGTH, NORMAL_STRENGTH);
   if (m && m.map) mat.color.set(0xb0b0b0);       // slight darkening: studio light lifts photo colours
   else mat.color.set(m && m.color ? m.color : FABRIC.color);
+  // Dark fabrics: real black cotton reads as deep charcoal with a soft fuzzy sheen on the folds.
+  // Lift very dark colours slightly for display, raise the sheen, and draw seams lighter (not darker).
+  const hsl = {}; mat.color.getHSL(hsl);
+  const dark = Math.max(0, Math.min(1, (0.28 - hsl.l) / 0.2));          // 0 for mid/light colours → 1 for near-black
+  if (hsl.l < DARK_MIN_L) mat.color.setHSL(hsl.h, hsl.s, DARK_MIN_L);
+  mat.sheen = 0.4 + 0.12 * dark;
+  mat.sheenRoughness = 0.95 - 0.15 * dark;
+  if (mat.sheenColor) mat.sheenColor.copy(mat.color).lerp(new THREE.Color(0xffffff), 0.12 + 0.06 * dark);
+  if (seamMat) {
+    if (dark > 0) { seamMat.color.copy(mat.color).lerp(new THREE.Color(0xffffff), 0.1 + 0.08 * dark); seamMat.opacity = 0.6; }
+    else { seamMat.color.copy(mat.color).multiplyScalar(0.55); seamMat.opacity = 0.55; }
+  }
   mat.needsUpdate = true;
 }
 
@@ -3062,9 +3085,46 @@ function zoom(d) {
   controls.update();
 }
 
+// ── Seam lines: the open edges of each pattern piece, drawn as a fine darker line ──
+let seamMat = null;   // created in init (three.js loads on demand)
+const seamGeoCache = new WeakMap();
+function seamGeometry(geo) {
+  if (seamGeoCache.has(geo)) return seamGeoCache.get(geo);
+  const idx = geo.index, pos = geo.attributes.position;
+  const vid = new Map(), remap = new Int32Array(pos.count);           // weld by position (UV splits aren't edges)
+  for (let i = 0; i < pos.count; i++) {
+    const k = Math.round(pos.getX(i) * 1e4) + ',' + Math.round(pos.getY(i) * 1e4) + ',' + Math.round(pos.getZ(i) * 1e4);
+    if (!vid.has(k)) vid.set(k, i); remap[i] = vid.get(k);
+  }
+  const cnt = new Map(), n = idx ? idx.count : pos.count, get = i => remap[idx ? idx.getX(i) : i];
+  for (let t = 0; t < n; t += 3) {
+    const a = get(t), b = get(t + 1), c = get(t + 2);
+    for (const [u, v] of [[a, b], [b, c], [c, a]]) { const k = u < v ? u + '_' + v : v + '_' + u; cnt.set(k, (cnt.get(k) || 0) + 1); }
+  }
+  const pts = [];
+  cnt.forEach((c, k) => {
+    if (c !== 1) return;
+    const [u, v] = k.split('_').map(Number);
+    pts.push(pos.getX(u), pos.getY(u), pos.getZ(u), pos.getX(v), pos.getY(v), pos.getZ(v));
+  });
+  const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+  seamGeoCache.set(geo, lg);
+  return lg;
+}
+
+const rig = [];
+let _q = null, _up = null;
+function updateRig() {
+  if (!center) return;
+  if (!_q) { _q = new THREE.Quaternion(); _up = new THREE.Vector3(0, 1, 0); }
+  const off = camera.position.clone().sub(controls.target);
+  _q.setFromAxisAngle(_up, Math.atan2(off.x, off.z));
+  rig.forEach(l => { l.position.copy(l.userData.base).applyQuaternion(_q).add(center); l.target.position.copy(center); });
+}
 function loop() {
   raf = requestAnimationFrame(loop);
   controls.update();
+  updateRig();
   renderer.render(scene, camera);
 }
 
