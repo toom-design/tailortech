@@ -2602,7 +2602,7 @@ function captureTechPackImage() {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.8</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.9</div>
 
 
 <!-- ═══════════════ 3D PREVIEW (three.js + glTF) ═══════════════ -->
@@ -2612,15 +2612,24 @@ function captureTechPackImage() {
 // isn't uploaded yet, the first available fallback is shown.
 const MODEL_BASE = 'https://raw.githubusercontent.com/toom-design/t-shirt/main/';
 const FALLBACK_MODELS = ['t_shirt_fit_regular_sleeve_raglan.gltf'];
+// CLO exports, one per sleeve style (both regular fit, crew neck with rib):
+//   TSHIRT1 = set-in sleeve · TSHIRT2 = raglan sleeve
+const MODEL_FOR_SLEEVE = { regular: 'TSHIRT1.glb', raglan: 'TSHIRT2.glb' };
 
 function modelCandidates() {
   const st = (typeof state !== 'undefined') ? state : {};
-  const fit = st.fit === 'oversized' ? 'oversize' : (st.fit || 'regular');
   const sleeve = st.sleeveStyle === 'raglan' ? 'raglan' : 'regular';
-  const stem = 't_shirt_fit_' + fit + '_sleeve_' + sleeve;
-  const list = [stem + '.glb', stem + '.gltf'];
+  const list = [MODEL_FOR_SLEEVE[sleeve]];
   FALLBACK_MODELS.forEach(f => { if (!list.includes(f)) list.push(f); });
   return list;
+}
+// Choices that don't have their own 3D model yet (shown in the note over the 3D view)
+function missingIn3D() {
+  const st = (typeof state !== 'undefined') ? state : {}, out = [];
+  if (st.fit && st.fit !== 'regular') out.push('Oversized fit');
+  if (st.neckline === 'mid') out.push('Mock neck');
+  if (st.neckline === 'turtleNeck') out.push('Turtleneck');
+  return out;
 }
 
 // Part groups — matched against mesh name + material name, first rule wins.
@@ -2752,6 +2761,20 @@ async function loadModel() {
   reset();
   buildPartButtons(decodeURIComponent(url.split('/').pop()));
   await setFabric(fabricInfo || selectedFabricInfo());
+}
+
+// Small note over the 3D view for choices that don't have a 3D piece yet
+function showMissing(list) {
+  let el = document.getElementById('s3d-missing');
+  if (!el) {
+    el = document.createElement('div'); el.id = 's3d-missing';
+    el.className = 's3d-note';
+    document.getElementById('stage-3d').appendChild(el);
+  }
+  el.innerHTML = list.length
+    ? '<span class="s3d-note-ic">i</span><span>Not in 3D yet: ' + list.join(', ') + '. The preview shows the closest available version.</span>'
+    : '';
+  el.style.display = list.length ? '' : 'none';
 }
 
 // One material per part group, so contrast parts (cuffs, collar…) can get their own fabric later
@@ -3138,6 +3161,7 @@ async function show() {
     if (!currentUrl) setLoading(true, 'Loading 3D model…');
     await loadModel();
     setLoading(false);
+    showMissing(missingIn3D());
   } catch (e) {
     console.error('3D load error:', e);
     setLoading(true, 'Could not load the 3D model (' + (e && e.message || e) + ').', true);
