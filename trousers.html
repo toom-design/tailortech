@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Trousers Configurator</title>
+<title>Trousers</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -667,6 +667,7 @@ function switchTab(btn, panelId) {
 
   var isMeas = (panelId === 'panel-measurements');
   document.getElementById('main-app').classList.toggle('measurements-active', isMeas);
+  if (isMeas && window.measRefreshFigure) window.measRefreshFigure();
 
   var viewToggle  = document.querySelector('.view-toggle');
   var avatarStage = document.getElementById('stage-viewport') && document.getElementById('stage-viewport').closest('.avatar-stage');
@@ -1327,21 +1328,29 @@ function showFeedback(msg, color) {
 
   var SHEETS_API  = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
   var RAW_BASE    = 'https://raw.githubusercontent.com/toom-design/measurements/main/';
-  var FRONT_IMG   = RAW_BASE + 'MEASUREMENTS_front.png';
+  // Figure follows the Gender choice in Design (male / female diagrams in the measurements repo).
+  // Folder, figures and every image name are read from the measurements page; these are only fallbacks.
+  var FRONT_IMGS  = { M: 'MEASUREMENTS_2front_M.webp', F: 'MEASUREMENTS_2front_F.webp' };
+  var FIELD_IMG_F = {};          // female diagrams — read from the measurements page
+  function measGender() {
+    var sec = Array.prototype.find.call(document.querySelectorAll('.section'), function(s){ var l = s.querySelector('.section-label'); return l && /^gender$/i.test(l.textContent.trim()); });
+    var sel = sec && sec.querySelector('.pill.selected');
+    return sel && /^f/i.test(sel.textContent.trim()) ? 'F' : 'M';
+  }
+  function frontBodyImg() { return RAW_BASE + encodeURIComponent(FRONT_IMGS[measGender()]); }
+  function fieldImgName(key) { return (measGender() === 'F' && FIELD_IMG_F[key]) || FIELD_IMG[key]; }
   var MEAS_URL    = 'https://tailortech.toom.design/measurements';
 
   // Trouser-specific fallback field definitions
   var FALLBACK_FIELD_IMG = {
-    'height':        'MEASUREMENTS_Height.png',
-    'waistGirth':    'MEASUREMENTS_Waist girth.png',
-    'hipGirth':      'MEASUREMENTS_Hip girth.png',
-    'thighGirth':    'MEASUREMENTS_Thigh girth.png',
-    'kneeGirth':     'MEASUREMENTS_Knee girth.png',
-    'calfGirth':     'MEASUREMENTS_Calf girth.png',
-    'pantWaist':     'MEASUREMENTS_Pant waist.png',
-    'inseamLength':  'MEASUREMENTS_Inseam length.png',
-    'outseamLength': 'MEASUREMENTS_Outseam length.png',
-    'riseLength':    'MEASUREMENTS_Rise.png',
+    'height':        'MEASUREMENTS_2Height_M.webp',
+    'waistGirth':    'MEASUREMENTS_2Waist girth_M.webp',
+    'hipGirth':      'MEASUREMENTS_2Hip girth_M.webp',
+    'kneeGirth':     'MEASUREMENTS_2Knee girth_M.webp',
+    'calfGirth':     'MEASUREMENTS_2Calf girth_M.webp',
+    'pantWaist':     'MEASUREMENTS_2Pant waist_M.webp',
+    'outseamLength': 'MEASUREMENTS_2Side trousers length_M.webp',
+    'riseLength':    'MEASUREMENTS_2Rise_M.webp',
   };
 
   // Trousers volumetric and linear fields
@@ -1378,10 +1387,17 @@ function showFeedback(msg, color) {
         if (fiMatch) {
           try { FIELD_IMG = (new Function('return ' + fiMatch[1]))(); } catch(e) {}
         }
+        // Everything about the diagrams comes from the measurements page — edit images there only
+        var fiF = html.match(/var FIELD_IMG_F\s*=\s*(\{[\s\S]*?\});/);
+        if (fiF) { try { FIELD_IMG_F = (new Function('return ' + fiF[1]))(); } catch(e) {} }
+        var rb = html.match(/var RAW_BASE\s*=\s*'([^']+)'/);
+        if (rb) RAW_BASE = rb[1];
+        var fr = html.match(/var FRONT_IMGS\s*=\s*(\{[\s\S]*?\});/);
+        if (fr) { try { FRONT_IMGS = (new Function('return ' + fr[1]))(); } catch(e) {} }
         var volMatch = html.match(/const VOL\s*=\s*(\[[\s\S]*?\]);/);
         var linMatch = html.match(/const LIN\s*=\s*(\[[\s\S]*?\]);/);
         // Look for trousers GARMENT_SETS keys on the measurements page
-        var gsMatch = html.match(/trousers\s*:\s*new Set\(\[([\s\S]*?)\]\)/);
+        var gsMatch = html.match(/\btrousers\s*:\s*new Set\(\[([\s\S]*?)\]\)/);
         var trouserKeys = null;
         if (gsMatch) {
           try {
@@ -1415,8 +1431,8 @@ function showFeedback(msg, color) {
     _diagLabel = document.getElementById('meas-diag-label');
     if (!_diagImg) return;
     _diagImg.onload = function() { _diagImg.style.opacity = '1'; _diagLabel.style.opacity = '0'; };
-    _diagImg.src = FRONT_IMG;
-    _diagActive  = FRONT_IMG;
+    _diagImg.src = frontBodyImg();
+    _diagActive  = frontBodyImg();
   }
 
   function showMeasDiagImage(url, labelText) {
@@ -1433,16 +1449,20 @@ function showFeedback(msg, color) {
         _diagLabel.style.opacity = labelText ? '1' : '0';
       };
       _diagImg.onerror = function() {
-        _diagImg.src = FRONT_IMG; _diagLabel.style.opacity = '0'; _diagActive = FRONT_IMG;
+        var fb = frontBodyImg(); _diagImg.onerror = null; _diagImg.src = fb; _diagLabel.style.opacity = '0'; _diagActive = fb;
       };
       _diagImg.src = url;
     }, 200);
   }
 
+  window.measRefreshFigure = function() {
+    if (!_diagImg) { initMeasDiag(); return; }
+    _diagActive = null; window.measFocusField('', null);
+  };
   window.measFocusField = function(label, key) {
     if (!_diagImg) initMeasDiag();
-    if (key && FIELD_IMG[key]) showMeasDiagImage(RAW_BASE + encodeURIComponent(FIELD_IMG[key]), label);
-    else showMeasDiagImage(FRONT_IMG, '');
+    if (key && fieldImgName(key)) showMeasDiagImage(RAW_BASE + encodeURIComponent(fieldImgName(key)), label);
+    else showMeasDiagImage(frontBodyImg(), '');
   };
 
   function makeField(key, label) {
@@ -1620,7 +1640,7 @@ function showFeedback(msg, color) {
   };
 
   function boot() {
-    loadFieldDefs().then(function() { buildFields(); });
+    loadFieldDefs().then(function() { buildFields(); if (_diagImg) { _diagActive = null; window.measFocusField('', null); } });
   }
 
   if (document.readyState === 'loading') {
@@ -2150,7 +2170,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v4.7.2</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v4.7.3</div>
 
 </body>
 </html>
