@@ -696,6 +696,7 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
 .mono-square { position: absolute; left: 0; right: 0; top: 50%; aspect-ratio: 1 / 1; transform: translateY(-50%); }
 .mono-mark { position: absolute; white-space: nowrap; line-height: 1; }
 .mono-mark.is-placeholder { opacity: 0.35; }
+.fabric-search-row { display: none !important; }   /* fabric search removed */
 </style>
 </head>
 <body>
@@ -826,15 +827,6 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
         </div>
       </div>
 
-      <!-- FIT -->
-      <div class="section">
-        <div class="section-label">Fit</div>
-        <div class="pill-group">
-          <button class="pill selected" onclick="selectFit(this,'regular')">Regular</button>
-          <button class="pill"          onclick="selectFit(this,'oversized')">Oversized</button>
-        </div>
-      </div>
-
       <!-- STYLE -->
       <div class="section">
         <div class="section-label">Style</div>
@@ -845,22 +837,21 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
         </div>
       </div>
 
+      <!-- FIT -->
+      <div class="section">
+        <div class="section-label">Fit</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectFit(this,'regular')">Regular</button>
+          <button class="pill"          onclick="selectFit(this,'oversized')">Oversized</button>
+        </div>
+      </div>
+
       <!-- HOOD CLOSURE — only relevant when Style is 2-Piece or 3-Piece Hood -->
       <div class="section" id="section-hood-closure" style="display:none;">
         <div class="section-label">Hood Closure</div>
         <div class="pill-group">
           <button class="pill selected" onclick="selectHoodClosure(this,'overhead')">Overhead</button>
           <button class="pill"          onclick="selectHoodClosure(this,'zip-up')">Zip-Up</button>
-        </div>
-      </div>
-
-
-      <!-- SLEEVE -->
-      <div class="section">
-        <div class="section-label">Sleeve</div>
-        <div class="pill-group">
-          <button class="pill selected" onclick="selectSleeve(this,'regular')">Regular</button>
-          <button class="pill"          onclick="selectSleeve(this,'raglan')">Raglan</button>
         </div>
       </div>
 
@@ -874,9 +865,18 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
         </div>
       </div>
 
-      <!-- CUFF -->
+      <!-- SLEEVE -->
       <div class="section">
-        <div class="section-label">Cuff</div>
+        <div class="section-label">Sleeve</div>
+        <div class="pill-group">
+          <button class="pill selected" onclick="selectSleeve(this,'regular')">Regular</button>
+          <button class="pill"          onclick="selectSleeve(this,'raglan')">Raglan</button>
+        </div>
+      </div>
+
+      <!-- HEM + CUFFS -->
+      <div class="section">
+        <div class="section-label">Hem + Cuffs</div>
         <div class="pill-group">
           <button class="pill selected" onclick="selectCuff(this,'rib')">Rib</button>
           <button class="pill"          onclick="selectCuff(this,'self-elastic')">Self-Elastic</button>
@@ -895,19 +895,20 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
 
         <div class="mono-body" id="mono-body" hidden>
           <label class="mono-lbl" for="mono-text">Initials <span id="mono-count">0 / 3</span></label>
-          <input type="text" id="mono-text" class="mono-input" maxlength="3" placeholder="e.g. TM" autocomplete="off" spellcheck="false" oninput="setMonoText(this.value)" onfocus="zoomToMonogram()">
+          <input type="text" id="mono-text" class="mono-input" maxlength="6" placeholder="e.g. T.M." autocomplete="off" spellcheck="false" oninput="setMonoText(this.value)" onfocus="zoomToMonogram()">
 
           <div class="mono-lbl">Style</div>
           <div class="mono-styles" id="mono-styles">
-            <button type="button" class="mono-style selected" data-style="serif"  onclick="selectMonoStyle('serif')"><span class="mono-sample" data-font="serif">TM</span><span class="mono-style-name">Serif</span></button>
-            <button type="button" class="mono-style"          data-style="sans"   onclick="selectMonoStyle('sans')"><span class="mono-sample" data-font="sans">TM</span><span class="mono-style-name">Sans</span></button>
-            <button type="button" class="mono-style"          data-style="script" onclick="selectMonoStyle('script')"><span class="mono-sample" data-font="script">TM</span><span class="mono-style-name">Script</span></button>
+            <button type="button" class="mono-style selected" data-style="serif"  onclick="selectMonoStyle('serif')"><span class="mono-sample" data-font="serif">T.M.</span><span class="mono-style-name">Serif</span></button>
+            <button type="button" class="mono-style"          data-style="sans"   onclick="selectMonoStyle('sans')"><span class="mono-sample" data-font="sans">T.M.</span><span class="mono-style-name">Sans</span></button>
+            <button type="button" class="mono-style"          data-style="script" onclick="selectMonoStyle('script')"><span class="mono-sample" data-font="script">T.M.</span><span class="mono-style-name">Script</span></button>
           </div>
 
           <div class="mono-lbl">Thread <span id="mono-thread-name">Tone on tone</span></div>
           <div class="mono-threads" id="mono-threads"></div>
         </div>
       </div>
+
 
 
     </div><!-- /panel-design -->
@@ -1307,12 +1308,20 @@ function zoomToMonogram() {
   var p = MONO_POS[state.monogram.place];
   zoomToRegion(MONO_ZOOM, p.x, (100 + p.y * 420) / 620);
 }
+// Letters only (max 3); a full stop is added after each letter: "tm" → "T.M."
+var _monoLetters = '';
+function monoFormat(letters) { return letters ? letters.split('').join('.') + '.' : ''; }
 function setMonoText(v) {
-  var clean = String(v || '').toUpperCase().replace(/[^A-ZÀ-ÖØ-Þ&.]/g, '').slice(0, 3);
-  var inp = document.getElementById('mono-text'); if (inp && inp.value !== clean) inp.value = clean;
-  state.monogram.text = clean;
-  document.getElementById('mono-count').textContent = clean.length + ' / 3';
-  document.querySelectorAll('.mono-sample').forEach(function(sp){ sp.textContent = clean || 'TM'; });
+  var letters = String(v || '').toUpperCase().replace(/[^A-ZÀ-ÖØ-Þ]/g, '').slice(0, 3);
+  // Backspace over a full stop leaves the letters unchanged — treat it as deleting the last letter
+  var inp = document.getElementById('mono-text');
+  if (letters === _monoLetters && String(v).length < monoFormat(_monoLetters).length) letters = letters.slice(0, -1);
+  _monoLetters = letters;
+  var shown = monoFormat(letters);
+  if (inp && inp.value !== shown) { inp.value = shown; try { inp.setSelectionRange(shown.length, shown.length); } catch (e) {} }
+  state.monogram.text = shown;
+  document.getElementById('mono-count').textContent = letters.length + ' / 3';
+  document.querySelectorAll('.mono-sample').forEach(function(sp){ sp.textContent = shown || 'T.M.'; });
   monoChanged(false);
 }
 function selectMonoStyle(style) {
@@ -1351,7 +1360,7 @@ function renderMonogram() {
   el.hidden = !show;
   if (!show) return;
   var p = MONO_POS[m.place], f = MONO_FONTS[m.style] || MONO_FONTS.serif, t = monoThread();
-  el.textContent = m.text || 'TM';
+  el.textContent = m.text || 'T.M.';
   el.classList.toggle('is-placeholder', !m.text);
   el.style.left = (p.x * 100) + '%';
   el.style.top = (p.y * 100) + '%';
@@ -1653,7 +1662,7 @@ function buildSummary() {
         ['Closure',              cfg['CLOSURE']],
         ['Sleeve',               cfg['SLEEVE STYLE']],
         ['Front Pocket',         cfg['FRONT POCKETS']],
-        ['Cuff',                 cfg['SLEEVE CUFF']],
+        ['Hem + Cuffs',          cfg['SLEEVE CUFF']],
         ['Monogram',             monoSummary()],
       ]
     },
@@ -2125,14 +2134,14 @@ function collectConfig() {
     'NECK':                sectionPill('Style'),
     'FRONT POCKETS':       sectionPill('Front Pocket'),
     'EXTRA POCKETS':       'N/A',
-    'HEM/FINISH':          sectionPill('Cuff'),
+    'HEM/FINISH':          sectionPill('Hem + Cuffs'),
     'BACK':                'N/A',
 
     'SLEEVE HEAD':         'N/A',
     'SLEEVE STYLE':        sectionPill('Sleeve'),
     'CONSTRUCTION':        'N/A',
     'SLEEVE BUTTONS':      'N/A',
-    'SLEEVE CUFF':         sectionPill('Cuff'),
+    'SLEEVE CUFF':         sectionPill('Hem + Cuffs'),
 
     'MONOGRAM PLACEMENT':  monoActive() ? MONO_PLACE_LABEL[state.monogram.place] : 'None',
     'MONOGRAM TEXT':       monoActive() ? state.monogram.text : '',
@@ -2563,7 +2572,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.8.1</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.8.2</div>
 
 <!-- Firebase -->
 <script type="module">
