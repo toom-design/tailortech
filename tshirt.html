@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- Google tag (gtag.js) — consent mode: nothing is stored until the visitor accepts -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  (function(){
+    var c = null; try { c = localStorage.getItem('tt_consent'); } catch (e) {}
+    gtag('consent', 'default', {
+      ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied',
+      analytics_storage: c === 'granted' ? 'granted' : 'denied',
+      wait_for_update: 500
+    });
+  })();
+  gtag('js', new Date());
+  gtag('config', 'G-NZTP07VKKF');
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NZTP07VKKF"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>T-Shirt</title>
@@ -2798,7 +2814,7 @@ function captureTechPackImage() {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.8.0</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.8.3</div>
 
 
 <!-- ═══════════════ 3D PREVIEW (three.js + glTF) ═══════════════ -->
@@ -3388,5 +3404,53 @@ if (typeof updatePreview === 'function') {
 if (window._pending3D) { window._pending3D = false; show(); }
 </script>
 
+
+<!-- Cookie consent (analytics) — wording is yours to edit; keep the two button ids -->
+<div id="tt-consent" role="dialog" aria-modal="true" aria-labelledby="tt-consent-title" hidden>
+  <div class="tt-consent-card">
+    <span class="tt-consent-ic" aria-hidden="true">i</span>
+    <div class="tt-consent-body">
+      <h2 id="tt-consent-title">Help us tailor TailorTech</h2>
+      <p>We'd like to use analytics cookies to see how the configurator is used, so we can keep refining it.</p>
+      <div class="tt-consent-btns">
+        <button type="button" id="tt-consent-no">Decline</button>
+        <button type="button" id="tt-consent-yes">Accept</button>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+#tt-consent { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(26,25,22,0.28); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; animation: ttcFade 0.25s ease; }
+#tt-consent[hidden] { display: none; }
+.tt-consent-card { display: flex; gap: 14px; align-items: flex-start; width: min(440px, 100%); padding: 22px 24px 20px; background: #F3F8F6; border: 1px solid rgba(77,191,171,0.45); border-radius: 14px; box-shadow: 0 18px 50px rgba(26,25,22,0.18); color: #2f6f63; animation: ttcRise 0.3s ease; }
+.tt-consent-ic { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #4dbfab; color: #4dbfab; display: flex; align-items: center; justify-content: center; font-family: Georgia, serif; font-style: italic; font-size: 14px; font-weight: 600; margin-top: 1px; }
+.tt-consent-body { flex: 1; min-width: 0; }
+#tt-consent h2 { margin: 2px 0 8px; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: #1f5249; }
+#tt-consent p { margin: 0 0 16px; font-size: 12.5px; line-height: 1.6; color: #2f6f63; }
+.tt-consent-btns { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+#tt-consent button { font-family: inherit; font-size: 10px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; padding: 11px 20px; border-radius: 999px; cursor: pointer; transition: opacity 0.15s, background 0.15s; }
+#tt-consent-no { background: transparent; border: 1px solid rgba(47,111,99,0.35); color: #2f6f63; }
+#tt-consent-no:hover { background: rgba(77,191,171,0.10); }
+#tt-consent-yes { background: #4a164f; border: 1px solid #4a164f; color: #fff; }
+#tt-consent-yes:hover { opacity: 0.9; }
+#tt-consent button:focus-visible { outline: 2px solid #4dbfab; outline-offset: 2px; }
+@keyframes ttcFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ttcRise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { #tt-consent, .tt-consent-card { animation: none; } }
+</style>
+<script>
+(function(){
+  var el = document.getElementById('tt-consent'), saved = null;
+  try { saved = localStorage.getItem('tt_consent'); } catch (e) {}
+  function choose(v) {
+    try { localStorage.setItem('tt_consent', v); } catch (e) {}
+    if (typeof gtag === 'function') gtag('consent', 'update', { analytics_storage: v });
+    el.hidden = true;
+  }
+  if (saved !== 'granted' && saved !== 'denied') { el.hidden = false; setTimeout(function(){ var b = document.getElementById('tt-consent-yes'); if (b) b.focus(); }, 50); }
+  document.getElementById('tt-consent-yes').onclick = function(){ choose('granted'); };
+  document.getElementById('tt-consent-no').onclick  = function(){ choose('denied'); };
+})();
+</script>
 </body>
 </html>
