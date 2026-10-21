@@ -11,7 +11,7 @@
 } }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Pinyon+Script&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -689,6 +689,32 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
 .meas-source-btn:not([aria-pressed="true"]):hover { color: var(--tt-purple); }
 .meas-source-btn[aria-pressed="true"] { background: var(--tt-purple); color: #fff; }
 #meas-body-fields, #meas-garment-fields:not([style*="none"]) { display: flex; flex-direction: column; gap: 12px; }
+/* ── Monogram ── */
+.mono-note { margin: 12px 0 0; padding: 10px 14px; border-radius: 8px; background: #F3F8F6; border: 1px solid rgba(77,191,171,0.45); color: #2f6f63; font-size: 11.5px; line-height: 1.5; }
+.pill.is-blocked { opacity: 0.45; border-style: dashed !important; cursor: not-allowed; }
+.pill.is-blocked:hover { color: var(--ink) !important; border-color: rgba(26,25,22,0.16) !important; }
+.mono-body { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); display: grid; gap: 8px; }
+.mono-body[hidden] { display: none; }
+.mono-lbl { font-size: 8.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: #8A8880; margin-top: 8px; display: flex; gap: 8px; align-items: baseline; }
+.mono-lbl span { letter-spacing: 0.06em; text-transform: none; font-size: 11px; color: var(--ink-mid); }
+.mono-input { width: 140px; padding: 11px 14px; border-radius: 8px; border: 1px solid rgba(26,25,22,0.16); background: #fff; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 20px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink); outline: none; }
+.mono-input:focus { border-color: var(--tt-purple); box-shadow: 0 0 0 3px rgba(74,22,79,0.08); }
+.mono-styles { display: flex; flex-wrap: wrap; gap: 10px; }
+.mono-style { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 92px; padding: 12px 16px 10px; border-radius: 8px; border: 1px solid rgba(26,25,22,0.16); background: #fff; cursor: pointer; color: var(--ink); transition: border-color 0.15s, background 0.15s, color 0.15s; }
+.mono-style:hover { border-color: var(--tt-purple); color: var(--tt-purple); }
+.mono-style.selected { background: var(--tt-purple); border-color: var(--tt-purple); color: #fff; }
+.mono-sample { font-size: 22px; line-height: 1.1; }
+.mono-sample[data-font="serif"]  { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 600; letter-spacing: 0.06em; }
+.mono-sample[data-font="sans"]   { font-family: 'Jost', sans-serif; font-weight: 500; font-size: 18px; letter-spacing: 0.14em; }
+.mono-sample[data-font="script"] { font-family: 'Pinyon Script', cursive; font-size: 26px; }
+.mono-style-name { font-size: 8.5px; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.7; }
+.mono-threads { display: flex; flex-wrap: wrap; gap: 10px; }
+.mono-thread { width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(26,25,22,0.18); cursor: pointer; padding: 0; box-shadow: inset 0 0 0 2px #fff; transition: box-shadow 0.15s; }
+.mono-thread.selected { box-shadow: inset 0 0 0 2px #fff, 0 0 0 2px var(--tt-purple); }
+.mono-layer { pointer-events: none; z-index: 5; }
+.mono-square { position: absolute; left: 0; right: 0; top: 50%; aspect-ratio: 1 / 1; transform: translateY(-50%); }
+.mono-mark { position: absolute; white-space: nowrap; line-height: 1; }
+.mono-mark.is-placeholder { opacity: 0.35; }
 </style>
 </head>
 <body>
@@ -753,6 +779,7 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
           <div class="layer"><img id="img-hem"      src="" alt=""></div>
           <div class="layer"><img id="img-neckrib"  src="" alt=""></div>
           <div class="layer"><img id="img-sideslit" src="" alt=""></div>
+          <div class="layer mono-layer"><div class="mono-square"><span id="mono-mark" class="mono-mark" hidden></span></div></div>
         </div>
       </div>
       <!-- 3D preview (glTF via three.js, loaded on first use) -->
@@ -834,6 +861,32 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
         <div class="pill-group">
           <button class="pill selected" onclick="selectSleeveStyle(this,'regular')">Set-In</button>
           <button class="pill"          onclick="selectSleeveStyle(this,'raglan')">Raglan</button>
+        </div>
+      </div>
+
+      <!-- MONOGRAM — embroidered initials -->
+      <div class="section" id="section-monogram">
+        <div class="section-label">Monogram</div>
+        <div class="pill-group" id="mono-place">
+          <button class="pill selected" data-place="none"   onclick="selectMonoPlace(this,'none')">None</button>
+          <button class="pill"          data-place="sleeve" onclick="selectMonoPlace(this,'sleeve')">Left Sleeve</button>
+          <button class="pill"          data-place="front"  onclick="selectMonoPlace(this,'front')">Front Left</button>
+        </div>
+        <p class="mono-note" id="mono-note" hidden></p>
+
+        <div class="mono-body" id="mono-body" hidden>
+          <label class="mono-lbl" for="mono-text">Initials <span id="mono-count">0 / 3</span></label>
+          <input type="text" id="mono-text" class="mono-input" maxlength="6" placeholder="e.g. T.M." autocomplete="off" spellcheck="false" oninput="setMonoText(this.value)" onfocus="zoomToMonogram()">
+
+          <div class="mono-lbl">Style</div>
+          <div class="mono-styles" id="mono-styles">
+            <button type="button" class="mono-style selected" data-style="serif"  onclick="selectMonoStyle('serif')"><span class="mono-sample" data-font="serif">T.M.</span><span class="mono-style-name">Serif</span></button>
+            <button type="button" class="mono-style"          data-style="sans"   onclick="selectMonoStyle('sans')"><span class="mono-sample" data-font="sans">T.M.</span><span class="mono-style-name">Sans</span></button>
+            <button type="button" class="mono-style"          data-style="script" onclick="selectMonoStyle('script')"><span class="mono-sample" data-font="script">T.M.</span><span class="mono-style-name">Script</span></button>
+          </div>
+
+          <div class="mono-lbl">Thread <span id="mono-thread-name">Tone on tone</span></div>
+          <div class="mono-threads" id="mono-threads"></div>
         </div>
       </div>
 
@@ -1029,6 +1082,7 @@ const state = {
   sleeveLength: 'short', sleeveStyle: 'regular', cuff: 'plain',
   pocket: 'none', hem: 'straight', neckrib: 'self',
   sideslit: false, view: 'f',
+  monogram: { place: 'none', text: '', style: 'serif', thread: 'tone' },
 };
 
 // ── URL builders ──────────────────────────────────────────────────
@@ -1061,6 +1115,7 @@ function updatePreview() {
   setImg('img-neckline', urls.collar(state.neckline, v));
   // Layers without live images yet — kept hidden
   ['img-cuff','img-pocket','img-hem','img-neckrib','img-sideslit'].forEach(function(id){ setImg(id,''); });
+  renderMonogram();
 }
 
 function hideLoading() {
@@ -1197,6 +1252,135 @@ function inputVal(label) {
   }
   return '';
 }
+
+// ── Monogram (embroidered initials) ─────────────────────────────
+// Positions on the 2250×2250 front drawing, as fractions (same for every fit / sleeve):
+//   left sleeve = wearer's left (viewer's right), just above the short-sleeve hem
+//   front left  = wearer's left, ~5 cm above the hem, ~8 cm in from the side seam
+var MONO_POS = {
+  sleeve: { x: 0.735, y: 0.378, rot: -38, size: 0.85 },   // short sleeve, parallel to the sleeve hem
+  front:  { x: 0.628, y: 0.735, rot: 0,   size: 1.0 },
+};
+var MONO_FONTS = {
+  serif:  { css: "'Cormorant Garamond', Georgia, serif", weight: 600, scale: 1.0,  spacing: '0.06em', label: 'Serif' },
+  sans:   { css: "'Jost', 'Helvetica Neue', Arial, sans-serif", weight: 500, scale: 0.86, spacing: '0.14em', label: 'Sans' },
+  script: { css: "'Pinyon Script', 'Snell Roundhand', cursive", weight: 400, scale: 1.3, spacing: '0.02em', label: 'Script' },
+};
+// Thread colours. "tone" = matched to the fabric (drawn as a soft grey on the white drawing).
+var MONO_THREADS = [
+  { key: 'tone',      name: 'Tone on tone', hex: '#9A968F', swatch: 'linear-gradient(135deg,#d8d4cc 50%,#8e8a83 50%)' },
+  { key: 'offwhite',  name: 'Off-white',    hex: '#F2EEE6', outline: true },
+  { key: 'black',     name: 'Black',        hex: '#1A1A1A' },
+  { key: 'grey',      name: 'Grey',         hex: '#8E8C88' },
+  { key: 'purple',    name: 'Purple',       hex: '#4A164F' },
+  { key: 'turquoise', name: 'Turquoise',    hex: '#4DBFAB' },
+];
+var MONO_BASE_PX = 7;      // size of the initials on the drawing (≈ 3 cm embroidery)
+var MONO_ZOOM = 3.2;       // close-up when the monogram is being edited
+var MONO_PLACE_LABEL = { none: 'None', sleeve: 'Left Sleeve', front: 'Front Left' };
+function monoThread() { return MONO_THREADS.find(function(t){ return t.key === state.monogram.thread; }) || MONO_THREADS[0]; }
+function monoActive() { return state.monogram.place !== 'none' && !!state.monogram.text; }
+
+function buildMonoThreads() {
+  var box = document.getElementById('mono-threads'); if (!box || box.childElementCount) return;
+  MONO_THREADS.forEach(function(t) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'mono-thread' + (t.key === state.monogram.thread ? ' selected' : '');
+    b.dataset.thread = t.key; b.title = t.name; b.setAttribute('aria-label', t.name);
+    b.style.background = t.swatch || t.hex;
+    b.onclick = function(){ selectMonoThread(t.key); };
+    box.appendChild(b);
+  });
+}
+function selectMonoPlace(el, place) {
+  document.querySelectorAll('#mono-place .pill').forEach(function(b){ b.classList.toggle('selected', b === el); });
+  state.monogram.place = place;
+  document.getElementById('mono-body').hidden = place === 'none';
+  showMonoNote('');
+  buildMonoThreads();
+  if (place !== 'none') {
+    var inp = document.getElementById('mono-text'); if (inp && !inp.value) setTimeout(function(){ inp.focus(); }, 50);
+  }
+  monoChanged(true);
+}
+function zoomToMonogram() {
+  if (window._is3D || state.monogram.place === 'none') return;
+  var p = MONO_POS[state.monogram.place];
+  zoomToRegion(MONO_ZOOM, p.x, (100 + p.y * 420) / 620);
+}
+// Letters only (max 3); a full stop is added after each letter: "tm" → "T.M."
+var _monoLetters = '';
+function monoFormat(letters) { return letters ? letters.split('').join('.') + '.' : ''; }
+function setMonoText(v) {
+  var letters = String(v || '').toUpperCase().replace(/[^A-ZÀ-ÖØ-Þ]/g, '').slice(0, 3);
+  // Backspace over a full stop leaves the letters unchanged — treat it as deleting the last letter
+  var inp = document.getElementById('mono-text');
+  if (letters === _monoLetters && String(v).length < monoFormat(_monoLetters).length) letters = letters.slice(0, -1);
+  _monoLetters = letters;
+  var shown = monoFormat(letters);
+  if (inp && inp.value !== shown) { inp.value = shown; try { inp.setSelectionRange(shown.length, shown.length); } catch (e) {} }
+  state.monogram.text = shown;
+  document.getElementById('mono-count').textContent = letters.length + ' / 3';
+  document.querySelectorAll('.mono-sample').forEach(function(sp){ sp.textContent = shown || 'T.M.'; });
+  monoChanged(false);
+}
+function selectMonoStyle(style) {
+  state.monogram.style = style;
+  document.querySelectorAll('.mono-style').forEach(function(b){ b.classList.toggle('selected', b.dataset.style === style); });
+  monoChanged(false);
+}
+function selectMonoThread(key) {
+  state.monogram.thread = key;
+  document.querySelectorAll('.mono-thread').forEach(function(b){ b.classList.toggle('selected', b.dataset.thread === key); });
+  document.getElementById('mono-thread-name').textContent = monoThread().name;
+  monoChanged(false);
+}
+function showMonoNote(msg) {
+  var n = document.getElementById('mono-note'); if (!n) return;
+  n.textContent = msg; n.hidden = !msg;
+}
+function monoChanged(zoom) {
+  if (state.view !== 'f') { goFront(); updatePreview(); } else { renderMonogram(); if (window.tt3d) window.tt3d.refresh(); }
+  if (state.monogram.place !== 'none') zoomToMonogram();
+}
+// Live preview on the technical drawing (front view only, like the pocket)
+function renderMonogram() {
+  var el = document.getElementById('mono-mark'); if (!el) return;
+  var m = state.monogram, show = m.place !== 'none' && state.view !== 'b';
+  el.hidden = !show;
+  if (!show) return;
+  var p = MONO_POS[m.place], f = MONO_FONTS[m.style] || MONO_FONTS.serif, t = monoThread();
+  el.textContent = m.text || 'T.M.';
+  el.classList.toggle('is-placeholder', !m.text);
+  el.style.left = (p.x * 100) + '%';
+  el.style.top = (p.y * 100) + '%';
+  el.style.fontFamily = f.css; el.style.fontWeight = f.weight; el.style.letterSpacing = f.spacing;
+  el.style.fontSize = (MONO_BASE_PX * f.scale * p.size) + 'px';
+  el.style.color = t.hex;
+  el.style.webkitTextStroke = t.outline ? '0.35px #8a8780' : '';
+  el.style.transform = 'translate(-50%, -50%) rotate(' + p.rot + 'deg)';
+}
+// Same mark on the tech-pack image (canvas W×H, square drawing centred like drawImageContain)
+function drawMonogramOnCanvas(ctx, W, H) {
+  if (!monoActive()) return;
+  var m = state.monogram, p = MONO_POS[m.place], f = MONO_FONTS[m.style] || MONO_FONTS.serif, t = monoThread();
+  var side = Math.min(W, H), ox = (W - side) / 2, oy = (H - side) / 2, k = side / 420;
+  ctx.save();
+  ctx.translate(ox + p.x * side, oy + p.y * side);
+  ctx.rotate(p.rot * Math.PI / 180);
+  ctx.font = f.weight + ' ' + (MONO_BASE_PX * f.scale * p.size * k) + 'px ' + f.css;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  if ('letterSpacing' in ctx) ctx.letterSpacing = f.spacing.replace('em', '') * MONO_BASE_PX * f.scale * k + 'px';
+  ctx.fillStyle = t.hex; ctx.fillText(m.text, 0, 0);
+  if (t.outline) { ctx.lineWidth = 0.6 * k; ctx.strokeStyle = '#8a8780'; ctx.strokeText(m.text, 0, 0); }
+  ctx.restore();
+}
+function monoSummary() {
+  if (!monoActive()) return 'None';
+  var m = state.monogram;
+  return m.text + ' · ' + MONO_FONTS[m.style].label + ' · ' + monoThread().name + ' · ' + MONO_PLACE_LABEL[m.place];
+}
+document.addEventListener('DOMContentLoaded', function(){ buildMonoThreads(); });
 
 // ── Design selections ─────────────────────────────────────────────
 function selectNeckline(btn, val) {
@@ -1476,6 +1660,10 @@ function collectConfig() {
     'NECKLINE':           sectionPill('Neckline'),
     'SLEEVE LENGTH':      sectionPill('Sleeve Length'),
     'SLEEVE STYLE':       sectionPill('Sleeve Style'),
+    'MONOGRAM PLACEMENT': monoActive() ? MONO_PLACE_LABEL[state.monogram.place] : 'None',
+    'MONOGRAM TEXT':      monoActive() ? state.monogram.text : '',
+    'MONOGRAM STYLE':     monoActive() ? MONO_FONTS[state.monogram.style].label : '',
+    'MONOGRAM THREAD':    monoActive() ? monoThread().name : '',
     'CUFF STYLE':         'Plain',   // not offered — standard construction
     'CHEST POCKET':       'None',   // not offered — standard construction
     'HEM/FINISH':         'Straight Hem',   // not offered — standard construction
@@ -1612,6 +1800,7 @@ function buildSummary() {
         ['Neckline',       cfg['NECKLINE']],
         ['Sleeve Length',  cfg['SLEEVE LENGTH']],
         ['Sleeve Style',   cfg['SLEEVE STYLE']],
+        ['Monogram',       monoSummary()],
       ]
     },
     {
@@ -2553,7 +2742,8 @@ function buildSilhouetteKey() {
   return 'TS_fit-' + s.fit + '_length-' + s.length + '_neckline-' + s.neckline +
     '_sleeve-' + s.sleeveStyle + '-' + s.sleeveLength + '_cuff-' + s.cuff +
     '_pocket-' + s.pocket + '_hem-' + s.hem + '_neckrib-' + s.neckrib +
-    '_sideslit-' + (s.sideslit ? '1' : '0');
+    '_sideslit-' + (s.sideslit ? '1' : '0') +
+    (monoActive() ? '_mono-' + s.monogram.place + '-' + s.monogram.style + '-' + s.monogram.thread + '-' + s.monogram.text.replace(/[^A-Z]/g, '') : '');
 }
 
 function drawImageContain(ctx, img, boxW, boxH) {
@@ -2593,7 +2783,13 @@ function captureTechPackImage() {
         if (failed) return;
         drawImageContain(ctx, img, W, H);
         loaded++;
-        if (loaded === toDraw.length) resolve(canvas.toDataURL('image/png'));
+        if (loaded === toDraw.length) {
+          var finish = function(){ drawMonogramOnCanvas(ctx, W, H); resolve(canvas.toDataURL('image/png')); };
+          if (monoActive() && document.fonts && document.fonts.load) {
+            var f = MONO_FONTS[state.monogram.style];
+            document.fonts.load(f.weight + ' 40px ' + f.css).then(finish, finish);
+          } else finish();
+        }
       };
       img.onerror = function(){ failed = true; reject(new Error('Failed to load layer: ' + el.id)); };
       img.src = el.src;
@@ -2602,7 +2798,7 @@ function captureTechPackImage() {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.7.9</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.8.0</div>
 
 
 <!-- ═══════════════ 3D PREVIEW (three.js + glTF) ═══════════════ -->
@@ -2629,6 +2825,7 @@ function missingIn3D() {
   if (st.fit && st.fit !== 'regular') out.push('Oversized fit');
   if (st.neckline === 'mid') out.push('Mock neck');
   if (st.neckline === 'turtleNeck') out.push('Turtleneck');
+  if (st.monogram && st.monogram.place !== 'none') out.push('Monogram');
   return out;
 }
 
