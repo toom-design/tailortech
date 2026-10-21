@@ -107,6 +107,9 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 }
 .layer-stack .layer { position: absolute; inset: 0; }
 .layer-stack .layer img { width: 100%; height: 100%; object-fit: contain; display: block; }
+/* Some drawings are 2251 px instead of 2250 px: draw every layer into the same exact square
+   (same box as the monogram/logo overlay) so the lines of all layers sit on top of each other */
+.layer-stack .layer img { position: absolute; left: 0; top: 50%; height: auto; aspect-ratio: 1 / 1; transform: translateY(-50%); object-fit: fill; }
 
 /* loading */
 .loading-overlay {
@@ -646,6 +649,11 @@ button[onclick="handleAddToCart()"]:hover { background: rgba(74,22,79,0.06) !imp
 .fc-check { display: none !important; }
 .fabric-card.selected { background: var(--tt-purple) !important; border-color: var(--tt-purple) !important; box-shadow: none !important; }
 .fabric-card.selected .fname, .fabric-card.selected .fcode, .fabric-card.selected .fgsm, .fabric-card.selected .fcomp { color: #fff !important; }
+/* Price on each main-fabric card: grey, readable on both the plain and the selected (purple) card */
+.fprice { display: block; margin-top: 3px; font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 0.02em; color: #8A8880; }
+.fprice:empty { display: none; }
+#fabric-comp-grid .fprice { display: none; }
+.fabric-card.selected .fprice { color: rgba(255,255,255,0.78) !important; }
 .fabric-card.selected .fcode, .fabric-card.selected .fgsm, .fabric-card.selected .fcomp { opacity: 0.72; }
 
 /* v1.6.4 — quote banner: solid optic black, quote on one line */
@@ -1711,7 +1719,9 @@ function buildFabricCard(fabric, group, isFirst) {
   check.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="5,12.5 10,17.5 19,7"/></svg>';
   imgWrap.appendChild(check);
 
-  body.appendChild(nameEl); body.appendChild(row); body.appendChild(compEl);
+  var priceEl = document.createElement('span'); priceEl.className = 'fprice';
+  priceEl.textContent = fabricPriceText(unitPrice);
+  body.appendChild(nameEl); body.appendChild(priceEl); body.appendChild(row); body.appendChild(compEl);
 
   var drawer = document.createElement('div');
   drawer.className = 'fc-details-drawer';
@@ -1892,7 +1902,7 @@ async function handleOrderNow() {
     var techPackUrl = await getOrCaptureSilhouette();
     var res = await _saveViaIframe('Pending', { 'tech pack': techPackUrl, 'Request Type': 'Garment Request' });
     toast('Request sent — #' + (res && res.orderNumber ? res.orderNumber : '') + ' — we\'ll be in touch shortly.');
-    setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/checkout'; }, 1800);
+    setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/success?orders=' + encodeURIComponent(res && res.orderNumber ? res.orderNumber : '') + '&garment=Hoodie'; }, 1800);
   } catch(e) {
     console.error('handleOrderNow:', e);
     toast('Could not send your request: ' + e.message, 'err');
@@ -2124,7 +2134,23 @@ function calculateOptionsExtra() {
   return total;
 }
 
+// Price shown on each main-fabric card = the estimated price of the current design in that fabric
+// (same maths as the footer: base + fabric + selected options, minus any published discount)
+function fabricPriceText(unitPrice) {
+  if (typeof _pricing === 'undefined' || !_pricing) return '';
+  var base = _pricing.tailoring * (1 + _pricing.marginPercent / 100);
+  var total = base + (Number(unitPrice) || 0) * _pricing.fabricCoefficient + calculateOptionsExtra();
+  var disc = Number(_pricing.discountPercent) || 0;
+  if (disc > 0 && total > 0) total = Math.round(total * (1 - disc / 100) * 100) / 100;
+  return total > 0 ? '€' + total.toFixed(2).replace(/\.00$/, '') : '';
+}
+function refreshFabricPrices() {
+  document.querySelectorAll('#fabric-main-grid .fabric-card').forEach(function(card) {
+    var el = card.querySelector('.fprice'); if (el) el.textContent = fabricPriceText(card.dataset.unitprice);
+  });
+}
 function updatePriceBar() {
+  refreshFabricPrices();
   var amounts = document.querySelectorAll('.price-display-amount');
   if (!amounts.length) return;
 
@@ -2723,7 +2749,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.8.8</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.8.9</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -2901,6 +2927,7 @@ function redirectToAuthWithPendingOrder(status, intent) {
     data['garment']    = 'hoodies';
     data['action']     = 'saveHoodie';
     data['Created At'] = new Date().toISOString();
+    if (intent === 'order') data['Request Type'] = 'Garment Request';
     sessionStorage.setItem('tt_pending_order', JSON.stringify({ data: data, intent: intent }));
     sessionStorage.setItem('tt_return_url', window.location.href);
   } catch(e) {}
@@ -2925,8 +2952,8 @@ function resumePendingOrderIfAny(user) {
       toast('Added to cart!');
       setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/cart'; }, 1500);
     } else if (pending.intent === 'order') {
-      toast('Order placed — #' + (res && res.orderNumber ? res.orderNumber : ''));
-      setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/checkout'; }, 1500);
+      toast('Request sent — #' + (res && res.orderNumber ? res.orderNumber : ''));
+      setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/success?orders=' + encodeURIComponent(res && res.orderNumber ? res.orderNumber : '') + '&garment=Hoodie'; }, 1500);
     } else {
       toast('Configuration saved!');
       setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/dashboard'; }, 1500);
