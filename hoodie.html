@@ -686,6 +686,22 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
 .price-new { color: #4a164f; }
 .price-tag { align-self: center; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: #fff; background: #4a164f; padding: 4px 7px; border-radius: 4px; line-height: 1; }
 
+/* ── Notes ── */
+.notes-input { width: 100%; min-height: 96px; resize: vertical; padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(26,25,22,0.16); background: #fff; font-family: 'Jost', sans-serif; font-size: 13px; line-height: 1.55; color: var(--ink); outline: none; box-sizing: border-box; transition: border-color 0.15s, box-shadow 0.15s; }
+.notes-input::placeholder { color: #A8A69F; }
+.notes-input:focus { border-color: var(--tt-purple); box-shadow: 0 0 0 3px rgba(74,22,79,0.08); }
+.notes-count { margin-top: 6px; font-size: 10px; letter-spacing: 0.06em; color: #8A8880; text-align: right; }
+/* ── Logo ── */
+.logo-colors { display: flex; flex-wrap: wrap; gap: 10px; }
+.logo-color { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 92px; padding: 12px 16px 10px; border-radius: 8px; border: 1px solid rgba(26,25,22,0.16); background: #fff; cursor: pointer; font-family: inherit; color: var(--ink); transition: border-color 0.15s, background 0.15s; }
+.logo-color:hover { border-color: var(--tt-purple); }
+.logo-color.selected { border-color: var(--tt-purple); box-shadow: 0 0 0 1px var(--tt-purple); }
+.logo-color svg { width: 34px; height: 38px; display: block; }
+.logo-color-name { font-size: 8.5px; letter-spacing: 0.18em; text-transform: uppercase; color: #8A8880; }
+.logo-color.selected .logo-color-name { color: var(--tt-purple); }
+.logo-mark { position: absolute; transform: translate(-50%, -50%); line-height: 0; }
+.logo-mark svg { width: 100%; height: auto; display: block; overflow: visible; }
+.logo-mark[hidden] { display: none; }
 /* ── Monogram ── */
 .mono-note { margin: 12px 0 0; padding: 10px 14px; border-radius: 8px; background: #F3F8F6; border: 1px solid rgba(77,191,171,0.45); color: #2f6f63; font-size: 11.5px; line-height: 1.5; }
 .pill.is-blocked { opacity: 0.45; border-style: dashed !important; cursor: not-allowed; }
@@ -787,7 +803,7 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
           <div class="layer"><img id="img-pocket" src="" alt="pocket"></div>
           <div class="layer"><img id="img-cuff"   src="" alt="cuff"></div>
           <div class="layer"><img id="img-zipper" src="" alt="zipper"></div>
-          <div class="layer mono-layer"><div class="mono-square"><span id="mono-mark" class="mono-mark" hidden></span></div></div>
+          <div class="layer mono-layer"><div class="mono-square"><span id="mono-mark" class="mono-mark" hidden></span><span id="logo-mark" class="logo-mark" hidden></span></div></div>
         </div>
       </div>
 
@@ -899,6 +915,19 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
         </div>
       </div>
 
+      <!-- LOGO — embroidered TailorTech logo -->
+      <div class="section" id="section-logo">
+        <div class="section-label">Logo</div>
+        <div class="pill-group" id="logo-place">
+          <button class="pill selected" data-place="none"  onclick="selectLogoPlace(this,'none')">None</button>
+          <button class="pill"          data-place="chest" onclick="selectLogoPlace(this,'chest')">Chest</button>
+        </div>
+        <div class="mono-body" id="logo-body" hidden>
+          <div class="mono-lbl">Colour <span id="logo-color-name">Turquoise</span></div>
+          <div class="logo-colors" id="logo-colors"></div>
+        </div>
+      </div>
+
       <!-- MONOGRAM — embroidered initials -->
       <div class="section" id="section-monogram">
         <div class="section-label">Monogram</div>
@@ -923,6 +952,13 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
           <div class="mono-lbl">Thread <span id="mono-thread-name">Tone on tone</span></div>
           <div class="mono-threads" id="mono-threads"></div>
         </div>
+      </div>
+
+      <!-- NOTES — free-text comments for the tailor -->
+      <div class="section" id="section-notes">
+        <div class="section-label">Notes</div>
+        <textarea id="notes-text" class="notes-input" maxlength="500" rows="4" placeholder="Anything we should know — fit preferences, special requests, details to change…" oninput="setNotes(this.value)"></textarea>
+        <div class="notes-count" id="notes-count">0 / 500</div>
       </div>
 
 
@@ -1111,6 +1147,8 @@ const state = {
   sleeve: 'regular',    // regular / raglan
   pocket: 'none',       // none / kangaroo / welt
   cuff: 'rib',          // rib / self-elastic
+  logo: { place: 'none', color: 'turquoise' },
+  notes: '',
   monogram: { place: 'none', text: '', style: 'serif', thread: 'tone' },
   side: 'front',
   zoom: 1.5,
@@ -1268,6 +1306,96 @@ function selectCuff(el, v) {
 }
 
 
+// ── Notes (free-text comments for the tailor) ──────────────────
+function setNotes(v) {
+  state.notes = String(v || '').slice(0, 500);
+  var c = document.getElementById('notes-count'); if (c) c.textContent = state.notes.length + ' / 500';
+}
+function escHtml(t) { return String(t).replace(/[&<>"']/g, function(ch){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]; }); }
+
+// ── Logo (embroidered TailorTech mark) ─────────────────────────
+// Chest = wearer's left (viewer's right), on the 2250×2250 front drawing as fractions.
+// w = logo width as a fraction of the drawing (≈ 6 cm embroidery).
+var LOGO_POS = { chest: { x: 0.588, y: 0.330, w: 0.034 } };
+var LOGO_COLORS = [
+  { key: 'turquoise', name: 'Turquoise',    hex: '#4DBFAB' },
+  { key: 'purple',    name: 'Purple',       hex: '#4A164F' },
+  { key: 'tone',      name: 'Tone on tone', hex: '#9A968F' },   // matched to the fabric (soft grey on the drawing)
+];
+var LOGO_PLACE_LABEL = { none: 'None', chest: 'Chest' };
+// Logo artwork (viewBox 130 110 330 370): V, two hexagons, four bars
+var LOGO_VIEWBOX = [130, 110, 330, 370];
+var LOGO_LINES = [
+  [[272,122],[296,200],[321,122]],
+  [[213,184],[285,222],[285,302],[213,341],[142,302],[142,222],[213,184]],
+  [[376,184],[448,222],[448,302],[376,341],[305,302],[305,222],[376,184]],
+  [[272,346],[322,346]], [[247,387],[347,387]], [[247,428],[347,428]], [[272,468],[322,468]]
+];
+function logoSvg(hex, sw) {
+  var v = LOGO_VIEWBOX;
+  return '<svg viewBox="' + v.join(' ') + '" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="' + hex + '" stroke-width="' + (sw || 7) + '" stroke-linecap="round" stroke-linejoin="round">' +
+    LOGO_LINES.map(function(l){ return '<polyline points="' + l.map(function(p){ return p.join(','); }).join(' ') + '"/>'; }).join('') + '</svg>';
+}
+function logoColor() { return LOGO_COLORS.find(function(c){ return c.key === state.logo.color; }) || LOGO_COLORS[0]; }
+function logoActive() { return state.logo.place !== 'none'; }
+function buildLogoColors() {
+  var box = document.getElementById('logo-colors'); if (!box || box.childElementCount) return;
+  LOGO_COLORS.forEach(function(c) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'logo-color' + (c.key === state.logo.color ? ' selected' : '');
+    b.dataset.color = c.key;
+    b.innerHTML = logoSvg(c.hex, 12) + '<span class="logo-color-name">' + c.name + '</span>';
+    b.onclick = function(){ selectLogoColor(c.key); };
+    box.appendChild(b);
+  });
+}
+function selectLogoPlace(el, place) {
+  document.querySelectorAll('#logo-place .pill').forEach(function(b){ b.classList.toggle('selected', b === el); });
+  state.logo.place = place;
+  document.getElementById('logo-body').hidden = place === 'none';
+  buildLogoColors();
+  logoChanged();
+}
+function selectLogoColor(key) {
+  state.logo.color = key;
+  document.querySelectorAll('.logo-color').forEach(function(b){ b.classList.toggle('selected', b.dataset.color === key); });
+  document.getElementById('logo-color-name').textContent = logoColor().name;
+  logoChanged();
+}
+function zoomToLogo() {
+  if (window._is3D || !logoActive()) return;
+  var p = LOGO_POS[state.logo.place];
+  zoomToRegion(MONO_ZOOM, p.x, (100 + p.y * 420) / 620);
+}
+function logoChanged() {
+  if (state.side !== 'front') { setFrontBack('front'); } else { renderMonogram(); if (window.tt3d) window.tt3d.refresh(); }
+  if (logoActive()) zoomToLogo(); else if (typeof resetZoom === 'function') resetZoom();
+}
+function renderLogo(isBack) {
+  var el = document.getElementById('logo-mark'); if (!el) return;
+  var show = logoActive() && !isBack;
+  el.hidden = !show;
+  if (!show) return;
+  var p = LOGO_POS[state.logo.place];
+  el.innerHTML = logoSvg(logoColor().hex, 9);
+  el.style.left = (p.x * 100) + '%';
+  el.style.top = (p.y * 100) + '%';
+  el.style.width = (p.w * 100) + '%';
+}
+function drawLogoOnCanvas(ctx, W, H) {
+  if (!logoActive()) return;
+  var p = LOGO_POS[state.logo.place], v = LOGO_VIEWBOX;
+  var side = Math.min(W, H), ox = (W - side) / 2, oy = (H - side) / 2;
+  var s = (p.w * side) / v[2];
+  ctx.save();
+  ctx.translate(ox + p.x * side - v[2] * s / 2, oy + p.y * side - v[3] * s / 2);
+  ctx.scale(s, s); ctx.translate(-v[0], -v[1]);
+  ctx.strokeStyle = logoColor().hex; ctx.lineWidth = 9; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  LOGO_LINES.forEach(function(l){ ctx.beginPath(); l.forEach(function(pt, i){ i ? ctx.lineTo(pt[0], pt[1]) : ctx.moveTo(pt[0], pt[1]); }); ctx.stroke(); });
+  ctx.restore();
+}
+function logoSummary() { return logoActive() ? LOGO_PLACE_LABEL[state.logo.place] + ' · ' + logoColor().name : 'None'; }
+
 // ── Monogram (embroidered initials) ─────────────────────────────
 // Positions on the 2250×2250 front drawing, as fractions (same for every fit / sleeve):
 //   left sleeve = wearer's left (viewer's right), ~8–10 cm above the cuff seam
@@ -1371,6 +1499,7 @@ function monoChanged(zoom) {
 }
 // Live preview on the technical drawing (front view only, like the pocket)
 function renderMonogram() {
+  renderLogo(state.side === 'back');
   var el = document.getElementById('mono-mark'); if (!el) return;
   var m = state.monogram, show = m.place !== 'none' && state.side !== 'back';
   el.hidden = !show;
@@ -1388,6 +1517,7 @@ function renderMonogram() {
 }
 // Same mark on the tech-pack image (canvas W×H, square drawing centred like drawImageContain)
 function drawMonogramOnCanvas(ctx, W, H) {
+  drawLogoOnCanvas(ctx, W, H);
   if (!monoActive()) return;
   var m = state.monogram, p = MONO_POS[m.place], f = MONO_FONTS[m.style] || MONO_FONTS.serif, t = monoThread();
   var side = Math.min(W, H), ox = (W - side) / 2, oy = (H - side) / 2, k = side / 420;
@@ -1679,7 +1809,9 @@ function buildSummary() {
         ['Sleeve',               cfg['SLEEVE STYLE']],
         ['Front Pocket',         cfg['FRONT POCKETS']],
         ['Hem + Cuffs',          cfg['SLEEVE CUFF']],
+        ['Logo',             logoSummary()],
         ['Monogram',             monoSummary()],
+        ['Notes',             escHtml(state.notes.trim()).replace(/\n/g, '<br>')],
       ]
     },
     {
@@ -2159,10 +2291,13 @@ function collectConfig() {
     'SLEEVE BUTTONS':      'N/A',
     'SLEEVE CUFF':         sectionPill('Hem + Cuffs'),
 
+    'LOGO PLACEMENT':   logoActive() ? LOGO_PLACE_LABEL[state.logo.place] : 'None',
+    'LOGO COLOUR':      logoActive() ? logoColor().name : '',
     'MONOGRAM PLACEMENT':  monoActive() ? MONO_PLACE_LABEL[state.monogram.place] : 'None',
     'MONOGRAM TEXT':       monoActive() ? state.monogram.text : '',
     'MONOGRAM STYLE':      monoActive() ? MONO_FONTS[state.monogram.style].label : '',
     'MONOGRAM THREAD':     monoActive() ? monoThread().name : '',
+    'NOTES':              state.notes.trim(),
 
     'WAISTBAND STYLE':     'N/A',
     'WAIST ADJUSTMENT':    'N/A',
@@ -2588,7 +2723,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.8.5</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.8.8</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -2670,6 +2805,7 @@ function buildSilhouetteKey() {
   var zip = (s.style === '3-piece-hood' && s.hoodClosure === 'zip-up') ? 'zip' : 'nozip';
   return 'HD_fit-' + slug(s.fit) + '_style-' + slug(s.style) + '_closure-' + zip +
     '_sleeve-' + slug(s.sleeve) + '_pocket-' + slug(s.pocket) + '_cuff-' + slug(s.cuff) +
+    (logoActive() ? '_logo-' + state.logo.place + '-' + state.logo.color : '') +
     (monoActive() ? '_mono-' + slug(s.monogram.place) + '-' + slug(s.monogram.style) + '-' + slug(s.monogram.thread) + '-' + slug(s.monogram.text) : '');
 }
 // Front-view layer images for the current design, bottom to top (same stack as the preview).
@@ -2959,6 +3095,7 @@ function modulesFor(st) {
   }
   // Not modelled yet
   if (st.fit && st.fit !== 'regular') missing.push('Oversized fit');
+  if (st.logo && st.logo.place !== 'none') missing.push('Logo');
   if (st.monogram && st.monogram.place !== 'none') missing.push('Monogram');
   return { mods, missing };
 }
