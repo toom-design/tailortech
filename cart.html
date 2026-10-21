@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) — consent mode: nothing is stored until the visitor accepts -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  (function(){
+    var c = null; try { c = localStorage.getItem('tt_consent'); } catch (e) {}
+    gtag('consent', 'default', {
+      ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied',
+      analytics_storage: c === 'granted' ? 'granted' : 'denied',
+      wait_for_update: 500
+    });
+  })();
+  gtag('js', new Date());
+  gtag('config', 'G-NZTP07VKKF');
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NZTP07VKKF"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #F0EDE6; --cream-mid: #EBE7DF; --white: #FAFAF8;
+  --ink: #1A1916; --ink-mid: #4A4844; --ink-light: #8A8880; --ink-faint: #C0BDB8;
+  --border: rgba(26,25,22,0.12); --border-mid: rgba(26,25,22,0.22);
+  --tt-purple: #4A164F; --tt-turq: #4DBFAB; --mint-bg: #F3F8F6; --mint-ink: #2f6f63;
+}
+html, body { background: var(--cream); color: var(--ink); font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+body { min-height: 100vh; display: flex; flex-direction: column; }
+button { font-family: inherit; }
+
+/* Nav */
+.nav { height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; background: var(--white); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; }
+.nav-brand img { display: block; height: 22px; }
+.nav-right { display: flex; align-items: center; gap: 14px; }
+.nav-link { font-size: 10.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-mid); text-decoration: none; }
+.nav-link:hover { color: var(--tt-purple); }
+.nav-btn { font-size: 10.5px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; padding: 8px 14px; border: 1px solid var(--border-mid); background: transparent; color: var(--ink); cursor: pointer; border-radius: 2px; text-decoration: none; }
+.nav-av { width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: var(--white); font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.nav-av img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Layout */
+main { flex: 1; width: 100%; max-width: 1080px; margin: 0 auto; padding: 48px 24px 80px; }
+.eyebrow { font-size: 9.5px; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 10px; }
+h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: clamp(34px, 5vw, 46px); line-height: 1.05; letter-spacing: -0.01em; }
+.lede { margin-top: 12px; font-size: 14px; line-height: 1.6; color: var(--ink-mid); max-width: 560px; }
+.grid { margin-top: 36px; display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 28px; align-items: start; }
+@media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+
+/* Items */
+.items { display: flex; flex-direction: column; gap: 14px; }
+.item { display: grid; grid-template-columns: 132px minmax(0, 1fr) auto; gap: 22px; align-items: stretch; padding: 18px; background: var(--white); border: 1px solid var(--border); border-radius: 14px; transition: opacity 0.25s, transform 0.25s; }
+.item.removing { opacity: 0; transform: translateX(12px); }
+.item-img { width: 132px; aspect-ratio: 1 / 1; border-radius: 10px; background: #fff; border: 1px solid var(--border); overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.item-img img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.item-img .ph { width: 26px; height: 26px; border: 1.5px solid var(--ink-faint); border-top-color: var(--tt-turq); border-radius: 50%; animation: spin 0.8s linear infinite; }
+.item-img.noimg .ph { animation: none; border: none; width: auto; height: auto; font-family: 'Cormorant Garamond', serif; font-size: 13px; font-style: italic; color: var(--ink-light); }
+.item-body { min-width: 0; display: flex; flex-direction: column; gap: 6px; padding-top: 2px; }
+.item-name { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 25px; font-weight: 500; line-height: 1.1; }
+.item-no { font-size: 10px; letter-spacing: 0.12em; color: var(--ink-light); text-transform: uppercase; }
+.item-meta { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--ink-mid); }
+.item-meta span { display: inline-flex; align-items: center; gap: 7px; }
+.swatch { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--border-mid); background: var(--cream-mid) center / cover no-repeat; flex-shrink: 0; }
+.item-date { margin-top: auto; font-size: 11px; color: var(--ink-light); }
+.item-side { display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.item-price { font-size: 17px; font-weight: 500; white-space: nowrap; }
+.item-price.na { font-size: 12px; color: var(--ink-light); font-weight: 400; }
+.link-btn { background: none; border: none; padding: 4px 0; font-size: 10.5px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-light); cursor: pointer; border-bottom: 1px solid transparent; }
+.link-btn:hover { color: var(--tt-purple); border-bottom-color: currentColor; }
+.link-btn:disabled { opacity: 0.4; cursor: default; }
+@media (max-width: 560px) {
+  .item { grid-template-columns: 92px minmax(0, 1fr); gap: 14px; padding: 14px; }
+  .item-img { width: 92px; }
+  .item-name { font-size: 21px; }
+  .item-side { grid-column: 1 / -1; flex-direction: row; align-items: center; border-top: 1px solid var(--border); padding-top: 12px; }
+}
+
+/* Summary */
+.summary { position: sticky; top: 76px; padding: 24px; background: var(--white); border: 1px solid var(--border); border-radius: 14px; }
+.summary h2 { font-size: 9.5px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-light); padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.sum-row { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--ink-mid); }
+.sum-row strong { font-size: 22px; font-weight: 500; color: var(--ink); }
+.sum-note { margin: 16px 0; padding: 12px 14px; border-radius: 10px; background: var(--mint-bg); border: 1px solid rgba(77,191,171,0.45); color: var(--mint-ink); font-size: 12px; line-height: 1.55; }
+.cta { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 16px 22px; border: none; border-radius: 999px; background: var(--tt-purple); color: #fff; font-size: 10.5px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; text-decoration: none; transition: opacity 0.15s; }
+.cta:hover { opacity: 0.9; }
+.cta:disabled { opacity: 0.5; cursor: default; }
+.cta-ghost { background: transparent; color: var(--tt-purple); border: 1px solid var(--tt-purple); }
+.cta-ghost:hover { background: rgba(74,22,79,0.05); opacity: 1; }
+.sum-more { display: block; margin-top: 14px; text-align: center; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-light); text-decoration: none; }
+.sum-more:hover { color: var(--tt-purple); }
+.spin { width: 12px; height: 12px; border: 1.5px solid rgba(255,255,255,0.35); border-top-color: #fff; border-radius: 50%; animation: spin 0.65s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* States */
+.state { margin-top: 36px; padding: 56px 28px; text-align: center; background: var(--white); border: 1px solid var(--border); border-radius: 14px; }
+.state h2 { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 30px; font-weight: 500; }
+.state p { margin: 10px auto 24px; max-width: 420px; font-size: 13.5px; line-height: 1.6; color: var(--ink-mid); }
+.state .cta { width: auto; min-width: 220px; }
+.state .loader { width: 30px; height: 30px; margin: 0 auto; border: 1.5px solid var(--ink-faint); border-top-color: var(--tt-turq); border-radius: 50%; animation: spin 0.8s linear infinite; }
+[hidden] { display: none !important; }
+
+.toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(20px); opacity: 0; padding: 12px 18px; border-radius: 10px; background: var(--ink); color: #fff; font-size: 12.5px; z-index: 200; transition: opacity 0.2s, transform 0.2s; pointer-events: none; max-width: calc(100% - 32px); }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.err { background: #8a2b2b; }
+.badge { position: fixed; bottom: 14px; left: 18px; font-size: 10px; font-weight: 500; letter-spacing: 0.10em; color: rgba(26,25,22,0.50); z-index: 40; pointer-events: none; }
+@media (max-width: 560px) { .nav { padding: 0 16px; } main { padding: 32px 16px 72px; } }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="nav-brand" href="https://tailortech.toom.design/"><img src="data:image/webp;base64,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" alt="TailorTech"></a>
+  <div class="nav-right">
+    <a class="nav-link" href="https://tailortech.toom.design/dashboard" id="nav-dash" hidden>Dashboard</a>
+    <div class="nav-av" id="nav-av" hidden></div>
+    <a class="nav-btn" id="nav-login" href="#" onclick="goToAuth(); return false;">Log In</a>
+  </div>
+</nav>
+
+<main>
+  <div class="eyebrow">TailorTech</div>
+  <h1>Your cart</h1>
+  <p class="lede">Garments you&rsquo;ve saved for later. Request them whenever you&rsquo;re ready &mdash; there&rsquo;s no payment at this stage.</p>
+
+  <section class="state" id="st-loading"><div class="loader"></div></section>
+
+  <section class="state" id="st-signin" hidden>
+    <h2>Sign in to see your cart</h2>
+    <p>Your cart is saved to your TailorTech account, so you can pick up where you left off on any device.</p>
+    <a class="cta" href="#" onclick="goToAuth(); return false;">Log in</a>
+  </section>
+
+  <section class="state" id="st-empty" hidden>
+    <h2>Your cart is empty</h2>
+    <p>Design a garment and choose &ldquo;Add to Cart&rdquo; on the summary step &mdash; it will wait for you here.</p>
+    <a class="cta" href="https://tailortech.toom.design/">Start designing</a>
+  </section>
+
+  <section class="state" id="st-error" hidden>
+    <h2>We couldn&rsquo;t load your cart</h2>
+    <p id="st-error-msg">Please check your connection and try again.</p>
+    <button class="cta" type="button" onclick="loadCart()">Try again</button>
+  </section>
+
+  <div class="grid" id="cart" hidden>
+    <div class="items" id="items"></div>
+    <aside class="summary">
+      <h2>Summary</h2>
+      <div class="sum-row"><span>Garments</span><span id="sum-count">0</span></div>
+      <div class="sum-row"><span>Estimated total</span><strong id="sum-total">—</strong></div>
+      <div class="sum-note">Submitting sends your garment requests to our team. We&rsquo;ll get in touch to discuss the next steps &mdash; no payment or commitment is required yet.</div>
+      <button class="cta" type="button" id="btn-request" onclick="requestAll()">
+        <span id="btn-request-lbl">Request my garments</span>
+      </button>
+      <a class="sum-more" href="https://tailortech.toom.design/">Design another garment</a>
+    </aside>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+<div class="badge">v1.0.0</div>
+
+<script>
+var SHEET_URL = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
+var SUCCESS_URL = 'https://tailortech.toom.design/success';
+var CART = [];
+var _user = null;
+
+function goToAuth() {
+  try { sessionStorage.setItem('tt_return_url', window.location.href); } catch (e) {}
+  window.location.href = 'https://tailortech.toom.design/auth';
+}
+function show(id) {
+  ['st-loading', 'st-signin', 'st-empty', 'st-error', 'cart'].forEach(function (x) { document.getElementById(x).hidden = x !== id; });
+}
+function toast(msg, kind) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show' + (kind === 'err' ? ' err' : '');
+  clearTimeout(toast._t); toast._t = setTimeout(function () { t.className = 'toast'; }, 3200);
+}
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+// JSONP call to the Apps Script web app
+function api(action, payload, timeoutMs) {
+  return new Promise(function (resolve, reject) {
+    var cb = '_ttcb' + Date.now() + Math.floor(Math.random() * 1e4);
+    var s = document.createElement('script');
+    var timer = setTimeout(function () { cleanup(); reject(new Error('The server took too long to respond.')); }, timeoutMs || 30000);
+    function cleanup() { clearTimeout(timer); try { delete window[cb]; } catch (e) { window[cb] = undefined; } if (s.parentNode) s.parentNode.removeChild(s); }
+    window[cb] = function (res) { cleanup(); resolve(res || {}); };
+    s.onerror = function () { cleanup(); reject(new Error('Network error.')); };
+    s.src = SHEET_URL + '?action=' + action + '&payload=' + encodeURIComponent(JSON.stringify(payload || {})) + '&callback=' + cb;
+    document.body.appendChild(s);
+  });
+}
+function token() { return _user ? _user.getIdToken() : Promise.reject(new Error('Please sign in.')); }
+
+function priceNum(p) {
+  var n = parseFloat(String(p || '').replace(/[^\d,.\-]/g, '').replace(/\.(?=.*[.,])/g, '').replace(',', '.'));
+  return isFinite(n) ? n : null;
+}
+function fmtPrice(n) { return '€' + n.toFixed(2).replace(/\.00$/, ''); }   // same format as the configurators
+function fmtDate(v) {
+  if (!v) return '';
+  var d = /^\d{4}-\d{2}-\d{2}T/.test(v) ? new Date(v) : null;
+  if (d && !isNaN(d)) return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  var m = String(v).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (m) return new Date(+m[3], +m[2] - 1, +m[1]).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  return String(v).split(' ')[0];
+}
+
+function loadCart() {
+  show('st-loading');
+  token().then(function (t) { return api('getCart', { idToken: t }); }).then(function (res) {
+    if (!res.success) throw new Error(res.message || 'Could not load your cart.');
+    CART = res.items || [];
+    render();
+  }).catch(function (e) {
+    document.getElementById('st-error-msg').textContent = e.message || 'Please try again.';
+    show('st-error');
+  });
+}
+
+function render() {
+  if (!CART.length) { show('st-empty'); return; }
+  show('cart');
+  var box = document.getElementById('items');
+  box.innerHTML = CART.map(function (it, i) {
+    var n = priceNum(it.price);
+    var meta = [];
+    if (it.fabric) meta.push('<span><i class="swatch"' + (it.swatch ? ' style="background-image:url(\'' + esc(it.swatch) + '\')"' : '') + '></i>' + esc(it.fabric) + (it.color ? ' · ' + esc(it.color) : '') + '</span>');
+    if (it.style) meta.push('<span>' + esc(it.style) + '</span>');
+    if (it.fit) meta.push('<span>' + esc(it.fit) + ' fit</span>');
+    return '<article class="item" data-no="' + esc(it.orderNumber) + '">' +
+      '<div class="item-img" id="img-' + i + '"><span class="ph"></span></div>' +
+      '<div class="item-body">' +
+        '<div class="item-name">' + esc(it.garment) + '</div>' +
+        '<div class="item-no">' + esc(it.orderNumber) + '</div>' +
+        '<div class="item-meta">' + meta.join('') + '</div>' +
+        (it.createdAt ? '<div class="item-date">Saved ' + esc(fmtDate(it.createdAt)) + '</div>' : '') +
+      '</div>' +
+      '<div class="item-side">' +
+        (n != null ? '<div class="item-price">' + fmtPrice(n) + '</div>' : '<div class="item-price na">Price on request</div>') +
+        '<button class="link-btn" type="button" onclick="removeItem(\'' + esc(it.orderNumber) + '\', this)">Remove</button>' +
+      '</div>' +
+    '</article>';
+  }).join('');
+  CART.forEach(function (it, i) { loadImage(it, i); });
+  updateSummary();
+}
+
+function updateSummary() {
+  var total = 0, priced = 0;
+  CART.forEach(function (it) { var n = priceNum(it.price); if (n != null) { total += n; priced++; } });
+  document.getElementById('sum-count').textContent = CART.length;
+  document.getElementById('sum-total').textContent = priced ? fmtPrice(total) + (priced < CART.length ? '+' : '') : '—';
+  document.getElementById('btn-request-lbl').textContent = CART.length > 1 ? 'Request my ' + CART.length + ' garments' : 'Request my garment';
+}
+
+// Tech-pack drawing (stored in Drive) comes back as base64
+function loadImage(it, i) {
+  var el = document.getElementById('img-' + i);
+  if (!it.techPack) { el.classList.add('noimg'); el.innerHTML = '<span class="ph">' + esc(it.garment) + '</span>'; return; }
+  api('getSilhouetteImageBase64', { url: it.techPack }, 45000).then(function (res) {
+    if (res && res.success && res.base64) el.innerHTML = '<img alt="' + esc(it.garment) + ' design" src="data:image/png;base64,' + res.base64 + '">';
+    else throw new Error();
+  }).catch(function () { el.classList.add('noimg'); el.innerHTML = '<span class="ph">' + esc(it.garment) + '</span>'; });
+}
+
+function removeItem(no, btn) {
+  btn.disabled = true;
+  token().then(function (t) { return api('cartAction', { idToken: t, op: 'remove', orderNumbers: [no] }); }).then(function (res) {
+    if (!res.success) throw new Error(res.message || 'Could not remove this item.');
+    var card = btn.closest('.item'); card.classList.add('removing');
+    setTimeout(function () {
+      CART = CART.filter(function (it) { return it.orderNumber !== no; });
+      card.remove();
+      if (!CART.length) show('st-empty'); else updateSummary();
+    }, 260);
+    toast('Removed from your cart');
+  }).catch(function (e) { btn.disabled = false; toast(e.message, 'err'); });
+}
+
+function requestAll() {
+  if (!CART.length) return;
+  var btn = document.getElementById('btn-request');
+  btn.disabled = true;
+  var lbl = document.getElementById('btn-request-lbl'), was = lbl.textContent;
+  lbl.textContent = 'Sending…';
+  var nos = CART.map(function (it) { return it.orderNumber; });
+  token().then(function (t) { return api('cartAction', { idToken: t, op: 'request', orderNumbers: nos }, 90000); }).then(function (res) {
+    if (!res.success) throw new Error(res.message || 'Could not send your request.');
+    var sent = res.orderNumbers && res.orderNumbers.length ? res.orderNumbers : nos;
+    try { if (window.gtag) gtag('event', 'generate_lead', { items: sent.length, source: 'cart' }); } catch (e) {}
+    window.location.href = SUCCESS_URL + '?orders=' + encodeURIComponent(sent.join(',')) + '&from=cart';
+  }).catch(function (e) { btn.disabled = false; lbl.textContent = was; toast(e.message, 'err'); });
+}
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+const app = initializeApp({
+  apiKey:            "AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY",
+  authDomain:        "tailortech-accounts.firebaseapp.com",
+  projectId:         "tailortech-accounts",
+  storageBucket:     "tailortech-accounts.firebasestorage.app",
+  messagingSenderId: "137614433833",
+  appId:             "1:137614433833:web:c78ea40b0d04ba89f3c638"
+});
+onAuthStateChanged(getAuth(app), function (user) {
+  _user = user || null;
+  var av = document.getElementById('nav-av');
+  document.getElementById('nav-login').hidden = !!user;
+  document.getElementById('nav-dash').hidden = !user;
+  av.hidden = !user;
+  if (!user) { show('st-signin'); return; }
+  var name = user.displayName || user.email || '?';
+  av.innerHTML = user.photoURL ? '<img alt="" src="' + user.photoURL + '">' : esc(name[0].toUpperCase());
+  loadCart();
+});
+</script>
+<!-- Cookie consent (analytics) — wording is yours to edit; keep the two button ids -->
+<div id="tt-consent" role="dialog" aria-modal="true" aria-labelledby="tt-consent-title" hidden>
+  <div class="tt-consent-card">
+    <span class="tt-consent-ic" aria-hidden="true">i</span>
+    <div class="tt-consent-body">
+      <h2 id="tt-consent-title">Help us tailor TailorTech</h2>
+      <p>We'd like to use analytics cookies to see how the configurator is used, so we can keep refining it.</p>
+      <div class="tt-consent-btns">
+        <button type="button" id="tt-consent-no">Decline</button>
+        <button type="button" id="tt-consent-yes">Accept</button>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+#tt-consent { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(26,25,22,0.28); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; animation: ttcFade 0.25s ease; }
+#tt-consent[hidden] { display: none; }
+.tt-consent-card { display: flex; gap: 14px; align-items: flex-start; width: min(440px, 100%); padding: 22px 24px 20px; background: #F3F8F6; border: 1px solid rgba(77,191,171,0.45); border-radius: 14px; box-shadow: 0 18px 50px rgba(26,25,22,0.18); color: #2f6f63; animation: ttcRise 0.3s ease; }
+.tt-consent-ic { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #4dbfab; color: #4dbfab; display: flex; align-items: center; justify-content: center; font-family: Georgia, serif; font-style: italic; font-size: 14px; font-weight: 600; margin-top: 1px; }
+.tt-consent-body { flex: 1; min-width: 0; }
+#tt-consent h2 { margin: 2px 0 8px; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: #1f5249; }
+#tt-consent p { margin: 0 0 16px; font-size: 12.5px; line-height: 1.6; color: #2f6f63; }
+.tt-consent-btns { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+#tt-consent button { font-family: inherit; font-size: 10px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; padding: 11px 20px; border-radius: 999px; cursor: pointer; transition: opacity 0.15s, background 0.15s; }
+#tt-consent-no { background: transparent; border: 1px solid rgba(47,111,99,0.35); color: #2f6f63; }
+#tt-consent-no:hover { background: rgba(77,191,171,0.10); }
+#tt-consent-yes { background: #4a164f; border: 1px solid #4a164f; color: #fff; }
+#tt-consent-yes:hover { opacity: 0.9; }
+#tt-consent button:focus-visible { outline: 2px solid #4dbfab; outline-offset: 2px; }
+@keyframes ttcFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ttcRise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { #tt-consent, .tt-consent-card { animation: none; } }
+</style>
+<script>
+(function(){
+  var el = document.getElementById('tt-consent'), saved = null;
+  try { saved = localStorage.getItem('tt_consent'); } catch (e) {}
+  function choose(v) {
+    try { localStorage.setItem('tt_consent', v); } catch (e) {}
+    if (typeof gtag === 'function') gtag('consent', 'update', { analytics_storage: v });
+    el.hidden = true;
+  }
+  if (saved !== 'granted' && saved !== 'denied') { el.hidden = false; setTimeout(function(){ var b = document.getElementById('tt-consent-yes'); if (b) b.focus(); }, 50); }
+  document.getElementById('tt-consent-yes').onclick = function(){ choose('granted'); };
+  document.getElementById('tt-consent-no').onclick  = function(){ choose('denied'); };
+})();
+</script>
+</body>
+</html>
