@@ -947,6 +947,7 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
         <div class="pill-group" id="mono-place">
           <button class="pill selected" data-place="none"   onclick="selectMonoPlace(this,'none')">None</button>
           <button class="pill"          data-place="under"  onclick="selectMonoPlace(this,'under')">Under Pocket</button>
+          <button class="pill"          data-place="waist"  onclick="selectMonoPlace(this,'waist')">Under Waistband</button>
         </div>
         <p class="mono-note" id="mono-note" hidden></p>
 
@@ -1256,6 +1257,7 @@ function logoSummary() { return logoActive() ? LOGO_PLACE_LABEL[state.logo.place
 // Position on the 2250×2250 front drawing, as a fraction (same for every style / fit / pocket):
 //   under pocket = wearer's left (viewer's right), just below the front pocket
 var MONO_POS = {
+  waist: { x: 0.568, y: 0.166, rot: 0, size: 0.72 },   // just below the waistband, centred over the thigh logo
   under: { x: 0.598, y: 0.288, rot: 0, size: 0.72 },   // wearer's left leg, just below the front pocket, against the side seam
 };
 // Outer side-seam position (fraction of drawing width) at the monogram height, per fit —
@@ -1265,7 +1267,10 @@ var MONO_EDGE_GAP = 0.019;
 function monoPos(place) {
   var p = MONO_POS[place]; if (!p) return p;
   var edge = MONO_EDGE[state.fit];
-  return edge ? { x: edge - MONO_EDGE_GAP, y: p.y, rot: p.rot, size: p.size } : p;
+  if (!edge) return p;
+  // under waistband: same x as the thigh logo (halfway between centre front and side seam)
+  var x = place === 'waist' ? (0.5 + edge) / 2 : edge - MONO_EDGE_GAP;
+  return { x: x, y: p.y, rot: p.rot, size: p.size };
 }
 var MONO_FONTS = {
   serif:  { css: "'Cormorant Garamond', Georgia, serif", weight: 600, scale: 1.0,  spacing: '0.06em', label: 'Serif' },
@@ -1283,7 +1288,7 @@ var MONO_THREADS = [
 ];
 var MONO_BASE_PX = 7;      // size of the initials on the drawing (≈ 3 cm embroidery)
 var MONO_ZOOM = 3.2;       // close-up when the monogram is being edited
-var MONO_PLACE_LABEL = { none: 'None', under: 'Under Pocket' };
+var MONO_PLACE_LABEL = { none: 'None', under: 'Under Pocket', waist: 'Under Waistband' };
 function monoThread() { return MONO_THREADS.find(function(t){ return t.key === state.monogram.thread; }) || MONO_THREADS[0]; }
 function monoActive() { return state.monogram.place !== 'none' && !!state.monogram.text; }
 
@@ -2991,7 +2996,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.2.6</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.2.7</div>
 
 
 <!-- Cookie consent (analytics) — wording is yours to edit; keep the two button ids -->
