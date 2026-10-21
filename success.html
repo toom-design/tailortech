@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) — consent mode: nothing is stored until the visitor accepts -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  (function(){
+    var c = null; try { c = localStorage.getItem('tt_consent'); } catch (e) {}
+    gtag('consent', 'default', {
+      ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied',
+      analytics_storage: c === 'granted' ? 'granted' : 'denied',
+      wait_for_update: 500
+    });
+  })();
+  gtag('js', new Date());
+  gtag('config', 'G-NZTP07VKKF');
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NZTP07VKKF"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Request Received</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #F0EDE6; --white: #FAFAF8;
+  --ink: #1A1916; --ink-mid: #4A4844; --ink-light: #8A8880; --ink-faint: #C0BDB8;
+  --border: rgba(26,25,22,0.12); --border-mid: rgba(26,25,22,0.22);
+  --tt-purple: #4A164F; --tt-turq: #4DBFAB; --mint-bg: #F3F8F6; --mint-ink: #2f6f63;
+}
+html, body { background: var(--cream); color: var(--ink); font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+body { min-height: 100vh; display: flex; flex-direction: column; }
+
+.nav { height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; background: var(--white); border-bottom: 1px solid var(--border); }
+.nav-brand img { display: block; height: 22px; }
+.nav-link { font-size: 10.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-mid); text-decoration: none; }
+.nav-link:hover { color: var(--tt-purple); }
+
+main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 56px 20px 80px; }
+.card { width: min(600px, 100%); padding: 48px 44px 40px; background: var(--white); border: 1px solid var(--border); border-radius: 18px; text-align: center; box-shadow: 0 24px 60px rgba(26,25,22,0.06); animation: rise 0.5s ease both; }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+.check { width: 72px; height: 72px; margin: 0 auto 24px; border-radius: 50%; background: var(--mint-bg); border: 1.5px solid var(--tt-turq); display: flex; align-items: center; justify-content: center; }
+.check svg { width: 30px; height: 30px; }
+.check path { stroke: var(--tt-turq); stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 30; stroke-dashoffset: 30; animation: draw 0.55s 0.25s ease forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+
+.eyebrow { font-size: 9.5px; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 10px; }
+h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: clamp(32px, 6vw, 42px); line-height: 1.08; }
+.lede { margin: 14px auto 0; max-width: 440px; font-size: 14px; line-height: 1.65; color: var(--ink-mid); }
+
+.orders { margin: 22px 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.order-chip { padding: 7px 12px; border-radius: 999px; border: 1px solid var(--border-mid); font-size: 11px; letter-spacing: 0.08em; color: var(--ink-mid); background: #fff; }
+
+.mail { margin: 26px 0 0; display: flex; gap: 14px; align-items: flex-start; text-align: left; padding: 16px 18px; border-radius: 12px; background: var(--mint-bg); border: 1px solid rgba(77,191,171,0.45); color: var(--mint-ink); }
+.mail svg { flex-shrink: 0; width: 22px; height: 22px; margin-top: 1px; }
+.mail strong { display: block; font-size: 12.5px; font-weight: 600; letter-spacing: 0.02em; color: #1f5249; margin-bottom: 3px; }
+.mail span { font-size: 12.5px; line-height: 1.55; }
+
+.steps { margin: 30px 0 0; padding: 0; list-style: none; text-align: left; border-top: 1px solid var(--border); }
+.steps li { display: grid; grid-template-columns: 28px 1fr; gap: 14px; padding: 15px 0; border-bottom: 1px solid var(--border); }
+.steps .n { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--tt-purple); color: var(--tt-purple); font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; }
+.steps b { display: block; font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+.steps p { font-size: 12.5px; line-height: 1.55; color: var(--ink-light); }
+
+.actions { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.cta { flex: 1 1 200px; display: inline-flex; align-items: center; justify-content: center; padding: 16px 22px; border-radius: 999px; background: var(--tt-purple); border: 1px solid var(--tt-purple); color: #fff; font-size: 10.5px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; text-decoration: none; transition: opacity 0.15s, background 0.15s; }
+.cta:hover { opacity: 0.9; }
+.cta-ghost { background: transparent; color: var(--tt-purple); }
+.cta-ghost:hover { background: rgba(74,22,79,0.05); opacity: 1; }
+.badge { position: fixed; bottom: 14px; left: 18px; font-size: 10px; font-weight: 500; letter-spacing: 0.10em; color: rgba(26,25,22,0.50); pointer-events: none; }
+@media (max-width: 560px) { .nav { padding: 0 16px; } .card { padding: 36px 22px 28px; } }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="nav-brand" href="https://tailortech.toom.design/"><img src="data:image/webp;base64,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" alt="TailorTech"></a>
+  <a class="nav-link" href="https://tailortech.toom.design/dashboard">Dashboard</a>
+</nav>
+
+<main>
+  <section class="card">
+    <div class="check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+    <div class="eyebrow" id="eyebrow">Request received</div>
+    <h1 id="headline">Thank you &mdash; your garment request is in</h1>
+    <p class="lede" id="lede">Our team will review your design and measurements and get in touch to discuss the next steps. There&rsquo;s nothing to pay yet.</p>
+
+    <div class="orders" id="orders" hidden></div>
+
+    <div class="mail">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg>
+      <div>
+        <strong>A confirmation email is on its way</strong>
+        <span id="mail-text">It should arrive in your inbox within a few minutes. If you can&rsquo;t see it, please check your spam or promotions folder.</span>
+      </div>
+    </div>
+
+    <ol class="steps">
+      <li><span class="n">1</span><div><b>Confirmation email</b><p>A summary of your request with your order number.</p></div></li>
+      <li><span class="n">2</span><div><b>We review your design</b><p>Our tailors check your choices, fabric and measurements.</p></div></li>
+      <li><span class="n">3</span><div><b>We get in touch</b><p>To talk through the details, fitting and price before anything is made.</p></div></li>
+    </ol>
+
+    <div class="actions">
+      <a class="cta" href="https://tailortech.toom.design/dashboard">Go to my dashboard</a>
+      <a class="cta cta-ghost" href="https://tailortech.toom.design/">Design another garment</a>
+    </div>
+  </section>
+</main>
+
+<div class="badge">v1.0.0</div>
+
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  var orders = (q.get('orders') || q.get('order') || '').split(',').map(function (s) { return s.trim(); })
+    .filter(function (s) { return /^[A-Za-z0-9\-]{4,40}$/.test(s); });
+  var garment = (q.get('garment') || '').replace(/[^A-Za-z \-]/g, '').trim();
+  var n = orders.length;
+  if (n) {
+    var box = document.getElementById('orders');
+    orders.forEach(function (o) { var c = document.createElement('span'); c.className = 'order-chip'; c.textContent = '#' + o; box.appendChild(c); });
+    box.hidden = false;
+  }
+  if (n > 1) {
+    document.getElementById('headline').textContent = 'Thank you — your ' + n + ' garment requests are in';
+    document.getElementById('mail-text').textContent = 'You’ll receive one email per garment within a few minutes. If you can’t see them, please check your spam or promotions folder.';
+  } else if (garment) {
+    document.getElementById('headline').textContent = 'Thank you — your ' + garment.toLowerCase() + ' request is in';
+  }
+  try { if (window.gtag && q.get('from') !== 'cart' && n) gtag('event', 'generate_lead', { items: n, source: garment || 'configurator' }); } catch (e) {}
+})();
+</script>
+<!-- Cookie consent (analytics) — wording is yours to edit; keep the two button ids -->
+<div id="tt-consent" role="dialog" aria-modal="true" aria-labelledby="tt-consent-title" hidden>
+  <div class="tt-consent-card">
+    <span class="tt-consent-ic" aria-hidden="true">i</span>
+    <div class="tt-consent-body">
+      <h2 id="tt-consent-title">Help us tailor TailorTech</h2>
+      <p>We'd like to use analytics cookies to see how the configurator is used, so we can keep refining it.</p>
+      <div class="tt-consent-btns">
+        <button type="button" id="tt-consent-no">Decline</button>
+        <button type="button" id="tt-consent-yes">Accept</button>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+#tt-consent { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(26,25,22,0.28); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; animation: ttcFade 0.25s ease; }
+#tt-consent[hidden] { display: none; }
+.tt-consent-card { display: flex; gap: 14px; align-items: flex-start; width: min(440px, 100%); padding: 22px 24px 20px; background: #F3F8F6; border: 1px solid rgba(77,191,171,0.45); border-radius: 14px; box-shadow: 0 18px 50px rgba(26,25,22,0.18); color: #2f6f63; animation: ttcRise 0.3s ease; }
+.tt-consent-ic { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #4dbfab; color: #4dbfab; display: flex; align-items: center; justify-content: center; font-family: Georgia, serif; font-style: italic; font-size: 14px; font-weight: 600; margin-top: 1px; }
+.tt-consent-body { flex: 1; min-width: 0; }
+#tt-consent h2 { margin: 2px 0 8px; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: #1f5249; }
+#tt-consent p { margin: 0 0 16px; font-size: 12.5px; line-height: 1.6; color: #2f6f63; }
+.tt-consent-btns { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+#tt-consent button { font-family: inherit; font-size: 10px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; padding: 11px 20px; border-radius: 999px; cursor: pointer; transition: opacity 0.15s, background 0.15s; }
+#tt-consent-no { background: transparent; border: 1px solid rgba(47,111,99,0.35); color: #2f6f63; }
+#tt-consent-no:hover { background: rgba(77,191,171,0.10); }
+#tt-consent-yes { background: #4a164f; border: 1px solid #4a164f; color: #fff; }
+#tt-consent-yes:hover { opacity: 0.9; }
+#tt-consent button:focus-visible { outline: 2px solid #4dbfab; outline-offset: 2px; }
+@keyframes ttcFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ttcRise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { #tt-consent, .tt-consent-card { animation: none; } }
+</style>
+<script>
+(function(){
+  var el = document.getElementById('tt-consent'), saved = null;
+  try { saved = localStorage.getItem('tt_consent'); } catch (e) {}
+  function choose(v) {
+    try { localStorage.setItem('tt_consent', v); } catch (e) {}
+    if (typeof gtag === 'function') gtag('consent', 'update', { analytics_storage: v });
+    el.hidden = true;
+  }
+  if (saved !== 'granted' && saved !== 'denied') { el.hidden = false; setTimeout(function(){ var b = document.getElementById('tt-consent-yes'); if (b) b.focus(); }, 50); }
+  document.getElementById('tt-consent-yes').onclick = function(){ choose('granted'); };
+  document.getElementById('tt-consent-no').onclick  = function(){ choose('denied'); };
+})();
+</script>
+</body>
+</html>
