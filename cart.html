@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <!-- Google tag (gtag.js) — consent mode: nothing is stored until the visitor accepts -->
@@ -164,7 +163,7 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
 </main>
 
 <div class="toast" id="toast"></div>
-<div class="badge">v1.0.0</div>
+<div class="badge">v1.0.1</div>
 
 <script>
 var SHEET_URL = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
@@ -219,6 +218,7 @@ function loadCart() {
   show('st-loading');
   token().then(function (t) { return api('getCart', { idToken: t }); }).then(function (res) {
     if (!res.success) throw new Error(res.message || 'Could not load your cart.');
+    if (res.debug) console.info('[cart]', res.debug, (res.items || []).length + ' item(s)');
     CART = res.items || [];
     render();
   }).catch(function (e) {
