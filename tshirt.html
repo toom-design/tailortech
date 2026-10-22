@@ -1838,6 +1838,24 @@ function collectConfig() {
   active.fields.forEach(function(f){ cfg[f[0]] = mval(f[0]); });
   return cfg;
 }
+
+// Estimated price saved with every order (PRICE column) — the same figure the footer shows,
+// after any published discount. Empty while the price is still loading.
+function ttEstimatedPrice() {
+  var el = document.querySelector('.price-display-amount');
+  if (!el || el.querySelector('.price-spin')) return '';
+  var src = el.querySelector('.price-new') || el;
+  var n = parseFloat(String(src.textContent || '').replace(/[^0-9.,]/g, '').replace(',', '.'));
+  return isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : '';
+}
+(function () {
+  var _collect = collectConfig;
+  collectConfig = function () {
+    var c = _collect.apply(this, arguments);
+    if (c && !c['PRICE']) c['PRICE'] = ttEstimatedPrice();
+    return c;
+  };
+})();
 window.collectConfig = collectConfig;
 
 // ── On-screen debug panel ──
@@ -2996,7 +3014,7 @@ function captureTechPackImage() {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.1</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.2</div>
 
 
 <!-- ═══════════════ 3D PREVIEW (three.js + glTF) ═══════════════ -->
