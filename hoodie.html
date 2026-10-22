@@ -737,6 +737,9 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
 .mono-mark { position: absolute; white-space: nowrap; line-height: 1; }
 .mono-mark.is-placeholder { opacity: 0.35; }
 .fabric-search-row { display: none !important; }   /* fabric search removed */
+/* Estimated price: spinner while the price is being calculated */
+.price-spin { display: inline-block; width: 16px; height: 16px; border: 1.5px solid rgba(26,25,22,0.18); border-top-color: #4A164F; border-radius: 50%; animation: ttPriceSpin 0.7s linear infinite; vertical-align: middle; }
+@keyframes ttPriceSpin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -923,19 +926,7 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
         </div>
       </div>
 
-      <!-- LOGO — embroidered TailorTech logo -->
-      <div class="section" id="section-logo">
-        <div class="section-label">Logo</div>
-        <div class="pill-group" id="logo-place">
-          <button class="pill selected" data-place="none"  onclick="selectLogoPlace(this,'none')">None</button>
-          <button class="pill"          data-place="chest" onclick="selectLogoPlace(this,'chest')">Chest</button>
-        </div>
-        <div class="mono-body" id="logo-body" hidden>
-          <div class="mono-lbl">Colour <span id="logo-color-name">Turquoise</span></div>
-          <div class="logo-colors" id="logo-colors"></div>
-        </div>
-      </div>
-
+      <!-- LOGO section removed (v1.9.1) — the logo code below stays dormant; state.logo.place is always "none" -->
       <!-- MONOGRAM — embroidered initials -->
       <div class="section" id="section-monogram">
         <div class="section-label">Monogram</div>
@@ -1125,7 +1116,7 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
     <div class="config-footer" id="config-footer">
       <div>
         <div class="footer-price-label">Estimated Price</div>
-        <div class="footer-price-amount price-display-amount">—</div>
+        <div class="footer-price-amount price-display-amount"><span class="price-spin" role="status" aria-label="Calculating price"></span></div>
       </div>
       <div class="req-tip" id="req-tip" role="tooltip">
         <span class="req-tip-ic">i</span>
@@ -1819,7 +1810,6 @@ function buildSummary() {
         ['Sleeve',               cfg['SLEEVE STYLE']],
         ['Front Pocket',         cfg['FRONT POCKETS']],
         ['Hem + Cuffs',          cfg['SLEEVE CUFF']],
-        ['Logo',             logoSummary()],
         ['Monogram',             monoSummary()],
         ['Notes',             escHtml(state.notes.trim()).replace(/\n/g, '<br>')],
       ]
@@ -2029,6 +2019,7 @@ async function loadPricingData() {
   } catch(err) {
     console.error('Pricing load failed:', err);
     _pricing = null;
+    window._pricingFailed = true;   // stop the spinner — show "—" instead
     _sectionConfigMap = {};
   }
 }
@@ -2155,6 +2146,16 @@ function updatePriceBar() {
   if (!amounts.length) return;
 
   var text = '—';
+  // Still loading (pricing, or the fabric the price depends on) → rotating circle instead of a dash
+  var fabricsReady = !document.getElementById('fabric-main-grid') ||
+    !!document.querySelector('#fabric-main-grid .fabric-card, #fabric-main-grid .fabric-error');
+  if ((!_pricing && !window._pricingFailed) || (_pricing && !fabricsReady)) {
+    amounts.forEach(function(el){
+      if (!el.querySelector('.price-spin')) el.innerHTML = '<span class="price-spin" role="status" aria-label="Calculating price"></span>';
+      el.classList.remove('has-discount');
+    });
+    return;
+  }
   if (_pricing) {
     var base = _pricing.tailoring * (1 + _pricing.marginPercent / 100);
 
@@ -2316,9 +2317,6 @@ function collectConfig() {
     'CONSTRUCTION':        'N/A',
     'SLEEVE BUTTONS':      'N/A',
     'SLEEVE CUFF':         sectionPill('Hem + Cuffs'),
-
-    'LOGO PLACEMENT':   logoActive() ? LOGO_PLACE_LABEL[state.logo.place] : 'None',
-    'LOGO COLOUR':      logoActive() ? logoColor().name : '',
     'MONOGRAM PLACEMENT':  monoActive() ? MONO_PLACE_LABEL[state.monogram.place] : 'None',
     'MONOGRAM TEXT':       monoActive() ? state.monogram.text : '',
     'MONOGRAM STYLE':      monoActive() ? MONO_FONTS[state.monogram.style].label : '',
@@ -2749,7 +2747,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.8.9</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.1</div>
 
 <!-- Firebase -->
 <script type="module">

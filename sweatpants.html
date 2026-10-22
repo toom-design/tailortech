@@ -640,6 +640,11 @@ button[onclick="handleAddToCart()"]:hover { background: rgba(74,22,79,0.06) !imp
 .fc-check { display: none !important; }
 .fabric-card.selected { background: var(--tt-purple) !important; border-color: var(--tt-purple) !important; box-shadow: none !important; }
 .fabric-card.selected .fname, .fabric-card.selected .fcode, .fabric-card.selected .fgsm, .fabric-card.selected .fcomp { color: #fff !important; }
+/* Price on each main-fabric card: grey, readable on both the plain and the selected (purple) card */
+.fprice { display: block; margin-top: 3px; font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 0.02em; color: #8A8880; }
+.fprice:empty { display: none; }
+#fabric-comp-grid .fprice { display: none; }
+.fabric-card.selected .fprice { color: rgba(255,255,255,0.78) !important; }
 .fabric-card.selected .fcode, .fabric-card.selected .fgsm, .fabric-card.selected .fcomp { opacity: 0.72; }
 
 /* v1.6.4 — quote banner: solid optic black, quote on one line */
@@ -792,6 +797,9 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
 .mono-square { position: absolute; left: 0; right: 0; top: 50%; aspect-ratio: 1 / 1; transform: translateY(-50%); }
 .mono-mark { position: absolute; white-space: nowrap; line-height: 1; }
 .mono-mark.is-placeholder { opacity: 0.35; }
+/* Estimated price: spinner while the price is being calculated */
+.price-spin { display: inline-block; width: 16px; height: 16px; border: 1.5px solid rgba(26,25,22,0.18); border-top-color: #4A164F; border-radius: 50%; animation: ttPriceSpin 0.7s linear infinite; vertical-align: middle; }
+@keyframes ttPriceSpin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -928,19 +936,7 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
         </div>
       </div>
 
-      <!-- LOGO — embroidered TailorTech logo -->
-      <div class="section" id="section-logo">
-        <div class="section-label">Logo</div>
-        <div class="pill-group" id="logo-place">
-          <button class="pill selected" data-place="none"  onclick="selectLogoPlace(this,'none')">None</button>
-          <button class="pill"          data-place="thigh" onclick="selectLogoPlace(this,'thigh')">Thigh</button>
-        </div>
-        <div class="mono-body" id="logo-body" hidden>
-          <div class="mono-lbl">Colour <span id="logo-color-name">Turquoise</span></div>
-          <div class="logo-colors" id="logo-colors"></div>
-        </div>
-      </div>
-
+      <!-- LOGO section removed (v1.3.2) — the logo code below stays dormant; state.logo.place is always "none" -->
       <!-- MONOGRAM — embroidered initials -->
       <div class="section" id="section-monogram">
         <div class="section-label">Monogram</div>
@@ -1002,7 +998,6 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
         <div class="comp-parts-row">
           <button class="comp-part-btn" id="comp-part-waistband" onclick="toggleCompPart(this,'waistband')">Waistband</button>
           <button class="comp-part-btn" id="comp-part-cuffs"     onclick="toggleCompPart(this,'cuffs')">Cuffs</button>
-          <button class="comp-part-btn" id="comp-part-pocket"    onclick="toggleCompPart(this,'pocket')">Pocket</button>
         </div>
         <div id="comp-fabric-body" style="display:none;margin-top:16px;">
           <div class="fabric-search-row">
@@ -1093,10 +1088,17 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
     <div class="config-footer" id="config-footer">
       <div>
         <div class="footer-price-label">Estimated Price</div>
-        <div class="footer-price-amount price-display-amount">—</div>
+        <div class="footer-price-amount price-display-amount"><span class="price-spin" role="status" aria-label="Calculating price"></span></div>
+      </div>
+      <div class="req-tip" id="req-tip" role="tooltip">
+        <span class="req-tip-ic">i</span>
+        <span>Ready to bring your design to life? Submit your garment request and we&rsquo;ll get in touch to discuss the next steps. No payment or commitment is required at this stage.</span>
       </div>
       <button type="button" class="footer-next" id="footer-next" onclick="footerNext(event)">
         <span id="footer-next-lbl">Continue to Materials</span>
+        <span class="req-info" id="req-info" role="button" tabindex="0" aria-label="What does this do?" aria-describedby="req-tip"
+              onclick="event.stopPropagation(); event.preventDefault(); toggleReqTip(true);"
+              onkeydown="if(event.key==='Enter'||event.key===' '){event.stopPropagation();event.preventDefault();toggleReqTip();}">i</span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="5,12 19,12"/><polyline points="13,6 19,12 13,18"/></svg>
       </button>
     </div>
@@ -1729,13 +1731,7 @@ function buildFabricCard(fabric, group, isFirst) {
   var codeEl = document.createElement('span'); codeEl.className = 'fcode'; codeEl.textContent = code;
   var compEl = document.createElement('span'); compEl.className = 'fcomp'; compEl.textContent = comp;
   var priceEl = document.createElement('span'); priceEl.className = 'fprice';
-  priceEl.style.cssText = 'font-family:Jost,sans-serif;font-size:12px;font-weight:600;color:var(--ink);margin-top:2px;';
-  if (typeof _pricing !== 'undefined' && _pricing) {
-    var basePrice = _pricing.tailoring * (1 + _pricing.marginPercent / 100);
-    var fabricPrice = unitPrice * _pricing.fabricCoefficient;
-    var fmt = function(n){ return n.toFixed(2).replace(/\.00$/, ''); };
-    priceEl.textContent = '€' + fmt(basePrice + fabricPrice);
-  }
+  priceEl.textContent = fabricPriceText(unitPrice);
 
   var detBtn = document.createElement('button');
   detBtn.className = 'fc-details-toggle';
@@ -1831,7 +1827,7 @@ function selectBtnMaterial(btn) {
 function collectConfig() {
   var selCard = document.querySelector('#fabric-main-grid .fabric-card.selected');
 
-  // Contrast fabric — Waistband / Cuffs / Pocket.
+  // Contrast fabric — Waistband / Cuffs.
   var compBody = document.getElementById('comp-fabric-body');
   var compVisible = compBody && compBody.style.display !== 'none';
   var compCard = compVisible ? document.querySelector('#fabric-comp-grid .fabric-card.selected') : null;
@@ -1841,7 +1837,6 @@ function collectConfig() {
   if (document.getElementById('comp-part-waistband') && document.getElementById('comp-part-waistband').classList.contains('selected')) contrastParts.push('Waistband');
   var cuffBtnEl = document.getElementById('comp-part-cuffs');
   if (cuffBtnEl && cuffBtnEl.classList.contains('selected') && cuffBtnEl.style.display !== 'none') contrastParts.push('Cuffs');
-  if (document.getElementById('comp-part-pocket') && document.getElementById('comp-part-pocket').classList.contains('selected')) contrastParts.push('Pocket');
 
   function mval(id) {
     var el = document.getElementById('mf-' + id);
@@ -1879,8 +1874,6 @@ function collectConfig() {
 
     // ── Waistband (no adjustment/rise for sweatpants) ──────────────
     'WAISTBAND STYLE':   sectionPill('Waistband'),
-    'LOGO PLACEMENT':   logoActive() ? LOGO_PLACE_LABEL[state.logo.place] : 'None',
-    'LOGO COLOUR':      logoActive() ? logoColor().name : '',
     'MONOGRAM PLACEMENT': monoActive() ? MONO_PLACE_LABEL[state.monogram.place] : 'None',
     'MONOGRAM TEXT':      monoActive() ? state.monogram.text : '',
     'MONOGRAM STYLE':     monoActive() ? MONO_FONTS[state.monogram.style].label : '',
@@ -2004,11 +1997,11 @@ async function handleOrderNow() {
   try {
     await ensurePersonId();
     var techPackUrl = await getOrCaptureSilhouette(); // '' on failure — never blocks the order
-    var res = await _saveViaIframe('Pending', { 'tech pack': techPackUrl });
-    toast('Order placed — #' + (res && res.orderNumber ? res.orderNumber : '') + ' — going to checkout…');
-    setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/checkout'; }, 1800);
+    var res = await _saveViaIframe('Pending', { 'tech pack': techPackUrl, 'Request Type': 'Garment Request' });
+    toast('Request sent — #' + (res && res.orderNumber ? res.orderNumber : '') + ' — we\'ll be in touch shortly.');
+    setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/success?orders=' + encodeURIComponent(res && res.orderNumber ? res.orderNumber : '') + '&garment=Sweatpants'; }, 1800);
   } catch(e) {
-    toast('Could not place order: ' + e.message, 'err');
+    toast('Could not send your request: ' + e.message, 'err');
     if (btn) { btn.disabled = false; btn.style.opacity = ''; }
   }
 }
@@ -2031,7 +2024,6 @@ function buildSummary() {
         ['Front Pockets',    cfg['FRONT POCKETS']],
         ['Waistband',        cfg['WAISTBAND STYLE']],
         ['Cuff Type',        cfg['HEM/FINISH']],
-        ['Logo',         logoSummary()],
         ['Monogram',         monoSummary()],
         ['Notes',         escHtml(state.notes.trim()).replace(/\n/g, '<br>')],
       ]
@@ -2474,6 +2466,7 @@ async function loadPricingData() {
   } catch(err) {
     console.error('Pricing load failed:', err);
     _pricing = null;
+    window._pricingFailed = true;   // stop the spinner — show "—" instead
     _sectionConfigMap = {};
   }
 }
@@ -2589,11 +2582,37 @@ function calculateOptionsExtra() {
   return total;
 }
 
+// Price shown on each main-fabric card = the estimated price of the current design in that fabric
+// (same maths as the footer: base + fabric + selected options, minus any published discount)
+function fabricPriceText(unitPrice) {
+  if (typeof _pricing === 'undefined' || !_pricing) return '';
+  var base = _pricing.tailoring * (1 + _pricing.marginPercent / 100);
+  var total = base + (Number(unitPrice) || 0) * _pricing.fabricCoefficient + calculateOptionsExtra();
+  var disc = Number(_pricing.discountPercent) || 0;
+  if (disc > 0 && total > 0) total = Math.round(total * (1 - disc / 100) * 100) / 100;
+  return total > 0 ? '€' + total.toFixed(2).replace(/\.00$/, '') : '';
+}
+function refreshFabricPrices() {
+  document.querySelectorAll('#fabric-main-grid .fabric-card').forEach(function(card) {
+    var el = card.querySelector('.fprice'); if (el) el.textContent = fabricPriceText(card.dataset.unitprice);
+  });
+}
 function updatePriceBar() {
+  refreshFabricPrices();
   var amounts = document.querySelectorAll('.price-display-amount');
   if (!amounts.length) return;
 
   var text = '—';
+  // Still loading (pricing, or the fabric the price depends on) → rotating circle instead of a dash
+  var fabricsReady = !document.getElementById('fabric-main-grid') ||
+    !!document.querySelector('#fabric-main-grid .fabric-card, #fabric-main-grid .fabric-error');
+  if ((!_pricing && !window._pricingFailed) || (_pricing && !fabricsReady)) {
+    amounts.forEach(function(el){
+      if (!el.querySelector('.price-spin')) el.innerHTML = '<span class="price-spin" role="status" aria-label="Calculating price"></span>';
+      el.classList.remove('has-discount');
+    });
+    return;
+  }
   if (_pricing) {
     var base = _pricing.tailoring * (1 + _pricing.marginPercent / 100);
 
@@ -2644,14 +2663,27 @@ function updateFooter() {
   var lbl = document.getElementById('footer-next-lbl');
   if (!lbl) return;
   var id = activePanelId();
+  var ri = document.getElementById('req-info'); if (ri) ri.style.display = id === 'panel-summary' ? '' : 'none';
+  if (id !== 'panel-summary') toggleReqTip(false);
   if (id === 'panel-design')         lbl.textContent = 'Continue to Materials';
   else if (id === 'panel-materials') lbl.textContent = 'Continue to Measurements';
-  else if (id === 'panel-summary')   lbl.textContent = 'Order Now';
+  else if (id === 'panel-summary')   lbl.textContent = 'Request My Garment';
   else {
     var ml = document.getElementById('meas-save-lbl');
     lbl.textContent = ml ? ml.textContent : 'Continue to Summary';
   }
 }
+// Info "i" on Request My Garment: shows on hover, click/tap toggles it
+function toggleReqTip(force) {
+  var t = document.getElementById('req-tip'); if (!t) return;
+  var on = typeof force === 'boolean' ? force : !t.classList.contains('show');
+  t.classList.toggle('show', on);
+}
+document.addEventListener('click', function(e){ if (!e.target.closest || !e.target.closest('#req-info')) toggleReqTip(false); });
+document.addEventListener('DOMContentLoaded', function(){
+  var i = document.getElementById('req-info');
+  if (i) { i.style.display = 'none'; i.addEventListener('mouseenter', function(){ toggleReqTip(true); }); i.addEventListener('mouseleave', function(){ toggleReqTip(false); }); }
+});
 function footerNext(e) {
   var id = activePanelId();
   if (id === 'panel-design')         goToMaterials();
@@ -2958,6 +2990,7 @@ function redirectToAuthWithPendingOrder(status, intent) {
     data['garment']    = 'sweatpants';
     data['action']     = 'saveSweatpants';
     data['Created At'] = new Date().toISOString();
+    if (intent === 'order') data['Request Type'] = 'Garment Request';
     sessionStorage.setItem('tt_pending_order', JSON.stringify({ data: data, intent: intent }));
     sessionStorage.setItem('tt_return_url', window.location.href);
   } catch(e) {}
@@ -2986,8 +3019,8 @@ function resumePendingOrderIfAny(user) {
       toast('Added to cart!');
       setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/cart'; }, 1500);
     } else if (pending.intent === 'order') {
-      toast('Order placed — #' + (res && res.orderNumber ? res.orderNumber : ''));
-      setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/checkout'; }, 1500);
+      toast('Request sent — #' + (res && res.orderNumber ? res.orderNumber : ''));
+      setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/success?orders=' + encodeURIComponent(res && res.orderNumber ? res.orderNumber : '') + '&garment=Sweatpants'; }, 1500);
     } else {
       toast('Configuration saved!');
       setTimeout(function(){ window.location.href = 'https://tailortech.toom.design/dashboard'; }, 1500);
@@ -3018,7 +3051,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.2.8</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.3.2</div>
 
 
 <!-- Cookie consent (analytics) — wording is yours to edit; keep the two button ids -->
