@@ -164,12 +164,13 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
 
 <div class="toast" id="toast"></div>
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.0.2</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.0.3</div>
 
 <script>
 var SHEET_URL = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
 var SUCCESS_URL = 'https://tailortech.toom.design/success';
 var CART = [];
+window.ttCartManaged = true;   // this page sets the nav cart count itself
 var _user = null;
 
 function goToAuth() {
@@ -221,6 +222,7 @@ function loadCart() {
     if (!res.success) throw new Error(res.message || 'Could not load your cart.');
     if (res.debug) console.info('[cart]', res.debug, (res.items || []).length + ' item(s)');
     CART = res.items || [];
+    if (window.ttCartCount) ttCartCount(CART.length);
     render();
   }).catch(function (e) {
     document.getElementById('st-error-msg').textContent = e.message || 'Please try again.';
@@ -281,6 +283,7 @@ function removeItem(no, btn) {
     var card = btn.closest('.item'); card.classList.add('removing');
     setTimeout(function () {
       CART = CART.filter(function (it) { return it.orderNumber !== no; });
+      if (window.ttCartCount) ttCartCount(CART.length);
       card.remove();
       if (!CART.length) show('st-empty'); else updateSummary();
     }, 260);
@@ -299,6 +302,7 @@ function requestAll() {
     if (!res.success) throw new Error(res.message || 'Could not send your request.');
     var sent = res.orderNumbers && res.orderNumbers.length ? res.orderNumbers : nos;
     try { if (window.gtag) gtag('event', 'generate_lead', { items: sent.length, source: 'cart' }); } catch (e) {}
+    if (window.ttCartCount) ttCartCount(0);
     window.location.href = SUCCESS_URL + '?orders=' + encodeURIComponent(sent.join(',')) + '&from=cart';
   }).catch(function (e) { btn.disabled = false; lbl.textContent = was; toast(e.message, 'err'); });
 }
@@ -373,6 +377,82 @@ onAuthStateChanged(getAuth(app), function (user) {
   document.getElementById('tt-consent-yes').onclick = function(){ choose('granted'); };
   document.getElementById('tt-consent-no').onclick  = function(){ choose('denied'); };
 })();
+</script>
+
+<!-- Cart icon + item count next to the profile picture (shown when signed in) -->
+<style>
+.tt-cart-btn { position: relative; display: none; align-items: center; justify-content: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; color: #1A1916; text-decoration: none; transition: background 0.15s, color 0.15s; }
+.tt-cart-btn.on { display: inline-flex; }
+.tt-cart-btn:hover { background: rgba(74,22,79,0.07); color: #4A164F; }
+.tt-cart-btn svg { width: 19px; height: 19px; display: block; }
+.tt-cart-count { position: absolute; top: -2px; right: -4px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px; background: #4A164F; color: #fff; border: 2px solid #FAFAF8; font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 9.5px; font-weight: 600; line-height: 13px; text-align: center; letter-spacing: 0; box-sizing: border-box; }
+.tt-cart-count[hidden] { display: none; }
+.tt-cart-count.bump { animation: ttCartBump 0.35s ease; }
+@keyframes ttCartBump { 50% { transform: scale(1.25); } }
+</style>
+<script>
+(function () {
+  var KEY = 'tt_cart_count', API = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
+  var btn, badge, last = null;
+  function store(n) { try { if (n == null) localStorage.removeItem(KEY); else localStorage.setItem(KEY, String(n)); } catch (e) {} }
+  function cached() { try { var v = localStorage.getItem(KEY); return v == null ? null : parseInt(v, 10); } catch (e) { return null; } }
+  function build() {
+    var av = document.getElementById('nav-av');
+    if (!av || !av.parentNode || document.getElementById('tt-cart-btn')) return !!btn;
+    btn = document.createElement('a');
+    btn.id = 'tt-cart-btn'; btn.className = 'tt-cart-btn'; btn.href = 'https://tailortech.toom.design/cart';
+    btn.setAttribute('aria-label', 'Cart'); btn.title = 'Cart';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span class="tt-cart-count" hidden></span>';
+    badge = btn.querySelector('.tt-cart-count');
+    av.parentNode.insertBefore(btn, av);
+    return true;
+  }
+  // Public: set the number (cart page calls this after loading / removing items)
+  window.ttCartCount = function (n) {
+    if (!build()) return;
+    n = Math.max(0, parseInt(n, 10) || 0);
+    badge.textContent = n > 99 ? '99+' : String(n);
+    badge.hidden = n === 0;
+    btn.setAttribute('aria-label', n ? 'Cart, ' + n + ' item' + (n > 1 ? 's' : '') : 'Cart');
+    if (last != null && n !== last) { badge.classList.remove('bump'); void badge.offsetWidth; badge.classList.add('bump'); }
+    last = n; store(n);
+  };
+  window.ttCartShow = function (on) { if (build()) btn.classList.toggle('on', !!on); if (!on) store(null); };
+  window.ttCartRefresh = function (user) {
+    if (!user || !user.getIdToken) return;
+    user.getIdToken().then(function (tok) {
+      var cb = '_ttcart' + Date.now(), s = document.createElement('script');
+      var done = function () { try { delete window[cb]; } catch (e) { window[cb] = undefined; } if (s.parentNode) s.parentNode.removeChild(s); };
+      window[cb] = function (res) { done(); if (res && res.success) window.ttCartCount((res.items || []).length); };
+      s.onerror = done; setTimeout(done, 30000);
+      s.src = API + '?action=getCart&payload=' + encodeURIComponent(JSON.stringify({ idToken: tok })) + '&callback=' + cb;
+      document.body.appendChild(s);
+    }).catch(function () {});
+  };
+  function init() {
+    if (!build()) return;
+    var c = cached(); if (c != null) window.ttCartCount(c);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+</script>
+<script type="module">
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+// Use the page's own Firebase app (same SDK build); start one only if the page has none
+function app() {
+  return getApps().length ? getApp() : initializeApp({
+    apiKey: "AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY", authDomain: "tailortech-accounts.firebaseapp.com",
+    projectId: "tailortech-accounts", storageBucket: "tailortech-accounts.firebasestorage.app",
+    messagingSenderId: "137614433833", appId: "1:137614433833:web:c78ea40b0d04ba89f3c638"
+  });
+}
+setTimeout(function () {
+  onAuthStateChanged(getAuth(app()), function (user) {
+    window.ttCartShow(!!user);
+    if (user && !window.ttCartManaged) window.ttCartRefresh(user);   // the cart page sets the count itself
+  });
+}, 0);
 </script>
 </body>
 </html>
