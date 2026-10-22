@@ -1842,6 +1842,9 @@ window.collectConfig = collectConfig;
 
 // ── On-screen debug panel ──
 function _debugLog(msg, isErr) {
+  // On-screen panel only when debugging (add ?debug to the URL); otherwise just the browser console
+  try { console[isErr ? 'warn' : 'log']('[tt]', msg); } catch (e) {}
+  if (!/[?&]debug\b/.test(location.search)) return;
   var panel = document.getElementById('tt-debug');
   if (!panel) {
     panel = document.createElement('div');
@@ -2993,7 +2996,7 @@ function captureTechPackImage() {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.8.9</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.0</div>
 
 
 <!-- ═══════════════ 3D PREVIEW (three.js + glTF) ═══════════════ -->
