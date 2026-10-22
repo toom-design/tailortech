@@ -2078,7 +2078,7 @@ function getClientJSONP(email, uid, callback) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.8.10</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.8.11</div>
 
 
 <!-- Cookie consent (analytics) — wording is yours to edit; keep the two button ids -->
@@ -2242,6 +2242,89 @@ setTimeout(function () {
   window.ttToast = ttToast;
   window.toast = ttToast;
   window.showToast = ttToast;
+})();
+</script>
+
+<!-- Loading feedback on action buttons: spinner while working, tick when done -->
+<style>
+.tt-busy, .tt-done { opacity: 1 !important; cursor: default !important; pointer-events: none; }
+.tt-busy-inner { display: inline-flex; align-items: center; justify-content: center; gap: 10px; }
+.tt-btn-spin { width: 14px; height: 14px; flex-shrink: 0; border-radius: 50%; border: 1.6px solid currentColor; border-right-color: transparent; opacity: 0.85; animation: ttBtnSpin 0.7s linear infinite; box-sizing: border-box; }
+.tt-btn-tick { width: 15px; height: 15px; flex-shrink: 0; display: block; }
+.tt-btn-tick polyline { stroke-dasharray: 24; stroke-dashoffset: 24; animation: ttBtnTick 0.35s ease forwards; }
+@keyframes ttBtnSpin { to { transform: rotate(360deg); } }
+@keyframes ttBtnTick { to { stroke-dashoffset: 0; } }
+</style>
+<script>
+(function () {
+  // Put a button into a "working" state; its own content is kept and put back afterwards
+  window.ttBusyOn = function (btn, text) {
+    if (!btn || btn._ttKept) return;
+    btn._ttKept = Array.prototype.slice.call(btn.childNodes);
+    btn._ttMinW = btn.style.minWidth;
+    btn.style.minWidth = btn.offsetWidth + 'px';
+    btn._ttKept.forEach(function (n) { btn.removeChild(n); });
+    var w = document.createElement('span'); w.className = 'tt-busy-inner';
+    w.innerHTML = '<span class="tt-btn-spin" aria-hidden="true"></span><span></span>';
+    w.lastChild.textContent = text || 'Working…';
+    btn.appendChild(w);
+    btn.classList.add('tt-busy'); btn.setAttribute('aria-busy', 'true');
+  };
+  window.ttBusyDone = function (btn, text) {
+    if (!btn || !btn._ttKept) return;
+    var w = btn.querySelector('.tt-busy-inner'); if (!w) return;
+    w.innerHTML = '<svg class="tt-btn-tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="5,12.5 10,17.5 19,7"/></svg><span></span>';
+    w.lastChild.textContent = text || 'Done';
+    btn.classList.remove('tt-busy'); btn.classList.add('tt-done'); btn.removeAttribute('aria-busy');
+  };
+  window.ttBusyOff = function (btn) {
+    if (!btn || !btn._ttKept) return;
+    var w = btn.querySelector('.tt-busy-inner'); if (w) btn.removeChild(w);
+    btn._ttKept.forEach(function (n) { btn.appendChild(n); });
+    btn._ttKept = null; btn.style.minWidth = btn._ttMinW || '';
+    btn.classList.remove('tt-busy', 'tt-done'); btn.removeAttribute('aria-busy');
+  };
+
+  // Configurator actions: the page's own handler disables its button and only re-enables it on failure,
+  // so a still-disabled button afterwards means success (the page then redirects).
+  function wrapAction(name, findBtn, busyText, doneText) {
+    var orig = window[name];
+    if (typeof orig !== 'function' || orig._ttWrapped) return;
+    var wrapped = async function () {
+      if (typeof isLoggedIn === 'function' && !isLoggedIn()) return orig.apply(this, arguments); // goes to sign-in
+      var btn = findBtn();
+      ttBusyOn(btn, busyText);
+      try { return await orig.apply(this, arguments); }
+      finally { if (btn && btn.disabled) ttBusyDone(btn, doneText); else ttBusyOff(btn); }
+    };
+    wrapped._ttWrapped = true;
+    window[name] = wrapped;
+  }
+  function q(sel) { return function () { return document.querySelector(sel); }; }
+  function wrapAll() {
+  wrapAction('handleAddToCart', q('[onclick="handleAddToCart()"]'), 'Adding to cart…', 'Added to cart');
+  wrapAction('handleOrderNow', function () { return document.querySelector('[onclick="handleOrderNow()"]') || document.getElementById('footer-next'); },
+             'Sending request…', 'Request sent');
+  wrapAction('submitOrder', q('#submit-btn'), 'Saving…', 'Saved');
+
+  // Measurements step: the footer button shows progress while the measurements are being saved
+  var origMeas = window.measHandleSubmitAndContinue;
+  if (typeof origMeas === 'function' && !origMeas._ttWrapped) {
+    window.measHandleSubmitAndContinue = function () {
+      var foot = document.getElementById('footer-next'), own = document.getElementById('meas-save-btn');
+      var r = origMeas.apply(this, arguments);
+      if (foot && own && own.disabled) {
+        ttBusyOn(foot, 'Saving measurements…');
+        var t = setInterval(function () { if (!own.disabled) { clearInterval(t); ttBusyOff(foot); if (window.updateFooter) updateFooter(); } }, 150);
+      }
+      return r;
+    };
+    window.measHandleSubmitAndContinue._ttWrapped = true;
+  }
+  }
+  wrapAll();
+  document.addEventListener('DOMContentLoaded', wrapAll);
+  window.addEventListener('load', wrapAll);
 })();
 </script>
 </body>
