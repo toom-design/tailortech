@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TailorTech — Dashboard</title>
+<title>Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
 <style>
@@ -434,6 +434,62 @@ button { cursor: pointer; font-family: inherit; }
 .qa-item:hover .qa-arrow { transform: translateX(2px); color: var(--ink); }
 @media(max-width:700px){ .quickbar { flex-direction: column; } .qa-item { border-right: none; border-bottom: 1px solid var(--border); } .qa-item:last-child { border-bottom: none; } }
 
+
+/* ══ v4.6.0 — TailorTech brand style (mint / purple), same as cart, success page and configurators ══ */
+:root { --tt-purple: #4A164F; --tt-turq: #4DBFAB; --mint-bg: #F3F8F6; --mint-ink: #2f6f63; }
+.loader { border-top-color: var(--tt-purple); }
+.hero-cta { background: var(--tt-purple); color: #fff; border-radius: 999px; padding: 15px 28px; font-weight: 500; letter-spacing: 0.18em; font-size: 10.5px; }
+.hero-cta:hover { background: #5a1d60; }
+.profile-card, .orders-panel, .meas-panel, .quickbar { border-radius: 14px; border-color: var(--border); }
+.profile-name { font-family: 'Cormorant Garamond', Georgia, serif; }
+.sec-head { border-bottom-color: var(--border); }
+.sec-action { border-radius: 999px; transition: color 0.15s; }
+.sec-action:hover { color: var(--tt-purple); }
+.btn-save { background: var(--tt-purple); border-radius: 999px; font-weight: 500; letter-spacing: 0.18em; padding: 13px 26px; }
+.btn-save:hover { background: #5a1d60; }
+.ef input, .ef select { border-radius: 8px; }
+.ef input:focus, .ef select:focus { border-color: var(--tt-purple); box-shadow: 0 0 0 3px rgba(74,22,79,0.08); outline: none; }
+.edit-form { background: var(--mint-bg); }
+.meas-date-row select { border-radius: 8px; }
+.qa-item:hover { background: var(--mint-bg); }
+.qa-icon { color: var(--tt-purple); }
+.qa-item:hover .qa-arrow { color: var(--tt-purple); }
+
+/* Orders: compact rows */
+.order-row { padding: 18px; gap: 12px; }
+.order-row:hover { background: rgba(77,191,171,0.06); }
+.order-swatch { width: 120px; height: 120px; border-radius: 10px; background: #fff; border: 1px solid var(--border); }
+img.order-swatch.has-img { padding: 6px; }
+.order-num { font-size: 10px; font-weight: 500; letter-spacing: 0.12em; color: var(--ink-light); text-transform: uppercase; margin-top: 3px; order: 2; }
+.order-header-line > div:first-child { display: flex; flex-direction: column; }
+.order-garment { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 22px; line-height: 1.1; color: var(--ink); margin-top: 0; order: 1; }
+.order-price { font-size: 15px; font-weight: 500; margin-top: 10px; }
+.order-price-lbl { display: block; font-size: 8.5px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 1px; }
+.order-fabrics-row { gap: 12px; margin-top: 12px; }
+.fabric-swatch-img { width: 44px; height: 44px; border-radius: 50%; }
+.fabric-swatch-img:hover { border-color: var(--tt-purple); }
+.order-row.is-removed .order-swatch, .order-row.is-removed .order-garment, .order-row.is-removed .order-price { opacity: 0.5; }
+@media (max-width: 560px) { .order-swatch { width: 84px; height: 84px; } .order-header-line { flex-direction: column; gap: 8px; } }
+
+/* Status pills */
+.status { border-radius: 999px; padding: 4px 10px; font-size: 9px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; border: 1px solid transparent; white-space: nowrap; }
+.st-cart     { background: var(--mint-bg); color: var(--mint-ink); border-color: rgba(77,191,171,0.45); }
+.st-pending  { background: rgba(184,146,74,0.10); color: #7a5e2a; border-color: rgba(184,146,74,0.30); }
+.st-accepted { background: rgba(74,22,79,0.07); color: var(--tt-purple); border-color: rgba(74,22,79,0.22); }
+.st-prod     { background: rgba(77,191,171,0.16); color: #1f5249; border-color: rgba(77,191,171,0.55); }
+.st-done     { background: rgba(61,122,90,0.10); color: #2a5c3f; border-color: rgba(61,122,90,0.28); }
+.st-removed  { background: rgba(26,25,22,0.05); color: var(--ink-light); border-color: var(--border); }
+
+/* Filter chips + show all */
+.ord-filters { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 18px; border-bottom: 1px solid var(--border); }
+.ord-chip { font-family: 'Jost', sans-serif; font-size: 11.5px; padding: 7px 13px; border-radius: 999px; border: 1px solid rgba(26,25,22,0.16); background: #fff; color: var(--ink-mid); cursor: pointer; transition: all 0.15s; }
+.ord-chip span { color: var(--ink-light); margin-left: 4px; }
+.ord-chip:hover { border-color: var(--tt-purple); color: var(--tt-purple); }
+.ord-chip.on { background: var(--tt-purple); border-color: var(--tt-purple); color: #fff; }
+.ord-chip.on span { color: rgba(255,255,255,0.7); }
+.ord-more { display: block; width: 100%; padding: 16px; border: none; border-top: 1px solid var(--border); background: transparent; font-family: 'Jost', sans-serif; font-size: 10.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--tt-purple); cursor: pointer; }
+.ord-more:hover { background: var(--mint-bg); }
+.ord-none { padding: 28px 18px; text-align: center; font-size: 12.5px; color: var(--ink-light); }
 </style>
 </head>
 <body>
@@ -509,7 +565,6 @@ button { cursor: pointer; font-family: inherit; }
           <div class="profile-name" id="profile-name">—</div>
           <div class="profile-meta">
             <span>Client ID <strong id="st-id">—</strong></span>
-            <span id="profile-uid"></span>
             <span id="st-since">member since —</span>
           </div>
         </div>
@@ -522,9 +577,9 @@ button { cursor: pointer; font-family: inherit; }
       <div class="edit-form" id="edit-form">
         <div class="edit-grid">
           <div class="ef"><label>Email</label><input type="email" id="ef-email" readonly></div>
-          <div class="ef"><label>Firebase UID</label><input type="text" id="ef-uid" readonly></div>
           <div class="ef"><label>First Name *</label><input type="text"  id="ef-fn"      placeholder="Jane"></div>
           <div class="ef"><label>Last Name</label>  <input type="text"  id="ef-ln"      placeholder="Doe"></div>
+          <div class="ef"><label>Gender</label><select id="ef-gender"><option value="">Not set</option><option value="Female">Female</option><option value="Male">Male</option></select></div>
           <div class="ef"><label>Phone</label>
             <div class="phone-row">
               <select id="ef-phone-code">
@@ -685,7 +740,7 @@ button { cursor: pointer; font-family: inherit; }
     <div class="split">
       <div id="sec-orders">
         <div class="sec-head">
-          <span class="sec-title">Recent Orders<span class="sec-count" id="st-orders-wrap">(<span id="st-orders">—</span>)</span></span>
+          <span class="sec-title">Orders<span class="sec-count" id="st-orders-wrap">(<span id="st-orders">—</span>)</span></span>
           <button class="sec-action" onclick="go('configure.html')">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             New order
@@ -693,7 +748,9 @@ button { cursor: pointer; font-family: inherit; }
         </div>
         <div class="orders-panel">
           <div id="orders-loading" style="padding:32px;text-align:center"><div class="loader" style="margin:0 auto"></div></div>
+          <div class="ord-filters" id="ord-filters" hidden></div>
           <div id="orders-list" style="display:none"></div>
+          <button type="button" class="ord-more" id="ord-more" hidden onclick="ttOrdersToggleAll()"></button>
           <div id="orders-empty" class="empty" style="display:none">
             <div class="empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg></div>
             <p>No orders yet</p>
@@ -969,11 +1026,11 @@ function loadOrders() {
     // not delay showing the orders themselves.
     var pendingFabricLookups = [];
 
-    orders.slice(0, 6).forEach(function(o, idx) {
+    orders.forEach(function(o, idx) {
       var st  = (o['Status'] || o['status'] || 'New').trim();
       var cls = {'New':'s-new','InCart':'s-new','Pending':'s-prog','In Progress':'s-prog','Complete':'s-done','Completed':'s-done','Cancelled':'s-cancel','Canceled':'s-cancel'}[st] || 's-new';
       var garment = o['garment'] || o['GARMENT'] || 'Order';
-      garment = garment.charAt(0).toUpperCase() + garment.slice(1);
+      garment = ttGarmentName(garment);
       // Now a real Drive view link (not a bare key) — see getOrCaptureSilhouette().
       var techPackUrl = o['tech pack'] || '';
       var swatchId = 'order-swatch-' + idx;
@@ -1024,10 +1081,13 @@ function loadOrders() {
       var fabricsRowHtml = '<div class="order-fabrics-row" id="' + fabricsRowId + '">' + resolvedChipsHtml + pendingChipsHtml + '</div>';
 
       var price = (o['PRICE'] || '').toString().trim();
-      var priceHtml = price ? '<div class="order-price">' + price + ' €</div>' : '';
+      var priceNum = parseFloat(price.replace(/[^0-9.,]/g, '').replace(',', '.'));
+      var priceHtml = isFinite(priceNum) && priceNum > 0 ? '<div class="order-price"><span class="order-price-lbl">Estimated</span>€' + priceNum.toFixed(2).replace(/\.00$/, '') + '</div>' : '';
 
       var row = document.createElement('div');
-      row.className = 'order-row';
+      var grp = ttStatusGroup(st);
+      row.className = 'order-row' + (grp === 'removed' ? ' is-removed' : '');
+      row.dataset.group = grp;
       var swatchInitialHtml = techPackUrl
         ? '<div class="order-swatch loading" id="' + swatchId + '"><div class="loader loader-sm"></div></div>'
         : '<div class="order-swatch empty" id="' + swatchId + '"></div>';
@@ -1042,7 +1102,7 @@ function loadOrders() {
               '</div>' +
               '<div style="display:flex;align-items:flex-start;gap:12px;flex-shrink:0;">' +
                 '<div class="order-date">' + fmtDate(o['Created At'] || o['Created at'] || '') + '</div>' +
-                '<span class="status ' + cls + '">' + st + '</span>' +
+                '<span class="status st-' + ttStatusPill(st) + '">' + ttStatusLabel(st) + '</span>' +
               '</div>' +
             '</div>' +
             priceHtml +
@@ -1055,7 +1115,8 @@ function loadOrders() {
       // the image travels as base64 in a normal JSON response (Apps Script
       // can't serve raw image bytes directly), so this is a real async
       // fetch per thumbnail rather than a plain <img src>.
-      if (techPackUrl) {
+      if (techPackUrl) row._loadImg = function () {
+        row._loadImg = null;
         window._d.req('getSilhouetteImageBase64', { url: techPackUrl }).then(function(imgRes) {
           if (!imgRes || !imgRes.success || !imgRes.base64) throw new Error('no image');
           var rawUri = 'data:image/png;base64,' + imgRes.base64;
@@ -1076,9 +1137,10 @@ function loadOrders() {
           var el = document.getElementById(swatchId);
           if (el) { el.className = 'order-swatch empty'; el.innerHTML = ''; }
         });
-      }
+      };
     });
     list.style.display = '';
+    ttOrdersInit();
 
     if (pendingFabricLookups.length) {
       getFabricPhotoMap().then(function(fabricMap) {
@@ -1108,6 +1170,91 @@ function loadOrders() {
       });
     }
   }).catch(function(){ document.getElementById('orders-loading').style.display='none'; document.getElementById('orders-empty').style.display='block'; });
+}
+
+
+// ── v4.6.0: order status labels / colours, filter chips and "Show all" ──
+var TT_STATUS = {
+  'incart':        { label: 'In cart',        pill: 'cart',     group: 'cart' },
+  'new':           { label: 'Saved',          pill: 'cart',     group: 'cart' },
+  'pending':       { label: 'Request sent',   pill: 'pending',  group: 'progress' },
+  'orderaccepted': { label: 'Order accepted', pill: 'accepted', group: 'progress' },
+  'inprogress':    { label: 'In progress',    pill: 'prod',     group: 'progress' },
+  'inproduction':  { label: 'In production',  pill: 'prod',     group: 'progress' },
+  'shipped':       { label: 'Shipped',        pill: 'prod',     group: 'progress' },
+  'complete':      { label: 'Completed',      pill: 'done',     group: 'done' },
+  'completed':     { label: 'Completed',      pill: 'done',     group: 'done' },
+  'delivered':     { label: 'Delivered',      pill: 'done',     group: 'done' },
+  'removed':       { label: 'Removed',        pill: 'removed',  group: 'removed' },
+  'cancelled':     { label: 'Cancelled',      pill: 'removed',  group: 'removed' },
+  'canceled':      { label: 'Cancelled',      pill: 'removed',  group: 'removed' }
+};
+function ttStatusInfo(st) { return TT_STATUS[String(st || '').replace(/[\s_-]+/g, '').toLowerCase()] || { label: st || 'Saved', pill: 'pending', group: 'progress' }; }
+function ttStatusLabel(st) { return ttStatusInfo(st).label; }
+function ttStatusPill(st)  { return ttStatusInfo(st).pill; }
+function ttStatusGroup(st) { return ttStatusInfo(st).group; }
+function ttGarmentName(g) {
+  var k = String(g || '').toLowerCase().replace(/[\s_-]+/g, '');
+  var map = { hoodies: 'Hoodie', hoodie: 'Hoodie', tshirt: 'T-shirt', tshirts: 'T-shirt', shirts: 'Shirt', shirt: 'Shirt',
+              sweatpants: 'Sweatpants', suits: 'Suit', suit: 'Suit', trousers: 'Trousers', casualjacket: 'Casual jacket',
+              denimtrousers: 'Denim trousers', jackets: 'Jacket' };
+  return map[k] || (g ? String(g).charAt(0).toUpperCase() + String(g).slice(1) : 'Order');
+}
+var TT_ORD_PAGE = 6, _ttOrdFilter = 'all', _ttOrdAll = false;
+var TT_ORD_GROUPS = [['all', 'All'], ['progress', 'In progress'], ['cart', 'In cart'], ['done', 'Completed'], ['removed', 'Removed']];
+function ttOrdersInit() {
+  var rows = document.querySelectorAll('#orders-list .order-row');
+  var counts = { all: rows.length };
+  rows.forEach(function (r) { counts[r.dataset.group] = (counts[r.dataset.group] || 0) + 1; });
+  var bar = document.getElementById('ord-filters');
+  var used = TT_ORD_GROUPS.filter(function (g) { return g[0] === 'all' || counts[g[0]]; });
+  bar.innerHTML = used.map(function (g) {
+    return '<button type="button" class="ord-chip' + (g[0] === _ttOrdFilter ? ' on' : '') + '" data-f="' + g[0] + '" onclick="ttOrdersFilter(\'' + g[0] + '\')">' + g[1] + '<span>' + (counts[g[0]] || 0) + '</span></button>';
+  }).join('');
+  bar.hidden = used.length <= 2 && rows.length <= TT_ORD_PAGE;
+  ttOrdersApply();
+}
+function ttOrdersFilter(f) {
+  _ttOrdFilter = f; _ttOrdAll = false;
+  document.querySelectorAll('#ord-filters .ord-chip').forEach(function (c) { c.classList.toggle('on', c.dataset.f === f); });
+  ttOrdersApply();
+}
+function ttOrdersToggleAll() { _ttOrdAll = !_ttOrdAll; ttOrdersApply(); }
+function ttOrdersApply() {
+  var rows = Array.prototype.slice.call(document.querySelectorAll('#orders-list .order-row'));
+  var match = rows.filter(function (r) { return _ttOrdFilter === 'all' || r.dataset.group === _ttOrdFilter; });
+  rows.forEach(function (r) { r.style.display = 'none'; });
+  match.forEach(function (r, i) {
+    if (_ttOrdAll || i < TT_ORD_PAGE) { r.style.display = ''; if (r._loadImg) r._loadImg(); }
+  });
+  var list = document.getElementById('orders-list'), none = document.getElementById('ord-none');
+  if (!match.length) {
+    if (!none) { none = document.createElement('div'); none.id = 'ord-none'; none.className = 'ord-none'; list.appendChild(none); }
+    none.textContent = 'No orders here yet.'; none.style.display = '';
+  } else if (none) none.style.display = 'none';
+  var more = document.getElementById('ord-more');
+  more.hidden = match.length <= TT_ORD_PAGE;
+  more.textContent = _ttOrdAll ? 'Show fewer' : 'Show all ' + match.length + ' orders';
+}
+
+
+// ── v4.6.0: gender (CLIENTS → "Gender") drives the measurement figure ──
+function ttGenderCode(g) { g = String(g || '').trim().toLowerCase(); return /^(f|w)/.test(g) ? 'F' : (/^m/.test(g) ? 'M' : ''); }
+function ttGenderWord(g) { var c = ttGenderCode(g); return c === 'F' ? 'Female' : (c === 'M' ? 'Male' : ''); }
+var TT_MEAS_FIG = { M: 'https://raw.githubusercontent.com/toom-design/measurements/main/MEASUREMENTS_2front_M.webp',
+                    F: 'https://raw.githubusercontent.com/toom-design/measurements/main/MEASUREMENTS_2front_F.webp' };
+var _ttFigGender = null;
+function ttSetMeasFigure(g) {
+  var code = ttGenderCode(g) || 'M';
+  if (code === _ttFigGender) return;
+  _ttFigGender = code;
+  var figEl = document.getElementById('meas-figure-img');
+  if (!figEl) return;
+  trimTransparentPadding(TT_MEAS_FIG[code]).then(function (t) {
+    if (_ttFigGender !== code) return;
+    figEl.src = t.src;
+    if (t.width && t.height) figEl.style.aspectRatio = t.width + ' / ' + t.height;
+  });
 }
 
 var _measRecords = [];
@@ -1238,11 +1385,13 @@ function loadProfile(user) {
 }
 
 var PC_ICONS = {
+  gender:  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>',
   address: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 21s-7-6.1-7-11a7 7 0 0114 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
   phone:   '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.8 19.8 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.68 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.9.32 1.85.55 2.81.68A2 2 0 0122 16.92z"/></svg>',
   email:   '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z"/><path d="M22 6l-10 7L2 6"/></svg>',
 };
 function renderProfile(c) {
+  ttSetMeasFigure(c && c['Gender']);
   var user  = window._d && window._d.currentUser;
   var parts = user && user.displayName ? user.displayName.split(' ') : [];
   // Always fall back to Firebase data for key fields
@@ -1274,6 +1423,7 @@ function renderProfile(c) {
   var address = addrLines.join('<br>');
 
   var items = [
+    { icon: PC_ICONS.gender,  label: 'Gender',  value: ttGenderWord(c && c['Gender']) },
     { icon: PC_ICONS.address, label: 'Address', value: address },
     { icon: PC_ICONS.phone,   label: 'Phone',   value: merged['Phone Number'] },
     { icon: PC_ICONS.email,   label: 'Email',   value: merged['Email'] },
@@ -1315,6 +1465,8 @@ function prefill(c) {
     var el = document.getElementById(id);
     if (el) el.value = merged[m[id]] || '';
   });
+  var gSel = document.getElementById('ef-gender');
+  if (gSel) gSel.value = ttGenderWord(c && c['Gender']);
 
   // Phone is split across two controls (code + number) but stored as one
   // string, e.g. "+44 7911 123456" — parse it back apart for editing.
@@ -1402,6 +1554,7 @@ function saveProfile() {
     'Email':        user.email,
     'First Name':   fname,
     'Last Name':    document.getElementById('ef-ln').value.trim(),
+    'Gender':       document.getElementById('ef-gender').value,
     'Phone Number': (function(){
       var code = document.getElementById('ef-phone-code').value.trim();
       var num  = document.getElementById('ef-phone-num').value.trim();
@@ -1529,7 +1682,7 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeI
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',system-ui,sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.35);z-index:9999;pointer-events:none;user-select:none;">v4.5.2</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v4.6.0</div>
 
 <!-- Cart icon + item count next to the profile picture (shown when signed in) -->
 <style>

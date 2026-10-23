@@ -103,6 +103,11 @@ button{cursor:pointer;font-family:inherit;}
 .popup-title{font-size:20px;font-weight:300;letter-spacing:-0.01em;color:var(--ink);margin-bottom:4px;}
 .popup-sub{font-size:12px;color:var(--ink-faint);margin-bottom:24px;line-height:1.5;}
 .popup .field-row{margin-bottom:0;}
+.g-pills{display:flex;gap:8px;}
+.g-pills button{flex:1;padding:11px 12px;font-family:'Jost',sans-serif;font-size:12.5px;border:1px solid rgba(26,25,22,0.18);border-radius:999px;background:#fff;color:var(--ink-mid);cursor:pointer;transition:all 0.15s;}
+.g-pills button:hover{border-color:#4A164F;color:#4A164F;}
+.g-pills button.on{background:#4A164F;border-color:#4A164F;color:#fff;}
+.g-hint{font-size:11px;color:var(--ink-faint);margin-top:6px;line-height:1.45;}
 .popup-btns{display:flex;gap:10px;margin-top:22px;border-top:1px solid var(--border);padding-top:20px;}
 .btn-popup-save{flex:1;padding:11px;font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;background:var(--ink);color:var(--white);border:none;border-radius:2px;cursor:pointer;transition:background 0.15s;display:flex;align-items:center;justify-content:center;gap:7px;}
 .btn-popup-save:hover{background:#2d2c29;}
@@ -233,7 +238,8 @@ button{cursor:pointer;font-family:inherit;}
       <div class="field" style="margin-bottom:0"><label>First Name *</label><input type="text" id="wp-fname" placeholder="Jane" autocomplete="given-name"></div>
       <div class="field" style="margin-bottom:0"><label>Last Name</label><input type="text" id="wp-lname" placeholder="Doe" autocomplete="family-name"></div>
     </div>
-    <div class="field" style="margin-top:14px"><label>Phone</label><input type="tel" id="wp-phone" placeholder="+1 234 567 8900" autocomplete="tel"></div>
+    <div class="field" style="margin-top:14px"><label>Gender</label><div class="g-pills" id="wp-gender"><button type="button" data-g="Female" onclick="ttPickGender(this)">Female</button><button type="button" data-g="Male" onclick="ttPickGender(this)">Male</button></div><div class="g-hint">We use it to preselect the right cut and measurement guide.</div></div>
+    <div class="field"><label>Phone</label><input type="tel" id="wp-phone" placeholder="+1 234 567 8900" autocomplete="tel"></div>
     <div class="field"><label>Instagram</label><input type="text" id="wp-ig" placeholder="@username"></div>
     <div class="popup-btns">
       <button class="btn-popup-save" id="wp-save-btn" onclick="wpSave()">
@@ -245,7 +251,21 @@ button{cursor:pointer;font-family:inherit;}
   </div>
 </div>
 
-<div class="version">v2.9.2</div>
+<!-- Gender prompt for existing clients who haven't set it -->
+<div class="overlay" id="gender-overlay">
+  <div class="popup">
+    <div class="popup-eyebrow">Your profile</div>
+    <div class="popup-title">One quick question</div>
+    <div class="popup-sub">Tell us your gender so we can preselect the right cut and measurement guide when you design.</div>
+    <div class="field"><div class="g-pills" id="gp-gender"><button type="button" data-g="Female" onclick="ttPickGender(this)">Female</button><button type="button" data-g="Male" onclick="ttPickGender(this)">Male</button></div></div>
+    <div class="popup-btns">
+      <button class="btn-popup-save" id="gp-save-btn" onclick="gpSave()" disabled>Save</button>
+      <button class="btn-popup-later" onclick="gpSkip()">Skip</button>
+    </div>
+  </div>
+</div>
+
+<div class="version">v2.9.3</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -504,6 +524,7 @@ function checkIfNewClient(user){
     .then(function(res){
       if(res&&res.success&&res.client&&res.client['Email']){
         saveToSession(user, { personId: res.client['Person ID'] || null });
+        if(!String(res.client['Gender']||'').trim() && !ttGenderSkipped(user.uid)){ document.getElementById('gender-overlay').classList.add('open'); return; }
         redirectAfterLogin();
       } else {
         // Save minimum data immediately
@@ -540,14 +561,29 @@ function wpSave(){
   btn.disabled=true;lbl.style.display='none';sp.style.display='block';
   saveClientJSONP({uid:_wpUser.uid,email:_wpUser.email,data:{
     'UID':_wpUser.uid,'First Name':fname,'Last Name':lname,
-    'Email':_wpUser.email,'Phone Number':phone,'IG':ig,
+    'Email':_wpUser.email,'Phone Number':phone,'IG':ig,'Gender':ttGenderValue('wp-gender'),
   }},function(){ saveToSession(_wpUser); redirectAfterLogin(); });
 }
+
+// ── Gender (saved to CLIENTS → "Gender"; the configurators preselect it) ──
+function ttPickGender(btn){
+  var box=btn.parentNode;
+  Array.prototype.forEach.call(box.children,function(b){ b.classList.toggle('on', b===btn); });
+  var gs=document.getElementById('gp-save-btn'); if(gs && box.id==='gp-gender') gs.disabled=false;
+}
+function ttGenderValue(id){ var on=document.querySelector('#'+id+' button.on'); return on?on.getAttribute('data-g'):''; }
+function ttGenderSkipped(uid){ try{ var t=+localStorage.getItem('tt_gender_skip_'+uid); return t && (Date.now()-t) < 30*864e5; }catch(e){ return false; } }
+function gpSave(){
+  var g=ttGenderValue('gp-gender'); if(!g||!_wpUser){ redirectAfterLogin(); return; }
+  var b=document.getElementById('gp-save-btn'); b.disabled=true; b.textContent='Saving…';
+  saveClientJSONP({uid:_wpUser.uid,email:_wpUser.email,data:{'UID':_wpUser.uid,'Email':_wpUser.email,'Gender':g}},function(){ redirectAfterLogin(); });
+}
+function gpSkip(){ try{ if(_wpUser) localStorage.setItem('tt_gender_skip_'+_wpUser.uid, String(Date.now())); }catch(e){} redirectAfterLogin(); }
 
 function wpLater(){
   if(!_wpUser){ redirectAfterLogin(); return; }
   saveClientJSONP({uid:_wpUser.uid,email:_wpUser.email,data:{
-    'UID':_wpUser.uid,'Email':_wpUser.email,
+    'UID':_wpUser.uid,'Email':_wpUser.email,'Gender':ttGenderValue('wp-gender'),
   }},function(){ saveToSession(_wpUser); redirectAfterLogin(); });
 }
 </script>

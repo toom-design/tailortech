@@ -2078,7 +2078,7 @@ function getClientJSONP(email, uid, callback) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.8.11</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.8.12</div>
 
 
 <!-- Cookie consent (analytics) — wording is yours to edit; keep the two button ids -->
@@ -2325,6 +2325,42 @@ setTimeout(function () {
   wrapAll();
   document.addEventListener('DOMContentLoaded', wrapAll);
   window.addEventListener('load', wrapAll);
+})();
+</script>
+
+<!-- Preselect the client's gender (CLIENTS → "Gender") once they're signed in -->
+<script>
+(function () {
+  function code(g) { g = String(g || '').trim().toLowerCase(); return /^(f|w)/.test(g) ? 'F' : (/^m/.test(g) ? 'M' : ''); }
+  var touched = false;   // a gender picked by hand always wins
+  document.addEventListener('click', function (e) {
+    if (!e.isTrusted || !e.target.closest) return;
+    var b = e.target.closest('.pill, .gender-btn'); if (!b) return;
+    var sec = b.closest('.section'), l = sec && sec.querySelector('.section-label');
+    if (b.classList.contains('gender-btn') || (l && l.textContent.trim() === 'Gender')) touched = true;
+  }, true);
+  window.ttApplyGender = function (g) {
+    var c = code(g); if (!c || touched) return;
+    if (typeof setGender === 'function' && document.querySelector('.gender-btn')) { setGender(c); return; }  // measurements page
+    var sec = Array.prototype.find.call(document.querySelectorAll('.section'), function (s) {
+      var l = s.querySelector('.section-label'); return l && l.textContent.trim() === 'Gender';
+    });
+    if (!sec) return;
+    var want = c === 'F' ? 'female' : 'male';
+    var btn = Array.prototype.find.call(sec.querySelectorAll('.pill'), function (p) {
+      return String(p.dataset.optionLabel || p.textContent).trim().toLowerCase().indexOf(want) === 0;
+    });
+    if (btn && !btn.classList.contains('selected')) btn.click();
+  };
+  var orig = window.getClientJSONP;
+  if (typeof orig === 'function') {
+    window.getClientJSONP = function (email, uid, cb) {
+      return orig.call(this, email, uid, function (res) {
+        try { if (res && res.client) ttApplyGender(res.client['Gender']); } catch (e) {}
+        if (cb) cb(res);
+      });
+    };
+  }
 })();
 </script>
 </body>
