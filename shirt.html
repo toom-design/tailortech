@@ -1497,7 +1497,7 @@ function collectConfig() {
     const sections = document.querySelectorAll('.section');
     for (const s of sections) {
       if (s.querySelector('.section-label')?.textContent.trim() === labelText)
-        return s.querySelector('.pill.selected')?.textContent.trim() || '';
+        { const sel = s.querySelector('.pill.selected'); return sel ? (sel.dataset.optionLabel || sel.textContent.trim()) : ''; }
     }
     return '';
   };
@@ -1946,7 +1946,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.6.4</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.6.5</div>
 
 <!-- Firebase -->
 <script type="module">

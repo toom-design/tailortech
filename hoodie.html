@@ -875,7 +875,7 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
         <div class="section-label">Style</div>
         <div class="pill-group">
           <button class="pill selected" onclick="selectStyle(this,'crewneck')">Crewneck</button>
-          <button class="pill"          onclick="selectStyle(this,'3-piece-hood')">3-Piece Hood</button>
+          <button class="pill"          onclick="selectStyle(this,'3-piece-hood')">Hoodie</button>
           <button class="pill"          onclick="selectStyle(this,'quarterzip')">Quarterzip</button>
         </div>
       </div>
@@ -2069,11 +2069,19 @@ function discoverSectionConfigMap() {
 // Looks up the price for one option value within one PRICE MATRIX
 // configuration — used both to badge buttons and to total up the
 // currently-selected options.
+// Website label → other names the same option may still have in the PRICE MATRIX sheet
+var OPTION_PRICE_ALIASES = { 'hoodie': ['3 piece hood', 'three piece hood'] };
 function lookupOptionPrice(configName, optionText) {
   if (!_pricing || !_pricing.configurations || !_pricing.configurations[configName]) return 0;
   var target = normalizeOptionText(optionText);
+  var names = [target].concat(OPTION_PRICE_ALIASES[target] || []);
   var find = function(name) {
-    return (_pricing.configurations[name] || []).find(function(opt){ return normalizeOptionText(opt.value) === target; });
+    var opts = _pricing.configurations[name] || [];
+    for (var i = 0; i < names.length; i++) {
+      var hit = opts.find(function(opt){ return normalizeOptionText(opt.value) === names[i]; });
+      if (hit) return hit;
+    }
+    return null;
   };
   var match = find(configName);
   if (!match) {
@@ -2287,7 +2295,8 @@ function collectConfig() {
     const sections = document.querySelectorAll('.section');
     for (const s of sections) {
       if (s.querySelector('.section-label')?.textContent.trim() === labelText)
-        return s.querySelector('.pill.selected')?.textContent.trim() || '';
+        { const sel = s.querySelector('.pill.selected');      // label without the "+€10" price badge
+          return sel ? (sel.dataset.optionLabel || sel.textContent.trim()) : ''; }
     }
     return '';
   };
@@ -2768,7 +2777,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.7</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.8</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -3127,7 +3136,7 @@ function modulesFor(st) {
   // Cuff + hem: self-elastic replaces the body's own rib trim; the zip-up body has no rib trim of its own.
   if (st.cuff === 'self-elastic') mods.push('trim_elastic');
   else if (zipUp && zipUp.ribTrim) mods.push(zipUp.ribTrim);
-  const styleName = { crewneck: 'Crewneck', '2-piece-hood': '2-Piece Hood', '3-piece-hood': '3-Piece Hood', quarterzip: 'Quarterzip' }[st.style] || st.style;
+  const styleName = { crewneck: 'Crewneck', '2-piece-hood': '2-Piece Hood', '3-piece-hood': 'Hoodie', quarterzip: 'Quarterzip' }[st.style] || st.style;
   // Style (falls back to the crewneck collar of the same body)
   if (set[st.style]) mods.push(set[st.style]);
   else { if (set.crewneck) mods.push(set.crewneck); missing.push(styleName + ' with ' + SLEEVE_NAME[sleeve]); }

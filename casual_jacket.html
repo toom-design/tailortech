@@ -1603,7 +1603,7 @@ function collectConfig() {
     const sections = document.querySelectorAll('.section');
     for (const s of sections) {
       if (s.querySelector('.section-label')?.textContent.trim() === labelText) {
-        const pillVal = s.querySelector('.pill.selected')?.textContent.trim();
+        const _sel = s.querySelector('.pill.selected'); const pillVal = _sel ? (_sel.dataset.optionLabel || _sel.textContent.trim()) : undefined;
         if (pillVal) return pillVal;
         return s.querySelector('.option-card.selected .cname')?.textContent.trim() || '';
       }
@@ -2044,7 +2044,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.5.4</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.5.5</div>
 
 <!-- Firebase -->
 <script type="module">
