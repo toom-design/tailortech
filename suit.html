@@ -2078,7 +2078,7 @@ function getClientJSONP(email, uid, callback) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.8.12</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.8.13</div>
 
 
 <!-- Cookie consent (analytics) — wording is yours to edit; keep the two button ids -->
@@ -2361,6 +2361,67 @@ setTimeout(function () {
       });
     };
   }
+})();
+</script>
+
+<!-- Phone layout: drawing / 3D in the upper part, configuration in the lower half -->
+<style>
+@media (max-width: 760px) {
+  body { height: 100vh; height: 100dvh; }
+  .app { flex-direction: column !important; }
+  .preview-panel { flex: 0 0 44vh !important; flex: 0 0 44dvh !important; max-height: 44dvh; border-right: none !important; border-bottom: 1px solid var(--border); }
+  .app.measurements-active .preview-panel { flex: 0 0 36dvh !important; max-height: 36dvh; }
+  .config-panel { flex: 1 1 auto !important; min-height: 0 !important; border-top-left-radius: 18px; border-top-right-radius: 18px; margin-top: -14px; z-index: 5; box-shadow: 0 -8px 24px rgba(26,25,22,0.06); }
+  .app.measurements-active .config-panel { flex: 1 1 auto !important; }
+  .config-tabs, .tabs { padding: 0 12px !important; }
+  .tab { font-size: 8.5px !important; letter-spacing: 0.12em !important; padding: 14px 4px 12px !important; line-height: 1.3; }
+  #meas-avatar-panel { padding: 0.75rem !important; }
+  .preview-panel .view-toggle { padding: 10px 12px 0 !important; }
+  .preview-panel .view-bar { padding: 0 12px 24px !important; }
+  .preview-panel .seg-wrap { transform: scale(0.86); transform-origin: center; }
+  .zoom-controls, .zoom-btns { transform: scale(0.86); transform-origin: top right; }
+  /* version badge: top-left of the drawing instead of over the price bar */
+  div[style*="position:fixed;bottom:14px;left:18px"] { top: 60px !important; bottom: auto !important; left: 12px !important; }
+}
+</style>
+<script>
+(function () {
+  var mq = window.matchMedia('(max-width: 760px)');
+  var DESK = (typeof DEFAULT_ZOOM !== 'undefined') ? DEFAULT_ZOOM
+           : (typeof state !== 'undefined' && state && state.zoom) ? state.zoom
+           : (typeof _z !== 'undefined' && _z && _z.zoom) ? _z.zoom : 1.5;
+  // Zoom that fits the square drawing into the (smaller) preview area on a phone
+  function fitZoom() {
+    var pp = document.querySelector('.preview-panel');
+    if (!pp) return DESK;
+    var w = pp.clientWidth, h = pp.clientHeight - 84;      // room for the view toggle and Front/Back bar
+    return Math.max(0.35, Math.min(w * 0.96, h) / 420 * 1.12);   // the drawing has a margin inside its square
+  }
+  function factor() { return mq.matches ? fitZoom() / DESK : 1; }
+  function setZoom(z) {
+    if (typeof state !== 'undefined' && state && 'zoom' in state) { state.zoom = z; state.panX = 0; state.panY = 0; }
+    else if (typeof _z !== 'undefined' && _z) { _z.zoom = z; _z.panX = 0; _z.panY = 0; }
+    if (typeof applyTransform === 'function') applyTransform();
+  }
+  var origReset = window.resetZoom;
+  if (typeof origReset === 'function') {
+    window.resetZoom = function () {
+      var r = origReset.apply(this, arguments);
+      if (mq.matches && !window._is3D) setZoom(fitZoom());
+      return r;
+    };
+  }
+  // Close-ups (monogram, pocket, cuffs…) keep the same framing as on a large screen
+  var origRegion = window.zoomToRegion;
+  if (typeof origRegion === 'function') {
+    window.zoomToRegion = function (scale, cx, cy) { return origRegion.call(this, scale * factor(), cx, cy); };
+  }
+  function relayout() { if (mq.matches && !window._is3D) setZoom(fitZoom()); window.dispatchEvent(new Event('tt-relayout')); }
+  if (mq.matches) {
+    if (document.readyState === 'complete') relayout(); else window.addEventListener('load', relayout);
+    setTimeout(relayout, 300);
+  }
+  var t; window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(function () { if (mq.matches) relayout(); else if (typeof origReset === 'function') origReset(); }, 200); });
 })();
 </script>
 </body>
