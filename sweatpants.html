@@ -3113,7 +3113,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.3.10</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.3.11</div>
 
 
 <!-- Cookie consent (analytics) — wording is yours to edit; keep the two button ids -->
@@ -3457,6 +3457,68 @@ setTimeout(function () {
     setTimeout(relayout, 300);
   }
   var t; window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(function () { if (mq.matches) relayout(); else if (typeof origReset === 'function') origReset(); }, 200); });
+})();
+</script>
+
+<!-- Sponsors (CLIENTS → profile = "sponsor"): everything is on the house -->
+<style>
+.price-display-amount.tt-sponsor { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; white-space: normal; }
+.tt-sponsor .price-new { color: #4a164f; }
+.tt-sponsor-tag { align-self: center; font-size: 9.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #1f5249; background: #F3F8F6; border: 1px solid rgba(77,191,171,0.55); padding: 4px 8px; border-radius: 999px; line-height: 1; white-space: nowrap; }
+</style>
+<script>
+(function () {
+  window.ttSponsor = false;
+  var NOTE = 'On the house ✦';
+  function isSponsor(client) {
+    if (!client) return false;
+    return Object.keys(client).some(function (k) {
+      var key = k.trim().toLowerCase(), v = String(client[k] || '').trim().toLowerCase();
+      return (key === 'profile' && v.split(/[\s,;]+/).indexOf('sponsor') >= 0) || (key === 'sponsor' && /^(true|yes|1|x)$/.test(v));
+    });
+  }
+  function showSponsorPrice() {
+    if (!window.ttSponsor) return;
+    document.querySelectorAll('.price-display-amount').forEach(function (el) {
+      if (el.querySelector('.price-spin')) return;                       // still calculating
+      var cur = el.querySelector('.price-new') || el;                    // what they would have paid
+      var was = cur.classList && cur.classList.contains('price-old') ? '' : String(cur.textContent || '').trim();
+      if (el.classList.contains('tt-sponsor') && el.dataset.was === was) return;
+      if (!/\d/.test(was)) return;
+      el.dataset.was = was;
+      el.innerHTML = '<span class="price-new">€0</span><span class="price-old">' + was + '</span><span class="tt-sponsor-tag">' + NOTE + '</span>';
+      el.classList.add('has-discount', 'tt-sponsor');
+      el.setAttribute('aria-label', '€0 — on the house for TailorTech sponsors (normally ' + was + ')');
+    });
+    document.querySelectorAll('#fabric-main-grid .fprice').forEach(function (p) { if (p.textContent && p.textContent !== '€0') p.textContent = '€0'; });
+  }
+  var origBar = window.updatePriceBar;
+  if (typeof origBar === 'function') {
+    window.updatePriceBar = function () {
+      document.querySelectorAll('.price-display-amount.tt-sponsor').forEach(function (el) { el.classList.remove('tt-sponsor'); delete el.dataset.was; });
+      var r = origBar.apply(this, arguments);
+      showSponsorPrice();
+      return r;
+    };
+  }
+  // Orders from a sponsor are saved with PRICE 0
+  var origEst = window.ttEstimatedPrice;
+  if (typeof origEst === 'function') window.ttEstimatedPrice = function () { return window.ttSponsor ? 0 : origEst.apply(this, arguments); };
+  var origGet = window.getClientJSONP;
+  if (typeof origGet === 'function') {
+    window.getClientJSONP = function (email, uid, cb) {
+      return origGet.call(this, email, uid, function (res) {
+        try {
+          if (res && res.client && isSponsor(res.client) && !window.ttSponsor) {
+            window.ttSponsor = true;
+            if (typeof updatePriceBar === 'function') updatePriceBar(); else showSponsorPrice();
+            setTimeout(function () { if (window.toast) toast('Hello, sponsor! Everything you design here is on the house — thank you for backing TailorTech ✦'); }, 900);
+          }
+        } catch (e) {}
+        if (cb) cb(res);
+      });
+    };
+  }
 })();
 </script>
 </body>
