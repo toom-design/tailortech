@@ -2815,7 +2815,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.11</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.12</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -3147,6 +3147,10 @@ const MODULES = {
 ] },
   zip_raglan:      { file: 'SWEATSHIRT8', pieces: [], match: /^zipper/i },
   kangaroo_raglan_zip: { file: 'SWEATSHIRT8', pieces: ['Pattern_2901680', 'Pattern_2901681'] },
+  // Complete pullover hoodie (raglan, 3-piece hood, kangaroo pocket, rib cuffs + hem, drawcords) — hoodie2 from CLO,
+  // compressed (meshopt) and served from this site: models/hoodie2.glb. Its own fabric structure (normal maps) is used;
+  // only the colour changes with the chosen fabric. Different CLO project → never mixed with SWEATSHIRT pieces.
+  hoodie2_full:    { file: 'models/hoodie2', local: true, pieces: [], match: /./ },
   // Cuff + hem trims. Rib trim comes with each body file; these are swapped in when needed.
   // Self-elastic (gathered cuffs + gathered hem, double layer) — SWEATSHIRT8, fits every body (same avatar pose).
   trim_elastic:    { file: 'SWEATSHIRT8', trim: true, pieces: ['Pattern_1303228', 'Pattern_1303229', 'Pattern_11393553', 'Pattern_11393554',
@@ -3167,6 +3171,12 @@ const SLEEVE_NAME = { regular: 'regular sleeve', raglan: 'raglan sleeve' };
 function modulesFor(st) {
   const sleeve = BODY_SETS[st.sleeve] ? st.sleeve : 'regular';
   const set = BODY_SETS[sleeve], missing = [];
+  // Hoodie + raglan + kangaroo + rib, pulled over the head: the complete hoodie2 model
+  if (sleeve === 'raglan' && st.style === '3-piece-hood' && st.hoodClosure !== 'zip-up' && st.pocket === 'kangaroo' && st.cuff !== 'self-elastic') {
+    if (st.fit && st.fit !== 'regular') missing.push('Oversized fit');
+    if (st.monogram && st.monogram.place !== 'none') missing.push('Monogram');
+    return { mods: ['hoodie2_full'], missing };
+  }
   // Zip-up hood: needs its own body (front cut open for the zip) — only exists where a zip-up export does.
   const zipUp = st.style === '3-piece-hood' && st.hoodClosure === 'zip-up' ? set.zipUp : null;
   const mods = [zipUp ? zipUp.body : ((set.bodyFor && set.bodyFor[st.style]) || set.body)];
@@ -3212,11 +3222,22 @@ const PART_BY_MESH = {
   Pattern_1303228: 'cuff',    Pattern_1303229: 'cuff',    Pattern_11393553: 'cuff',  Pattern_11393554: 'cuff',
   Pattern_1303230: 'hem',     Pattern_1303231: 'hem',     Pattern_11393555: 'hem',   Pattern_11393556: 'hem',
   Pattern_11393552: 'hem',    Pattern_11393557: 'hem',
+  // hoodie2 (complete hoodie, its own CLO project)
+  Pattern_106161: 'front',    Pattern_106151: 'back',     Pattern_106144: 'sleeves', Pattern_106145: 'sleeves',
+  Pattern_106131: 'hood',     Pattern_106132: 'hood',     Pattern_106150: 'hood',    Pattern_1207603: 'hood', Pattern_1207604: 'hood',
+  Pattern_2554288: 'hood',    Pattern_2554289: 'hood',    Pattern_1189891: 'hood',
+  Pattern_923416: 'collar',   Pattern_3481357: 'collar',  Pattern_3481358: 'collar', Pattern_3490969: 'collar',
+  Pattern_152595: 'hem',      Pattern_152596: 'hem',      Pattern_912855: 'cuff',    Pattern_912856: 'cuff',
+  '7875': 'pocket',           '5461': 'pocket',           '5462': 'pocket',
+  '57': 'cord',               '58': 'cord',               '574': 'hardware',         '575': 'hardware',
+  Pattern_106133: 'hardware', Pattern_106134: 'hardware',
 };
 
 // Part groups — matched against mesh name + material name, first rule wins.
 // Anything that doesn't match gets its own button, so new parts show up automatically.
 const PART_RULES = [
+  { key: 'cord',     label: 'Drawcord', test: /drawcord|drwacord/i },
+  { key: 'hardware', label: 'Eyelets',  test: /(?!)/ },
   { key: 'hood',    label: 'Hood',    test: /hood/i },
   { key: 'pocket',  label: 'Pocket',  test: /pocket|kangaroo|welt/i },
   { key: 'cuff',    label: 'Cuff',    test: /cuff/i },
@@ -3237,7 +3258,9 @@ function classify(mesh) {
   return { key: 'x_' + n, label: n.replace(/_/g, ' ') };
 }
 
-let THREE, GLTFLoader, OrbitControls, RoomEnvironment;
+let THREE, GLTFLoader, OrbitControls, RoomEnvironment, MeshoptDecoder = null;
+// Compressed models (meshopt) need the decoder; uncompressed ones load as before
+function gltfLoader() { const l = new GLTFLoader(); if (MeshoptDecoder) l.setMeshoptDecoder(MeshoptDecoder); return l; }
 let renderer, scene, camera, controls, modelRoot = null, shadow = null;
 let parts = {};              // key -> { label, meshes: [], visible }
 let fitRadius = 1, center = null, currentUrl = null, visible = false, raf = null;
@@ -3260,6 +3283,7 @@ async function init() {
     import('three/addons/controls/OrbitControls.js'),
     import('three/addons/environments/RoomEnvironment.js'),
   ]);
+  try { ({ MeshoptDecoder } = await import('three/addons/libs/meshopt_decoder.module.js')); } catch (e) { MeshoptDecoder = null; }
   const host = $('stage-3d');
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -3319,7 +3343,9 @@ function loadFileIndex(file) {
   return fileIndex[file] = (async () => {
     let gltf = null, lastErr = null;
     for (const ext of ['.glb', '.gltf']) {
-      try { gltf = await new GLTFLoader().loadAsync(MODEL_BASE + encodeURIComponent(file + ext)); break; }
+      // Files with a folder (e.g. models/hoodie2) are served from this site; the rest from the hoodie repo
+      const url = file.indexOf('/') >= 0 ? new URL(file + ext, location.href).href : MODEL_BASE + encodeURIComponent(file + ext);
+      try { gltf = await gltfLoader().loadAsync(url); break; }
       catch (e) { lastErr = e; }
     }
     if (!gltf) { delete fileIndex[file]; throw lastErr || new Error('Model not found: ' + file); }
@@ -3369,7 +3395,7 @@ async function loadModel() {
     m.applyMatrix4(mesh.matrixWorld);                       // place it exactly where it sat in its file
     m.userData.origMaterial = mesh.material;
     const fileNormal = !noStructure && !/^topstitch/i.test(mesh.name) && mesh.material && mesh.material.normalMap ? mesh.material.normalMap : null;
-    m.material = partKey === 'zip' ? zipMaterial() : fabricMaterial(partKey, fileNormal);
+    m.material = (partKey === 'zip' || partKey === 'hardware') ? zipMaterial() : fabricMaterial(partKey, fileNormal);
     if (!/^topstitch/i.test(mesh.name)) m.add(new THREE.LineSegments(seamGeometry(mesh.geometry), seamMat));
     modelRoot.add(m);
     (parts[partKey] = parts[partKey] || { label, meshes: [], visible: true }).meshes.push(m);
