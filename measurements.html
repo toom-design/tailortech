@@ -281,16 +281,16 @@ body{height:100dvh;}
     <!-- Scrollable area -->
     <div class="form-content">
       <h2 class="form-heading" id="form-heading">All Measurements</h2>
-      <p class="form-sub">Enter your measurements below</p>
+      <p class="form-sub" id="form-sub">Enter your measurements below. Pick one or more garments to see only what they need.</p>
 
       <!-- Garment filter buttons -->
       <div class="garment-btns" id="garment-btns">
         <button class="gbtn active-all" data-filter="all" onclick="setFilter('all')">All</button>
-        <button class="gbtn" data-filter="shirt" onclick="setFilter('shirt')">Shirt</button>
-        <button class="gbtn" data-filter="tshirt" onclick="setFilter('tshirt')">T-shirt</button>
-        <button class="gbtn" data-filter="hoodie" onclick="setFilter('hoodie')">Hoodie</button>
-        <button class="gbtn" data-filter="suit" onclick="setFilter('suit')">Suit</button>
-        <button class="gbtn" data-filter="trousers" onclick="setFilter('trousers')">Trousers</button>
+        <button class="gbtn" data-filter="shirt" onclick="toggleGarment('shirt')" aria-pressed="false">Shirt</button>
+        <button class="gbtn" data-filter="tshirt" onclick="toggleGarment('tshirt')" aria-pressed="false">T-shirt</button>
+        <button class="gbtn" data-filter="hoodie" onclick="toggleGarment('hoodie')" aria-pressed="false">Hoodie</button>
+        <button class="gbtn" data-filter="suit" onclick="toggleGarment('suit')" aria-pressed="false">Suit</button>
+        <button class="gbtn" data-filter="trousers" onclick="toggleGarment('trousers')" aria-pressed="false">Trousers</button>
       </div>
 
       <!-- Tailor access: shown only to signed-in tailors (CLIENTS → profile = tailor / developer) -->
@@ -581,7 +581,7 @@ function showDiagImage(url, labelText) {
     };
     _diagImg.onerror = function() {
       // Missing image: garment mode falls back to its first diagram, otherwise the body front
-      var gm = GARMENT_MEAS[currentFilter], fb = FRONT_IMG;
+      var gm = GARMENT_MEAS[activeGM()], fb = FRONT_IMG;
       if (currentSource === 'garment' && gm && gm.fields.length) fb = RAW_BASE + encodeURIComponent(gm.fields[0][2]);
       if (_diagImg.src === fb || decodeURIComponent(_diagImg.src) === decodeURIComponent(fb)) fb = FRONT_IMG;
       _diagImg.onerror = null;
@@ -641,29 +641,52 @@ function makeField(key, label) {
   initDiag();
 })();
 
-// ── Garment filter ────────────────────────────────────────────────
-var currentFilter = 'all';
+// ── Garment filter: one or more garments, their measurements combined (no duplicates) ──
+var currentFilter = 'all';     // 'all', one garment key, or several joined with "," (saved as the Garment)
+var _selGarments = [];         // in button order
+var GARMENT_ORDER = ['shirt', 'tshirt', 'hoodie', 'suit', 'trousers'];
+var GARMENT_NAME = { shirt: 'Shirt', tshirt: 'T-shirt', hoodie: 'Hoodie', suit: 'Suit', trousers: 'Trousers' };
 
-function setFilter(filter) {
-  currentFilter = filter;
-  // Update button states
-  document.querySelectorAll('.gbtn').forEach(function(b) {
-    b.classList.remove('active-all','active-sub');
-    if (b.dataset.filter === filter) {
-      b.classList.add(filter === 'all' ? 'active-all' : 'active-sub');
-    }
+function selectedGarments() { return _selGarments.slice(); }
+// The garment that can be measured "from a garment" (GARMENT_MEAS), if one is selected
+function activeGM() {
+  for (var i = 0; i < _selGarments.length; i++) if (GARMENT_MEAS[_selGarments[i]]) return _selGarments[i];
+  return '';
+}
+function setGarments(list) {
+  _selGarments = GARMENT_ORDER.filter(function (g) { return list.indexOf(g) >= 0; });
+  currentFilter = _selGarments.length ? _selGarments.join(',') : 'all';
+  document.querySelectorAll('.gbtn').forEach(function (b) {
+    var f = b.dataset.filter, on = f === 'all' ? !_selGarments.length : _selGarments.indexOf(f) >= 0;
+    b.classList.remove('active-all', 'active-sub');
+    if (on) b.classList.add(f === 'all' ? 'active-all' : 'active-sub');
+    b.setAttribute('aria-pressed', String(on));
   });
-  // Update heading
-  document.getElementById('form-heading').textContent = LABELS[filter] || 'Measurements';
-  // Apply field visibility
-  applyFilter(filter);
+  var names = _selGarments.map(function (g) { return GARMENT_NAME[g] || g; });
+  document.getElementById('form-heading').textContent =
+    !names.length ? LABELS.all : (names.length === 1 ? (LABELS[_selGarments[0]] || names[0] + ' Measurements') : names.join(' + '));
+  var sub = document.getElementById('form-sub');
+  if (sub) sub.textContent = names.length > 1
+    ? 'Measurements for all ' + names.length + ' garments combined — each one only once.'
+    : 'Enter your measurements below. Pick one or more garments to see only what they need.';
+  applyFilter(currentFilter);
+}
+// Garment buttons toggle; "All" clears the selection
+function toggleGarment(g) {
+  var list = selectedGarments(), i = list.indexOf(g);
+  if (i >= 0) list.splice(i, 1); else list.push(g);
+  setGarments(list);
+}
+// Kept for links and other callers: "all", one garment, or a comma-separated list
+function setFilter(filter) {
+  setGarments(!filter || filter === 'all' ? [] : String(filter).split(',').map(function (x) { return x.trim(); }));
 }
 
 // ── Measure from: body / garment ──────────────────────────────────
 var currentSource = 'body';
 
 function currentFrontImg() {
-  var gm = GARMENT_MEAS[currentFilter];
+  var gm = GARMENT_MEAS[activeGM()];
   return (currentSource === 'garment' && gm) ? (/^https?:/.test(gm.front) ? gm.front : RAW_BASE + encodeURIComponent(gm.front)) : FRONT_IMG;
 }
 
@@ -677,8 +700,8 @@ function setSource(source) {
   showDiagImage(currentFrontImg(), '');
 }
 
-function applyFilter(filter) {
-  var gm = GARMENT_MEAS[filter];
+function applyFilter() {
+  var sel = selectedGarments(), gmKey = activeGM(), gm = GARMENT_MEAS[gmKey];
   var row = document.getElementById('source-row');
   row.classList.toggle('visible', !!gm);
   if (!gm) currentSource = 'body';
@@ -688,13 +711,18 @@ function applyFilter(filter) {
   document.getElementById('sec-garment').style.display = garmentMode ? '' : 'none';
   if (garmentMode) {
     document.getElementById('garment-sec-label').textContent = gm.name + ' Measurements';
-    document.querySelectorAll('#grid-garment .field').forEach(function(f){ f.style.display = f.dataset.garment === filter ? '' : 'none'; });
-    ['wrap-height','wrap-weight','sec-vol','sec-lin','gap-vol-lin'].forEach(function(id){ document.getElementById(id).style.display = 'none'; });
-    return;
+    document.querySelectorAll('#grid-garment .field').forEach(function(f){ f.style.display = f.dataset.garment === gmKey ? '' : 'none'; });
   }
-  var set = GARMENT_SETS[filter];
-  document.getElementById('wrap-height').style.display = (!set || set.has('height')) ? '' : 'none';
-  document.getElementById('wrap-weight').style.display = filter === 'all' ? '' : 'none';
+  // Body measurements: every selected garment's list combined (a garment measured "from a garment" adds none)
+  var bodyGarments = sel.filter(function (g) { return !(garmentMode && g === gmKey); });
+  var set = null;
+  if (sel.length) {
+    set = new Set();
+    bodyGarments.forEach(function (g) { (GARMENT_SETS[g] || new Set()).forEach(function (k) { set.add(k); }); });
+  }
+  var noBody = !!set && set.size === 0;
+  document.getElementById('wrap-height').style.display = (!noBody && (!set || set.has('height'))) ? '' : 'none';
+  document.getElementById('wrap-weight').style.display = !sel.length ? '' : 'none';
   var anyVol = false, anyLin = false;
   document.querySelectorAll('#grid-vol .field').forEach(function(f){
     var show = !set || set.has(f.dataset.key); f.style.display = show ? '' : 'none'; if(show) anyVol=true;
@@ -733,8 +761,8 @@ function handleSubmit(e) {
   if (!form.checkValidity()) { form.reportValidity(); return; }
   var btn=document.getElementById('btn-save'),lbl=document.getElementById('save-lbl'),sp=document.getElementById('save-spin');
   btn.disabled=true; lbl.style.display='none'; sp.style.display='block';
-  var data = {garment:currentFilter, dateTime:new Date().toLocaleString()};
-  if (GARMENT_MEAS[currentFilter]) data[currentFilter + 'MeasurementSource'] = currentSource;   // e.g. tshirtMeasurementSource
+  var data = {garment:currentFilter, dateTime:new Date().toLocaleString()};   // e.g. "hoodie,trousers"
+  if (activeGM()) data[activeGM() + 'MeasurementSource'] = currentSource;   // e.g. tshirtMeasurementSource
   var fd = new FormData(form);
   fd.forEach(function(v,k){ if(v) data[k]=v; });
   var email = document.getElementById('f-email').value.trim();
@@ -831,7 +859,7 @@ document.addEventListener('click',function(e){
   // Apply garment from URL if provided
   if (filter !== 'all') setFilter(filter);
   else applyFilter('all');
-  if (params.get('source') === 'garment' && GARMENT_MEAS[filter]) setSource('garment');
+  if (params.get('source') === 'garment' && activeGM()) setSource('garment');
 
   if (email) {
     var decodedEmail = decodeURIComponent(email);
@@ -880,8 +908,8 @@ function loadMeasurementHistory(email){
 
 function prefillMeasurements(rec){
   if(!rec) return;
-  var savedSource = rec[currentFilter + 'MeasurementSource'];
-  if (GARMENT_MEAS[currentFilter] && (savedSource === 'garment' || savedSource === 'body') && !new URLSearchParams(location.search).get('source')) setSource(savedSource);
+  var savedSource = activeGM() ? rec[activeGM() + 'MeasurementSource'] : '';
+  if (activeGM() && (savedSource === 'garment' || savedSource === 'body') && !new URLSearchParams(location.search).get('source')) setSource(savedSource);
   var heightEl=document.getElementById('f-height');
   var weightEl=document.getElementById('f-weight');
   var hVal=rec['Height [CM]']||rec['height']||'';
@@ -898,7 +926,7 @@ function prefillMeasurements(rec){
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v2.12.6</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v2.13.0</div>
 
 <!-- Firebase -->
 <script type="module">
