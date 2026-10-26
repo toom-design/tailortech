@@ -736,6 +736,10 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
 .mono-lbl span { letter-spacing: 0.06em; text-transform: none; font-size: 11px; color: var(--ink-mid); }
 .mono-input { width: 140px; padding: 11px 14px; border-radius: 8px; border: 1px solid rgba(26,25,22,0.16); background: #fff; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 20px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink); outline: none; }
 .mono-input:focus { border-color: var(--tt-purple); box-shadow: 0 0 0 3px rgba(74,22,79,0.08); }
+.mono-kinds { display: inline-flex; padding: 3px; border-radius: 999px; background: rgba(26,25,22,0.05); gap: 2px; justify-self: start; }
+.mono-kind { font-family: 'Jost', sans-serif; font-size: 11.5px; padding: 8px 16px; border: none; border-radius: 999px; background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s; }
+.mono-kind.selected { background: var(--tt-purple); color: #fff; }
+.mono-input.is-text { width: min(300px, 100%); text-transform: none; letter-spacing: 0.06em; }
 .mono-styles { display: flex; flex-wrap: wrap; gap: 10px; }
 .mono-style { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 92px; padding: 12px 16px 10px; border-radius: 8px; border: 1px solid rgba(26,25,22,0.16); background: #fff; cursor: pointer; color: var(--ink); transition: border-color 0.15s, background 0.15s, color 0.15s; }
 .mono-style:hover { border-color: var(--tt-purple); color: var(--tt-purple); }
@@ -916,7 +920,11 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
         <p class="mono-note" id="mono-note" hidden></p>
 
         <div class="mono-body" id="mono-body" hidden>
-          <label class="mono-lbl" for="mono-text">Initials <span id="mono-count">0 / 3</span></label>
+          <div class="mono-kinds" role="group" aria-label="Monogram type">
+            <button type="button" class="mono-kind selected" data-kind="initials" onclick="setMonoKind('initials')">Initials</button>
+            <button type="button" class="mono-kind" data-kind="text" onclick="setMonoKind('text')">Custom text</button>
+          </div>
+          <label class="mono-lbl" for="mono-text"><b id="mono-kind-lbl" style="font-weight:inherit">Initials</b> <span id="mono-count">0 / 3</span></label>
           <input type="text" id="mono-text" class="mono-input" maxlength="6" placeholder="e.g. T.M." autocomplete="off" spellcheck="false" oninput="setMonoText(this.value)" onfocus="zoomToMonogram()">
 
           <div class="mono-lbl">Style</div>
@@ -1139,7 +1147,7 @@ const state = {
   sideslit: false, view: 'f',
   logo: { place: 'none', color: 'turquoise' },
   notes: '',
-  monogram: { place: 'none', text: '', style: 'serif', thread: 'tone' },
+  monogram: { place: 'none', kind: 'initials', text: '', style: 'serif', thread: 'tone' },
 };
 
 // ── URL builders ──────────────────────────────────────────────────
@@ -1458,7 +1466,36 @@ function zoomToMonogram() {
 // Letters only (max 3); a full stop is added after each letter: "tm" → "T.M."
 var _monoLetters = '';
 function monoFormat(letters) { return letters ? letters.split('').join('.') + '.' : ''; }
+// Custom text: up to 10 characters (letters, numbers, spaces and . & ' -), written as typed
+var MONO_TEXT_MAX = 10;
+function setMonoKind(kind) {
+  kind = kind === 'text' ? 'text' : 'initials';
+  if (state.monogram.kind === kind) return;
+  state.monogram.kind = kind;
+  document.querySelectorAll('.mono-kind').forEach(function(b){ b.classList.toggle('selected', b.dataset.kind === kind); });
+  var inp = document.getElementById('mono-text');
+  document.getElementById('mono-kind-lbl').textContent = kind === 'text' ? 'Custom text' : 'Initials';
+  inp.classList.toggle('is-text', kind === 'text');
+  inp.maxLength = kind === 'text' ? MONO_TEXT_MAX : 6;
+  inp.placeholder = kind === 'text' ? 'e.g. Tailored' : 'e.g. T.M.';
+  _monoLetters = ''; inp.value = '';
+  setMonoText('');
+  setTimeout(function(){ inp.focus(); }, 30);
+}
+function monoPlaceholder() { return state.monogram.kind === 'text' ? 'Text' : 'T.M.'; }
+// Longer custom text is embroidered a little smaller so it fits the same area
+function monoTextScale() { var n = (state.monogram.text || monoPlaceholder()).length; return n > 5 ? Math.max(0.55, 5 / n) : 1; }
 function setMonoText(v) {
+  if (state.monogram.kind === 'text') {
+    var txt = String(v || '').replace(/[^0-9A-Za-zÀ-ÖØ-öø-ÿĀ-ž .&'\-]/g, '').replace(/\s{2,}/g, ' ').slice(0, MONO_TEXT_MAX);
+    var ti = document.getElementById('mono-text');
+    if (ti && ti.value !== txt) ti.value = txt;
+    state.monogram.text = txt.trim();
+    document.getElementById('mono-count').textContent = txt.length + ' / ' + MONO_TEXT_MAX;
+    document.querySelectorAll('.mono-sample').forEach(function(sp){ sp.textContent = state.monogram.text || 'Text'; });
+    monoChanged(false);
+    return;
+  }
   var letters = String(v || '').toUpperCase().replace(/[^A-ZÀ-ÖØ-Þ]/g, '').slice(0, 3);
   // Backspace over a full stop leaves the letters unchanged — treat it as deleting the last letter
   var inp = document.getElementById('mono-text');
@@ -1498,12 +1535,12 @@ function renderMonogram() {
   el.hidden = !show;
   if (!show) return;
   var p = MONO_POS[m.place], f = MONO_FONTS[m.style] || MONO_FONTS.serif, t = monoThread();
-  el.textContent = m.text || 'T.M.';
+  el.textContent = m.text || monoPlaceholder();
   el.classList.toggle('is-placeholder', !m.text);
   el.style.left = (p.x * 100) + '%';
   el.style.top = (p.y * 100) + '%';
   el.style.fontFamily = f.css; el.style.fontWeight = f.weight; el.style.letterSpacing = f.spacing;
-  el.style.fontSize = (MONO_BASE_PX * f.scale * p.size) + 'px';
+  el.style.fontSize = (MONO_BASE_PX * f.scale * p.size * monoTextScale()) + 'px';
   el.style.color = t.hex;
   el.style.webkitTextStroke = t.outline ? '0.35px #8a8780' : '';
   el.style.transform = 'translate(-50%, -50%) rotate(' + p.rot + 'deg)';
@@ -1517,7 +1554,7 @@ function drawMonogramOnCanvas(ctx, W, H) {
   ctx.save();
   ctx.translate(ox + p.x * side, oy + p.y * side);
   ctx.rotate(p.rot * Math.PI / 180);
-  ctx.font = f.weight + ' ' + (MONO_BASE_PX * f.scale * p.size * k) + 'px ' + f.css;
+  ctx.font = f.weight + ' ' + (MONO_BASE_PX * f.scale * p.size * monoTextScale() * k) + 'px ' + f.css;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   if ('letterSpacing' in ctx) ctx.letterSpacing = f.spacing.replace('em', '') * MONO_BASE_PX * f.scale * k + 'px';
   ctx.fillStyle = t.hex; ctx.fillText(m.text, 0, 0);
@@ -1527,7 +1564,7 @@ function drawMonogramOnCanvas(ctx, W, H) {
 function monoSummary() {
   if (!monoActive()) return 'None';
   var m = state.monogram;
-  return m.text + ' · ' + MONO_FONTS[m.style].label + ' · ' + monoThread().name + ' · ' + MONO_PLACE_LABEL[m.place];
+  return (m.kind === 'text' ? '“' + m.text + '”' : m.text) + ' · ' + MONO_FONTS[m.style].label + ' · ' + monoThread().name + ' · ' + MONO_PLACE_LABEL[m.place];
 }
 document.addEventListener('DOMContentLoaded', function(){ buildMonoThreads(); });
 
@@ -1812,6 +1849,7 @@ function collectConfig() {
     'SLEEVE LENGTH':      sectionPill('Sleeve Length'),
     'SLEEVE STYLE':       sectionPill('Sleeve Style'),
     'MONOGRAM PLACEMENT': monoActive() ? MONO_PLACE_LABEL[state.monogram.place] : 'None',
+    'MONOGRAM TYPE':     monoActive() ? (state.monogram.kind === 'text' ? 'Custom text' : 'Initials') : '',
     'MONOGRAM TEXT':      monoActive() ? state.monogram.text : '',
     'MONOGRAM STYLE':     monoActive() ? MONO_FONTS[state.monogram.style].label : '',
     'MONOGRAM THREAD':    monoActive() ? monoThread().name : '',
@@ -2959,7 +2997,7 @@ function buildSilhouetteKey() {
     '_pocket-' + s.pocket + '_hem-' + s.hem + '_neckrib-' + s.neckrib +
     '_sideslit-' + (s.sideslit ? '1' : '0') +
     (logoActive() ? '_logo-' + state.logo.place + '-' + state.logo.color : '') +
-    (monoActive() ? '_mono-' + s.monogram.place + '-' + s.monogram.style + '-' + s.monogram.thread + '-' + s.monogram.text.replace(/[^A-Z]/g, '') : '');
+    (monoActive() ? '_mono-' + (s.monogram.kind === 'text' ? 'txt-' : '') + s.monogram.place + '-' + s.monogram.style + '-' + s.monogram.thread + '-' + encodeURIComponent(s.monogram.text).replace(/%/g, '') : '');
 }
 
 function drawImageContain(ctx, img, boxW, boxH) {
@@ -3014,7 +3052,7 @@ function captureTechPackImage() {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.5</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.6</div>
 
 
 <!-- ═══════════════ 3D PREVIEW (three.js + glTF) ═══════════════ -->
