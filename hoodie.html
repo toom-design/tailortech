@@ -2815,7 +2815,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.13</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.14</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -3150,8 +3150,7 @@ const MODULES = {
   // Complete pullover hoodie (raglan, 3-piece hood, kangaroo pocket, rib cuffs + hem, drawcords) — hoodie2 from CLO,
   // compressed (meshopt) and served from this site: models/hoodie2.glb. Its own fabric structure (normal maps) is used;
   // only the colour changes with the chosen fabric. Different CLO project → never mixed with SWEATSHIRT pieces.
-  // knit: the file's own normal maps are almost flat (CLO baked only seam puckering), so the jersey knit is tiled on instead
-  hoodie2_full:    { file: 'models/hoodie2', local: true, pieces: [], match: /./, noStructure: true, knit: true },
+  hoodie2_full:    { file: 'models/hoodie2', local: true, pieces: [], match: /./ },
   // Cuff + hem trims. Rib trim comes with each body file; these are swapped in when needed.
   // Self-elastic (gathered cuffs + gathered hem, double layer) — SWEATSHIRT8, fits every body (same avatar pose).
   trim_elastic:    { file: 'SWEATSHIRT8', trim: true, pieces: ['Pattern_1303228', 'Pattern_1303229', 'Pattern_11393553', 'Pattern_11393554',
@@ -3390,13 +3389,13 @@ async function loadModel() {
   if (shadow) scene.remove(shadow);
   modelRoot = new THREE.Group();
   parts = {};
-  const add = (mesh, partKey, label, noStructure, knit) => {
+  const add = (mesh, partKey, label, noStructure) => {
     const m = mesh.clone();                                 // shares geometry with the loaded file
     m.position.set(0, 0, 0); m.quaternion.identity(); m.scale.set(1, 1, 1);
     m.applyMatrix4(mesh.matrixWorld);                       // place it exactly where it sat in its file
     m.userData.origMaterial = mesh.material;
     const fileNormal = !noStructure && !/^topstitch/i.test(mesh.name) && mesh.material && mesh.material.normalMap ? mesh.material.normalMap : null;
-    m.material = (partKey === 'zip' || partKey === 'hardware') ? zipMaterial() : fabricMaterial(partKey, fileNormal, knit && !/^topstitch/i.test(mesh.name));
+    m.material = (partKey === 'zip' || partKey === 'hardware') ? zipMaterial() : fabricMaterial(partKey, fileNormal);
     if (!/^topstitch/i.test(mesh.name)) m.add(new THREE.LineSegments(seamGeometry(mesh.geometry), seamMat));
     modelRoot.add(m);
     (parts[partKey] = parts[partKey] || { label, meshes: [], visible: true }).meshes.push(m);
@@ -3410,8 +3409,8 @@ async function loadModel() {
     ids.forEach(pieceId => {
       (idx[mod.file][pieceId] || []).forEach(entry => {
         const r = classify(entry.mesh);
-        add(entry.mesh, r.key, r.label, mod.noStructure, mod.knit);
-        entry.stitches.forEach(stc => add(stc, r.key, r.label, mod.noStructure, false));
+        add(entry.mesh, r.key, r.label, mod.noStructure);
+        entry.stitches.forEach(stc => add(stc, r.key, r.label, mod.noStructure));
       });
     });
   });
@@ -3459,8 +3458,8 @@ function zipMaterial() {
   if (!_zipMat) _zipMat = new THREE.MeshStandardMaterial({ color: 0x2b2b2e, metalness: 0.6, roughness: 0.38, side: THREE.DoubleSide, envMapIntensity: 0.6 });
   return _zipMat;
 }
-function fabricMaterial(partKey, fileNormal, knit) {
-  const key = partKey + (fileNormal ? '|' + fileNormal.uuid : '') + (knit ? '|knit' : '');
+function fabricMaterial(partKey, fileNormal) {
+  const key = partKey + (fileNormal ? '|' + fileNormal.uuid : '');
   if (!partMaterials[key]) {
     partMaterials[key] = new THREE.MeshPhysicalMaterial({
       sheen: 0.4, sheenRoughness: 0.95, specularIntensity: 0.08, envMapIntensity: 0.25,
@@ -3469,8 +3468,6 @@ function fabricMaterial(partKey, fileNormal, knit) {
     });
     partMaterials[key].name = 'fabric_' + partKey;
     partMaterials[key].userData.fileNormal = fileNormal || null;
-    partMaterials[key].userData.knit = !!knit;
-    if (knit) loadKnitNormal();
     applyFabricTo(partMaterials[key]);
   }
   return partMaterials[key];
@@ -3499,22 +3496,12 @@ const DEFAULT_TILE_CM = 8;
 let fabricInfo = null, fabricMaps = null;
 const mapCache = {};
 
-// Jersey knit (normal map from the CLO jersey fabric), tiled at its real size: models/jersey_normal.webp
-const KNIT_NORMAL_URL = 'models/jersey_normal.webp', KNIT_TILE_CM = [4, 4.3], KNIT_STRENGTH = 1.1;
-let knitTex = null, knitLoading = null;
-function loadKnitNormal() {
-  if (knitLoading) return knitLoading;
-  return knitLoading = loadImg(new URL(KNIT_NORMAL_URL, location.href).href).then(img => {
-    knitTex = toTexture(normalHighPass(img), KNIT_TILE_CM, false);
-    Object.values(partMaterials).forEach(applyFabricTo);
-  }).catch(e => console.warn('3D knit normal:', e));
-}
 function applyFabricTo(mat) {
   const m = fabricMaps;
   mat.map = m ? m.map : null;
-  const own = mat.userData.fileNormal || (mat.userData.knit ? knitTex : null);
+  const own = mat.userData.fileNormal;
   mat.normalMap = own || (m && m.normal ? m.normal : null);
-  if (mat.normalMap) { const k = mat.userData.knit ? KNIT_STRENGTH : (own ? FILE_NORMAL_STRENGTH : NORMAL_STRENGTH); mat.normalScale.set(k, k); }
+  if (mat.normalMap) { const k = own ? FILE_NORMAL_STRENGTH : NORMAL_STRENGTH; mat.normalScale.set(k, k); }
   if (m && m.map) mat.color.set(0xb0b0b0);       // slight darkening: studio light lifts photo colours
   else mat.color.set(m && m.color ? m.color : FABRIC.color);
   // Dark fabrics: real black cotton reads as deep charcoal with a soft fuzzy sheen on the folds.
