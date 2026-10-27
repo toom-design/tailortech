@@ -2818,7 +2818,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.16</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.17</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -3161,6 +3161,18 @@ const MODULES = {
   reg_crew_welt:   { file: 'models/regular_crewneck', pieces: ['Pattern_5267298', 'Pattern_5267299'] },
   reg_zip_body:    { file: 'models/regular_hoodie_zipup', pieces: [], match: /./, exclude: ['Pattern_12337', 'Pattern_12339', 'Pattern_1050613', 'Pattern_1050614'] },
   reg_zip_kangaroo:{ file: 'models/regular_hoodie_zipup', pieces: ['Pattern_12337', 'Pattern_12339', 'Pattern_1050613', 'Pattern_1050614'] },
+  // Raglan crewneck, complete garments from CLO (models/…): CREWNECK_raglan = self-elastic cuffs + hem with pouch pocket,
+  // CREWNECK_raglan_2 = rib cuffs + hem with welt pockets. Same pattern, so the pockets can be shown on either body.
+  rag_crew_elastic: { file: 'models/CREWNECK_raglan', pieces: [], match: /^Pattern_/, exclude: ['Pattern_12339', 'Pattern_1050613', 'Pattern_1050614'] },
+  rag_crew_pouch:   { file: 'models/CREWNECK_raglan', pieces: ['Pattern_12339', 'Pattern_1050613', 'Pattern_1050614'] },
+  rag_crew_rib:     { file: 'models/CREWNECK_raglan_2', pieces: [], match: /^Pattern_/, exclude: ['Pattern_5267298', 'Pattern_5267299'] },
+  rag_crew_welt:    { file: 'models/CREWNECK_raglan_2', pieces: ['Pattern_5267298', 'Pattern_5267299'] },
+  // The self-elastic body was simulated with the pouch on it (its front keeps the pocket's shape), so without the pouch
+  // the rib body is used with the self-elastic cuffs + hem taken from CREWNECK_raglan.
+  rag_crew_rib_bare: { file: 'models/CREWNECK_raglan_2', pieces: [], match: /^Pattern_/,
+                       exclude: ['Pattern_5267298', 'Pattern_5267299', 'Pattern_15505', 'Pattern_15506', 'Pattern_15526', 'Pattern_15527'] },
+  rag_crew_el_trim:  { file: 'models/CREWNECK_raglan', pieces: ['Pattern_1303228', 'Pattern_1303229', 'Pattern_11393553', 'Pattern_11393554',
+                       'Pattern_1303226', 'Pattern_1303227', 'Pattern_11393551', 'Pattern_11393552'] },
   // Cuff + hem trims. Rib trim comes with each body file; these are swapped in when needed.
   // Self-elastic (gathered cuffs + gathered hem, double layer) — SWEATSHIRT8, fits every body (same avatar pose).
   trim_elastic:    { file: 'SWEATSHIRT8', trim: true, pieces: ['Pattern_1303228', 'Pattern_1303229', 'Pattern_11393553', 'Pattern_11393554',
@@ -3186,6 +3198,17 @@ function modulesFor(st) {
     if (st.fit && st.fit !== 'regular') missing.push('Oversized fit');
     if (st.monogram && st.monogram.place !== 'none') missing.push('Monogram');
     return { mods: ['hoodie2_full'], missing };
+  }
+  // Raglan crewneck: rib or self-elastic body, plus pouch / welt / no pocket
+  if (sleeve === 'raglan' && st.style === 'crewneck') {
+    const extra = [];
+    if (st.fit && st.fit !== 'regular') extra.push('Oversized fit');
+    if (st.monogram && st.monogram.place !== 'none') extra.push('Monogram');
+    const elastic = st.cuff === 'self-elastic';
+    const mods = elastic ? (st.pocket === 'kangaroo' ? ['rag_crew_elastic'] : ['rag_crew_rib_bare', 'rag_crew_el_trim']) : ['rag_crew_rib'];
+    if (st.pocket === 'kangaroo') mods.push('rag_crew_pouch');
+    else if (st.pocket === 'welt') mods.push('rag_crew_welt');
+    return { mods, missing: extra };
   }
   // Regular sleeve + rib: complete crewneck (no pocket / welt) and zip-up hoodie (no pocket / kangaroo)
   if (sleeve === 'regular' && st.cuff !== 'self-elastic') {
@@ -3241,7 +3264,7 @@ const PART_BY_MESH = {
   Pattern_2901680: 'pocket',  Pattern_2901681: 'pocket',
   Pattern_1303228: 'cuff',    Pattern_1303229: 'cuff',    Pattern_11393553: 'cuff',  Pattern_11393554: 'cuff',
   Pattern_1303230: 'hem',     Pattern_1303231: 'hem',     Pattern_11393555: 'hem',   Pattern_11393556: 'hem',
-  Pattern_11393552: 'hem',    Pattern_11393557: 'hem',
+  Pattern_11393552: 'hem',    Pattern_11393557: 'hem',    Pattern_11393551: 'hem',
   // hoodie2 (complete hoodie, its own CLO project)
   Pattern_106161: 'front',    Pattern_106151: 'back',     Pattern_106144: 'sleeves', Pattern_106145: 'sleeves',
   Pattern_106131: 'hood',     Pattern_106132: 'hood',     Pattern_106150: 'hood',    Pattern_1207603: 'hood', Pattern_1207604: 'hood',
