@@ -907,7 +907,7 @@ body { height: 100vh; height: 100dvh; min-height: -webkit-fill-available; }
         <div class="section-label">Front Pocket</div>
         <div class="pill-group">
           <button class="pill selected" onclick="selectPocket(this,'none')">None</button>
-          <button class="pill"          onclick="selectPocket(this,'kangaroo')">Kangaroo</button>
+          <button class="pill"          onclick="selectPocket(this,'kangaroo')">Pouch</button>
           <button class="pill"          onclick="selectPocket(this,'welt')">Welt</button>
         </div>
       </div>
@@ -1443,7 +1443,7 @@ function buildMonoThreads() {
   });
 }
 function selectMonoPlace(el, place) {
-  if (place === 'front' && state.pocket === 'kangaroo') { showMonoNote('Front left sits where the kangaroo pocket is. Choose Welt or no pocket, or put the monogram on the left sleeve.'); return; }
+  if (place === 'front' && state.pocket === 'kangaroo') { showMonoNote('Front left sits where the pouch pocket is. Choose Welt or no pocket, or put the monogram on the left sleeve.'); return; }
   document.querySelectorAll('#mono-place .pill').forEach(function(b){ b.classList.toggle('selected', b === el); });
   state.monogram.place = place;
   document.getElementById('mono-body').hidden = place === 'none';
@@ -1523,10 +1523,10 @@ function showMonoNote(msg) {
 function updateMonoAvailability() {
   var blocked = state.pocket === 'kangaroo';
   var fb = document.querySelector('#mono-place .pill[data-place="front"]');
-  if (fb) { fb.classList.toggle('is-blocked', blocked); fb.setAttribute('aria-disabled', blocked ? 'true' : 'false'); fb.title = blocked ? 'Not available with a kangaroo pocket' : ''; }
+  if (fb) { fb.classList.toggle('is-blocked', blocked); fb.setAttribute('aria-disabled', blocked ? 'true' : 'false'); fb.title = blocked ? 'Not available with a pouch pocket' : ''; }
   if (blocked && state.monogram.place === 'front') {
     selectMonoPlace(document.querySelector('#mono-place .pill[data-place="sleeve"]'), 'sleeve');
-    showMonoNote('Moved to the left sleeve — the kangaroo pocket covers the front-left spot.');
+    showMonoNote('Moved to the left sleeve — the pouch pocket covers the front-left spot.');
   }
 }
 function monoChanged(zoom) {
@@ -2043,8 +2043,11 @@ const SHEET_URL = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHw
 var _pricing = null;           // { fabricCoefficient, tailoring, marginPercent, configurations }
 var _sectionConfigMap = {};    // discovered automatically — see below
 
+// Old option names still used in the PRICE MATRIX sheet are treated as the new website names
+var OPTION_CANON = { 'kangaroo': 'pouch', 'kangaroo pocket': 'pouch', '3 piece hood': 'hoodie', 'three piece hood': 'hoodie' };
 function normalizeOptionText(s) {
-  return String(s || '').trim().toLowerCase().replace(/[-_]+/g, ' ').replace(/\s+/g, ' ');
+  var t = String(s || '').trim().toLowerCase().replace(/[-_]+/g, ' ').replace(/\s+/g, ' ');
+  return OPTION_CANON[t] || t;
 }
 
 async function loadPricingData() {
@@ -2107,7 +2110,7 @@ function discoverSectionConfigMap() {
 // configuration — used both to badge buttons and to total up the
 // currently-selected options.
 // Website label → other names the same option may still have in the PRICE MATRIX sheet
-var OPTION_PRICE_ALIASES = { 'hoodie': ['3 piece hood', 'three piece hood'] };
+var OPTION_PRICE_ALIASES = { 'hoodie': ['3 piece hood', 'three piece hood'], 'pouch': ['kangaroo', 'kangaroo pocket'] };
 function lookupOptionPrice(configName, optionText) {
   if (!_pricing || !_pricing.configurations || !_pricing.configurations[configName]) return 0;
   var target = normalizeOptionText(optionText);
@@ -2815,7 +2818,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.15</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.16</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -3207,7 +3210,7 @@ function modulesFor(st) {
   else { if (set.crewneck) mods.push(set.crewneck); missing.push(styleName + ' with ' + SLEEVE_NAME[sleeve]); }
   if (st.style === '3-piece-hood' && st.hoodClosure === 'zip-up' && !zipUp) missing.push('Zip-up closure with ' + SLEEVE_NAME[sleeve]);
   // Pocket
-  const pocketName = { kangaroo: 'Kangaroo pocket', welt: 'Welt pocket', zipper: 'Zipper pocket' }[st.pocket] || st.pocket;
+  const pocketName = { kangaroo: 'Pouch pocket', welt: 'Welt pocket', zipper: 'Zipper pocket' }[st.pocket] || st.pocket;
   if (st.pocket !== 'none') {
     const pk = (zipUp && zipUp.pockets && zipUp.pockets[st.pocket]) || (set.pocketFor && set.pocketFor[st.style] && set.pocketFor[st.style][st.pocket]) || set[st.pocket];
     if (pk) mods.push(pk);
