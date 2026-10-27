@@ -2818,7 +2818,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.17</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.19</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -3155,10 +3155,19 @@ const MODULES = {
   // only the colour changes with the chosen fabric. Different CLO project → never mixed with SWEATSHIRT pieces.
   hoodie2_full:    { file: 'models/hoodie2', local: true, pieces: [], match: /./ },
   // Regular (set-in) sleeve, complete garments from CLO (compressed, served from this site: models/…):
-  // crewneck with slanted side pockets, and zip-up hoodie with split kangaroo pocket. Colour only (no structure in the files).
+  // crewneck (see below), and zip-up hoodie with split kangaroo pocket. Colour only (no structure in the files).
   // The stray trim mesh in the crewneck file ("Slider_01") isn't a pattern piece and is left out.
+  // Regular crewneck: regular_crewneck = rib + welt pockets (clean front), CREWNECK_regular = self-elastic + pouch (same pattern;
+  // its front keeps the pouch's shape, so without the pouch the rib body gets the self-elastic cuffs + hem instead).
+  // (CREWNECK_regular2 isn't used: its front was simulated with a pocket shape pressed into it.)
   reg_crew_body:   { file: 'models/regular_crewneck', pieces: [], match: /^Pattern_/, exclude: ['Pattern_5267298', 'Pattern_5267299'] },
   reg_crew_welt:   { file: 'models/regular_crewneck', pieces: ['Pattern_5267298', 'Pattern_5267299'] },
+  reg_crew_bare:   { file: 'models/regular_crewneck', pieces: [], match: /^Pattern_/,
+                     exclude: ['Pattern_5267298', 'Pattern_5267299', 'Pattern_15505', 'Pattern_15506', 'Pattern_15526', 'Pattern_15527'] },
+  reg_crew_elastic:{ file: 'models/CREWNECK_regular', pieces: [], match: /^Pattern_/, exclude: ['Pattern_12339', 'Pattern_1050613', 'Pattern_1050614'] },
+  reg_crew_pouch:  { file: 'models/CREWNECK_regular', pieces: ['Pattern_12339', 'Pattern_1050613', 'Pattern_1050614'] },
+  reg_crew_el_trim:{ file: 'models/CREWNECK_regular', pieces: ['Pattern_1303228', 'Pattern_1303229', 'Pattern_11393553', 'Pattern_11393554',
+                     'Pattern_1303226', 'Pattern_1303227', 'Pattern_11393551', 'Pattern_11393552'] },
   reg_zip_body:    { file: 'models/regular_hoodie_zipup', pieces: [], match: /./, exclude: ['Pattern_12337', 'Pattern_12339', 'Pattern_1050613', 'Pattern_1050614'] },
   reg_zip_kangaroo:{ file: 'models/regular_hoodie_zipup', pieces: ['Pattern_12337', 'Pattern_12339', 'Pattern_1050613', 'Pattern_1050614'] },
   // Raglan crewneck, complete garments from CLO (models/…): CREWNECK_raglan = self-elastic cuffs + hem with pouch pocket,
@@ -3210,13 +3219,22 @@ function modulesFor(st) {
     else if (st.pocket === 'welt') mods.push('rag_crew_welt');
     return { mods, missing: extra };
   }
+  // Regular crewneck with self-elastic cuffs + hem
+  if (sleeve === 'regular' && st.style === 'crewneck' && st.cuff === 'self-elastic') {
+    const extra = [];
+    if (st.fit && st.fit !== 'regular') extra.push('Oversized fit');
+    if (st.monogram && st.monogram.place !== 'none') extra.push('Monogram');
+    const mods = st.pocket === 'kangaroo' ? ['reg_crew_elastic', 'reg_crew_pouch'] : ['reg_crew_bare', 'reg_crew_el_trim'];
+    if (st.pocket === 'welt') mods.push('reg_crew_welt');
+    return { mods, missing: extra };
+  }
   // Regular sleeve + rib: complete crewneck (no pocket / welt) and zip-up hoodie (no pocket / kangaroo)
   if (sleeve === 'regular' && st.cuff !== 'self-elastic') {
     const extra = [];
     if (st.fit && st.fit !== 'regular') extra.push('Oversized fit');
     if (st.monogram && st.monogram.place !== 'none') extra.push('Monogram');
-    if (st.style === 'crewneck' && (st.pocket === 'none' || st.pocket === 'welt'))
-      return { mods: st.pocket === 'welt' ? ['reg_crew_body', 'reg_crew_welt'] : ['reg_crew_body'], missing: extra };
+    if (st.style === 'crewneck' && (st.pocket === 'none' || st.pocket === 'welt' || st.pocket === 'kangaroo'))
+      return { mods: ['reg_crew_body'].concat(st.pocket === 'welt' ? ['reg_crew_welt'] : st.pocket === 'kangaroo' ? ['reg_crew_pouch'] : []), missing: extra };
     if (st.style === '3-piece-hood' && st.hoodClosure === 'zip-up' && (st.pocket === 'none' || st.pocket === 'kangaroo'))
       return { mods: st.pocket === 'kangaroo' ? ['reg_zip_body', 'reg_zip_kangaroo'] : ['reg_zip_body'], missing: extra };
   }
@@ -3349,7 +3367,7 @@ async function init() {
   scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
   // Studio rig: low ambient + strong raking key from the side (shows folds and seams), soft fill, back rim.
   // The rig turns with the camera, so the garment is lit the same way from every angle.
-  seamMat = new THREE.LineBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.55 });
+  seamMat = new THREE.LineBasicMaterial({ color: 0x555555, transparent: true, opacity: 0.9 });
   scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8a8a, 0.55));
   [[2.2, 2.6, 1.6, 1.6], [0.6, -2.4, 0.8, 1.8], [0.9, -1.2, 2.2, -2.4]].forEach(([i, x, y, z]) => {
     const l = new THREE.DirectionalLight(0xffffff, i);
@@ -3566,8 +3584,9 @@ function applyFabricTo(mat) {
   mat.sheenRoughness = 0.95 - 0.15 * dark;
   if (mat.sheenColor) mat.sheenColor.copy(mat.color).lerp(new THREE.Color(0xffffff), 0.12 + 0.06 * dark);
   if (seamMat) {
-    if (dark > 0) { seamMat.color.copy(mat.color).lerp(new THREE.Color(0xffffff), 0.1 + 0.08 * dark); seamMat.opacity = 0.6; }
-    else { seamMat.color.copy(mat.color).multiplyScalar(0.55); seamMat.opacity = 0.55; }
+    // Seams drawn clearly (so raglan vs set-in sleeves read at a glance): much darker than the fabric, or lighter on dark fabric
+    if (dark > 0) { seamMat.color.copy(mat.color).lerp(new THREE.Color(0xffffff), 0.28 + 0.12 * dark); seamMat.opacity = 0.95; }
+    else { seamMat.color.copy(mat.color).multiplyScalar(0.24); seamMat.opacity = 0.95; }
   }
   mat.needsUpdate = true;
 }
