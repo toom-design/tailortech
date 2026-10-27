@@ -2818,7 +2818,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.19</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.20</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -3182,6 +3182,16 @@ const MODULES = {
                        exclude: ['Pattern_5267298', 'Pattern_5267299', 'Pattern_15505', 'Pattern_15506', 'Pattern_15526', 'Pattern_15527'] },
   rag_crew_el_trim:  { file: 'models/CREWNECK_raglan', pieces: ['Pattern_1303228', 'Pattern_1303229', 'Pattern_11393553', 'Pattern_11393554',
                        'Pattern_1303226', 'Pattern_1303227', 'Pattern_11393551', 'Pattern_11393552'] },
+  // Regular-sleeve hoodies (models/…): HOODIE_regular = overhead, pouch, self-elastic cuffs + hem;
+  // hoodie_regular_zipup2 = zip-up with a real zipper (teeth, slider, puller), welt pockets, rib cuffs + hem.
+  // A stray neck piece (Pattern_3481357) lies on the floor in the zip-up file and is left out.
+  reg_hood_elastic: { file: 'models/HOODIE_regular', pieces: [], match: /^Pattern_/, exclude: ['Pattern_12339', 'Pattern_1050613', 'Pattern_1050614'] },
+  reg_hood_pouch:   { file: 'models/HOODIE_regular', pieces: ['Pattern_12339', 'Pattern_1050613', 'Pattern_1050614'] },
+  reg_hood_nohem:   { file: 'models/HOODIE_regular', pieces: [], match: /^Pattern_/, exclude: ['Pattern_12339', 'Pattern_1050613', 'Pattern_1050614',
+                      'Pattern_1303228', 'Pattern_1303229', 'Pattern_11393553', 'Pattern_11393554', 'Pattern_1303226', 'Pattern_1303227', 'Pattern_11393551', 'Pattern_11393552'] },
+  reg_rib_trim:     { file: 'models/regular_crewneck', pieces: ['Pattern_15505', 'Pattern_15506', 'Pattern_15526', 'Pattern_15527'] },
+  reg_zip2_body:    { file: 'models/hoodie_regular_zipup2', pieces: [], match: /./, exclude: ['Pattern_5267298', 'Pattern_5267299', 'Pattern_3481357'] },
+  reg_zip2_welt:    { file: 'models/hoodie_regular_zipup2', pieces: ['Pattern_5267298', 'Pattern_5267299'] },
   // Cuff + hem trims. Rib trim comes with each body file; these are swapped in when needed.
   // Self-elastic (gathered cuffs + gathered hem, double layer) — SWEATSHIRT8, fits every body (same avatar pose).
   trim_elastic:    { file: 'SWEATSHIRT8', trim: true, pieces: ['Pattern_1303228', 'Pattern_1303229', 'Pattern_11393553', 'Pattern_11393554',
@@ -3227,6 +3237,20 @@ function modulesFor(st) {
     const mods = st.pocket === 'kangaroo' ? ['reg_crew_elastic', 'reg_crew_pouch'] : ['reg_crew_bare', 'reg_crew_el_trim'];
     if (st.pocket === 'welt') mods.push('reg_crew_welt');
     return { mods, missing: extra };
+  }
+  // Regular-sleeve hoodies
+  if (sleeve === 'regular' && st.style === '3-piece-hood') {
+    const extra = [];
+    if (st.fit && st.fit !== 'regular') extra.push('Oversized fit');
+    if (st.monogram && st.monogram.place !== 'none') extra.push('Monogram');
+    const elastic = st.cuff === 'self-elastic';
+    if (st.hoodClosure !== 'zip-up') {
+      if (st.pocket === 'kangaroo') return { mods: elastic ? ['reg_hood_elastic', 'reg_hood_pouch'] : ['reg_hood_nohem', 'reg_rib_trim', 'reg_hood_pouch'], missing: extra };
+      // (no pocket / welt: HOODIE_regular's front keeps the pouch's shape, so those use the older models below)
+    } else if (!elastic) {
+      if (st.pocket === 'kangaroo') return { mods: ['reg_zip_body', 'reg_zip_kangaroo'], missing: extra };
+      return { mods: ['reg_zip2_body'].concat(st.pocket === 'welt' ? ['reg_zip2_welt'] : []), missing: extra };
+    }
   }
   // Regular sleeve + rib: complete crewneck (no pocket / welt) and zip-up hoodie (no pocket / kangaroo)
   if (sleeve === 'regular' && st.cuff !== 'self-elastic') {
@@ -3294,6 +3318,7 @@ const PART_BY_MESH = {
   Pattern_106133: 'hardware', Pattern_106134: 'hardware',
   // regular_crewneck + regular_hoodie_zipup (same CLO project)
   Pattern_8629: 'front',      Pattern_8627: 'front',      Pattern_10975: 'back',
+  Pattern_8630: 'front',      Pattern_8631: 'front',      Pattern_15528: 'hem',      Pattern_15529: 'hem',
   Pattern_14259: 'sleeves',   Pattern_14260: 'sleeves',
   Pattern_15505: 'cuff',      Pattern_15506: 'cuff',      Pattern_15524: 'hem',      Pattern_15526: 'hem', Pattern_15527: 'hem',
   Pattern_10965834: 'collar', Pattern_3402318: 'collar',
