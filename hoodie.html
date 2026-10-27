@@ -2815,7 +2815,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.14</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.15</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -3151,6 +3151,13 @@ const MODULES = {
   // compressed (meshopt) and served from this site: models/hoodie2.glb. Its own fabric structure (normal maps) is used;
   // only the colour changes with the chosen fabric. Different CLO project → never mixed with SWEATSHIRT pieces.
   hoodie2_full:    { file: 'models/hoodie2', local: true, pieces: [], match: /./ },
+  // Regular (set-in) sleeve, complete garments from CLO (compressed, served from this site: models/…):
+  // crewneck with slanted side pockets, and zip-up hoodie with split kangaroo pocket. Colour only (no structure in the files).
+  // The stray trim mesh in the crewneck file ("Slider_01") isn't a pattern piece and is left out.
+  reg_crew_body:   { file: 'models/regular_crewneck', pieces: [], match: /^Pattern_/, exclude: ['Pattern_5267298', 'Pattern_5267299'] },
+  reg_crew_welt:   { file: 'models/regular_crewneck', pieces: ['Pattern_5267298', 'Pattern_5267299'] },
+  reg_zip_body:    { file: 'models/regular_hoodie_zipup', pieces: [], match: /./, exclude: ['Pattern_12337', 'Pattern_12339', 'Pattern_1050613', 'Pattern_1050614'] },
+  reg_zip_kangaroo:{ file: 'models/regular_hoodie_zipup', pieces: ['Pattern_12337', 'Pattern_12339', 'Pattern_1050613', 'Pattern_1050614'] },
   // Cuff + hem trims. Rib trim comes with each body file; these are swapped in when needed.
   // Self-elastic (gathered cuffs + gathered hem, double layer) — SWEATSHIRT8, fits every body (same avatar pose).
   trim_elastic:    { file: 'SWEATSHIRT8', trim: true, pieces: ['Pattern_1303228', 'Pattern_1303229', 'Pattern_11393553', 'Pattern_11393554',
@@ -3176,6 +3183,16 @@ function modulesFor(st) {
     if (st.fit && st.fit !== 'regular') missing.push('Oversized fit');
     if (st.monogram && st.monogram.place !== 'none') missing.push('Monogram');
     return { mods: ['hoodie2_full'], missing };
+  }
+  // Regular sleeve + rib: complete crewneck (no pocket / welt) and zip-up hoodie (no pocket / kangaroo)
+  if (sleeve === 'regular' && st.cuff !== 'self-elastic') {
+    const extra = [];
+    if (st.fit && st.fit !== 'regular') extra.push('Oversized fit');
+    if (st.monogram && st.monogram.place !== 'none') extra.push('Monogram');
+    if (st.style === 'crewneck' && (st.pocket === 'none' || st.pocket === 'welt'))
+      return { mods: st.pocket === 'welt' ? ['reg_crew_body', 'reg_crew_welt'] : ['reg_crew_body'], missing: extra };
+    if (st.style === '3-piece-hood' && st.hoodClosure === 'zip-up' && (st.pocket === 'none' || st.pocket === 'kangaroo'))
+      return { mods: st.pocket === 'kangaroo' ? ['reg_zip_body', 'reg_zip_kangaroo'] : ['reg_zip_body'], missing: extra };
   }
   // Zip-up hood: needs its own body (front cut open for the zip) — only exists where a zip-up export does.
   const zipUp = st.style === '3-piece-hood' && st.hoodClosure === 'zip-up' ? set.zipUp : null;
@@ -3231,6 +3248,15 @@ const PART_BY_MESH = {
   '7875': 'pocket',           '5461': 'pocket',           '5462': 'pocket',
   '57': 'cord',               '58': 'cord',               '574': 'hardware',         '575': 'hardware',
   Pattern_106133: 'hardware', Pattern_106134: 'hardware',
+  // regular_crewneck + regular_hoodie_zipup (same CLO project)
+  Pattern_8629: 'front',      Pattern_8627: 'front',      Pattern_10975: 'back',
+  Pattern_14259: 'sleeves',   Pattern_14260: 'sleeves',
+  Pattern_15505: 'cuff',      Pattern_15506: 'cuff',      Pattern_15524: 'hem',      Pattern_15526: 'hem', Pattern_15527: 'hem',
+  Pattern_10965834: 'collar', Pattern_3402318: 'collar',
+  Pattern_5267298: 'pocket',  Pattern_5267299: 'pocket',
+  Pattern_12337: 'pocket',    Pattern_12339: 'pocket',    Pattern_1050613: 'pocket', Pattern_1050614: 'pocket',
+  Pattern_1277547: 'hood',    Pattern_1277550: 'hood',    Pattern_1277554: 'hood',   Pattern_1988658: 'hood', Pattern_1988659: 'hood',
+  Pattern_3464084: 'hood',    Pattern_3464085: 'hood',    Pattern_1942126: 'hood',
 };
 
 // Part groups — matched against mesh name + material name, first rule wins.
@@ -3405,7 +3431,8 @@ async function loadModel() {
   const RIB_TRIM_IDS = ['Pattern_1303224', 'Pattern_1303225', 'Pattern_1303226', 'Pattern_1303227'];
   mods.forEach(modName => {
     const mod = MODULES[modName];
-    const ids = mod.pieces.filter(id => mod.trim || !hasTrim || !RIB_TRIM_IDS.includes(id)).concat(mod.match ? Object.keys(idx[mod.file]).filter(n => mod.match.test(n) && !mod.pieces.includes(n)) : []);
+    const ids = mod.pieces.filter(id => mod.trim || !hasTrim || !RIB_TRIM_IDS.includes(id)).concat(mod.match ? Object.keys(idx[mod.file]).filter(n => mod.match.test(n) && !mod.pieces.includes(n)) : [])
+      .filter(id => !(mod.exclude && mod.exclude.includes(id)));
     ids.forEach(pieceId => {
       (idx[mod.file][pieceId] || []).forEach(entry => {
         const r = classify(entry.mesh);
