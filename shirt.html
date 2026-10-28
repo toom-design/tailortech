@@ -1947,7 +1947,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.6.7</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.6.8</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -2553,6 +2553,114 @@ setTimeout(function () {
   gate('handleAddToCart');
   gate('handleOrderNow');
 })();
+</script>
+
+<!-- Marketing consent card: asks signed-in clients who haven't said yes yet (CLIENTS → Marketing Consent) -->
+<style>
+#tt-mkt { position: fixed; right: 22px; bottom: 22px; z-index: 100000; width: min(360px, calc(100% - 32px)); padding: 20px 20px 18px; border-radius: 14px; background: #FAFAF8; border: 1px solid rgba(26,25,22,0.12); box-shadow: 0 18px 50px rgba(26,25,22,0.16); font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; color: #1A1916; opacity: 0; transform: translateY(16px); pointer-events: none; transition: opacity 0.3s ease, transform 0.3s ease; box-sizing: border-box; }
+#tt-mkt.show { opacity: 1; transform: none; pointer-events: auto; }
+#tt-mkt .m-eye { font-size: 9.5px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #4DBFAB; margin-bottom: 8px; }
+#tt-mkt .m-h { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 23px; font-weight: 500; line-height: 1.15; color: #4A164F; margin: 0 26px 8px 0; }
+#tt-mkt .m-p { font-size: 12.5px; line-height: 1.55; color: #4A4844; margin: 0 0 16px; }
+#tt-mkt .m-row { display: flex; gap: 8px; }
+#tt-mkt button { font-family: inherit; cursor: pointer; border-radius: 999px; font-size: 10.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; padding: 12px 14px; transition: background 0.15s, opacity 0.15s; }
+#tt-mkt .m-yes { flex: 1.3; background: #4A164F; color: #fff; border: 1px solid #4A164F; }
+#tt-mkt .m-yes:hover { opacity: 0.9; }
+#tt-mkt .m-no { flex: 1; background: transparent; color: #4A4844; border: 1px solid rgba(26,25,22,0.22); }
+#tt-mkt .m-no:hover { background: rgba(26,25,22,0.04); }
+#tt-mkt .m-x { position: absolute; top: 12px; right: 12px; width: 28px; height: 28px; padding: 0; border: none; background: transparent; color: #8A8880; font-size: 18px; line-height: 1; letter-spacing: 0; border-radius: 50%; }
+#tt-mkt .m-x:hover { background: rgba(26,25,22,0.06); color: #1A1916; }
+#tt-mkt .m-fine { font-size: 10.5px; color: #8A8880; margin-top: 10px; line-height: 1.45; }
+@media (max-width: 560px) { #tt-mkt { right: 16px; bottom: 16px; } }
+</style>
+<script>
+(function () {
+  var API = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
+  var DELAY = 12000;                 // let people look around first
+  var LATER_DAYS = 14;               // "×" — ask again in two weeks
+  var NO_DAYS = 90;                  // "No, thanks" (or FALSE in the sheet) — ask again after three months at most
+  var DAY = 864e5;
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function jsonp(action, payload, cb) {
+    var name = '_ttmkt' + Date.now() + Math.floor(Math.random() * 1e4), s = document.createElement('script');
+    var done = function () { try { delete window[name]; } catch (e) { window[name] = undefined; } if (s.parentNode) s.parentNode.removeChild(s); };
+    window[name] = function (res) { done(); if (cb) cb(res); };
+    s.onerror = function () { done(); if (cb) cb(null); };
+    setTimeout(done, 30000);
+    s.src = API + '?action=' + action + '&payload=' + encodeURIComponent(JSON.stringify(payload)) + '&callback=' + name;
+    document.body.appendChild(s);
+  }
+  function parseDate(v) {          // "28/10/2026 09:30:00" (script) or anything Date understands
+    var m = String(v || '').match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
+    if (m) return new Date(+m[3], m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0)).getTime();
+    var t = Date.parse(v); return isNaN(t) ? 0 : t;
+  }
+  function field(client, name) {
+    var k = Object.keys(client || {}).find(function (x) { return x.trim().toLowerCase() === name.toLowerCase(); });
+    return k ? String(client[k] == null ? '' : client[k]).trim() : '';
+  }
+  function busyElsewhere() {        // don't stack on top of another popup
+    return !!document.querySelector('.overlay.open, .modal.open, [role="dialog"][open], #welcome-overlay.open, #gender-overlay.open, #tt-consent:not([hidden])');
+  }
+  function hide(el) { el.classList.remove('show'); setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 350); }
+  function show(user) {
+    if (document.getElementById('tt-mkt')) return;
+    if (busyElsewhere()) { setTimeout(function () { show(user); }, 8000); return; }
+    var el = document.createElement('div');
+    el.id = 'tt-mkt'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Email updates');
+    el.innerHTML = '<button class="m-x" type="button" aria-label="Ask me later">&times;</button>' +
+      '<div class="m-eye">Stay in the loop</div>' +
+      '<div class="m-h">New fabrics &amp; garments, first</div>' +
+      '<p class="m-p">Get an occasional email when we add new fabrics, garments or offers. No spam &mdash; unsubscribe in one click.</p>' +
+      '<div class="m-row"><button class="m-yes" type="button">Yes, keep me posted</button><button class="m-no" type="button">No, thanks</button></div>' +
+      '<div class="m-fine">You can change this any time in your dashboard.</div>';
+    document.body.appendChild(el);
+    void el.offsetWidth; el.classList.add('show');
+    var key = 'tt_mkt_snooze_' + user.uid;
+    function save(val) {
+      lsSet(key, String(Date.now() + (val === 'TRUE' ? 3650 : NO_DAYS) * DAY));
+      jsonp('saveClient', { uid: user.uid, email: user.email, data: { 'UID': user.uid, 'Email': user.email, 'Marketing Consent': val } });
+      hide(el);
+      if (val === 'TRUE' && window.toast) toast('Thank you! We’ll keep you posted ✦');
+    }
+    el.querySelector('.m-yes').onclick = function () { save('TRUE'); };
+    el.querySelector('.m-no').onclick = function () { save('FALSE'); };
+    el.querySelector('.m-x').onclick = function () { lsSet(key, String(Date.now() + LATER_DAYS * DAY)); hide(el); };
+  }
+  window.ttMarketingAsk = function (user) {
+    if (!user || !user.uid || !user.email) return;
+    if (/[?&]nomkt\b/.test(location.search)) return;
+    var snooze = +lsGet('tt_mkt_snooze_' + user.uid) || 0;
+    if (snooze > Date.now()) return;
+    try { if (sessionStorage.getItem('tt_mkt_checked')) return; } catch (e) {}
+    setTimeout(function () {
+      try { sessionStorage.setItem('tt_mkt_checked', '1'); } catch (e) {}          // check once per visit
+      jsonp('getClient', { uid: user.uid, email: user.email }, function (res) {
+        var c = res && res.client; if (!c) return;
+        var v = field(c, 'Marketing Consent');
+        if (/^(true|yes|1)$/i.test(v)) return;                                   // already subscribed
+        if (v !== '' && Date.now() - parseDate(field(c, 'Marketing Consent Updated')) < NO_DAYS * DAY) return;  // said no recently
+        show(user);
+      });
+    }, DELAY);
+  };
+})();
+</script>
+<script type="module">
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+function app() {
+  return getApps().length ? getApp() : initializeApp({
+    apiKey: "AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY", authDomain: "tailortech-accounts.firebaseapp.com",
+    projectId: "tailortech-accounts", storageBucket: "tailortech-accounts.firebasestorage.app",
+    messagingSenderId: "137614433833", appId: "1:137614433833:web:c78ea40b0d04ba89f3c638"
+  });
+}
+setTimeout(function () {
+  var asked = false;
+  onAuthStateChanged(getAuth(app()), function (user) { if (user && !asked) { asked = true; window.ttMarketingAsk(user); } });
+}, 0);
 </script>
 </body>
 </html>
