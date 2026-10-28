@@ -1694,7 +1694,7 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeI
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v4.6.8</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v4.6.9</div>
 
 <!-- Cart icon + item count next to the profile picture (shown when signed in) -->
 <style>
@@ -2041,7 +2041,7 @@ setTimeout(function () {
         x.font = 'italic 500 96px ' + SERIF; x.fillText('Tailored for me.', W / 2, 402);
       }
       // Cream panel with the drawing
-      var px = 108, py = SIMPLE ? 300 : 457, pw = 865, ph = SIMPLE ? 1230 : 718;
+      var px = 108, py = SIMPLE ? 330 : 457, pw = 865, ph = SIMPLE ? 760 : 718;
       if (!DARK) { x.save(); x.shadowColor = 'rgba(58,18,64,0.12)'; x.shadowBlur = 40; x.shadowOffsetY = 14; }
       rr(x, px, py, pw, ph, 36); x.fillStyle = PANEL; x.fill();
       if (!DARK) x.restore();
@@ -2083,7 +2083,7 @@ setTimeout(function () {
       });
       // Website in an outlined pill
       x.font = '500 42px ' + SERIF;
-      var url = 'www.' + SITE, bw2 = Math.round(x.measureText(url).width + 120), bh2 = 96, bx = (W - bw2) / 2, by = SIMPLE ? 1620 : 1690;
+      var url = 'www.' + SITE, bw2 = Math.round(x.measureText(url).width + 120), bh2 = 96, bx = (W - bw2) / 2, by = SIMPLE ? 1700 : 1690;
       rr(x, bx, by, bw2, bh2, bh2 / 2); x.strokeStyle = TURQ; x.lineWidth = 3; x.stroke();
       x.fillStyle = INK; x.textAlign = 'center'; x.fillText(url, W / 2, by + 61);
       return c;
@@ -2141,9 +2141,9 @@ setTimeout(function () {
     : 'Save the image and post it from your phone: in Instagram, add a story and pick it from your photos ✦';
   btns.innerHTML = (canShareFiles ? '<button type="button" class="sgo" disabled>' + ICON_SHARE + 'Share to Instagram</button>' : '') +
                    '<button type="button" class="sdl" disabled>' + ICON_DL + 'Save image</button>';
-  var mode = 'text', theme = 'plum', cur = null, blob = null, token = 0;
-  try { mode = localStorage.getItem('tt_share_mode') === 'simple' ? 'simple' : 'text'; } catch (e) {}
-  try { theme = localStorage.getItem('tt_share_theme') === 'cream' ? 'cream' : 'plum'; } catch (e) {}
+  var mode = 'simple', theme = 'cream', cur = null, blob = null, token = 0;
+  try { mode = localStorage.getItem('tt_share_mode2') === 'text' ? 'text' : 'simple'; } catch (e) {}
+  try { theme = localStorage.getItem('tt_share_theme2') === 'plum' ? 'plum' : 'cream'; } catch (e) {}
   function fileName(it) { return 'tailortech-my-' + String(it.garment || 'design').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.png'; }
   function setBusy(on) { btns.querySelectorAll('button').forEach(function (b) { b.disabled = on; }); }
   function fonts() {
@@ -2170,10 +2170,10 @@ setTimeout(function () {
     }).catch(function () { prev.innerHTML = ''; });
   }
   modal.querySelectorAll('.smode button').forEach(function (b) {
-    b.onclick = function () { mode = b.dataset.mode; try { localStorage.setItem('tt_share_mode', mode); } catch (e) {} paint(); };
+    b.onclick = function () { mode = b.dataset.mode; try { localStorage.setItem('tt_share_mode2', mode); } catch (e) {} paint(); };
   });
   modal.querySelectorAll('.stheme:not(.smode) button').forEach(function (b) {
-    b.onclick = function () { theme = b.dataset.theme; try { localStorage.setItem('tt_share_theme', theme); } catch (e) {} paint(); };
+    b.onclick = function () { theme = b.dataset.theme; try { localStorage.setItem('tt_share_theme2', theme); } catch (e) {} paint(); };
   });
   function close() { modal.classList.remove('open'); token++; }
   modal.querySelector('.sx').onclick = close;

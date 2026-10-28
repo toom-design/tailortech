@@ -137,7 +137,7 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
   <h2 id="share-h">Your one-of-one, ready for your story</h2>
   <p class="sub">You designed it, and it will be cut to your measurements. Show it off: here&rsquo;s a story card made from your own design.</p>
   <div class="share-theme" role="group" aria-label="Card colour">
-    <button type="button" class="on" data-theme="plum"><i style="background:#3A1240"></i>Dark</button>
+    <button type="button" data-theme="plum"><i style="background:#3A1240"></i>Dark</button>
     <button type="button" data-theme="cream"><i style="background:#F6F2EC"></i>Light</button>
   </div>
   <div class="share-theme share-mode" role="group" aria-label="Card text">
@@ -150,7 +150,7 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
 </main>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.0.8</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.0.9</div>
 
 <script>
 (function () {
@@ -234,10 +234,10 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
   var items = data.items.slice(0, 6);
   var urlGarment = (q.get('garment') || '').replace(/[^A-Za-z \-]/g, '').trim();
   if (items.length === 1 && urlGarment && !items[0].garment) items[0].garment = urlGarment;
-  var theme = 'plum';
-  var mode = 'text';
-  try { mode = localStorage.getItem('tt_share_mode') === 'simple' ? 'simple' : 'text'; } catch (e) {}
-  try { theme = localStorage.getItem('tt_share_theme') === 'cream' ? 'cream' : 'plum'; } catch (e) {}
+  var theme = 'cream';
+  var mode = 'simple';
+  try { mode = localStorage.getItem('tt_share_mode2') === 'text' ? 'text' : 'simple'; } catch (e) {}
+  try { theme = localStorage.getItem('tt_share_theme2') === 'plum' ? 'plum' : 'cream'; } catch (e) {}
 
   function load(src, cors) {
     return new Promise(function (res) {
@@ -307,7 +307,7 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
         x.font = 'italic 500 96px ' + SERIF; x.fillText('Tailored for me.', W / 2, 402);
       }
       // Cream panel with the drawing
-      var px = 108, py = SIMPLE ? 300 : 457, pw = 865, ph = SIMPLE ? 1230 : 718;
+      var px = 108, py = SIMPLE ? 330 : 457, pw = 865, ph = SIMPLE ? 760 : 718;
       if (!DARK) { x.save(); x.shadowColor = 'rgba(58,18,64,0.12)'; x.shadowBlur = 40; x.shadowOffsetY = 14; }
       rr(x, px, py, pw, ph, 36); x.fillStyle = PANEL; x.fill();
       if (!DARK) x.restore();
@@ -349,7 +349,7 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
       });
       // Website in an outlined pill
       x.font = '500 42px ' + SERIF;
-      var url = 'www.' + SITE, bw2 = Math.round(x.measureText(url).width + 120), bh2 = 96, bx = (W - bw2) / 2, by = SIMPLE ? 1620 : 1690;
+      var url = 'www.' + SITE, bw2 = Math.round(x.measureText(url).width + 120), bh2 = 96, bx = (W - bw2) / 2, by = SIMPLE ? 1700 : 1690;
       rr(x, bx, by, bw2, bh2, bh2 / 2); x.strokeStyle = TURQ; x.lineWidth = 3; x.stroke();
       x.fillStyle = INK; x.textAlign = 'center'; x.fillText(url, W / 2, by + 61);
       return c;
@@ -442,7 +442,7 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
     b.classList.toggle('on', b.dataset.mode === mode);
     b.onclick = function () {
       mode = b.dataset.mode;
-      try { localStorage.setItem('tt_share_mode', mode); } catch (e) {}
+      try { localStorage.setItem('tt_share_mode2', mode); } catch (e) {}
       document.querySelectorAll('.share-mode button').forEach(function (o) { o.classList.toggle('on', o === b); });
       render();
     };
@@ -451,7 +451,7 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
     b.classList.toggle('on', b.dataset.theme === theme);
     b.onclick = function () {
       theme = b.dataset.theme;
-      try { localStorage.setItem('tt_share_theme', theme); } catch (e) {}
+      try { localStorage.setItem('tt_share_theme2', theme); } catch (e) {}
       document.querySelectorAll('.share-theme:not(.share-mode) button').forEach(function (o) { o.classList.toggle('on', o === b); });
       render();
     };
