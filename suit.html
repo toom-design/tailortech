@@ -2079,7 +2079,7 @@ function getClientJSONP(email, uid, callback) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.8.19</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.8.20</div>
 
 
 <!-- Cookie consent (analytics) — wording is yours to edit; keep the two button ids -->
@@ -2693,18 +2693,19 @@ setTimeout(function () {
 })();
 </script>
 
-<!-- Prices only for signed-in clients: guests see "Log in to see your price" instead of the estimate and the +€ extras -->
+<!-- Prices only for signed-in clients: guests see "Available to members · Sign in" instead of the estimate and the +€ extras -->
 <style>
-.tt-price-lock { display: none; align-items: center; gap: 7px; margin: 2px 0 0; padding: 7px 13px 7px 11px; border: 1px solid rgba(74,22,79,0.35); border-radius: 999px; background: #fff; color: #4A164F; font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 10.5px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; line-height: 1; cursor: pointer; white-space: nowrap; vertical-align: middle; transition: background 0.15s; }
-.tt-price-lock:hover { background: rgba(74,22,79,0.06); }
-.tt-price-lock svg { width: 12px; height: 12px; flex-shrink: 0; }
-.tt-price-lock .s { display: none; }
+.tt-price-lock { display: none; align-items: baseline; gap: 8px; margin: 2px 0 0; padding: 0; border: none; background: transparent; cursor: pointer; white-space: nowrap; vertical-align: baseline; text-transform: none; letter-spacing: normal; }
+.tt-price-lock .m { font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 17px; font-weight: 500; color: #4A4844; line-height: 1.1; }
+.tt-price-lock .d { color: #C0BDB8; font-size: 12px; }
+.tt-price-lock .si { font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 10.5px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: #4A164F; border-bottom: 1px solid rgba(74,22,79,0.45); padding-bottom: 1px; transition: border-color 0.15s; }
+.tt-price-lock:hover .si { border-bottom-color: #4A164F; }
 html.tt-guest .tt-price-lock { display: inline-flex; }
+@media (max-width: 480px) { html.tt-guest .tt-price-lock { flex-direction: column; align-items: flex-start; gap: 4px; } .tt-price-lock .d { display: none; } .tt-price-lock .m { font-size: 15px; } }
 html.tt-guest .price-display-amount, html.tt-auth-pending .price-display-amount { display: none !important; }
 html.tt-guest .pill-extra-price, html.tt-guest .icon-card-extra-price,
 html.tt-guest .fabric-card .fprice, html.tt-guest #fabric-main-grid .fprice,
 html.tt-auth-pending .pill-extra-price, html.tt-auth-pending .icon-card-extra-price, html.tt-auth-pending .fabric-card .fprice { display: none !important; }
-@media (max-width: 420px) { .tt-price-lock .l { display: none; } .tt-price-lock .s { display: inline; } }
 </style>
 <script>
 (function () {
@@ -2715,8 +2716,8 @@ html.tt-auth-pending .pill-extra-price, html.tt-auth-pending .icon-card-extra-pr
     document.querySelectorAll('.price-display-amount').forEach(function (el) {
       if (el.previousElementSibling && el.previousElementSibling.classList.contains('tt-price-lock')) return;
       var b = document.createElement('button');
-      b.type = 'button'; b.className = 'tt-price-lock'; b.title = 'Prices are shown to signed-in clients';
-      b.innerHTML = LOCK + '<span class="l">Log in to see your price</span><span class="s">Log in for price</span>';
+      b.type = 'button'; b.className = 'tt-price-lock'; b.setAttribute('aria-label', 'Prices are available to members. Sign in');
+      b.innerHTML = '<span class="m">Available to members</span><span class="d">&middot;</span><span class="si">Sign in</span>';
       b.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); if (typeof goToAuth === 'function') goToAuth(); else location.href = 'https://tailortech.toom.design/auth'; });
       el.parentNode.insertBefore(b, el);
     });
