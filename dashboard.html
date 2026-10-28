@@ -1694,7 +1694,7 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeI
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v4.6.7</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v4.6.8</div>
 
 <!-- Cart icon + item count next to the profile picture (shown when signed in) -->
 <style>
@@ -1956,6 +1956,10 @@ setTimeout(function () {
     <div class="stheme" role="group" aria-label="Card colour">
       <button type="button" data-theme="plum"><i style="background:#3A1240"></i>Dark</button>
       <button type="button" data-theme="cream"><i style="background:#F6F2EC"></i>Light</button>
+    </div><br>
+    <div class="stheme smode" role="group" aria-label="Card text" style="margin-top:8px">
+      <button type="button" data-mode="simple">Simple</button>
+      <button type="button" data-mode="text">With text</button>
     </div>
     <div class="sprev"><span class="loader"></span></div>
     <div class="sbtns"></div>
@@ -2005,7 +2009,8 @@ setTimeout(function () {
   function fit(ctx, text, maxW) { var t = String(text); while (t.length > 3 && ctx.measureText(t).width > maxW) t = t.slice(0, -2).trim() + '…'; return t; }
   function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 
-  function draw(it, th) {
+  function draw(it, th, mode) {
+    var SIMPLE = mode === 'simple';
     var c = document.createElement('canvas'); c.width = W; c.height = H;
     var x = c.getContext('2d');
     var DARK = th !== 'cream';
@@ -2029,21 +2034,23 @@ setTimeout(function () {
       else spaced(x, 'BY TOOM', W / 2, by0 + 12, 9);
       x.strokeStyle = DARK ? 'rgba(95,205,184,0.6)' : 'rgba(46,158,137,0.55)'; x.lineWidth = 2;
       x.beginPath(); x.moveTo(157, by0); x.lineTo(bx0 - 32, by0); x.moveTo(bx0 + rowW + 32, by0); x.lineTo(923, by0); x.stroke();
-      // Headline
-      x.fillStyle = INK; x.textAlign = 'center';
-      x.font = '500 96px ' + SERIF; x.fillText('Designed by me.', W / 2, 300);
-      x.font = 'italic 500 96px ' + SERIF; x.fillText('Tailored for me.', W / 2, 402);
+      // Headline (only in the version with text)
+      if (!SIMPLE) {
+        x.fillStyle = INK; x.textAlign = 'center';
+        x.font = '500 96px ' + SERIF; x.fillText('Designed by me.', W / 2, 300);
+        x.font = 'italic 500 96px ' + SERIF; x.fillText('Tailored for me.', W / 2, 402);
+      }
       // Cream panel with the drawing
-      var px = 108, py = 457, pw = 865, ph = 718;
+      var px = 108, py = SIMPLE ? 300 : 457, pw = 865, ph = SIMPLE ? 1230 : 718;
       if (!DARK) { x.save(); x.shadowColor = 'rgba(58,18,64,0.12)'; x.shadowBlur = 40; x.shadowOffsetY = 14; }
       rr(x, px, py, pw, ph, 36); x.fillStyle = PANEL; x.fill();
       if (!DARK) x.restore();
       if (art) {
         x.save(); rr(x, px, py, pw, ph, 36); x.clip();
-        var pad = 56, bw = pw - pad * 2 - 40, bh = ph - pad * 2, s = Math.min(bw / art.naturalWidth, bh / art.naturalHeight);
+        var pad = 56, bw = pw - pad * 2, bh = ph - pad * 2, s = Math.min(bw / art.naturalWidth, bh / art.naturalHeight);
         var dw = art.naturalWidth * s, dh = art.naturalHeight * s;
         x.globalCompositeOperation = 'multiply';
-        x.drawImage(art, px + (pw - dw) / 2 - 20, py + (ph - dh) / 2, dw, dh);
+        x.drawImage(art, px + (pw - dw) / 2, py + (ph - dh) / 2, dw, dh);
         x.restore();
       } else {
         x.fillStyle = '#8A8880'; x.textAlign = 'center'; x.font = 'italic 500 60px ' + SERIF;
@@ -2062,7 +2069,7 @@ setTimeout(function () {
         ['MADE TO ORDER', 'Produced specifically for me.', 'machine']
       ];
       var cy0 = 1257, step = 141, ix = 255, vx = 356, tx = 408;
-      rows.forEach(function (r, i) {
+      if (!SIMPLE) rows.forEach(function (r, i) {
         var cy = cy0 + step * i;
         icon(x, r[2], ix, cy, INK);
         x.strokeStyle = 'rgba(' + INK_RGB + ',0.4)'; x.lineWidth = 2;
@@ -2074,11 +2081,11 @@ setTimeout(function () {
           x.beginPath(); x.moveTo(157, cy + step / 2); x.lineTo(923, cy + step / 2); x.stroke();
         }
       });
-      // Call to action pill
-      var bx = 160, by = 1680, bw2 = 760, bh2 = 146;
+      // Website in an outlined pill
+      x.font = '500 42px ' + SERIF;
+      var url = 'www.' + SITE, bw2 = Math.round(x.measureText(url).width + 120), bh2 = 96, bx = (W - bw2) / 2, by = SIMPLE ? 1620 : 1690;
       rr(x, bx, by, bw2, bh2, bh2 / 2); x.strokeStyle = TURQ; x.lineWidth = 3; x.stroke();
-      x.fillStyle = TURQ; x.font = '600 23px ' + SANS; spaced(x, 'DESIGN YOUR OWN AT', W / 2, by + 56, 8);
-      x.fillStyle = INK; x.textAlign = 'center'; x.font = '500 50px ' + SERIF; x.fillText('www.' + SITE, W / 2, by + 114);
+      x.fillStyle = INK; x.textAlign = 'center'; x.fillText(url, W / 2, by + 61);
       return c;
     });
   }
@@ -2134,7 +2141,8 @@ setTimeout(function () {
     : 'Save the image and post it from your phone: in Instagram, add a story and pick it from your photos ✦';
   btns.innerHTML = (canShareFiles ? '<button type="button" class="sgo" disabled>' + ICON_SHARE + 'Share to Instagram</button>' : '') +
                    '<button type="button" class="sdl" disabled>' + ICON_DL + 'Save image</button>';
-  var theme = 'plum', cur = null, blob = null, token = 0;
+  var mode = 'text', theme = 'plum', cur = null, blob = null, token = 0;
+  try { mode = localStorage.getItem('tt_share_mode') === 'simple' ? 'simple' : 'text'; } catch (e) {}
   try { theme = localStorage.getItem('tt_share_theme') === 'cream' ? 'cream' : 'plum'; } catch (e) {}
   function fileName(it) { return 'tailortech-my-' + String(it.garment || 'design').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.png'; }
   function setBusy(on) { btns.querySelectorAll('button').forEach(function (b) { b.disabled = on; }); }
@@ -2146,11 +2154,12 @@ setTimeout(function () {
   function paint() {
     var my = ++token; blob = null; setBusy(true);
     prev.innerHTML = '<span class="loader"></span>';
-    modal.querySelectorAll('.stheme button').forEach(function (b) { b.classList.toggle('on', b.dataset.theme === theme); });
+    modal.querySelectorAll('.stheme:not(.smode) button').forEach(function (b) { b.classList.toggle('on', b.dataset.theme === theme); });
+    modal.querySelectorAll('.smode button').forEach(function (b) { b.classList.toggle('on', b.dataset.mode === mode); });
     var it = cur;
     Promise.all([it.imgPromise, fonts()]).then(function (r) {
       it.img = r[0] || '';
-      return draw(it, theme);
+      return draw(it, theme, mode);
     }).then(function (c) {
       c.toBlob(function (b) {
         if (my !== token) return;
@@ -2160,7 +2169,10 @@ setTimeout(function () {
       }, 'image/png');
     }).catch(function () { prev.innerHTML = ''; });
   }
-  modal.querySelectorAll('.stheme button').forEach(function (b) {
+  modal.querySelectorAll('.smode button').forEach(function (b) {
+    b.onclick = function () { mode = b.dataset.mode; try { localStorage.setItem('tt_share_mode', mode); } catch (e) {} paint(); };
+  });
+  modal.querySelectorAll('.stheme:not(.smode) button').forEach(function (b) {
     b.onclick = function () { theme = b.dataset.theme; try { localStorage.setItem('tt_share_theme', theme); } catch (e) {} paint(); };
   });
   function close() { modal.classList.remove('open'); token++; }

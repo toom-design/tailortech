@@ -88,6 +88,7 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
 .share-btns .go { background: var(--tt-purple); color: #fff; border: 1px solid var(--tt-purple); }
 .share-btns .dl { background: transparent; color: var(--tt-purple); border: 1px solid rgba(74,22,79,0.35); }
 .share-btns svg { width: 14px; height: 14px; }
+.share-mode { display: flex !important; width: max-content; margin: 8px auto 0 !important; }
 .share-theme { margin-top: 18px; display: inline-flex; gap: 6px; padding: 4px; border-radius: 999px; background: var(--cream); }
 .share-theme button { font-family: inherit; border: none; cursor: pointer; border-radius: 999px; padding: 8px 16px; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; background: transparent; color: var(--ink-mid); display: inline-flex; align-items: center; gap: 7px; }
 .share-theme button i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; border: 1px solid rgba(26,25,22,0.2); }
@@ -139,13 +140,17 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
     <button type="button" class="on" data-theme="plum"><i style="background:#3A1240"></i>Dark</button>
     <button type="button" data-theme="cream"><i style="background:#F6F2EC"></i>Light</button>
   </div>
+  <div class="share-theme share-mode" role="group" aria-label="Card text">
+    <button type="button" data-mode="simple">Simple</button>
+    <button type="button" data-mode="text">With text</button>
+  </div>
   <div class="share-row" id="share-row"></div>
   <p class="tip" id="share-tip"></p>
 </section>
 </main>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.0.7</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.0.8</div>
 
 <script>
 (function () {
@@ -230,6 +235,8 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
   var urlGarment = (q.get('garment') || '').replace(/[^A-Za-z \-]/g, '').trim();
   if (items.length === 1 && urlGarment && !items[0].garment) items[0].garment = urlGarment;
   var theme = 'plum';
+  var mode = 'text';
+  try { mode = localStorage.getItem('tt_share_mode') === 'simple' ? 'simple' : 'text'; } catch (e) {}
   try { theme = localStorage.getItem('tt_share_theme') === 'cream' ? 'cream' : 'plum'; } catch (e) {}
 
   function load(src, cors) {
@@ -268,7 +275,8 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
   function fit(ctx, text, maxW) { var t = String(text); while (t.length > 3 && ctx.measureText(t).width > maxW) t = t.slice(0, -2).trim() + '…'; return t; }
   function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 
-  function draw(it, th) {
+  function draw(it, th, mode) {
+    var SIMPLE = mode === 'simple';
     var c = document.createElement('canvas'); c.width = W; c.height = H;
     var x = c.getContext('2d');
     var DARK = th !== 'cream';
@@ -292,21 +300,23 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
       else spaced(x, 'BY TOOM', W / 2, by0 + 12, 9);
       x.strokeStyle = DARK ? 'rgba(95,205,184,0.6)' : 'rgba(46,158,137,0.55)'; x.lineWidth = 2;
       x.beginPath(); x.moveTo(157, by0); x.lineTo(bx0 - 32, by0); x.moveTo(bx0 + rowW + 32, by0); x.lineTo(923, by0); x.stroke();
-      // Headline
-      x.fillStyle = INK; x.textAlign = 'center';
-      x.font = '500 96px ' + SERIF; x.fillText('Designed by me.', W / 2, 300);
-      x.font = 'italic 500 96px ' + SERIF; x.fillText('Tailored for me.', W / 2, 402);
+      // Headline (only in the version with text)
+      if (!SIMPLE) {
+        x.fillStyle = INK; x.textAlign = 'center';
+        x.font = '500 96px ' + SERIF; x.fillText('Designed by me.', W / 2, 300);
+        x.font = 'italic 500 96px ' + SERIF; x.fillText('Tailored for me.', W / 2, 402);
+      }
       // Cream panel with the drawing
-      var px = 108, py = 457, pw = 865, ph = 718;
+      var px = 108, py = SIMPLE ? 300 : 457, pw = 865, ph = SIMPLE ? 1230 : 718;
       if (!DARK) { x.save(); x.shadowColor = 'rgba(58,18,64,0.12)'; x.shadowBlur = 40; x.shadowOffsetY = 14; }
       rr(x, px, py, pw, ph, 36); x.fillStyle = PANEL; x.fill();
       if (!DARK) x.restore();
       if (art) {
         x.save(); rr(x, px, py, pw, ph, 36); x.clip();
-        var pad = 56, bw = pw - pad * 2 - 40, bh = ph - pad * 2, s = Math.min(bw / art.naturalWidth, bh / art.naturalHeight);
+        var pad = 56, bw = pw - pad * 2, bh = ph - pad * 2, s = Math.min(bw / art.naturalWidth, bh / art.naturalHeight);
         var dw = art.naturalWidth * s, dh = art.naturalHeight * s;
         x.globalCompositeOperation = 'multiply';
-        x.drawImage(art, px + (pw - dw) / 2 - 20, py + (ph - dh) / 2, dw, dh);
+        x.drawImage(art, px + (pw - dw) / 2, py + (ph - dh) / 2, dw, dh);
         x.restore();
       } else {
         x.fillStyle = '#8A8880'; x.textAlign = 'center'; x.font = 'italic 500 60px ' + SERIF;
@@ -325,7 +335,7 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
         ['MADE TO ORDER', 'Produced specifically for me.', 'machine']
       ];
       var cy0 = 1257, step = 141, ix = 255, vx = 356, tx = 408;
-      rows.forEach(function (r, i) {
+      if (!SIMPLE) rows.forEach(function (r, i) {
         var cy = cy0 + step * i;
         icon(x, r[2], ix, cy, INK);
         x.strokeStyle = 'rgba(' + INK_RGB + ',0.4)'; x.lineWidth = 2;
@@ -337,11 +347,11 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
           x.beginPath(); x.moveTo(157, cy + step / 2); x.lineTo(923, cy + step / 2); x.stroke();
         }
       });
-      // Call to action pill
-      var bx = 160, by = 1680, bw2 = 760, bh2 = 146;
+      // Website in an outlined pill
+      x.font = '500 42px ' + SERIF;
+      var url = 'www.' + SITE, bw2 = Math.round(x.measureText(url).width + 120), bh2 = 96, bx = (W - bw2) / 2, by = SIMPLE ? 1620 : 1690;
       rr(x, bx, by, bw2, bh2, bh2 / 2); x.strokeStyle = TURQ; x.lineWidth = 3; x.stroke();
-      x.fillStyle = TURQ; x.font = '600 23px ' + SANS; spaced(x, 'DESIGN YOUR OWN AT', W / 2, by + 56, 8);
-      x.fillStyle = INK; x.textAlign = 'center'; x.font = '500 50px ' + SERIF; x.fillText('www.' + SITE, W / 2, by + 114);
+      x.fillStyle = INK; x.textAlign = 'center'; x.fillText(url, W / 2, by + 61);
       return c;
     });
   }
@@ -408,7 +418,7 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
         '<button type="button" class="dl">' + ICON_DL + 'Save image</button></div>';
       row.appendChild(el);
       var entry = { el: el, blob: null };
-      draw(it, theme).then(function (c) {
+      draw(it, theme, mode).then(function (c) {
         c.toBlob(function (b) { entry.blob = b; el.querySelector('img').src = URL.createObjectURL(b); }, 'image/png');
       });
       var go = el.querySelector('.go');
@@ -428,12 +438,21 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
       return entry;
     });
   }
-  document.querySelectorAll('.share-theme button').forEach(function (b) {
+  document.querySelectorAll('.share-mode button').forEach(function (b) {
+    b.classList.toggle('on', b.dataset.mode === mode);
+    b.onclick = function () {
+      mode = b.dataset.mode;
+      try { localStorage.setItem('tt_share_mode', mode); } catch (e) {}
+      document.querySelectorAll('.share-mode button').forEach(function (o) { o.classList.toggle('on', o === b); });
+      render();
+    };
+  });
+  document.querySelectorAll('.share-theme:not(.share-mode) button').forEach(function (b) {
     b.classList.toggle('on', b.dataset.theme === theme);
     b.onclick = function () {
       theme = b.dataset.theme;
       try { localStorage.setItem('tt_share_theme', theme); } catch (e) {}
-      document.querySelectorAll('.share-theme button').forEach(function (o) { o.classList.toggle('on', o === b); });
+      document.querySelectorAll('.share-theme:not(.share-mode) button').forEach(function (o) { o.classList.toggle('on', o === b); });
       render();
     };
   });
