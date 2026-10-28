@@ -88,7 +88,7 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
 .share-btns .go { background: var(--tt-purple); color: #fff; border: 1px solid var(--tt-purple); }
 .share-btns .dl { background: transparent; color: var(--tt-purple); border: 1px solid rgba(74,22,79,0.35); }
 .share-btns svg { width: 14px; height: 14px; }
-.share-theme { margin-top: 18px; display: inline-flex; gap: 6px; padding: 4px; border-radius: 999px; background: var(--cream); }
+.share-theme { display: none !important; margin-top: 18px; display: inline-flex; gap: 6px; padding: 4px; border-radius: 999px; background: var(--cream); }
 .share-theme button { font-family: inherit; border: none; cursor: pointer; border-radius: 999px; padding: 8px 16px; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; background: transparent; color: var(--ink-mid); display: inline-flex; align-items: center; gap: 7px; }
 .share-theme button i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; border: 1px solid rgba(26,25,22,0.2); }
 .share-theme button.on { background: #fff; color: var(--ink); box-shadow: 0 1px 4px rgba(26,25,22,0.12); }
@@ -145,7 +145,7 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
 </main>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.0.3</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.0.5</div>
 
 <script>
 (function () {
@@ -269,69 +269,122 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
   function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 
   function draw(it, th) {
-    var T = THEMES[th];
     var c = document.createElement('canvas'); c.width = W; c.height = H;
     var x = c.getContext('2d');
-    return Promise.all([load(it.img), load(it.fabricImg, true)]).then(function (im) {
-      var art = im[0] ? trim(im[0]) : null, fab = im[1];
-      x.fillStyle = T.bg; x.fillRect(0, 0, W, H);
+    var CREAM = '#F4EFE9', TURQ = '#5FCDB8', SANS = 'Jost, "Helvetica Neue", Arial, sans-serif', SERIF = '"Cormorant Garamond", Georgia, serif';
+    return Promise.all([load(it.img), load(LOGO_TT), load(LOGO_TOOM)]).then(function (im) {
+      var art = im[0] ? trim(im[0]) : null, logo = im[1], toom = im[2];
+      // Background: deep plum with a soft glow
+      var g = x.createRadialGradient(W / 2, H * 0.42, 80, W / 2, H * 0.5, H * 0.75);
+      g.addColorStop(0, '#4A1A4F'); g.addColorStop(1, '#2C0C31');
+      x.fillStyle = g; x.fillRect(0, 0, W, H);
       x.textBaseline = 'alphabetic';
-      // Brand + eyebrow
-      x.fillStyle = T.ink; x.font = '500 34px Jost, "Helvetica Neue", Arial, sans-serif'; spaced(x, 'TAILORTECH', W / 2, 228, 13);
-      x.fillStyle = T.accent; x.font = '600 25px Jost, "Helvetica Neue", Arial, sans-serif';
-      spaced(x, ('Designed by ' + (it.name || 'me')).toUpperCase(), W / 2, 312, 9);
+      // Brand: TailorTech logo with rules either side, "BY" + TOOM logo underneath
+      var LW = 440, LH = Math.round(LW * (logo ? logo.naturalHeight / logo.naturalWidth : 71 / 434)), ly = 70;
+      if (logo) x.drawImage(tint(logo, CREAM), (W - LW) / 2, ly, LW, LH);
+      else { x.fillStyle = CREAM; x.font = '600 42px ' + SANS; spaced(x, 'TAILORTECH', W / 2, 122, 15); }
+      x.strokeStyle = 'rgba(244,239,233,0.55)'; x.lineWidth = 2;
+      var rl = ly + LH / 2;
+      x.beginPath(); x.moveTo(157, rl); x.lineTo((W - LW) / 2 - 30, rl); x.moveTo((W + LW) / 2 + 30, rl); x.lineTo(923, rl); x.stroke();
+      x.fillStyle = TURQ; x.font = '600 24px ' + SANS;
+      var tH = 30, tW = toom ? tH * toom.naturalWidth / toom.naturalHeight : 0, byW = x.measureText('B').width + x.measureText('Y').width + 7;
+      var rowW = byW + 16 + (toom ? tW : 0), bx0 = (W - rowW) / 2, by0 = ly + LH + 44;
+      if (toom) { spaced(x, 'BY', bx0, by0 + 9, 7, 'left'); x.drawImage(toom, bx0 + byW + 16, by0 - tH / 2, tW, tH); }
+      else spaced(x, 'BY TOOM', W / 2, by0 + 9, 9);
       // Headline
-      x.fillStyle = T.head; x.textAlign = 'center'; x.font = '500 98px "Cormorant Garamond", Georgia, serif';
-      x.fillText('Designed by me.', W / 2, 430);
-      x.font = 'italic 500 98px "Cormorant Garamond", Georgia, serif';
-      x.fillText('Made for me.', W / 2, 530);
-      // Drawing on a white panel
-      var px = 120, py = 600, pw = W - 240, ph = 860;
-      x.save(); x.shadowColor = 'rgba(0,0,0,' + (th === 'plum' ? 0.35 : 0.10) + ')'; x.shadowBlur = 50; x.shadowOffsetY = 18;
-      rr(x, px, py, pw, ph, 34); x.fillStyle = '#FFFFFF'; x.fill(); x.restore();
+      x.fillStyle = CREAM; x.textAlign = 'center';
+      x.font = '500 96px ' + SERIF; x.fillText('Designed by me.', W / 2, 300);
+      x.font = 'italic 500 96px ' + SERIF; x.fillText('Tailored for me.', W / 2, 402);
+      // Cream panel with the drawing
+      var px = 108, py = 457, pw = 865, ph = 718;
+      rr(x, px, py, pw, ph, 36); x.fillStyle = CREAM; x.fill();
       if (art) {
-        x.save(); rr(x, px, py, pw, ph, 34); x.clip();
-        var pad = 80, bw = pw - pad * 2, bh = ph - pad * 2, s = Math.min(bw / art.naturalWidth, bh / art.naturalHeight);
+        x.save(); rr(x, px, py, pw, ph, 36); x.clip();
+        var pad = 56, bw = pw - pad * 2 - 40, bh = ph - pad * 2, s = Math.min(bw / art.naturalWidth, bh / art.naturalHeight);
         var dw = art.naturalWidth * s, dh = art.naturalHeight * s;
         x.globalCompositeOperation = 'multiply';
-        x.drawImage(art, px + (pw - dw) / 2, py + (ph - dh) / 2, dw, dh);
+        x.drawImage(art, px + (pw - dw) / 2 - 20, py + (ph - dh) / 2, dw, dh);
         x.restore();
       } else {
-        x.fillStyle = '#8A8880'; x.textAlign = 'center'; x.font = 'italic 500 54px "Cormorant Garamond", Georgia, serif';
-        x.fillText('My ' + (it.garment || 'garment').toLowerCase(), W / 2, py + ph / 2);
+        x.fillStyle = '#8A8880'; x.textAlign = 'center'; x.font = 'italic 500 60px ' + SERIF;
+        x.fillText('My ' + String(it.garment || 'garment').toLowerCase(), W / 2, py + ph / 2);
       }
-      // "1 of 1" stamp on the panel
-      x.save(); x.translate(px + pw - 34, py + 34); x.rotate(-0.18);
-      x.beginPath(); x.arc(0, 0, 62, 0, Math.PI * 2); x.fillStyle = '#4A164F'; x.fill();
-      x.fillStyle = '#FFFFFF'; x.font = '600 24px Jost, "Helvetica Neue", Arial, sans-serif'; spaced(x, '1 OF 1', 0, 9, 4);
-      x.restore();
-      // Spec rows, like a garment label
-      var rows = [['Garment', it.garment || '—'], ['Fabric', it.fabric || '—'], ['Measurements', 'Mine'], ['Made', 'Only because I asked']];
-      var top = 1530, rh = 62, lx = 140, rx = W - 140;
-      x.strokeStyle = T.line; x.lineWidth = 2;
-      x.beginPath(); x.moveTo(lx, top); x.lineTo(rx, top); x.stroke();
+      // "MY DESIGN" ribbon hanging from the panel's top-right corner
+      var rx = 790, ry = 449, rw = 155, rh = 177, notch = 34;
+      x.save(); x.shadowColor = 'rgba(0,0,0,0.28)'; x.shadowBlur = 14; x.shadowOffsetY = 4;
+      x.beginPath(); x.moveTo(rx, ry); x.lineTo(rx + rw, ry); x.lineTo(rx + rw, ry + rh); x.lineTo(rx + rw / 2, ry + rh - notch); x.lineTo(rx, ry + rh); x.closePath();
+      x.fillStyle = '#4A1A4F'; x.fill(); x.restore();
+      x.fillStyle = CREAM; x.font = '600 28px ' + SANS;
+      spaced(x, '1 OF 1', rx + rw / 2, ry + 72, 6);
+      x.strokeStyle = TURQ; x.lineWidth = 3; x.beginPath(); x.moveTo(rx + rw / 2 - 20, ry + 100); x.lineTo(rx + rw / 2 + 20, ry + 100); x.stroke();
+      // Three promises, each with an icon
+      var rows = [
+        ['CUSTOM DESIGN', 'My style, my details.', 'sliders'],
+        ['BESPOKE PATTERN', 'Drafted to my measurements.', 'form'],
+        ['MADE TO ORDER', 'Produced specifically for me.', 'machine']
+      ];
+      var cy0 = 1257, step = 141, ix = 255, vx = 356, tx = 408;
       rows.forEach(function (r, i) {
-        var yb = top + rh * (i + 1);
-        x.beginPath(); x.moveTo(lx, yb); x.lineTo(rx, yb); x.stroke();
-        var ty = yb - 21;
-        x.fillStyle = T.soft; x.font = '400 27px Jost, "Helvetica Neue", Arial, sans-serif'; x.textAlign = 'left'; x.fillText(r[0], lx, ty);
-        x.fillStyle = T.ink; x.font = '500 27px Jost, "Helvetica Neue", Arial, sans-serif'; x.textAlign = 'right';
-        var val = fit(x, r[1], 520);
-        x.fillText(val, rx, ty);
-        if (r[0] === 'Fabric' && (fab || it.colorHex)) {          // little swatch before the fabric name
-          var sx = rx - x.measureText(val).width - 30, sy = ty - 10;
-          x.save(); x.beginPath(); x.arc(sx, sy, 15, 0, Math.PI * 2); x.closePath();
-          if (fab) { x.clip(); x.drawImage(fab, sx - 15, sy - 15, 30, 30); }
-          else { x.fillStyle = '#' + String(it.colorHex).replace('#', ''); x.fill(); }
-          x.restore();
-          x.beginPath(); x.arc(sx, sy, 15, 0, Math.PI * 2); x.strokeStyle = T.line; x.stroke();
+        var cy = cy0 + step * i;
+        icon(x, r[2], ix, cy, CREAM);
+        x.strokeStyle = 'rgba(244,239,233,0.4)'; x.lineWidth = 2;
+        x.beginPath(); x.moveTo(vx, cy - 37); x.lineTo(vx, cy + 37); x.stroke();
+        x.fillStyle = CREAM; x.font = '600 30px ' + SANS; spaced(x, r[0], tx, cy - 8, 8, 'left');
+        x.fillStyle = 'rgba(244,239,233,0.85)'; x.font = '400 30px ' + SANS; x.textAlign = 'left'; x.fillText(r[1], tx, cy + 36);
+        if (i < rows.length - 1) {
+          x.strokeStyle = 'rgba(244,239,233,0.28)'; x.lineWidth = 2;
+          x.beginPath(); x.moveTo(157, cy + step / 2); x.lineTo(923, cy + step / 2); x.stroke();
         }
       });
-      // Footer
-      x.fillStyle = T.soft; x.font = '500 22px Jost, "Helvetica Neue", Arial, sans-serif';
-      spaced(x, ('Made to measure · ' + SITE).toUpperCase(), W / 2, 1840, 6);
+      // Call to action pill
+      var bx = 119, by = 1667, bw2 = 842, bh2 = 168;
+      rr(x, bx, by, bw2, bh2, bh2 / 2); x.strokeStyle = TURQ; x.lineWidth = 3; x.stroke();
+      x.fillStyle = TURQ; x.font = '600 27px ' + SANS; spaced(x, 'DESIGN YOUR OWN AT', W / 2, by + 66, 9);
+      x.fillStyle = CREAM; x.textAlign = 'center'; x.font = '500 58px ' + SERIF; x.fillText('www.' + SITE, W / 2, by + 132);
       return c;
     });
+  }
+  // Logo in a single colour (the file is dark ink on transparent)
+  function tint(img, col) {
+    var c = document.createElement('canvas'); c.width = img.naturalWidth * 2; c.height = img.naturalHeight * 2;
+    var t = c.getContext('2d'); t.imageSmoothingQuality = 'high'; t.drawImage(img, 0, 0, c.width, c.height);
+    t.globalCompositeOperation = 'source-in'; t.fillStyle = col; t.fillRect(0, 0, c.width, c.height);
+    return c;
+  }
+  var LOGO_TT = "data:image/webp;base64,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";
+  var LOGO_TOOM = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent("<svg width=\"458\" height=\"132\" viewBox=\"0 0 229.18 65.81\" fill=\"none\" stroke=\"#5FCDB8\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M61.69,20.37v25.06c0,1.02.54,1.95,1.42,2.46l21.71,12.53c.88.51,1.96.51,2.84,0l21.71-12.53c.88-.51,1.42-1.45,1.42-2.46v-25.06c0-1.02-.54-1.95-1.42-2.46l-21.71-12.53c-.88-.51-1.96-.51-2.84,0l-21.71,12.53c-.88.51-1.42,1.45-1.42,2.46Z\"></path><path d=\"M118.39,20.37v25.06c0,1.02.54,1.95,1.42,2.46l21.71,12.53c.88.51,1.96.51,2.84,0l21.71-12.53c.88-.51,1.42-1.45,1.42-2.46v-25.06c0-1.02-.54-1.95-1.42-2.46l-21.71-12.53c-.88-.51-1.96-.51-2.84,0l-21.71,12.53c-.88.51-1.42,1.45-1.42,2.46Z\"></path><line x1=\"29.55\" y1=\"8.36\" x2=\"29.55\" y2=\"57.46\"></line><line x1=\"5\" y1=\"8.36\" x2=\"54.1\" y2=\"8.36\"></line><polyline points=\"175.08 57.46 175.08 8.36 199.63 30.85 224.18 8.36 224.18 57.46\"></polyline></svg>");
+  // Line icons (sliders, dress form, sewing machine)
+  function icon(x, kind, cx, cy, col) {
+    x.save(); x.translate(cx, cy); x.strokeStyle = col; x.fillStyle = col; x.lineWidth = 2.6; x.lineCap = 'round'; x.lineJoin = 'round';
+    if (kind === 'sliders') {
+      [[-20, -12], [0, 14], [20, -4]].forEach(function (r) {
+        var y = r[0], k = r[1];
+        x.beginPath(); x.moveTo(-30, y); x.lineTo(k - 6, y); x.moveTo(k + 6, y); x.lineTo(30, y); x.stroke();
+        x.beginPath(); x.arc(k, y, 6, 0, Math.PI * 2); x.stroke();
+      });
+    } else if (kind === 'form') {
+      x.beginPath();
+      x.moveTo(-6, -36); x.lineTo(6, -36);
+      x.bezierCurveTo(8, -30, 16, -28, 18, -22);
+      x.bezierCurveTo(20, -12, 12, -4, 12, 4);
+      x.bezierCurveTo(12, 12, 20, 16, 18, 24);
+      x.lineTo(-18, 24);
+      x.bezierCurveTo(-20, 16, -12, 12, -12, 4);
+      x.bezierCurveTo(-12, -4, -20, -12, -18, -22);
+      x.bezierCurveTo(-16, -28, -8, -30, -6, -36);
+      x.stroke();
+      x.beginPath(); x.moveTo(0, 24); x.lineTo(0, 38); x.moveTo(-14, 40); x.lineTo(14, 40); x.stroke();
+      x.beginPath(); x.moveTo(-10, -14); x.quadraticCurveTo(0, -8, 10, -14); x.stroke();
+    } else {
+      x.beginPath();
+      x.moveTo(-34, 30); x.lineTo(34, 30);                           // base
+      x.moveTo(-28, 30); x.lineTo(-28, 18); x.lineTo(28, 18); x.lineTo(28, 30);
+      x.moveTo(-22, 18); x.lineTo(-22, -22); x.quadraticCurveTo(-22, -30, -14, -30); x.lineTo(24, -30); x.quadraticCurveTo(32, -30, 32, -22); x.lineTo(32, -10); x.lineTo(14, -10); x.lineTo(14, 18);
+      x.moveTo(-8, -10); x.lineTo(-8, 4);                            // needle
+      x.stroke();
+      x.beginPath(); x.arc(20, -20, 4, 0, Math.PI * 2); x.stroke();
+    }
+    x.restore();
   }
 
   var row = document.getElementById('share-row'), tip = document.getElementById('share-tip');
