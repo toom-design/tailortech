@@ -1694,7 +1694,7 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeI
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v4.6.6</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v4.6.7</div>
 
 <!-- Cart icon + item count next to the profile picture (shown when signed in) -->
 <style>
@@ -1936,7 +1936,7 @@ setTimeout(function () {
 #tt-story .sprev img { width: 100%; height: 100%; display: block; }
 #tt-story .sprev .loader { width: 26px; height: 26px; border: 1.6px solid #C0BDB8; border-top-color: #4DBFAB; border-radius: 50%; animation: ttsSpin 0.8s linear infinite; }
 @keyframes ttsSpin { to { transform: rotate(360deg); } }
-#tt-story .stheme { display: none;  gap: 6px; padding: 4px; border-radius: 999px; background: #F0EDE6; }
+#tt-story .stheme { display: inline-flex;  gap: 6px; padding: 4px; border-radius: 999px; background: #F0EDE6; }
 #tt-story .stheme button { font-family: inherit; border: none; cursor: pointer; border-radius: 999px; padding: 8px 16px; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; background: transparent; color: #4A4844; display: inline-flex; align-items: center; gap: 7px; }
 #tt-story .stheme button i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; border: 1px solid rgba(26,25,22,0.2); }
 #tt-story .stheme button.on { background: #fff; color: #1A1916; box-shadow: 0 1px 4px rgba(26,25,22,0.12); }
@@ -1954,8 +1954,8 @@ setTimeout(function () {
     <div class="se">Share your design</div>
     <h3 id="tt-story-h">Your one-of-one</h3>
     <div class="stheme" role="group" aria-label="Card colour">
-      <button type="button" data-theme="cream"><i style="background:#F0EDE6"></i>Cream</button>
-      <button type="button" data-theme="plum"><i style="background:#4A164F"></i>Plum</button>
+      <button type="button" data-theme="plum"><i style="background:#3A1240"></i>Dark</button>
+      <button type="button" data-theme="cream"><i style="background:#F6F2EC"></i>Light</button>
     </div>
     <div class="sprev"><span class="loader"></span></div>
     <div class="sbtns"></div>
@@ -2008,32 +2008,36 @@ setTimeout(function () {
   function draw(it, th) {
     var c = document.createElement('canvas'); c.width = W; c.height = H;
     var x = c.getContext('2d');
-    var CREAM = '#F4EFE9', TURQ = '#5FCDB8', SANS = 'Jost, "Helvetica Neue", Arial, sans-serif', SERIF = '"Cormorant Garamond", Georgia, serif';
+    var DARK = th !== 'cream';
+    var INK = DARK ? '#F4EFE9' : '#3A1240', PANEL = DARK ? '#F4EFE9' : '#FFFFFF', TURQ = DARK ? '#5FCDB8' : '#2E9E89',
+        INK_RGB = DARK ? '244,239,233' : '58,18,64', CREAM = '#F4EFE9', SANS = 'Jost, "Helvetica Neue", Arial, sans-serif', SERIF = '"Cormorant Garamond", Georgia, serif';
     return Promise.all([load(it.img), load(LOGO_TT), load(LOGO_TOOM)]).then(function (im) {
       var art = im[0] ? trim(im[0]) : null, logo = im[1], toom = im[2];
       // Background: deep plum with a soft glow
       var g = x.createRadialGradient(W / 2, H * 0.42, 80, W / 2, H * 0.5, H * 0.75);
-      g.addColorStop(0, '#4A1A4F'); g.addColorStop(1, '#2C0C31');
+      if (DARK) { g.addColorStop(0, '#4A1A4F'); g.addColorStop(1, '#2C0C31'); } else { g.addColorStop(0, '#FAF7F2'); g.addColorStop(1, '#E9E2D8'); }
       x.fillStyle = g; x.fillRect(0, 0, W, H);
       x.textBaseline = 'alphabetic';
       // Brand: TailorTech logo with rules either side, "BY" + TOOM logo underneath
       var LW = 440, LH = Math.round(LW * (logo ? logo.naturalHeight / logo.naturalWidth : 71 / 434)), ly = 70;
-      if (logo) x.drawImage(tint(logo, CREAM), (W - LW) / 2, ly, LW, LH);
-      else { x.fillStyle = CREAM; x.font = '600 42px ' + SANS; spaced(x, 'TAILORTECH', W / 2, 122, 15); }
+      if (logo) x.drawImage(tint(logo, INK), (W - LW) / 2, ly, LW, LH);
+      else { x.fillStyle = INK; x.font = '600 42px ' + SANS; spaced(x, 'TAILORTECH', W / 2, 122, 15); }
       x.fillStyle = TURQ; x.font = '300 34px ' + SANS;
       var tH = 40, tW = toom ? tH * toom.naturalWidth / toom.naturalHeight : 0, byW = x.measureText('B').width + x.measureText('Y').width + 8;
       var rowW = byW + 20 + (toom ? tW : 0), bx0 = (W - rowW) / 2, by0 = ly + LH + 40;
-      if (toom) { spaced(x, 'BY', bx0, by0 + 12, 8, 'left'); x.drawImage(toom, bx0 + byW + 20, by0 - tH / 2, tW, tH); }
+      if (toom) { spaced(x, 'BY', bx0, by0 + 12, 8, 'left'); x.drawImage(tint(toom, TURQ), bx0 + byW + 20, by0 - tH / 2, tW, tH); }
       else spaced(x, 'BY TOOM', W / 2, by0 + 12, 9);
-      x.strokeStyle = 'rgba(95,205,184,0.6)'; x.lineWidth = 2;
+      x.strokeStyle = DARK ? 'rgba(95,205,184,0.6)' : 'rgba(46,158,137,0.55)'; x.lineWidth = 2;
       x.beginPath(); x.moveTo(157, by0); x.lineTo(bx0 - 32, by0); x.moveTo(bx0 + rowW + 32, by0); x.lineTo(923, by0); x.stroke();
       // Headline
-      x.fillStyle = CREAM; x.textAlign = 'center';
+      x.fillStyle = INK; x.textAlign = 'center';
       x.font = '500 96px ' + SERIF; x.fillText('Designed by me.', W / 2, 300);
       x.font = 'italic 500 96px ' + SERIF; x.fillText('Tailored for me.', W / 2, 402);
       // Cream panel with the drawing
       var px = 108, py = 457, pw = 865, ph = 718;
-      rr(x, px, py, pw, ph, 36); x.fillStyle = CREAM; x.fill();
+      if (!DARK) { x.save(); x.shadowColor = 'rgba(58,18,64,0.12)'; x.shadowBlur = 40; x.shadowOffsetY = 14; }
+      rr(x, px, py, pw, ph, 36); x.fillStyle = PANEL; x.fill();
+      if (!DARK) x.restore();
       if (art) {
         x.save(); rr(x, px, py, pw, ph, 36); x.clip();
         var pad = 56, bw = pw - pad * 2 - 40, bh = ph - pad * 2, s = Math.min(bw / art.naturalWidth, bh / art.naturalHeight);
@@ -2060,13 +2064,13 @@ setTimeout(function () {
       var cy0 = 1257, step = 141, ix = 255, vx = 356, tx = 408;
       rows.forEach(function (r, i) {
         var cy = cy0 + step * i;
-        icon(x, r[2], ix, cy, CREAM);
-        x.strokeStyle = 'rgba(244,239,233,0.4)'; x.lineWidth = 2;
+        icon(x, r[2], ix, cy, INK);
+        x.strokeStyle = 'rgba(' + INK_RGB + ',0.4)'; x.lineWidth = 2;
         x.beginPath(); x.moveTo(vx, cy - 37); x.lineTo(vx, cy + 37); x.stroke();
-        x.fillStyle = CREAM; x.font = '600 30px ' + SANS; spaced(x, r[0], tx, cy - 8, 8, 'left');
-        x.fillStyle = 'rgba(244,239,233,0.85)'; x.font = '400 30px ' + SANS; x.textAlign = 'left'; x.fillText(r[1], tx, cy + 36);
+        x.fillStyle = INK; x.font = '600 30px ' + SANS; spaced(x, r[0], tx, cy - 8, 8, 'left');
+        x.fillStyle = 'rgba(' + INK_RGB + ',0.85)'; x.font = '400 30px ' + SANS; x.textAlign = 'left'; x.fillText(r[1], tx, cy + 36);
         if (i < rows.length - 1) {
-          x.strokeStyle = 'rgba(244,239,233,0.28)'; x.lineWidth = 2;
+          x.strokeStyle = 'rgba(' + INK_RGB + ',0.25)'; x.lineWidth = 2;
           x.beginPath(); x.moveTo(157, cy + step / 2); x.lineTo(923, cy + step / 2); x.stroke();
         }
       });
@@ -2074,7 +2078,7 @@ setTimeout(function () {
       var bx = 160, by = 1680, bw2 = 760, bh2 = 146;
       rr(x, bx, by, bw2, bh2, bh2 / 2); x.strokeStyle = TURQ; x.lineWidth = 3; x.stroke();
       x.fillStyle = TURQ; x.font = '600 23px ' + SANS; spaced(x, 'DESIGN YOUR OWN AT', W / 2, by + 56, 8);
-      x.fillStyle = CREAM; x.textAlign = 'center'; x.font = '500 50px ' + SERIF; x.fillText('www.' + SITE, W / 2, by + 114);
+      x.fillStyle = INK; x.textAlign = 'center'; x.font = '500 50px ' + SERIF; x.fillText('www.' + SITE, W / 2, by + 114);
       return c;
     });
   }
@@ -2130,8 +2134,8 @@ setTimeout(function () {
     : 'Save the image and post it from your phone: in Instagram, add a story and pick it from your photos ✦';
   btns.innerHTML = (canShareFiles ? '<button type="button" class="sgo" disabled>' + ICON_SHARE + 'Share to Instagram</button>' : '') +
                    '<button type="button" class="sdl" disabled>' + ICON_DL + 'Save image</button>';
-  var theme = 'cream', cur = null, blob = null, token = 0;
-  try { theme = localStorage.getItem('tt_share_theme') === 'plum' ? 'plum' : 'cream'; } catch (e) {}
+  var theme = 'plum', cur = null, blob = null, token = 0;
+  try { theme = localStorage.getItem('tt_share_theme') === 'cream' ? 'cream' : 'plum'; } catch (e) {}
   function fileName(it) { return 'tailortech-my-' + String(it.garment || 'design').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.png'; }
   function setBusy(on) { btns.querySelectorAll('button').forEach(function (b) { b.disabled = on; }); }
   function fonts() {
