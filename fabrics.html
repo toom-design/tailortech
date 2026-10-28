@@ -486,7 +486,7 @@ tbody td{padding:11px 14px;vertical-align:middle}
 
     <!-- Fabric Code + QR -->
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Fabric Code <span>*</span></label><input class="form-input" id="f-code" placeholder="e.g. SUI-GYps-0015" oninput="autoFillQR()"></div>
+      <div class="form-group"><label class="form-label">Fabric Code</label><input class="form-input" id="f-code" placeholder="e.g. SUI-GYps-0015 — left empty, one is created" oninput="autoFillQR()"></div>
       <div class="form-group"><label class="form-label">QR Code</label><input class="form-input readonly" id="f-qr" placeholder="Auto-filled from Fabric Code" readonly><div class="form-hint">Matches Fabric Code by default.</div></div>
     </div>
 
@@ -515,12 +515,12 @@ tbody td{padding:11px 14px;vertical-align:middle}
     </div>
 
     <!-- Name -->
-    <div class="form-row single"><div class="form-group"><label class="form-label">Product Name <span>*</span></label><input class="form-input" id="f-name" placeholder="e.g. 100% fine Italian WOOL"></div></div>
+    <div class="form-row single"><div class="form-group"><label class="form-label">Product Name</label><input class="form-input" id="f-name" placeholder="e.g. 100% fine Italian WOOL"></div></div>
 
     <!-- Type + Color -->
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Type <span>*</span></label><select class="form-select" id="f-type" onchange="onTypeColorPatternChange()"><option value="">Select type...</option></select></div>
-      <div class="form-group"><label class="form-label">Color <span>*</span></label><select class="form-select" id="f-color" onchange="onTypeColorPatternChange()"><option value="">Select color...</option></select></div>
+      <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="f-type" onchange="onTypeColorPatternChange()"><option value="">Select type...</option></select></div>
+      <div class="form-group"><label class="form-label">Color</label><select class="form-select" id="f-color" onchange="onTypeColorPatternChange()"><option value="">Select color...</option></select></div>
     </div>
 
     <!-- Pattern + Composition -->
@@ -903,8 +903,7 @@ function handlePhoto(e, side) {
 }
 
 async function uploadPhotoToGitHub(side) {
-  const code = document.getElementById('f-code').value.trim();
-  if (!code) { showToast('Enter a Fabric Code first'); return; }
+  const code = document.getElementById('edit-id').value ? (document.getElementById('f-code').value.trim() || document.getElementById('edit-id').value) : ensureFabricCode();
   const data = side === 'face' ? editingPhotoFace : editingPhotoBack;
   if (!data) { showToast('No photo selected'); return; }
 
@@ -1004,14 +1003,25 @@ function loadEditForm(f) {
   }
 }
 
+// Fabric Code is optional: when left empty, the next free FAB-0001, FAB-0002… is used (it's the row's key in the sheet)
+function ensureFabricCode() {
+  const el = document.getElementById('f-code');
+  let code = el.value.trim();
+  if (code) return code;
+  let n = 0;
+  fabrics.forEach(f => { const m = String(f.code || '').match(/^FAB-(\d+)$/i); if (m) n = Math.max(n, +m[1]); });
+  code = 'FAB-' + String(n + 1).padStart(4, '0');
+  el.value = code; autoFillQR();
+  return code;
+}
 function autoFillQR() { document.getElementById('f-qr').value = document.getElementById('f-code').value; }
 
 async function saveFabric() {
-  const code = document.getElementById('f-code').value.trim();
+  const editIdNow = document.getElementById('edit-id').value;
+  const code = editIdNow ? (document.getElementById('f-code').value.trim() || editIdNow) : ensureFabricCode();
   const name = document.getElementById('f-name').value.trim();
   const type = document.getElementById('f-type').value.trim();
   const color = document.getElementById('f-color').value.trim();
-  if (!code || !name || !type || !color) { showToast('Fill in required fields (*)'); return; }
   const editId = document.getElementById('edit-id').value;
   if (!editId && fabrics.find(f => f.code === code)) { showToast('Fabric Code already exists'); return; }
   const existing = fabrics.find(x => x.code === (editId || code)) || {};
@@ -1261,7 +1271,7 @@ window.__appBoot = async function() {
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.2.3</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.2.4</div>
 </div><!-- /#app-root -->
 
 <!-- Pop-up messages (toasts) in the TailorTech mint style — replaces the page's toast()/showToast() -->
