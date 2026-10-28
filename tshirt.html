@@ -3053,7 +3053,7 @@ function captureTechPackImage() {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.14</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.15</div>
 
 
 <!-- ═══════════════ 3D PREVIEW (three.js + glTF) ═══════════════ -->
@@ -3442,7 +3442,7 @@ function normalHighPass(img) {
 }
 
 function loadFabricMaps(info) {
-  const key = [info.code, info.face, info.tileCm, info.colorHex, info.type].join('|');
+  const key = [info.code, info.face, info.tileCm, info.colorHex, info.colorName, info.type].join('|');
   if (mapCache[key]) return mapCache[key];
   return mapCache[key] = (async () => {
     // TileSize_cm: "4" (square) or "4 x 4.3" (width x height), comma decimals allowed
@@ -3485,6 +3485,15 @@ function loadFabricMaps(info) {
       color = new THREE.Color('#' + String(info.colorHex).trim().replace('#', ''));
       source = 'ColorHex ' + info.colorHex;
     }
+    // No ColorHex in the sheet: take the plain colour of the fabric photo (colour only, no texture)
+    if (!map && !color && info.face) {
+      try { color = averagePhotoColor(await loadImg(info.face)); if (color) source = 'photo colour'; }
+      catch (e) { console.warn('3D fabric: photo colour failed', e); }
+    }
+    if (!map && !color && info.colorName) {
+      const hex = COLOR_NAMES[String(info.colorName).trim().toLowerCase()];
+      if (hex) { color = new THREE.Color(hex); source = 'colour name ' + info.colorName; }
+    }
     if (nrmImg) normal = toTexture(normalHighPass(nrmImg), tileCm, false);
 
     console.info('3D fabric', info.code || '', '→ colour from', source,
@@ -3494,12 +3503,34 @@ function loadFabricMaps(info) {
   })();
 }
 
+// Average colour of the middle of a fabric photo (folds and shadows evened out by using the median brightness band)
+function averagePhotoColor(img) {
+  const n = 48, c = document.createElement('canvas'); c.width = c.height = n;
+  const x = c.getContext('2d'), w = img.naturalWidth, h = img.naturalHeight, side = Math.min(w, h) * 0.6;
+  x.drawImage(img, (w - side) / 2, (h - side) / 2, side, side, 0, 0, n, n);
+  const d = x.getImageData(0, 0, n, n).data, px = [];
+  for (let i = 0; i < d.length; i += 4) px.push([d[i], d[i + 1], d[i + 2], 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]]);
+  px.sort((a, b) => a[3] - b[3]);
+  const mid = px.slice(Math.floor(px.length * 0.3), Math.ceil(px.length * 0.8));   // skip deep shadows and highlights
+  if (!mid.length) return null;
+  const avg = [0, 1, 2].map(k => mid.reduce((t, p) => t + p[k], 0) / mid.length);
+  const col = new THREE.Color().setRGB(avg[0] / 255, avg[1] / 255, avg[2] / 255, THREE.SRGBColorSpace);
+  const hsl = {}; col.getHSL(hsl);
+  if (hsl.l < 0.2) col.setHSL(hsl.h, hsl.s * 0.45, hsl.l * 0.85);    // near-black photos carry a warm cast from the studio light
+  return col;
+}
+// Last resort when a fabric has neither a ColorHex nor a photo: its Color name from the sheet
+const COLOR_NAMES = { black: '#1c1c1e', white: '#f2f0ea', 'off white': '#ece6d8', ecru: '#e6dcc6', cream: '#efe7d4', beige: '#d6c5a5', sand: '#cbb790',
+  grey: '#8e8c88', gray: '#8e8c88', 'light grey': '#bdbab4', 'dark grey': '#4a4a4c', charcoal: '#36383b', navy: '#1f2a44', blue: '#2f4f86',
+  'light blue': '#9db7d6', green: '#3f5f45', olive: '#5b5a3a', khaki: '#8d8456', brown: '#5a3f2e', camel: '#b08654', burgundy: '#5e1f2c',
+  red: '#a5282c', pink: '#d8a1a8', purple: '#4a164f', yellow: '#d8b84a', orange: '#c86a2b' };
+
 function fabricInfoFromCard(card) {
   if (!card) return null;
   const img = card.querySelector('img');
   const face = img && img.src && !img.src.startsWith('data:') ? img.src : '';
   return { code: card.dataset.code || '', face, tileCm: card.dataset.tilecm || '',
-           colorHex: card.dataset.colorhex || '', type: card.dataset.type || '' };
+           colorHex: card.dataset.colorhex || '', colorName: card.dataset.color || '', type: card.dataset.type || '' };
 }
 function selectedFabricInfo() {
   return fabricInfoFromCard(document.querySelector('#fabric-main-grid .fabric-card.selected'));
