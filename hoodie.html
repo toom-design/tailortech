@@ -2847,7 +2847,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.25</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.9.26</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -4563,6 +4563,59 @@ setTimeout(function () {
   var asked = false;
   onAuthStateChanged(getAuth(app()), function (user) { if (user && !asked) { asked = true; window.ttMarketingAsk(user); } });
 }, 0);
+</script>
+
+<!-- Story card: keeps a snapshot of the design (drawing, fabric, first name) for the share card on the success page -->
+<script>
+(function () {
+  var origGet = window.getClientJSONP;
+  if (typeof origGet === 'function') {
+    window.getClientJSONP = function (email, uid, cb) {
+      return origGet.call(this, email, uid, function (res) {
+        try { var c = res && res.client; if (c && String(c['First Name'] || '').trim()) window.ttFirstName = String(c['First Name']).trim(); } catch (e) {}
+        if (cb) cb(res);
+      });
+    };
+  }
+  function toJpeg(dataUrl) {          // smaller than PNG, so it fits in the browser's session storage
+    return new Promise(function (res) {
+      var img = new Image();
+      img.onload = function () {
+        var s = Math.min(1, 900 / img.naturalHeight), c = document.createElement('canvas');
+        c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+        var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+        try { res(c.toDataURL('image/jpeg', 0.88)); } catch (e) { res(''); }
+      };
+      img.onerror = function () { res(''); };
+      img.src = dataUrl;
+    });
+  }
+  function snapshot() {
+    var card = document.querySelector('#fabric-main-grid .fabric-card.selected');
+    var fimg = card && card.querySelector('img');
+    var item = {
+      garment: (document.title || '').replace(/\s+[|·–-]\s.*$/, '').replace(/\s+Configurator$/i, '').trim(),
+      fabric: card ? ((card.querySelector('.fname') || {}).textContent || '').trim() : '',
+      fabricImg: fimg && /^https?:/.test(fimg.src) ? fimg.src : '',
+      colorHex: card ? (card.dataset.colorhex || '') : '',
+      name: window.ttFirstName || '',
+      img: ''
+    };
+    try { var st = collectConfig()['STYLE/SILHOUETTE']; if (st) item.garment = String(st).replace(/\s*\+.*$/, '').trim(); } catch (e) {}
+    var save = function () { try { sessionStorage.setItem('tt_share', JSON.stringify({ at: Date.now(), items: [item] })); } catch (e) {} };
+    save();
+    if (typeof captureTechPackImage !== 'function') return;
+    captureTechPackImage().then(toJpeg).then(function (j) { item.img = j; save(); }).catch(function () {});
+  }
+  var orig = window.handleOrderNow;
+  if (typeof orig === 'function') {
+    window.handleOrderNow = function () {
+      var ok = !(typeof isLoggedIn === 'function' && !isLoggedIn()) && !(document.getElementById('tt-terms') && !(window.ttTermsAccepted && ttTermsAccepted()));
+      if (ok) { try { snapshot(); } catch (e) {} }
+      return orig.apply(this, arguments);
+    };
+  }
+})();
 </script>
 </body>
 </html>

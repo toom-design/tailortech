@@ -174,7 +174,7 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
 
 <div class="toast" id="toast"></div>
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.0.8</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.0.9</div>
 
 <script>
 var SHEET_URL = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
@@ -319,6 +319,14 @@ function requestAll() {
     var sent = res.orderNumbers && res.orderNumbers.length ? res.orderNumbers : nos;
     try { if (window.gtag) gtag('event', 'generate_lead', { items: sent.length, source: 'cart' }); } catch (e) {}
     if (window.ttCartCount) ttCartCount(0);
+    try {                                   // story card on the success page: each requested design
+      var share = CART.filter(function (it) { return sent.indexOf(it.orderNumber) >= 0; }).slice(0, 6).map(function (it) {
+        var im = document.querySelector('#img-' + CART.indexOf(it) + ' img');
+        return { garment: it.garment || '', fabric: it.fabric || '', fabricImg: /^https?:/.test(it.swatch || '') ? it.swatch : '', colorHex: '', name: window.ttFirstName || '', img: im ? im.src : '' };
+      });
+      try { sessionStorage.setItem('tt_share', JSON.stringify({ at: Date.now(), items: share })); }
+      catch (e) { share.forEach(function (s) { s.img = ''; }); sessionStorage.setItem('tt_share', JSON.stringify({ at: Date.now(), items: share })); }
+    } catch (e) {}
     ttBusyDone(btn, 'Request sent');
     window.location.href = SUCCESS_URL + '?orders=' + encodeURIComponent(sent.join(',')) + '&from=cart';
   }).catch(function (e) { ttBusyOff(btn); btn.disabled = false; lbl.textContent = was; toast(e.message, 'err'); });
@@ -344,6 +352,7 @@ onAuthStateChanged(getAuth(app), function (user) {
   av.hidden = !user;
   if (!user) { show('st-signin'); return; }
   var name = user.displayName || user.email || '?';
+  if (user.displayName) window.ttFirstName = user.displayName.split(' ')[0];
   av.innerHTML = user.photoURL ? '<img alt="" src="' + user.photoURL + '">' : esc(name[0].toUpperCase());
   loadCart();
 });
