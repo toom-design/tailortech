@@ -1947,7 +1947,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.6.10</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.6.11</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -2722,6 +2722,53 @@ setTimeout(function () {
       return origSave.apply(this, arguments);
     };
   }
+})();
+</script>
+
+<!-- Prices only for signed-in clients: guests see "Log in to see your price" instead of the estimate and the +€ extras -->
+<style>
+.tt-price-lock { display: none; align-items: center; gap: 7px; margin: 2px 0 0; padding: 7px 13px 7px 11px; border: 1px solid rgba(74,22,79,0.35); border-radius: 999px; background: #fff; color: #4A164F; font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 10.5px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; line-height: 1; cursor: pointer; white-space: nowrap; vertical-align: middle; transition: background 0.15s; }
+.tt-price-lock:hover { background: rgba(74,22,79,0.06); }
+.tt-price-lock svg { width: 12px; height: 12px; flex-shrink: 0; }
+.tt-price-lock .s { display: none; }
+html.tt-guest .tt-price-lock { display: inline-flex; }
+html.tt-guest .price-display-amount, html.tt-auth-pending .price-display-amount { display: none !important; }
+html.tt-guest .pill-extra-price, html.tt-guest .icon-card-extra-price,
+html.tt-guest .fabric-card .fprice, html.tt-guest #fabric-main-grid .fprice,
+html.tt-auth-pending .pill-extra-price, html.tt-auth-pending .icon-card-extra-price, html.tt-auth-pending .fabric-card .fprice { display: none !important; }
+@media (max-width: 420px) { .tt-price-lock .l { display: none; } .tt-price-lock .s { display: inline; } }
+</style>
+<script>
+(function () {
+  var root = document.documentElement;
+  root.classList.add('tt-auth-pending');
+  var LOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>';
+  function addLocks() {
+    document.querySelectorAll('.price-display-amount').forEach(function (el) {
+      if (el.previousElementSibling && el.previousElementSibling.classList.contains('tt-price-lock')) return;
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'tt-price-lock'; b.title = 'Prices are shown to signed-in clients';
+      b.innerHTML = LOCK + '<span class="l">Log in to see your price</span><span class="s">Log in for price</span>';
+      b.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); if (typeof goToAuth === 'function') goToAuth(); else location.href = 'https://tailortech.toom.design/auth'; });
+      el.parentNode.insertBefore(b, el);
+    });
+  }
+  function set(signedIn) {
+    root.classList.remove('tt-auth-pending');
+    root.classList.toggle('tt-guest', !signedIn);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addLocks); else addLocks();
+  // Wait for the page's Firebase sign-in to be known, then follow it
+  var tries = 0;
+  (function wait() {
+    var auth = window._fb && window._fb.auth;
+    if (auth) {
+      try { auth.onAuthStateChanged(function (u) { set(!!u); }); return; } catch (e) {}
+      set(!!auth.currentUser); setInterval(function () { set(!!auth.currentUser); }, 2000); return;
+    }
+    if (++tries > 60) { set(typeof isLoggedIn === 'function' && isLoggedIn()); return; }   // 15 s: give up waiting
+    setTimeout(wait, 250);
+  })();
 })();
 </script>
 </body>
