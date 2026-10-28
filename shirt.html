@@ -1947,7 +1947,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.6.9</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v3.6.10</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -2704,12 +2704,22 @@ setTimeout(function () {
     if (typeof captureTechPackImage !== 'function') return;
     captureTechPackImage().then(toJpeg).then(function (j) { item.img = j; save(); }).catch(function () {});
   }
-  var orig = window.handleOrderNow;
-  if (typeof orig === 'function') {
-    window.handleOrderNow = function () {
-      var ok = !(typeof isLoggedIn === 'function' && !isLoggedIn()) && !(document.getElementById('tt-terms') && !(window.ttTermsAccepted && ttTermsAccepted()));
-      if (ok) { try { snapshot(); } catch (e) {} }
-      return orig.apply(this, arguments);
+  // Any garment request (straight away, or after signing in) keeps a snapshot for the success page
+  var origSave = window._saveToSheet;
+  if (typeof origSave === 'function') {
+    window._saveToSheet = function (data) {
+      try {
+        if (data && String(data['Status'] || '') === 'Pending') {
+          snapshot();
+          var st = data['STYLE/SILHOUETTE'], fab = data['MAIN FABRIC'];
+          var cur = JSON.parse(sessionStorage.getItem('tt_share') || 'null');
+          if (cur && cur.items && cur.items[0]) {
+            if (fab && !cur.items[0].fabric) cur.items[0].fabric = String(fab);
+            sessionStorage.setItem('tt_share', JSON.stringify(cur));
+          }
+        }
+      } catch (e) {}
+      return origSave.apply(this, arguments);
     };
   }
 })();
