@@ -107,6 +107,9 @@ button{cursor:pointer;font-family:inherit;}
 .g-pills button{flex:1;padding:11px 12px;font-family:'Jost',sans-serif;font-size:12.5px;border:1px solid rgba(26,25,22,0.18);border-radius:999px;background:#fff;color:var(--ink-mid);cursor:pointer;transition:all 0.15s;}
 .g-pills button:hover{border-color:#4A164F;color:#4A164F;}
 .g-pills button.on{background:#4A164F;border-color:#4A164F;color:#fff;}
+.mk-opt{display:flex;gap:10px;align-items:flex-start;margin:4px 0 6px;padding:12px 14px;border:1px solid var(--border,rgba(26,25,22,0.12));border-radius:10px;cursor:pointer;font-size:12.5px;line-height:1.5;color:var(--ink-soft,#4a4844);}
+.mk-opt input{margin:2px 0 0;width:16px;height:16px;flex-shrink:0;accent-color:#4A164F;cursor:pointer;}
+.mk-opt small{display:block;font-size:11px;color:var(--ink-faint);margin-top:2px;}
 .g-hint{font-size:11px;color:var(--ink-faint);margin-top:6px;line-height:1.45;}
 .popup-btns{display:flex;gap:10px;margin-top:22px;border-top:1px solid var(--border);padding-top:20px;}
 .btn-popup-save{flex:1;padding:11px;font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;background:var(--ink);color:var(--white);border:none;border-radius:2px;cursor:pointer;transition:background 0.15s;display:flex;align-items:center;justify-content:center;gap:7px;}
@@ -241,6 +244,7 @@ button{cursor:pointer;font-family:inherit;}
     <div class="field" style="margin-top:14px"><label>Gender</label><div class="g-pills" id="wp-gender"><button type="button" data-g="Female" onclick="ttPickGender(this)">Female</button><button type="button" data-g="Male" onclick="ttPickGender(this)">Male</button></div><div class="g-hint">We use it to preselect the right cut and measurement guide.</div></div>
     <div class="field"><label>Phone</label><input type="tel" id="wp-phone" placeholder="+1 234 567 8900" autocomplete="tel"></div>
     <div class="field"><label>Instagram</label><input type="text" id="wp-ig" placeholder="@username"></div>
+    <label class="mk-opt"><input type="checkbox" id="wp-marketing"><span>Send me news about new fabrics, garments and offers from TAILORTECH.<small>Optional. You can unsubscribe in any email or in your dashboard.</small></span></label>
     <div class="popup-btns">
       <button class="btn-popup-save" id="wp-save-btn" onclick="wpSave()">
         <span id="wp-save-lbl">Save Profile</span>
@@ -265,7 +269,7 @@ button{cursor:pointer;font-family:inherit;}
   </div>
 </div>
 
-<div class="version">v2.9.3</div>
+<div class="version">v2.9.4</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -561,7 +565,7 @@ function wpSave(){
   btn.disabled=true;lbl.style.display='none';sp.style.display='block';
   saveClientJSONP({uid:_wpUser.uid,email:_wpUser.email,data:{
     'UID':_wpUser.uid,'First Name':fname,'Last Name':lname,
-    'Email':_wpUser.email,'Phone Number':phone,'IG':ig,'Gender':ttGenderValue('wp-gender'),
+    'Email':_wpUser.email,'Phone Number':phone,'IG':ig,'Gender':ttGenderValue('wp-gender'),'Marketing Consent':ttMarketingValue(),
   }},function(){ saveToSession(_wpUser); redirectAfterLogin(); });
 }
 
@@ -580,10 +584,11 @@ function gpSave(){
 }
 function gpSkip(){ try{ if(_wpUser) localStorage.setItem('tt_gender_skip_'+_wpUser.uid, String(Date.now())); }catch(e){} redirectAfterLogin(); }
 
+function ttMarketingValue(){ var c=document.getElementById('wp-marketing'); return c&&c.checked?'TRUE':'FALSE'; }
 function wpLater(){
   if(!_wpUser){ redirectAfterLogin(); return; }
   saveClientJSONP({uid:_wpUser.uid,email:_wpUser.email,data:{
-    'UID':_wpUser.uid,'Email':_wpUser.email,'Gender':ttGenderValue('wp-gender'),
+    'UID':_wpUser.uid,'Email':_wpUser.email,'Gender':ttGenderValue('wp-gender'),'Marketing Consent':ttMarketingValue(),
   }},function(){ saveToSession(_wpUser); redirectAfterLogin(); });
 }
 </script>

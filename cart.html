@@ -111,6 +111,14 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
 .badge { position: fixed; bottom: 14px; left: 18px; font-size: 10px; font-weight: 500; letter-spacing: 0.10em; color: rgba(26,25,22,0.50); z-index: 40; pointer-events: none; }
 @media (max-width: 560px) { .nav { padding: 0 16px; } main { padding: 32px 16px 72px; } }
 </style>
+<style>
+.tt-terms { display: flex; gap: 11px; align-items: flex-start; margin: 4px 0 14px; padding: 13px 15px; border: 1px solid var(--border, rgba(26,25,22,0.12)); border-radius: 10px; background: var(--white, #FAFAF8); cursor: pointer; font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 12.5px; line-height: 1.5; color: var(--ink-mid, #4A4844); transition: border-color 0.15s, box-shadow 0.15s; }
+.tt-terms input { margin: 2px 0 0; width: 16px; height: 16px; flex-shrink: 0; accent-color: #4A164F; cursor: pointer; }
+.tt-terms a { color: #4A164F; text-decoration: underline; text-underline-offset: 2px; }
+.tt-terms.need { border-color: #C4625A; box-shadow: 0 0 0 3px rgba(196,98,90,0.12); animation: ttTermsNudge 0.35s ease; }
+@keyframes ttTermsNudge { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+</style>
+<script>document.addEventListener('change',function(e){if(e.target&&e.target.id==='tt-terms'&&e.target.checked)e.target.closest('.tt-terms').classList.remove('need');});</script>
 </head>
 <body>
 
@@ -155,6 +163,7 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
       <div class="sum-row"><span>Garments</span><span id="sum-count">0</span></div>
       <div class="sum-row"><span>Estimated total</span><strong id="sum-total">—</strong></div>
       <div class="sum-note">Submitting sends your garment requests to our team. We&rsquo;ll get in touch to discuss the next steps &mdash; no payment or commitment is required yet.</div>
+      <label class="tt-terms"><input type="checkbox" id="tt-terms"><span>I have read and accept the <a href="https://tailortech.toom.design/terms" target="_blank" rel="noopener">Terms</a> for these garment requests.</span></label>
       <button class="cta" type="button" id="btn-request" onclick="requestAll()">
         <span id="btn-request-lbl">Request my garments</span>
       </button>
@@ -165,7 +174,7 @@ h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-s
 
 <div class="toast" id="toast"></div>
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.0.6</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.0.7</div>
 
 <script>
 var SHEET_URL = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
@@ -295,12 +304,17 @@ function removeItem(no, btn) {
 
 function requestAll() {
   if (!CART.length) return;
+  var terms = document.getElementById('tt-terms');
+  if (terms && !terms.checked) {
+    var tl = terms.closest('.tt-terms'); tl.classList.remove('need'); void tl.offsetWidth; tl.classList.add('need');
+    toast('Please read and accept the Terms to continue.', 'err'); return;
+  }
   var btn = document.getElementById('btn-request');
   btn.disabled = true;
   var lbl = document.getElementById('btn-request-lbl'), was = lbl.textContent;
   ttBusyOn(btn, 'Sending your request…');
   var nos = CART.map(function (it) { return it.orderNumber; });
-  token().then(function (t) { return api('cartAction', { idToken: t, op: 'request', orderNumbers: nos }, 90000); }).then(function (res) {
+  token().then(function (t) { return api('cartAction', { idToken: t, op: 'request', orderNumbers: nos, termsAccepted: true }, 90000); }).then(function (res) {
     if (!res.success) throw new Error(res.message || 'Could not send your request.');
     var sent = res.orderNumbers && res.orderNumbers.length ? res.orderNumbers : nos;
     try { if (window.gtag) gtag('event', 'generate_lead', { items: sent.length, source: 'cart' }); } catch (e) {}

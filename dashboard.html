@@ -693,6 +693,7 @@ img.order-swatch.has-img { padding: 6px; }
             </div>
           </div>
           <div class="ef"><label>Instagram</label>  <input type="text"  id="ef-ig"      placeholder="@username"></div>
+          <div class="ef"><label>Marketing emails</label><select id="ef-marketing"><option value="">Not set</option><option value="TRUE">Yes, send me news &amp; offers</option><option value="FALSE">No, thanks</option></select></div>
           <div class="ef"><label>Street</label>     <input type="text"  id="ef-street"  placeholder="123 Main St"></div>
           <div class="ef"><label>City</label>       <input type="text"  id="ef-city"    placeholder="London"></div>
           <div class="ef"><label>Postal Code</label><input type="text"  id="ef-postal"  placeholder="SW1A 1AA"></div>
@@ -1388,8 +1389,10 @@ var PC_ICONS = {
   gender:  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>',
   address: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 21s-7-6.1-7-11a7 7 0 0114 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
   phone:   '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.8 19.8 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.68 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.9.32 1.85.55 2.81.68A2 2 0 0122 16.92z"/></svg>',
+  mail2:   '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>',
   email:   '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z"/><path d="M22 6l-10 7L2 6"/></svg>',
 };
+function ttMktWord(v) { v = String(v == null ? '' : v).trim(); return v === '' ? '' : (/^(true|yes|1)$/i.test(v) ? 'Subscribed' : 'Not subscribed'); }
 function renderProfile(c) {
   ttSetMeasFigure(c && c['Gender']);
   var user  = window._d && window._d.currentUser;
@@ -1427,6 +1430,7 @@ function renderProfile(c) {
     { icon: PC_ICONS.address, label: 'Address', value: address },
     { icon: PC_ICONS.phone,   label: 'Phone',   value: merged['Phone Number'] },
     { icon: PC_ICONS.email,   label: 'Email',   value: merged['Email'] },
+    { icon: PC_ICONS.mail2,   label: 'Marketing emails', value: ttMktWord(c && c['Marketing Consent']) },
   ];
   var g = document.getElementById('profile-display');
   g.innerHTML = '';
@@ -1467,6 +1471,8 @@ function prefill(c) {
   });
   var gSel = document.getElementById('ef-gender');
   if (gSel) gSel.value = ttGenderWord(c && c['Gender']);
+  var mSel = document.getElementById('ef-marketing');
+  if (mSel) { var mv = String((c && c['Marketing Consent']) || '').trim(); mSel.value = mv === '' ? '' : (/^(true|yes|1)$/i.test(mv) ? 'TRUE' : 'FALSE'); }
 
   // Phone is split across two controls (code + number) but stored as one
   // string, e.g. "+44 7911 123456" — parse it back apart for editing.
@@ -1566,6 +1572,8 @@ function saveProfile() {
     'Postal Code':  document.getElementById('ef-postal').value.trim(),
     'Country':      document.getElementById('ef-country').value.trim(),
   };
+  var mkt = document.getElementById('ef-marketing');
+  if (mkt && mkt.value) data['Marketing Consent'] = mkt.value;   // saved with the date it changed
 
   var btn = document.getElementById('btn-save-p');
   var lbl = document.getElementById('save-lbl');
@@ -1682,7 +1690,7 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeI
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v4.6.0</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v4.6.1</div>
 
 <!-- Cart icon + item count next to the profile picture (shown when signed in) -->
 <style>

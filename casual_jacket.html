@@ -727,6 +727,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
       <div class="section" style="border-bottom:none;">
         <div class="section-label">Order Summary</div>
         <div id="summary-rows" style="display:flex;flex-direction:column;gap:0;margin-bottom:28px;"></div>
+        <label class="tt-terms"><input type="checkbox" id="tt-terms"><span>I have read and accept the <a href="https://tailortech.toom.design/terms" target="_blank" rel="noopener">Terms</a> for this garment request.</span></label>
 
         <!-- Action buttons -->
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
@@ -1618,7 +1619,7 @@ function collectConfig() {
                               ? (window._fb.auth.currentUser.email || '') : ''),
     'Status':              'New',
     'Created At':          new Date().toISOString(),
-    'Terms Accepted':      '',
+    'Terms Accepted':      (window.ttTermsAccepted && ttTermsAccepted() ? 'TRUE' : 'FALSE'),
     'Marketing Consent':   '',
     'GENDER':              sectionPill('Gender'),
 
@@ -2044,7 +2045,7 @@ function showFeedback(msg, color) {
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.5.6</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.5.7</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -2615,6 +2616,41 @@ setTimeout(function () {
       });
     };
   }
+})();
+</script>
+
+<!-- Terms: each garment request must be accepted (stored as "Terms Accepted" = TRUE on the order) -->
+<style>
+.tt-terms { display: flex; gap: 11px; align-items: flex-start; margin: -8px 0 22px; padding: 13px 15px; border: 1px solid var(--border, rgba(26,25,22,0.12)); border-radius: 10px; background: var(--white, #FAFAF8); cursor: pointer; font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 12.5px; line-height: 1.5; color: var(--ink-mid, #4A4844); transition: border-color 0.15s, box-shadow 0.15s; }
+.tt-terms input { margin: 2px 0 0; width: 16px; height: 16px; flex-shrink: 0; accent-color: #4A164F; cursor: pointer; }
+.tt-terms a { color: #4A164F; text-decoration: underline; text-underline-offset: 2px; }
+.tt-terms.need { border-color: #C4625A; box-shadow: 0 0 0 3px rgba(196,98,90,0.12); animation: ttTermsNudge 0.35s ease; }
+@keyframes ttTermsNudge { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+</style>
+<script>
+(function () {
+  function box() { return document.getElementById('tt-terms'); }
+  window.ttTermsAccepted = function () { var b = box(); return !!(b && b.checked); };
+  document.addEventListener('change', function (e) {
+    if (e.target && e.target.id === 'tt-terms' && e.target.checked) e.target.closest('.tt-terms').classList.remove('need');
+  });
+  function gate(name) {
+    var orig = window[name];
+    if (typeof orig !== 'function') return;
+    window[name] = function () {
+      if (typeof isLoggedIn === 'function' && !isLoggedIn()) return orig.apply(this, arguments);   // sign-in first
+      if (box() && !ttTermsAccepted()) {
+        var lbl = box().closest('.tt-terms');
+        lbl.classList.remove('need'); void lbl.offsetWidth; lbl.classList.add('need');
+        lbl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (window.toast) toast('Please read and accept the Terms to continue.', 'err');
+        return;
+      }
+      return orig.apply(this, arguments);
+    };
+  }
+  gate('handleAddToCart');
+  gate('handleOrderNow');
 })();
 </script>
 </body>
