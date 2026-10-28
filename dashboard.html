@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -1694,7 +1694,7 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeI
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v4.6.5</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v4.6.6</div>
 
 <!-- Cart icon + item count next to the profile picture (shown when signed in) -->
 <style>
@@ -2020,14 +2020,13 @@ setTimeout(function () {
       var LW = 440, LH = Math.round(LW * (logo ? logo.naturalHeight / logo.naturalWidth : 71 / 434)), ly = 70;
       if (logo) x.drawImage(tint(logo, CREAM), (W - LW) / 2, ly, LW, LH);
       else { x.fillStyle = CREAM; x.font = '600 42px ' + SANS; spaced(x, 'TAILORTECH', W / 2, 122, 15); }
-      x.strokeStyle = 'rgba(244,239,233,0.55)'; x.lineWidth = 2;
-      var rl = ly + LH / 2;
-      x.beginPath(); x.moveTo(157, rl); x.lineTo((W - LW) / 2 - 30, rl); x.moveTo((W + LW) / 2 + 30, rl); x.lineTo(923, rl); x.stroke();
-      x.fillStyle = TURQ; x.font = '600 24px ' + SANS;
-      var tH = 30, tW = toom ? tH * toom.naturalWidth / toom.naturalHeight : 0, byW = x.measureText('B').width + x.measureText('Y').width + 7;
-      var rowW = byW + 16 + (toom ? tW : 0), bx0 = (W - rowW) / 2, by0 = ly + LH + 44;
-      if (toom) { spaced(x, 'BY', bx0, by0 + 9, 7, 'left'); x.drawImage(toom, bx0 + byW + 16, by0 - tH / 2, tW, tH); }
-      else spaced(x, 'BY TOOM', W / 2, by0 + 9, 9);
+      x.fillStyle = TURQ; x.font = '300 34px ' + SANS;
+      var tH = 40, tW = toom ? tH * toom.naturalWidth / toom.naturalHeight : 0, byW = x.measureText('B').width + x.measureText('Y').width + 8;
+      var rowW = byW + 20 + (toom ? tW : 0), bx0 = (W - rowW) / 2, by0 = ly + LH + 40;
+      if (toom) { spaced(x, 'BY', bx0, by0 + 12, 8, 'left'); x.drawImage(toom, bx0 + byW + 20, by0 - tH / 2, tW, tH); }
+      else spaced(x, 'BY TOOM', W / 2, by0 + 12, 9);
+      x.strokeStyle = 'rgba(95,205,184,0.6)'; x.lineWidth = 2;
+      x.beginPath(); x.moveTo(157, by0); x.lineTo(bx0 - 32, by0); x.moveTo(bx0 + rowW + 32, by0); x.lineTo(923, by0); x.stroke();
       // Headline
       x.fillStyle = CREAM; x.textAlign = 'center';
       x.font = '500 96px ' + SERIF; x.fillText('Designed by me.', W / 2, 300);
@@ -2046,14 +2045,12 @@ setTimeout(function () {
         x.fillStyle = '#8A8880'; x.textAlign = 'center'; x.font = 'italic 500 60px ' + SERIF;
         x.fillText('My ' + String(it.garment || 'garment').toLowerCase(), W / 2, py + ph / 2);
       }
-      // "MY DESIGN" ribbon hanging from the panel's top-right corner
-      var rx = 790, ry = 449, rw = 155, rh = 177, notch = 34;
-      x.save(); x.shadowColor = 'rgba(0,0,0,0.28)'; x.shadowBlur = 14; x.shadowOffsetY = 4;
-      x.beginPath(); x.moveTo(rx, ry); x.lineTo(rx + rw, ry); x.lineTo(rx + rw, ry + rh); x.lineTo(rx + rw / 2, ry + rh - notch); x.lineTo(rx, ry + rh); x.closePath();
-      x.fillStyle = '#4A1A4F'; x.fill(); x.restore();
-      x.fillStyle = CREAM; x.font = '600 28px ' + SANS;
-      spaced(x, '1 OF 1', rx + rw / 2, ry + 72, 6);
-      x.strokeStyle = TURQ; x.lineWidth = 3; x.beginPath(); x.moveTo(rx + rw / 2 - 20, ry + 100); x.lineTo(rx + rw / 2 + 20, ry + 100); x.stroke();
+      // "1 OF 1" stamp
+      x.save(); x.translate(px + pw - 96, py + 96); x.rotate(-0.18);
+      x.beginPath(); x.arc(0, 0, 66, 0, Math.PI * 2); x.fillStyle = '#4A1A4F'; x.fill();
+      x.beginPath(); x.arc(0, 0, 57, 0, Math.PI * 2); x.strokeStyle = 'rgba(95,205,184,0.75)'; x.lineWidth = 2; x.stroke();
+      x.fillStyle = CREAM; x.font = '600 25px ' + SANS; spaced(x, '1 OF 1', 0, 9, 4);
+      x.restore();
       // Three promises, each with an icon
       var rows = [
         ['CUSTOM DESIGN', 'My style, my details.', 'sliders'],
@@ -2074,10 +2071,10 @@ setTimeout(function () {
         }
       });
       // Call to action pill
-      var bx = 119, by = 1667, bw2 = 842, bh2 = 168;
+      var bx = 160, by = 1680, bw2 = 760, bh2 = 146;
       rr(x, bx, by, bw2, bh2, bh2 / 2); x.strokeStyle = TURQ; x.lineWidth = 3; x.stroke();
-      x.fillStyle = TURQ; x.font = '600 27px ' + SANS; spaced(x, 'DESIGN YOUR OWN AT', W / 2, by + 66, 9);
-      x.fillStyle = CREAM; x.textAlign = 'center'; x.font = '500 58px ' + SERIF; x.fillText('www.' + SITE, W / 2, by + 132);
+      x.fillStyle = TURQ; x.font = '600 23px ' + SANS; spaced(x, 'DESIGN YOUR OWN AT', W / 2, by + 56, 8);
+      x.fillStyle = CREAM; x.textAlign = 'center'; x.font = '500 50px ' + SERIF; x.fillText('www.' + SITE, W / 2, by + 114);
       return c;
     });
   }
@@ -2139,7 +2136,7 @@ setTimeout(function () {
   function setBusy(on) { btns.querySelectorAll('button').forEach(function (b) { b.disabled = on; }); }
   function fonts() {
     if (!document.fonts || !document.fonts.load) return Promise.resolve();
-    return Promise.race([Promise.all(['500 98px "Cormorant Garamond"', 'italic 500 98px "Cormorant Garamond"', '500 30px Jost', '600 30px Jost', '400 30px Jost'].map(function (f) { return document.fonts.load(f); })).catch(function () {}),
+    return Promise.race([Promise.all(['500 98px "Cormorant Garamond"', 'italic 500 98px "Cormorant Garamond"', '300 34px Jost', '500 30px Jost', '600 30px Jost', '400 30px Jost'].map(function (f) { return document.fonts.load(f); })).catch(function () {}),
                          new Promise(function (r) { setTimeout(r, 2500); })]);
   }
   function paint() {
