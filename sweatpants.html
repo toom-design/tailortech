@@ -1755,6 +1755,9 @@ function buildFabricCard(fabric, group, isFirst) {
   card.dataset.comp  = comp;
   card.dataset.color = color;
   card.dataset.unitprice = unitPrice;
+  card.dataset.tilecm = fabric.TileSize_cm || '';
+  card.dataset.colorhex = fabric.ColorHex || '';
+  card.dataset.type = (fabric.Type || '') + ' ' + name;
   card.onclick = function(){ selectFabric(card, group); if (typeof updatePriceBar === 'function') updatePriceBar(); };
 
   var imgWrap = document.createElement('div');
@@ -1762,24 +1765,33 @@ function buildFabricCard(fabric, group, isFirst) {
 
   var faceImg = document.createElement('img');
   faceImg.className = 'fc-img'; faceImg.alt = name; faceImg.loading = 'lazy';
-  if (face) faceImg.src = face; else faceImg.style.background = 'var(--cream-dark)';
+  if (face) faceImg.src = face;
+  else {                                   // no photo yet: show the sheet's ColorHex as a swatch
+    faceImg.alt = '';
+    faceImg.style.background = /^#?[0-9a-f]{6}$/i.test(String(fabric.ColorHex || '').trim())
+      ? '#' + String(fabric.ColorHex).trim().replace('#', '') : 'var(--cream-dark)';
+  }
   imgWrap.appendChild(faceImg);
 
   var body = document.createElement('div');
   body.className = 'fc-body';
 
   var nameEl = document.createElement('span'); nameEl.className = 'fname'; nameEl.textContent = name;
+  var row    = document.createElement('div');  row.className = 'fc-row';
   var codeEl = document.createElement('span'); codeEl.className = 'fcode'; codeEl.textContent = code;
+  var gsmEl  = document.createElement('span'); gsmEl.className = 'fgsm';
+  gsmEl.textContent = fabric.Weight_gsm ? fabric.Weight_gsm + ' GSM' : '';
+  row.appendChild(codeEl); row.appendChild(gsmEl);
   var compEl = document.createElement('span'); compEl.className = 'fcomp'; compEl.textContent = comp;
+
+  var check = document.createElement('span');
+  check.className = 'fc-check';
+  check.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="5,12.5 10,17.5 19,7"/></svg>';
+  imgWrap.appendChild(check);
+
   var priceEl = document.createElement('span'); priceEl.className = 'fprice';
   priceEl.textContent = fabricPriceText(unitPrice);
-
-  var detBtn = document.createElement('button');
-  detBtn.className = 'fc-details-toggle';
-  detBtn.innerHTML = '<span>Details</span><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>';
-  detBtn.onclick = function(e){ toggleFabricDetails(detBtn, e); };
-
-  body.appendChild(nameEl); body.appendChild(priceEl); body.appendChild(codeEl); body.appendChild(compEl); body.appendChild(detBtn);
+  body.appendChild(nameEl); body.appendChild(priceEl); body.appendChild(row); body.appendChild(compEl);
 
   var drawer = document.createElement('div');
   drawer.className = 'fc-details-drawer';
@@ -3114,7 +3126,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.3.13</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.3.14</div>
 
 
 <!-- Cookie consent (analytics) — wording is yours to edit; keep the two button ids -->
