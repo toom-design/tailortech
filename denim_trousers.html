@@ -178,7 +178,7 @@ body { font-family: 'Jost', sans-serif; background: #ffffff; color: var(--ink); 
 </div>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.1.2</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:rgba(26,25,22,0.30);z-index:9999;pointer-events:none;">v1.1.3</div>
 
 <!-- Firebase -->
 <script type="module">
@@ -462,6 +462,81 @@ setTimeout(function () {
   var asked = false;
   onAuthStateChanged(getAuth(app()), function (user) { if (user && !asked) { asked = true; window.ttMarketingAsk(user); } });
 }, 0);
+</script>
+
+<!-- TailorTech brand skin (same look as Hoodie / T-shirt / Sweatpants): purple + turquoise, card sections, rounded option buttons -->
+<style>
+:root { --tt-turq: #4dbfab; --tt-purple: #4a164f; --tt-grey: #e3e3e3; }
+/* Preview: grey stage, pill-shaped segmented switches */
+.preview-panel, .preview-panel .avatar-stage, .preview-panel .stage-viewport, #stage-3d { background: var(--tt-grey) !important; }
+.preview-panel .view-bar { background: transparent !important; border-top: none !important; padding: 14px 20px 20px !important; }
+.preview-panel .view-toggle { padding: 18px 20px 6px !important; }
+.seg-wrap { display: inline-flex; padding: 3px; background: #fff; border: 1px solid rgba(26,25,22,0.08); border-radius: 999px; box-shadow: 0 6px 18px rgba(26,25,22,0.08); }
+.view-btn, .view-bar-btn { font-family: 'Jost', sans-serif !important; font-size: 9.5px !important; font-weight: 500 !important; letter-spacing: 0.2em !important; text-transform: uppercase;
+  padding: 10px 28px !important; border: none !important; border-radius: 999px !important; background: transparent !important; color: #6E6C68 !important; cursor: pointer; transition: background 0.2s, color 0.2s; }
+.view-btn.active, .view-bar-btn.active { background: var(--tt-purple) !important; color: #fff !important; }
+.view-btn:not(.active):hover, .view-bar-btn:not(.active):hover { color: var(--tt-purple) !important; }
+.preview-panel .layer-stack, .preview-panel #layer-stack, .preview-panel .layer img { mix-blend-mode: multiply; }   /* white fills in the drawings blend into the grey stage */
+.zoom-btn { background: #fff !important; border: 1px solid rgba(26,25,22,0.14) !important; box-shadow: 0 2px 8px rgba(26,25,22,0.06); }
+/* Tabs: equal width, bar underneath, turquoise when active */
+.tabs { display: flex !important; gap: 10px; padding: 0 20px !important; border-bottom: 1px solid var(--border); overflow: visible !important; }
+.tab { flex: 1 1 0; min-width: 0; margin: 0 !important; padding: 20px 4px 18px !important; position: relative; text-align: center; white-space: normal !important; line-height: 1.35;
+  font-size: 9.5px !important; letter-spacing: 0.16em !important; font-weight: 500 !important; border-bottom: none !important; color: #B5B3AE !important; background: none !important; }
+.tab::after { content: ''; position: absolute; left: 0; right: 0; bottom: 8px; height: 3px; border-radius: 3px; background: var(--tt-grey); transition: background 0.25s; }
+.tab.active { color: var(--ink) !important; font-weight: 600 !important; }
+.tab.active::after { background: var(--tt-turq); }
+.tab:not(.active):hover { color: var(--ink-mid) !important; }
+/* Sections as framed cards */
+.config-body { padding: 14px 12px 20px !important; display: flex; flex-direction: column; gap: 12px; }
+.config-body .section { padding: 18px 20px !important; margin: 0 !important; background: var(--white); border: 1px solid var(--border) !important; border-radius: 12px; transition: border-color 0.2s; }
+.config-body .section:hover { border-color: var(--border-mid) !important; }
+.section-label { font-size: 10px !important; font-weight: 600 !important; letter-spacing: 0.2em !important; text-transform: uppercase; color: var(--ink) !important; margin-bottom: 14px; }
+/* Option buttons: rounded rectangles, purple when selected */
+.pill-group { gap: 10px !important; }
+.pill { font-family: 'Jost', sans-serif !important; font-size: 12px !important; font-weight: 400 !important; letter-spacing: 0.01em; padding: 11px 18px !important; border-radius: 8px !important;
+  background: #fff !important; color: var(--ink) !important; border: 1px solid rgba(26,25,22,0.16) !important; display: inline-flex; align-items: center; gap: 8px; }
+.pill:hover { border-color: var(--tt-purple) !important; color: var(--tt-purple) !important; }
+.pill.selected { background: var(--tt-purple) !important; border-color: var(--tt-purple) !important; color: #fff !important; font-weight: 500 !important; }
+.pill.selected .pill-extra-price { color: rgba(255,255,255,0.65) !important; }
+.comp-part-btn, .btn-material, .btn-size { border-radius: 8px !important; border: 1px solid rgba(26,25,22,0.16) !important; background: #fff !important; color: var(--ink) !important; }
+.comp-part-btn:hover, .btn-material:hover, .btn-size:hover { border-color: var(--tt-purple) !important; color: var(--tt-purple) !important; }
+.comp-part-btn.selected, .btn-material.selected, .btn-size.selected { background: var(--tt-purple) !important; border-color: var(--tt-purple) !important; color: #fff !important; }
+.btn-material.selected .bm-price { color: rgba(255,255,255,0.7) !important; }
+/* Picture cards (collars, cuffs, pockets…) */
+.option-card, .icon-card, .btn-stitch-card { border-radius: 10px !important; border: 1px solid rgba(26,25,22,0.14) !important; background: #fff !important; }
+.option-card:hover, .icon-card:hover, .btn-stitch-card:hover { border-color: rgba(74,22,79,0.45) !important; }
+.option-card.selected, .icon-card.selected, .btn-stitch-card.selected { border-color: var(--tt-purple) !important; box-shadow: inset 0 0 0 1.5px var(--tt-purple) !important; }
+.option-card.selected .cname, .icon-card.selected .icon-card-label { color: var(--tt-purple) !important; font-weight: 600; }
+/* Fabric cards */
+.fabric-card { border-radius: 10px !important; }
+.fabric-card:hover { border-color: rgba(74,22,79,0.45) !important; }
+.fabric-card.selected { background: var(--tt-purple) !important; border-color: var(--tt-purple) !important; box-shadow: none !important; }
+.fabric-card.selected .fname, .fabric-card.selected .fcode, .fabric-card.selected .fgsm, .fabric-card.selected .fcomp { color: #fff !important; }
+.fabric-card.selected .fprice { color: rgba(255,255,255,0.78) !important; }
+/* Request / Add to cart buttons */
+[onclick="handleOrderNow()"] { background: var(--tt-purple) !important; color: #fff !important; border: 1px solid var(--tt-purple) !important; border-radius: 999px !important; padding: 16px 22px !important; font-size: 11px !important; letter-spacing: 0.16em !important; }
+[onclick="handleAddToCart()"] { background: #fff !important; color: var(--tt-purple) !important; border: 1px solid rgba(74,22,79,0.35) !important; border-radius: 999px !important; padding: 14px 22px !important; }
+[onclick="handleOrderNow()"]:hover { opacity: 0.92; }
+[onclick="handleAddToCart()"]:hover { background: rgba(74,22,79,0.05) !important; }
+/* Estimated price bar */
+#price-bar-fixed { background: var(--white) !important; border-top: 1px solid var(--border) !important; box-shadow: 0 -6px 20px rgba(26,25,22,0.07) !important; color: var(--ink-light) !important;
+  font-size: 9.5px !important; font-weight: 600 !important; letter-spacing: 0.16em !important; justify-content: space-between !important; padding: 16px 24px !important; }
+#price-bar-fixed .price-display-amount { font-family: 'Jost', sans-serif; font-size: 20px; font-weight: 500; letter-spacing: 0.02em; color: var(--tt-purple); text-transform: none; }
+/* Inputs */
+.config-body input:focus, .config-body select:focus, .config-body textarea:focus { border-color: var(--tt-purple) !important; outline: none; }
+</style>
+<script>
+(function () {
+  // Wrap the Technical/3D and Front/Back buttons in the white pill holder used on the other configurators
+  document.querySelectorAll('.view-toggle, .view-bar').forEach(function (bar) {
+    if (bar.querySelector('.seg-wrap')) return;
+    var btns = Array.prototype.filter.call(bar.children, function (c) { return c.classList.contains('view-btn') || c.classList.contains('view-bar-btn'); });
+    if (!btns.length) return;
+    var w = document.createElement('div'); w.className = 'seg-wrap';
+    bar.insertBefore(w, btns[0]);
+    btns.forEach(function (b) { w.appendChild(b); });
+  });
+})();
 </script>
 </body>
 </html>
