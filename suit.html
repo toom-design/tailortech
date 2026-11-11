@@ -1072,6 +1072,8 @@ function collectConfig() {
     'backNeckToWaist':           mval('backNeckToWaist'),
     'acrossBackShoulderWidth':   mval('acrossBackShoulderWidth'),
     'acrossBackWidth':           mval('acrossBackWidth'),
+    'chestWidth':                mval('chestWidth'),
+    'armscyeDepth':              mval('armscyeDepth'),
     'suitLength':                mval('suitLength'),
     'thighGirth':                mval('thighGirth'),
     'kneeGirth':                 mval('kneeGirth'),
@@ -1279,6 +1281,8 @@ function buildSummary() {
         mrow('Back Neck to Waist',      'backNeckToWaist'),
         mrow('Across Back Shoulder',    'acrossBackShoulderWidth'),
         mrow('Across Back Width',       'acrossBackWidth'),
+        mrow('Front Chest Width',       'chestWidth'),
+        mrow('Armscye Depth',           'armscyeDepth'),
         mrow('Suit Length',             'suitLength'),
         mrow('Thigh Girth',             'thighGirth'),
         mrow('Knee Girth',              'kneeGirth'),
@@ -1598,6 +1602,8 @@ document.addEventListener('DOMContentLoaded', function() {
     ['backNeckToWaist',       'Back neck point to waist (cm)'],
     ['acrossBackShoulderWidth','Across back shoulder width (cm)'],
     ['acrossBackWidth',       'Across back width (cm)'],
+    ['chestWidth',            'Front chest width (cm)'],
+    ['armscyeDepth',          'Armscye depth (cm)'],
     ['upperArmLength',        'Upper arm length (cm)'],
     ['suitLength',            'Suit jacket length (cm)'],
     ['insideLeg',             'Inside leg (cm)'],
@@ -2079,7 +2085,7 @@ function getClientJSONP(email, uid, callback) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.8.21</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v1.8.22</div>
 
 
 <!-- Cookie consent (analytics) — wording is yours to edit; keep the two button ids -->

@@ -468,7 +468,7 @@ const GARMENT_SETS = {
   tshirt:   new Set(['height','bustGirth','waistGirth','hipGirth','neckBaseGirth','upperBicepGirth','acrossBackShoulderWidth','outerArmLength','shirtLength']),
   shirt:    new Set(['neckBaseGirth','height','bustGirth','waistGirth','hipGirth','backNeckToWaist','acrossBackWidth','shoulderLength','outerArmLength','upperArmLength','shirtLength','acrossBackShoulderWidth','upperBicepGirth','wristGirth']),
   hoodie:   new Set(['bustGirth','upperBicepGirth','wristGirth','neckBaseGirth','outerArmLength','waistToHipLength','backNeckToWaist','acrossBackWidth','sideNeckToBust']),
-  suit:     new Set(['height','bustGirth','waistGirth','hipGirth','outerArmLength','shoulderLength','backNeckToWaist','acrossBackShoulderWidth','acrossBackWidth','upperArmLength','suitLength','wristGirth']),
+  suit:     new Set(['height','bustGirth','waistGirth','hipGirth','outerArmLength','shoulderLength','backNeckToWaist','acrossBackShoulderWidth','acrossBackWidth','chestWidth','armscyeDepth','upperArmLength','suitLength','wristGirth']),
   trousers: new Set(['height','pantWaist','hipGirth','kneeGirth','calfGirth','outsideLegLength','rise']),
 };
 // ── Garment measurements (measure a garment that already fits) ───
@@ -511,7 +511,7 @@ const LIN = [
   ['insideCrotchToCalf','Inside crotch length to calf (cm)'],['straightBodyRise','Straight body rise (cm)'],
   ['outerArmLength','Outer arm length (cm)'],['underarmLength','Underarm length (cm)'],
   ['backNeckToWrist','Back neck point to wrist length (cm)'],['backNeckToWristExtended','Back neck point to 1.5" past the wrist point (cm)'],
-  ['upperHipBreadth','Upper hip breadth (cm)'],['frontShoulderWidth','Front shoulder width (cm)'],['chestWidth','Chest width (cm)'],
+  ['upperHipBreadth','Upper hip breadth (cm)'],['frontShoulderWidth','Front shoulder width (cm)'],['chestWidth','Front chest width (cm)'],['armscyeDepth','Armscye depth (cm)'],
   ['shoulderLength','Shoulder length (cm)'],['shoulderSlope','Shoulder slope (cm)'],['neckBaseWidth','Neck base width (cm)'],
   ['waistToHipLength','Waist to hip length (cm)'],['waistToKneeLength','Waist to knee length (cm)'],
   ['abdomenToUpperKnee','Abdomen to upper knee length (cm)'],['upperKneeToAnkle','Upper knee girth to ankle girth (cm)'],
@@ -926,7 +926,7 @@ function prefillMeasurements(rec){
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v2.13.1</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v2.13.2</div>
 
 <!-- Firebase -->
 <script type="module">
