@@ -1357,9 +1357,9 @@ function loadProfile(user) {
       // Mirror to dropdown
       window._currentPersonId = res.client['Person ID'] || null;
       var _el;
-      _el = document.getElementById('dd-pid');      if(_el) _el.textContent = window._currentPersonId || '—';
-      _el = document.getElementById('dd-email-sub');if(_el) _el.textContent = res.client['Email'] || '—';
-      _el = document.getElementById('dd-name');     if(_el) _el.textContent = (res.client['First Name']||'') + ' ' + (res.client['Last Name']||'') || window._d.currentUser.displayName || '—';
+      _el = document.getElementById('dd-pid');      if(_el && !document.body.classList.contains('tt-viewing')) _el.textContent = window._currentPersonId || '—';
+      _el = document.getElementById('dd-email-sub');if(_el && !document.body.classList.contains('tt-viewing')) _el.textContent = res.client['Email'] || '—';
+      _el = document.getElementById('dd-name');     if(_el && !document.body.classList.contains('tt-viewing')) _el.textContent = (res.client['First Name']||'') + ' ' + (res.client['Last Name']||'') || window._d.currentUser.displayName || '—';
     } else {
       // Not in sheet — save now so future logins find them
       if (uid && email) {
@@ -1378,7 +1378,7 @@ function loadProfile(user) {
           if (res && res.personId) {
             document.getElementById('st-id').textContent = res.personId;
             window._currentPersonId = res.personId;
-            var _el = document.getElementById('dd-pid'); if(_el) _el.textContent = res.personId;
+            var _el = document.getElementById('dd-pid'); if(_el && !document.body.classList.contains('tt-viewing')) _el.textContent = res.personId;
           }
         });
       }
@@ -1598,7 +1598,7 @@ function saveProfile() {
       if (res.personId) {
         document.getElementById('st-id').textContent = res.personId;
         window._currentPersonId = res.personId;
-        var _el = document.getElementById('dd-pid'); if(_el) _el.textContent = res.personId;
+        var _el = document.getElementById('dd-pid'); if(_el && !document.body.classList.contains('tt-viewing')) _el.textContent = res.personId;
       }
       renderProfile(data);
       prefill(data);
@@ -1694,7 +1694,7 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeI
 
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v4.6.9</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v4.7.0</div>
 
 <!-- Cart icon + item count next to the profile picture (shown when signed in) -->
 <style>
@@ -2211,6 +2211,127 @@ setTimeout(function () {
     modal.classList.add('open');
     paint();
   };
+})();
+</script>
+
+<!-- Admin view: developers (CLIENTS → profile = developer) can open any client's dashboard -->
+<style>
+#tt-admin { display: none; position: sticky; top: 52px; z-index: 60; background: #2C0C31; color: #F4EFE9; font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; box-shadow: 0 6px 20px rgba(26,25,22,0.15); }
+#tt-admin.on { display: block; }
+#tt-admin .in { max-width: 1180px; margin: 0 auto; padding: 10px 24px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+#tt-admin .tag { font-size: 9.5px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #5FCDB8; border: 1px solid rgba(95,205,184,0.5); border-radius: 999px; padding: 5px 10px; }
+#tt-admin .who { font-size: 13px; flex: 1 1 200px; min-width: 0; }
+#tt-admin .who b { font-weight: 500; }
+#tt-admin input { flex: 0 1 280px; min-width: 160px; padding: 9px 14px; border-radius: 999px; border: 1px solid rgba(244,239,233,0.25); background: rgba(255,255,255,0.08); color: #fff; font-family: inherit; font-size: 12.5px; outline: none; }
+#tt-admin input::placeholder { color: rgba(244,239,233,0.55); }
+#tt-admin button { font-family: inherit; cursor: pointer; border-radius: 999px; padding: 9px 16px; font-size: 10px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; border: 1px solid rgba(244,239,233,0.35); background: transparent; color: #F4EFE9; }
+#tt-admin button:hover { background: rgba(255,255,255,0.08); }
+#tt-admin .list { display: none; max-width: 1180px; margin: 0 auto; padding: 0 24px 14px; max-height: 50vh; overflow-y: auto; }
+#tt-admin.open .list { display: block; }
+#tt-admin .row { display: grid; grid-template-columns: 110px 1fr 1.3fr 80px; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 12.5px; }
+#tt-admin .row:hover, #tt-admin .row.cur { background: rgba(255,255,255,0.08); }
+#tt-admin .row .pid { font-variant-numeric: tabular-nums; color: #5FCDB8; letter-spacing: 0.04em; }
+#tt-admin .row .em { color: rgba(244,239,233,0.7); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#tt-admin .row .g { color: rgba(244,239,233,0.6); font-size: 11px; text-transform: capitalize; }
+#tt-admin .count { font-size: 11px; color: rgba(244,239,233,0.6); padding: 4px 12px 8px; }
+body.tt-viewing .hero-cta { display: none; }
+@media (max-width: 640px) { #tt-admin .row { grid-template-columns: 90px 1fr; } #tt-admin .row .em, #tt-admin .row .g { display: none; } #tt-admin .in { padding: 10px 16px; } }
+</style>
+<div id="tt-admin" aria-label="Admin view">
+  <div class="in">
+    <span class="tag">Admin</span>
+    <span class="who" id="tt-admin-who">Your own dashboard</span>
+    <input type="search" id="tt-admin-q" placeholder="Find a client: name, ID or email" autocomplete="off">
+    <button type="button" id="tt-admin-all">All clients</button>
+    <button type="button" id="tt-admin-me" style="display:none">Back to mine</button>
+  </div>
+  <div class="list" id="tt-admin-list"></div>
+</div>
+<script>
+(function () {
+  var bar = document.getElementById('tt-admin'), list = document.getElementById('tt-admin-list'), q = document.getElementById('tt-admin-q');
+  var clients = [], view = null, realUser = null;
+  var VIEW_ACTIONS = ['getOrders', 'getMeasurements', 'getClient', 'saveClient'];
+  function esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function name(c) { return ((c.firstName || '') + ' ' + (c.lastName || '')).trim() || c.email; }
+
+  // While viewing a client, the dashboard's own requests ask for that client's data
+  function patchReq() {
+    var orig = window._d.req;
+    window._d.req = function (action, payload) {
+      if (view && VIEW_ACTIONS.indexOf(action) >= 0) payload = Object.assign({}, payload || {}, { email: view.email, uid: '' });
+      return orig.call(window._d, action, payload);
+    };
+    var origSave = window.saveClientJSONP;
+    if (typeof origSave === 'function') window.saveClientJSONP = function (data, cb) {
+      if (view) {
+        data = Object.assign({}, data, { uid: '', email: view.email });
+        if (data.data) { data.data = Object.assign({}, data.data); delete data.data['UID']; delete data.data['Marketing Consent']; data.data['Email'] = view.email; }
+      }
+      return origSave.call(this, data, cb);
+    };
+    var origMeas = window.goMeasurements;
+    window.goMeasurements = function () {
+      if (!view) return origMeas.apply(this, arguments);
+      location.href = 'https://tailortech.toom.design/' + (location.pathname.indexOf('/staging/') >= 0 ? 'staging/' : '') + 'measurements.html?client=' + encodeURIComponent(view.email);
+    };
+  }
+
+  function resetPanels() {
+    ['orders-loading', 'meas-loading'].forEach(function (id) { var e = document.getElementById(id); if (e) e.style.display = ''; });
+    ['orders-empty', 'meas-empty', 'orders-list', 'meas-body-row', 'meas-date-row'].forEach(function (id) { var e = document.getElementById(id); if (e) e.style.display = 'none'; });
+    ['orders-list', 'meas-chips'].forEach(function (id) { var e = document.getElementById(id); if (e) e.innerHTML = ''; });
+  }
+  function show(c) {
+    view = c || null;
+    var u = view ? { uid: '', email: view.email, displayName: name(view) } : realUser;
+    window._d.currentUser = u;
+    document.body.classList.toggle('tt-viewing', !!view);
+    document.getElementById('tt-admin-who').innerHTML = view
+      ? 'Viewing <b>' + esc(name(view)) + '</b> · ' + esc(view.personId || view.email)
+      : 'Your own dashboard';
+    document.getElementById('tt-admin-me').style.display = view ? '' : 'none';
+    var g = document.getElementById('greeting');
+    if (g) g.textContent = view ? name(view) + '’s dashboard' : 'Welcome back, ' + ((realUser.displayName || '').split(' ')[0] || 'there');
+    var mk = document.getElementById('ef-marketing'); if (mk && mk.closest('.ef')) mk.closest('.ef').style.display = view ? 'none' : '';
+    bar.classList.remove('open');
+    resetPanels();
+    try { loadOrders(); loadMeasurements(); loadProfile(u); } catch (e) { console.error(e); }
+    if (!view) setTimeout(function () { try { setAccountPopover(realUser); } catch (e) {} }, 2500);
+    try { history.replaceState(null, '', view ? '?client=' + encodeURIComponent(view.email) : location.pathname); } catch (e) {}
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function render() {
+    var s = (q.value || '').toLowerCase().trim();
+    var rows = clients.filter(function (c) { return !s || (name(c) + ' ' + c.email + ' ' + c.personId).toLowerCase().indexOf(s) >= 0; });
+    list.innerHTML = '<div class="count">' + rows.length + ' of ' + clients.length + ' clients</div>' + rows.map(function (c, i) {
+      return '<div class="row' + (view && view.email === c.email ? ' cur' : '') + '" data-i="' + clients.indexOf(c) + '"><span class="pid">' + esc(c.personId || '—') + '</span><span>' + esc(name(c)) + '</span><span class="em">' + esc(c.email) + '</span><span class="g">' + esc(c.gender || '') + '</span></div>';
+    }).join('');
+  }
+  list.addEventListener('click', function (e) { var r = e.target.closest('.row'); if (r) show(clients[+r.dataset.i]); });
+  q.addEventListener('input', function () { bar.classList.add('open'); render(); });
+  q.addEventListener('focus', function () { bar.classList.add('open'); render(); });
+  document.getElementById('tt-admin-all').onclick = function () { bar.classList.toggle('open'); render(); };
+  document.getElementById('tt-admin-me').onclick = function () { show(null); };
+  document.addEventListener('click', function (e) { if (!bar.contains(e.target)) bar.classList.remove('open'); });
+
+  // Wait for sign-in, then ask the server whether this account may see all clients (checked with the Firebase token)
+  var tries = 0;
+  (function wait() {
+    var u = window._d && window._d.auth && window._d.auth.currentUser;
+    if (!u) { if (++tries < 80) setTimeout(wait, 250); return; }
+    realUser = u;
+    u.getIdToken().then(function (tok) { return window._d.req('getTailorClients', { idToken: tok }); }).then(function (res) {
+      if (!res || !res.success) return;                       // ordinary client: nothing changes
+      clients = res.clients || [];
+      patchReq();
+      var main = document.getElementById('main'); if (main) main.parentNode.insertBefore(bar, main);   // right under the top bar
+      bar.classList.add('on');
+      var want = new URLSearchParams(location.search).get('client');
+      var c = want && clients.find(function (x) { return x.email.toLowerCase() === want.toLowerCase(); });
+      if (c) show(c);
+    }).catch(function () {});
+  })();
 })();
 </script>
 </body>

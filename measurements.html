@@ -801,6 +801,9 @@ window.initTailorMode = function(user, client) {
       _tailor.clients = res.clients || [];
       hint.textContent = _tailor.clients.length ? 'Pick a client to enter or update their measurements. Their latest saved values load automatically.' : 'No clients yet.';
       filterTailorClients();
+      var want = new URLSearchParams(location.search).get('client');           // opened from the admin dashboard
+      var pick = want && _tailor.clients.find(function(c){ return c.email.toLowerCase() === want.toLowerCase(); });
+      if (pick) { _tailor.current = pick; filterTailorClients(); pickTailorClient(pick.email); }
     })
     .catch(function(){ document.getElementById('tailor-hint').textContent = 'Could not load clients.'; });
 };
@@ -926,7 +929,7 @@ function prefillMeasurements(rec){
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v2.13.2</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v2.14.0</div>
 
 <!-- Firebase -->
 <script type="module">
