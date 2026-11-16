@@ -1,0 +1,2342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #F0EDE6; --cream-dark: #E5E1D8; --cream-mid: #EBE7DF;
+  --ink: #1A1916; --ink-mid: #4A4844; --ink-light: #8A8880; --ink-faint: #C0BDB8;
+  --white: #FAFAF8; --border: rgba(26,25,22,0.10); --border-mid: rgba(26,25,22,0.20);
+}
+body {
+  font-family: 'Jost', sans-serif; background: var(--cream);
+  color: var(--ink); min-height: 100vh; -webkit-font-smoothing: antialiased;
+}
+button { cursor: pointer; font-family: inherit; }
+
+
+/* ── Loading ── */
+#loading {
+  min-height: calc(100vh - 52px);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 14px;
+}
+.loader {
+  width: 24px; height: 24px;
+  border: 1.5px solid var(--border-mid); border-top-color: var(--ink);
+  border-radius: 50%; animation: spin 0.7s linear infinite;
+}
+.loader-sm { width: 20px; height: 20px; }
+.loader-xs { width: 14px; height: 14px; border-width: 1.2px; }
+.fabric-swatch-pending { display: flex; align-items: center; justify-content: center; background: var(--cream-mid); border: 1px solid var(--border); cursor: default; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.load-text { font-size: 11px; letter-spacing: 0.10em; color: var(--ink-faint); text-transform: uppercase; }
+
+/* ── Page ── */
+#main { display: none; }
+.page { max-width: 1020px; margin: 0 auto; padding: 48px 28px 80px; }
+
+/* ── Welcome ── */
+.welcome { margin-bottom: 40px; }
+.welcome-eyebrow {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px;
+}
+.welcome h1 { font-size: 26px; font-weight: 300; letter-spacing: -0.01em; color: var(--ink); }
+
+/* ── Stats ── */
+.stats { display: flex; gap: 1px; margin-bottom: 48px; background: var(--border); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; }
+.stat { flex: 1; background: var(--white); padding: 20px 22px; }
+.stat-lbl { font-size: 9px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 8px; }
+.stat-val { font-size: 22px; font-weight: 300; color: var(--ink); line-height: 1; }
+.stat-sub { font-size: 11px; color: var(--ink-faint); margin-top: 4px; letter-spacing: 0.02em; }
+
+/* ── Section ── */
+.sec-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px;
+}
+.sec-title {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--ink-light);
+}
+.sec-gap { height: 48px; }
+
+/* ── Action link ── */
+.sec-action {
+  font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 500;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  background: none; border: none; color: var(--ink-light); cursor: pointer;
+  transition: color 0.15s; display: inline-flex; align-items: center; gap: 5px;
+  text-decoration: none;
+}
+.sec-action:hover { color: var(--ink); }
+
+/* ── Cards grid (quick actions) ── */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 48px; }
+.action-card {
+  background: var(--white); padding: 28px 24px 22px;
+  cursor: pointer; transition: background 0.15s;
+  display: flex; flex-direction: column;
+}
+.action-card:hover { background: var(--cream-mid); }
+.action-card-icon {
+  width: 36px; height: 36px; margin-bottom: 16px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-mid);
+}
+.action-card-title { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 6px; letter-spacing: 0.01em; }
+.action-card-desc  { font-size: 12px; color: var(--ink-light); line-height: 1.55; flex: 1; }
+.action-card-cta {
+  margin-top: 20px; font-size: 10px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint);
+  display: flex; align-items: center; gap: 6px; transition: color 0.15s;
+}
+.action-card:hover .action-card-cta { color: var(--ink); }
+
+/* ── Table ── */
+.table-wrap { background: var(--white); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 48px; }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  text-align: left; padding: 12px 18px;
+  font-size: 9px; font-weight: 600; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink-faint);
+  border-bottom: 1px solid var(--border); background: var(--cream-mid);
+}
+.data-table td {
+  padding: 14px 18px; font-size: 13px; color: var(--ink);
+  border-bottom: 1px solid var(--border);
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--cream-mid); }
+.status {
+  display: inline-block; padding: 3px 8px; border-radius: 1px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase;
+}
+.s-new     { background: rgba(26,25,22,0.06); color: var(--ink-mid); }
+.s-prog    { background: rgba(184,146,74,0.12); color: #7a5e2a; border: 1px solid rgba(184,146,74,0.3); }
+.s-done    { background: rgba(61,122,90,0.10); color: #2a5c3f; border: 1px solid rgba(61,122,90,0.25); }
+.s-cancel  { background: rgba(160,64,64,0.08); color: #7a2c2c; border: 1px solid rgba(160,64,64,0.2); }
+
+/* ── Meas chips ── */
+.meas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1px; background: var(--border); }
+.meas-chip { background: var(--white); padding: 16px 18px; }
+.meas-lbl { font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px; }
+.meas-val { font-size: 20px; font-weight: 300; color: var(--ink); }
+.meas-unit { font-size: 11px; color: var(--ink-faint); margin-left: 2px; }
+
+/* ── Profile ── */
+.profile-wrap { background: var(--white); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; }
+.profile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 0; }
+.pf {
+  padding: 18px 20px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+}
+.pf:last-child { border-right: none; }
+.pf-lbl { font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 5px; }
+.pf-val { font-size: 13px; color: var(--ink); }
+.pf-val.empty { color: var(--ink-faint); font-style: italic; }
+
+/* ── Edit form ── */
+.edit-form { display: none; padding: 24px; border-top: 1px solid var(--border); background: var(--cream-mid); }
+.edit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; margin-bottom: 18px; }
+.ef { display: flex; flex-direction: column; }
+.ef label { font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 6px; }
+.ef input, .ef select {
+  font-family: 'Jost', sans-serif; font-size: 13px;
+  padding: 9px 12px; background: var(--white);
+  border: 1px solid var(--border-mid); border-radius: 2px;
+  color: var(--ink); outline: none; transition: border-color 0.15s;
+  -webkit-appearance: none;
+}
+.ef input:focus, .ef select:focus { border-color: var(--ink); }
+.ef input::placeholder { color: var(--ink-faint); }
+.ef select { cursor: pointer; }
+.phone-row { display: flex; gap: 8px; }
+.phone-row select { flex: 0 0 118px; }
+.phone-row input { flex: 1; min-width: 0; }
+.edit-btns { display: flex; gap: 10px; }
+.btn-save {
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 11px 24px; background: var(--ink); color: var(--white);
+  border: none; border-radius: 2px; cursor: pointer; transition: background 0.15s;
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.btn-save:hover { background: #2d2c29; }
+.btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-cancel {
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  padding: 11px 20px; background: transparent;
+  border: 1px solid var(--border-mid); border-radius: 2px;
+  color: var(--ink-mid); cursor: pointer; transition: all 0.15s;
+}
+.btn-cancel:hover { background: var(--white); }
+.spin-sm {
+  width: 12px; height: 12px;
+  border: 1.5px solid rgba(255,255,255,0.3); border-top-color: #fff;
+  border-radius: 50%; animation: spin 0.65s linear infinite; display: none;
+}
+
+/* ── Empty state ── */
+.empty { padding: 40px 24px; text-align: center; }
+.empty-icon { color: var(--ink-faint); margin-bottom: 12px; }
+.empty p { font-size: 12px; color: var(--ink-faint); letter-spacing: 0.04em; margin-bottom: 20px; }
+
+/* ── Toast ── */
+#toast {
+  position: fixed; bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--ink); color: var(--white);
+  font-size: 11px; font-weight: 500; letter-spacing: 0.06em;
+  padding: 12px 22px; border-radius: 2px;
+  opacity: 0; transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none; z-index: 9999;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#toast.err  { background: #7a2c2c; }
+
+@media(max-width:600px){
+  .page { padding: 32px 16px 60px; }
+  .stats { flex-wrap: wrap; }
+  .data-table th:nth-child(3), .data-table td:nth-child(3),
+  .data-table th:nth-child(4), .data-table td:nth-child(4) { display: none; }
+}
+
+
+.account-popover {
+  position: fixed; top: 60px; right: 28px;
+  width: min(320px, calc(100vw - 32px));
+  background: var(--white); border: 1px solid var(--border-mid);
+  border-radius: 2px; box-shadow: 0 18px 52px rgba(26,25,22,0.16);
+  padding: 20px; z-index: 9999; display: none;
+}
+.account-popover.open { display: block; } /* fallback */
+.account-popover::before {
+  content: ''; position: absolute; top: -7px; right: 12px;
+  width: 12px; height: 12px; background: var(--white);
+  border-left: 1px solid var(--border-mid); border-top: 1px solid var(--border-mid);
+  transform: rotate(45deg);
+}
+.account-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.account-av-lg {
+  width: 40px; height: 40px; border-radius: 50%; background: var(--ink);
+  color: var(--white); font-size: 14px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; flex-shrink: 0;
+}
+.account-av-lg img { width: 100%; height: 100%; object-fit: cover; }
+.account-fullname { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+.account-subemail { font-size: 11px; color: var(--ink-light); }
+.account-divider { height: 1px; background: var(--border); margin: 0 0 14px; }
+.account-title { font-size: 10px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 14px; }
+.account-row { margin-bottom: 10px; }
+.account-lbl { font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 4px; }
+.account-val { font-size: 12px; color: var(--ink); background: var(--cream-mid); border: 1px solid var(--border); padding: 7px 10px; border-radius: 2px; word-break: break-all; }
+.account-actions { display: flex; gap: 8px; margin-top: 14px; border-top: 1px solid var(--border); padding-top: 14px; flex-wrap: wrap; }
+.account-copy { font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; padding: 7px 12px; border: 1px solid var(--border-mid); background: transparent; color: var(--ink-mid); border-radius: 2px; cursor: pointer; transition: all 0.15s; }
+.account-copy:hover { background: var(--cream-mid); color: var(--ink); }
+.account-copy.danger { color: #8a3030; border-color: rgba(138,48,48,0.25); }
+.account-copy.danger:hover { background: rgba(138,48,48,0.06); }
+
+/* ── Nav ── */
+.nav {
+  height: 52px; background: var(--white); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 28px; gap: 16px;
+  position: sticky; top: 0; z-index: 100;
+}
+.nav-brand {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.20em;
+  text-transform: uppercase; color: var(--ink); margin-right: auto; text-decoration: none;
+}
+.nav-btn {
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  padding: 7px 16px; border: 1px solid var(--border-mid); border-radius: 2px;
+  background: transparent; color: var(--ink-mid); cursor: pointer; transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
+}
+.nav-btn:hover { background: var(--cream-mid); color: var(--ink); }
+.nav-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--ink); color: var(--white);
+  font-size: 11px; font-weight: 600; letter-spacing: 0;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; flex-shrink: 0;
+  border: none; padding: 0; cursor: pointer;
+  -webkit-appearance: none;
+}
+.nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ── Account popover ── */
+.account-popover {
+  position: fixed; top: 60px; right: 28px;
+  width: min(340px, calc(100vw - 32px));
+  background: var(--white); border: 1px solid var(--border-mid);
+  border-radius: 2px; box-shadow: 0 18px 48px rgba(26,25,22,0.16);
+  padding: 18px; z-index: 999; display: none;
+}
+.account-popover.open { display: block; } /* fallback */
+.account-popover::before {
+  content: ''; position: absolute; top: -7px; right: 10px;
+  width: 12px; height: 12px; background: var(--white);
+  border-left: 1px solid var(--border-mid); border-top: 1px solid var(--border-mid);
+  transform: rotate(45deg);
+}
+.account-title { font-size: 10px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 14px; }
+.account-row { margin-bottom: 12px; }
+.account-lbl { font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 4px; }
+.account-val { font-size: 12px; color: var(--ink); word-break: break-all; background: var(--cream-mid); border: 1px solid var(--border); padding: 8px 10px; border-radius: 2px; }
+.account-actions { display: flex; gap: 8px; margin-top: 14px; }
+.account-copy { font-size: 10px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; padding: 7px 12px; border: 1px solid var(--border-mid); background: transparent; color: var(--ink-mid); border-radius: 2px; cursor: pointer; }
+.account-copy:hover { background: var(--cream-mid); color: var(--ink); }
+
+/* ── Hero ── */
+.hero {
+  position: relative; width: 100%; overflow: hidden;
+  background: #111110; min-height: 340px; display: flex; align-items: center;
+  margin-bottom: 32px;
+}
+.hero-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+.hero-overlay {
+  position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(90deg, rgba(17,17,16,0.94) 0%, rgba(17,17,16,0.82) 38%, rgba(17,17,16,0.45) 70%, rgba(17,17,16,0.12) 100%);
+}
+.hero-inner { position: relative; z-index: 2; max-width: 1020px; margin: 0 auto; width: 100%; padding: 56px 28px; }
+.hero-eyebrow {
+  font-size: 9px; font-weight: 600; letter-spacing: 0.24em; text-transform: uppercase;
+  color: rgba(240,237,230,0.45); margin-bottom: 18px; display: flex; align-items: center; gap: 10px;
+}
+.hero-eyebrow::before { content: ''; display: block; width: 22px; height: 1px; background: rgba(240,237,230,0.30); }
+.hero-title {
+  font-family: 'Cormorant Garamond', serif; font-weight: 300;
+  font-size: 40px; line-height: 1.08; color: #F0EDE6; margin-bottom: 14px;
+}
+.hero-sub { font-size: 13px; color: rgba(240,237,230,0.55); line-height: 1.6; max-width: 380px; margin-bottom: 26px; }
+.hero-cta {
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase; color: #1A1916;
+  background: #F0EDE6; border: none; border-radius: 2px; padding: 13px 26px;
+  display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+  transition: background 0.15s; cursor: pointer;
+}
+.hero-cta:hover { background: #fff; }
+@media(max-width:760px){ .hero { min-height: 260px; } .hero-inner { padding: 40px 20px; } .hero-title { font-size: 30px; } }
+
+/* ── Profile card ── */
+.profile-card { background: var(--white); border: 1px solid var(--border); border-radius: 3px; padding: 26px 28px; margin-bottom: 32px; }
+.profile-card-top {
+  display: flex; align-items: baseline; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px; margin-bottom: 18px; padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.profile-name { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 500; color: var(--ink); }
+.profile-meta { font-size: 11px; color: var(--ink-light); display: flex; gap: 18px; flex-wrap: wrap; margin-top: 4px; }
+.profile-meta strong { color: var(--ink); font-weight: 600; }
+
+/* ── Profile contact row (replaces the old field grid) ── */
+.profile-contact-row { display: flex; gap: 36px; flex-wrap: wrap; padding-top: 18px; }
+.pc-item { display: flex; align-items: flex-start; gap: 10px; }
+.pc-icon { color: var(--ink-mid); flex-shrink: 0; margin-top: 1px; }
+.pc-lbl { font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 4px; }
+.pc-val { font-size: 13px; color: var(--ink); line-height: 1.5; }
+.pc-val.empty { color: var(--ink-faint); font-style: italic; }
+
+/* ── Split layout ── */
+.split { display: grid; grid-template-columns: 1.6fr 1fr; gap: 24px; margin-bottom: 32px; align-items: start; }
+.split > div { min-width: 0; }
+@media(max-width:800px){ .split { grid-template-columns: 1fr; } }
+
+.sec-count {
+  font-size: 10px; color: var(--ink-faint); font-weight: 500; margin-left: 8px;
+  letter-spacing: 0.04em; text-transform: none;
+}
+
+/* ── Order rows ── */
+.orders-panel { background: var(--white); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
+.order-row {
+  display: flex; flex-direction: column; gap: 20px; padding: 36px 18px;
+  border-bottom: 1px solid var(--border); transition: background 0.15s;
+}
+.order-row:last-child { border-bottom: none; }
+.order-row:hover { background: var(--cream-mid); }
+.order-row-top { display: flex; align-items: flex-start; gap: 16px; }
+.order-swatch { width: 224px; height: 224px; border-radius: 3px; flex-shrink: 0; object-fit: contain; background: transparent; }
+.order-swatch.has-img { cursor: pointer; transition: opacity 0.15s; }
+.order-swatch.has-img:hover { opacity: 0.85; }
+.order-swatch.loading, .order-swatch.empty {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--cream-mid); border: 1px solid var(--border);
+}
+.order-main { flex: 1; min-width: 0; }
+.order-header-line { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.order-num { font-size: 12px; font-weight: 600; color: var(--ink); letter-spacing: 0.01em; }
+.order-garment { font-size: 11px; color: var(--ink-light); margin-top: 2px; }
+.order-price { font-size: 13px; font-weight: 600; color: var(--ink); margin-top: 8px; }
+.order-date { font-size: 11px; color: var(--ink-faint); flex-shrink: 0; white-space: nowrap; }
+
+/* Fabric swatches row — larger, labeled, only rendered for fabrics that
+   actually exist on the order (never padded with empty slots). */
+.order-fabrics-row { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 14px; }
+.fabric-swatch-item { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; flex-shrink: 0; }
+.fabric-swatch-img {
+  width: 72px; height: 72px; border-radius: 3px; object-fit: cover;
+  border: 1px solid var(--border); background: var(--cream-mid); cursor: pointer;
+  transition: border-color 0.15s; flex-shrink: 0;
+}
+.fabric-swatch-img:hover { border-color: var(--ink-mid); }
+.fabric-swatch-label {
+  font-size: 9px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--ink-light);
+}
+
+/* ── Measurements panel ── */
+.meas-panel { background: var(--white); border: 1px solid var(--border); border-radius: 3px; padding: 22px 20px; display: flex; flex-direction: column; gap: 16px; }
+.meas-date-row { display: flex; align-items: center; gap: 8px; }
+.meas-date-row label { font-size: 9px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-light); }
+.meas-date-row select {
+  font-family: 'Jost', sans-serif; font-size: 12px; padding: 7px 10px;
+  background: var(--white); border: 1px solid var(--border-mid); border-radius: 2px;
+  color: var(--ink); outline: none; cursor: pointer;
+}
+.meas-body-row { display: flex; gap: 18px; align-items: flex-start; }
+.meas-figure {
+  flex: 1 1 58%; width: 58%; min-width: 0; max-height: 960px; border-radius: 2px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  color: var(--ink-faint); overflow: hidden; background: transparent;
+}
+.meas-figure img { width: 100%; height: auto; max-height: 960px; object-fit: contain; display: block; }
+.meas-figure span { font-size: 8px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; text-align: center; padding: 0 4px; }
+.meas-list { flex: 1 1 42%; display: flex; flex-direction: column; gap: 1px; background: var(--border); border-radius: 2px; overflow-y: auto; max-height: 960px; }
+.meas-list .meas-chip { display: flex; align-items: baseline; justify-content: space-between; padding: 10px 12px; }
+.meas-list .meas-lbl { margin-bottom: 0; }
+.meas-list .meas-val { font-size: 15px; }
+@media(max-width:420px){ .meas-body-row { flex-direction: column; } .meas-figure { width: 100%; height: 220px; } }
+
+/* ── Quick actions bar ── */
+.quickbar { background: var(--white); border: 1px solid var(--border); border-radius: 3px; display: flex; overflow: hidden; }
+.qa-item {
+  flex: 1; display: flex; align-items: center; gap: 14px; padding: 20px 22px;
+  cursor: pointer; transition: background 0.15s; border-right: 1px solid var(--border);
+}
+.qa-item:last-child { border-right: none; }
+.qa-item:hover { background: var(--cream-mid); }
+.qa-icon { color: var(--ink-mid); flex-shrink: 0; }
+.qa-text { flex: 1; min-width: 0; }
+.qa-title { font-size: 12px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+.qa-desc { font-size: 11px; color: var(--ink-light); line-height: 1.4; }
+.qa-arrow { color: var(--ink-faint); flex-shrink: 0; transition: transform 0.15s; }
+.qa-item:hover .qa-arrow { transform: translateX(2px); color: var(--ink); }
+@media(max-width:700px){ .quickbar { flex-direction: column; } .qa-item { border-right: none; border-bottom: 1px solid var(--border); } .qa-item:last-child { border-bottom: none; } }
+
+
+/* ══ v4.6.0 — TailorTech brand style (mint / purple), same as cart, success page and configurators ══ */
+:root { --tt-purple: #4A164F; --tt-turq: #4DBFAB; --mint-bg: #F3F8F6; --mint-ink: #2f6f63; }
+.loader { border-top-color: var(--tt-purple); }
+.hero-cta { background: var(--tt-purple); color: #fff; border-radius: 999px; padding: 15px 28px; font-weight: 500; letter-spacing: 0.18em; font-size: 10.5px; }
+.hero-cta:hover { background: #5a1d60; }
+.profile-card, .orders-panel, .meas-panel, .quickbar { border-radius: 14px; border-color: var(--border); }
+.profile-name { font-family: 'Cormorant Garamond', Georgia, serif; }
+.sec-head { border-bottom-color: var(--border); }
+.sec-action { border-radius: 999px; transition: color 0.15s; }
+.sec-action:hover { color: var(--tt-purple); }
+.btn-save { background: var(--tt-purple); border-radius: 999px; font-weight: 500; letter-spacing: 0.18em; padding: 13px 26px; }
+.btn-save:hover { background: #5a1d60; }
+.ef input, .ef select { border-radius: 8px; }
+.ef input:focus, .ef select:focus { border-color: var(--tt-purple); box-shadow: 0 0 0 3px rgba(74,22,79,0.08); outline: none; }
+.edit-form { background: var(--mint-bg); }
+.meas-date-row select { border-radius: 8px; }
+.qa-item:hover { background: var(--mint-bg); }
+.qa-icon { color: var(--tt-purple); }
+.qa-item:hover .qa-arrow { color: var(--tt-purple); }
+
+/* Orders: compact rows */
+.order-row { padding: 18px; gap: 12px; }
+.order-row:hover { background: rgba(77,191,171,0.06); }
+.order-swatch { width: 120px; height: 120px; border-radius: 10px; background: #fff; border: 1px solid var(--border); }
+img.order-swatch.has-img { padding: 6px; }
+.order-num { font-size: 10px; font-weight: 500; letter-spacing: 0.12em; color: var(--ink-light); text-transform: uppercase; margin-top: 3px; order: 2; }
+.order-header-line > div:first-child { display: flex; flex-direction: column; }
+.order-garment { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 22px; line-height: 1.1; color: var(--ink); margin-top: 0; order: 1; }
+.order-price { font-size: 15px; font-weight: 500; margin-top: 10px; }
+.order-price-lbl { display: block; font-size: 8.5px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 1px; }
+.order-fabrics-row { gap: 12px; margin-top: 12px; }
+.fabric-swatch-img { width: 44px; height: 44px; border-radius: 50%; }
+.fabric-swatch-img:hover { border-color: var(--tt-purple); }
+.order-row.is-removed .order-swatch, .order-row.is-removed .order-garment, .order-row.is-removed .order-price { opacity: 0.5; }
+@media (max-width: 560px) { .order-swatch { width: 84px; height: 84px; } .order-header-line { flex-direction: column; gap: 8px; } }
+
+/* Status pills */
+.status { border-radius: 999px; padding: 4px 10px; font-size: 9px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; border: 1px solid transparent; white-space: nowrap; }
+.st-cart     { background: var(--mint-bg); color: var(--mint-ink); border-color: rgba(77,191,171,0.45); }
+.st-pending  { background: rgba(184,146,74,0.10); color: #7a5e2a; border-color: rgba(184,146,74,0.30); }
+.st-accepted { background: rgba(74,22,79,0.07); color: var(--tt-purple); border-color: rgba(74,22,79,0.22); }
+.st-prod     { background: rgba(77,191,171,0.16); color: #1f5249; border-color: rgba(77,191,171,0.55); }
+.st-done     { background: rgba(61,122,90,0.10); color: #2a5c3f; border-color: rgba(61,122,90,0.28); }
+.st-removed  { background: rgba(26,25,22,0.05); color: var(--ink-light); border-color: var(--border); }
+
+/* Filter chips + show all */
+.ord-filters { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 18px; border-bottom: 1px solid var(--border); }
+.ord-chip { font-family: 'Jost', sans-serif; font-size: 11.5px; padding: 7px 13px; border-radius: 999px; border: 1px solid rgba(26,25,22,0.16); background: #fff; color: var(--ink-mid); cursor: pointer; transition: all 0.15s; }
+.ord-chip span { color: var(--ink-light); margin-left: 4px; }
+.ord-chip:hover { border-color: var(--tt-purple); color: var(--tt-purple); }
+.ord-chip.on { background: var(--tt-purple); border-color: var(--tt-purple); color: #fff; }
+.ord-chip.on span { color: rgba(255,255,255,0.7); }
+.ord-more { display: block; width: 100%; padding: 16px; border: none; border-top: 1px solid var(--border); background: transparent; font-family: 'Jost', sans-serif; font-size: 10.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--tt-purple); cursor: pointer; }
+.ord-more:hover { background: var(--mint-bg); }
+.ord-none { padding: 28px 18px; text-align: center; font-size: 12.5px; color: var(--ink-light); }
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- Nav -->
+<nav class="nav" style="position:relative;">
+  <a class="nav-brand" href="https://tailortech.toom.design/">
+    <img src="data:image/webp;base64,UklGRhwRAABXRUJQVlA4WAoAAAAwAAAAsQEARgAASUNDUEgMAAAAAAxITGlubwIQAABtbnRyUkdCIFhZWiAHzgACAAkABgAxAABhY3NwTVNGVAAAAABJRUMgc1JHQgAAAAAAAAAAAAAAAAAA9tYAAQAAAADTLUhQICAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABFjcHJ0AAABUAAAADNkZXNjAAABhAAAAGx3dHB0AAAB8AAAABRia3B0AAACBAAAABRyWFlaAAACGAAAABRnWFlaAAACLAAAABRiWFlaAAACQAAAABRkbW5kAAACVAAAAHBkbWRkAAACxAAAAIh2dWVkAAADTAAAAIZ2aWV3AAAD1AAAACRsdW1pAAAD+AAAABRtZWFzAAAEDAAAACR0ZWNoAAAEMAAAAAxyVFJDAAAEPAAACAxnVFJDAAAEPAAACAxiVFJDAAAEPAAACAx0ZXh0AAAAAENvcHlyaWdodCAoYykgMTk5OCBIZXdsZXR0LVBhY2thcmQgQ29tcGFueQAAZGVzYwAAAAAAAAASc1JHQiBJRUM2MTk2Ni0yLjEAAAAAAAAAAAAAABJzUkdCIElFQzYxOTY2LTIuMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWFlaIAAAAAAAAPNRAAEAAAABFsxYWVogAAAAAAAAAAAAAAAAAAAAAFhZWiAAAAAAAABvogAAOPUAAAOQWFlaIAAAAAAAAGKZAAC3hQAAGNpYWVogAAAAAAAAJKAAAA+EAAC2z2Rlc2MAAAAAAAAAFklFQyBodHRwOi8vd3d3LmllYy5jaAAAAAAAAAAAAAAAFklFQyBodHRwOi8vd3d3LmllYy5jaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABkZXNjAAAAAAAAAC5JRUMgNjE5NjYtMi4xIERlZmF1bHQgUkdCIGNvbG91ciBzcGFjZSAtIHNSR0IAAAAAAAAAAAAAAC5JRUMgNjE5NjYtMi4xIERlZmF1bHQgUkdCIGNvbG91ciBzcGFjZSAtIHNSR0IAAAAAAAAAAAAAAAAAAAAAAAAAAAAAZGVzYwAAAAAAAAAsUmVmZXJlbmNlIFZpZXdpbmcgQ29uZGl0aW9uIGluIElFQzYxOTY2LTIuMQAAAAAAAAAAAAAALFJlZmVyZW5jZSBWaWV3aW5nIENvbmRpdGlvbiBpbiBJRUM2MTk2Ni0yLjEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHZpZXcAAAAAABOk/gAUXy4AEM8UAAPtzAAEEwsAA1yeAAAAAVhZWiAAAAAAAEwJVgBQAAAAVx/nbWVhcwAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAo8AAAACc2lnIAAAAABDUlQgY3VydgAAAAAAAAQAAAAABQAKAA8AFAAZAB4AIwAoAC0AMgA3ADsAQABFAEoATwBUAFkAXgBjAGgAbQByAHcAfACBAIYAiwCQAJUAmgCfAKQAqQCuALIAtwC8AMEAxgDLANAA1QDbAOAA5QDrAPAA9gD7AQEBBwENARMBGQEfASUBKwEyATgBPgFFAUwBUgFZAWABZwFuAXUBfAGDAYsBkgGaAaEBqQGxAbkBwQHJAdEB2QHhAekB8gH6AgMCDAIUAh0CJgIvAjgCQQJLAlQCXQJnAnECegKEAo4CmAKiAqwCtgLBAssC1QLgAusC9QMAAwsDFgMhAy0DOANDA08DWgNmA3IDfgOKA5YDogOuA7oDxwPTA+AD7AP5BAYEEwQgBC0EOwRIBFUEYwRxBH4EjASaBKgEtgTEBNME4QTwBP4FDQUcBSsFOgVJBVgFZwV3BYYFlgWmBbUFxQXVBeUF9gYGBhYGJwY3BkgGWQZqBnsGjAadBq8GwAbRBuMG9QcHBxkHKwc9B08HYQd0B4YHmQesB78H0gflB/gICwgfCDIIRghaCG4IggiWCKoIvgjSCOcI+wkQCSUJOglPCWQJeQmPCaQJugnPCeUJ+woRCicKPQpUCmoKgQqYCq4KxQrcCvMLCwsiCzkLUQtpC4ALmAuwC8gL4Qv5DBIMKgxDDFwMdQyODKcMwAzZDPMNDQ0mDUANWg10DY4NqQ3DDd4N+A4TDi4OSQ5kDn8Omw62DtIO7g8JDyUPQQ9eD3oPlg+zD88P7BAJECYQQxBhEH4QmxC5ENcQ9RETETERTxFtEYwRqhHJEegSBxImEkUSZBKEEqMSwxLjEwMTIxNDE2MTgxOkE8UT5RQGFCcUSRRqFIsUrRTOFPAVEhU0FVYVeBWbFb0V4BYDFiYWSRZsFo8WshbWFvoXHRdBF2UXiReuF9IX9xgbGEAYZRiKGK8Y1Rj6GSAZRRlrGZEZtxndGgQaKhpRGncanhrFGuwbFBs7G2MbihuyG9ocAhwqHFIcexyjHMwc9R0eHUcdcB2ZHcMd7B4WHkAeah6UHr4e6R8THz4faR+UH78f6iAVIEEgbCCYIMQg8CEcIUghdSGhIc4h+yInIlUigiKvIt0jCiM4I2YjlCPCI/AkHyRNJHwkqyTaJQklOCVoJZclxyX3JicmVyaHJrcm6CcYJ0kneierJ9woDSg/KHEooijUKQYpOClrKZ0p0CoCKjUqaCqbKs8rAis2K2krnSvRLAUsOSxuLKIs1y0MLUEtdi2rLeEuFi5MLoIuty7uLyQvWi+RL8cv/jA1MGwwpDDbMRIxSjGCMbox8jIqMmMymzLUMw0zRjN/M7gz8TQrNGU0njTYNRM1TTWHNcI1/TY3NnI2rjbpNyQ3YDecN9c4FDhQOIw4yDkFOUI5fzm8Ofk6Njp0OrI67zstO2s7qjvoPCc8ZTykPOM9Ij1hPaE94D4gPmA+oD7gPyE/YT+iP+JAI0BkQKZA50EpQWpBrEHuQjBCckK1QvdDOkN9Q8BEA0RHRIpEzkUSRVVFmkXeRiJGZ0arRvBHNUd7R8BIBUhLSJFI10kdSWNJqUnwSjdKfUrESwxLU0uaS+JMKkxyTLpNAk1KTZNN3E4lTm5Ot08AT0lPk0/dUCdQcVC7UQZRUFGbUeZSMVJ8UsdTE1NfU6pT9lRCVI9U21UoVXVVwlYPVlxWqVb3V0RXklfgWC9YfVjLWRpZaVm4WgdaVlqmWvVbRVuVW+VcNVyGXNZdJ114XcleGl5sXr1fD19hX7NgBWBXYKpg/GFPYaJh9WJJYpxi8GNDY5dj62RAZJRk6WU9ZZJl52Y9ZpJm6Gc9Z5Nn6Wg/aJZo7GlDaZpp8WpIap9q92tPa6dr/2xXbK9tCG1gbbluEm5rbsRvHm94b9FwK3CGcOBxOnGVcfByS3KmcwFzXXO4dBR0cHTMdSh1hXXhdj52m3b4d1Z3s3gReG54zHkqeYl553pGeqV7BHtje8J8IXyBfOF9QX2hfgF+Yn7CfyN/hH/lgEeAqIEKgWuBzYIwgpKC9INXg7qEHYSAhOOFR4Wrhg6GcobXhzuHn4gEiGmIzokziZmJ/opkisqLMIuWi/yMY4zKjTGNmI3/jmaOzo82j56QBpBukNaRP5GokhGSepLjk02TtpQglIqU9JVflcmWNJaflwqXdZfgmEyYuJkkmZCZ/JpomtWbQpuvnByciZz3nWSd0p5Anq6fHZ+Ln/qgaaDYoUehtqImopajBqN2o+akVqTHpTilqaYapoum/adup+CoUqjEqTepqaocqo+rAqt1q+msXKzQrUStuK4trqGvFq+LsACwdbDqsWCx1rJLssKzOLOutCW0nLUTtYq2AbZ5tvC3aLfguFm40blKucK6O7q1uy67p7whvJu9Fb2Pvgq+hL7/v3q/9cBwwOzBZ8Hjwl/C28NYw9TEUcTOxUvFyMZGxsPHQce/yD3IvMk6ybnKOMq3yzbLtsw1zLXNNc21zjbOts83z7jQOdC60TzRvtI/0sHTRNPG1EnUy9VO1dHWVdbY11zX4Nhk2OjZbNnx2nba+9uA3AXcit0Q3ZbeHN6i3ynfr+A24L3hROHM4lPi2+Nj4+vkc+T85YTmDeaW5x/nqegy6LzpRunQ6lvq5etw6/vshu0R7ZzuKO6070DvzPBY8OXxcvH/8ozzGfOn9DT0wvVQ9d72bfb794r4Gfio+Tj5x/pX+uf7d/wH/Jj9Kf26/kv+3P9t//9BTFBIPQQAAAGwG217JEnOZ8JvAizYSAcYAQN4pEgRPAxIE6CRYooUYUKKFGFCSpThAIO/A4yXx0zVn9mZWbwZEROg//v/v8Kmtbf5aZWtr+lzs8rf9+lJ5Q7g1S4mB/78x/n9Kcp+OEmKSacrDj1Xh2ZxKUdG5MAf/zgHvjbl8OkYa+B17jDmqCkuHbJy0jnoj3+eTpF8jZiZz5U7jFlS2sCXqOSE9vLOwknXV2YOnI+oDi1JKgP6FLIwR62ejph6IH/q728WM0M7RaZHVOqZUgOv+nbeYeQYrT1wAGN+zbb+PvTA6RXbevhmcfOAnvVNqw7NAio1qpOPCKXrrBtgd2DVoZleLA49hcSmZUB7KRR0tVOHUfRiauD1AST4A/UG5gF90uu2AtVOItkK7V5sBarp9bzDyLe3shXG5U0dRtH7qYOXs0gFljtZHLak94tDT/dmTpYzX5s18GoKzQP2fBYtkG4jD9izQq0Cq91ZYUiVfmmLw5YUvjhs6STqtJtIHbwoPG3gy40NipQgXVfaYc860hp4OUkGu4UCrKYj84D1tjJukhrtujpedPTUIZ1DO/MdJOhJRy+j3tZGk6SM22VB1gkH5SQr9Q4qQ6e+mwTp77SzXJjOWKknKWz3UJ9MpeubhfGMMv3jc+ZvyZkfUWH79ApD313pj2ilfno7y/cSpCe0M394GbfvaWN9QBnsw2s0vZhxez6dps8uwfSKBuXxLHj68CpdLxfG0ymw6EstNXz5Yr+l1+BxQYPymjn50dgKTV+qcGD+Wr/nwF9fTWHozZXtwaTqsOpraanhs75WpdfgQb6aTn0nQXoepX/TgTHrq533C1QF98uZwN5RZ30eG9/dio7/fBpNb8/485icPec86ZQfj8H0ngblcSjDqrN+PJWuwIX9eahA+QfBoESYk5+HKsz/ECi4Qhvtgajh0z8COjUmQXog2nH7/BKkGHXqBZUTmFMOsZ3d7mRh2ANpNAUX/HIaVDtqHrgdouT0O0kw8lG20m7GnBylQbka6+DlkNTBJx08Oe1GNDts6ZDisNzMwq7wSr8aaR7Qc5itQDUdXmC5EdkKVAvLO4ysmxmUOIPpcqTq0FLM4rAlnbFAuREpdfASkzbwRa/ew4zrwEa7IFkDrwF5wJ510gbTnUh5wJ7fswqsptvprEdMYBck5Q5jfiNt4IvOu+HTrUjVoaU3yoA+6c1bSJCOUKdeklQG9OkFq8BqOrHt7HYvsgZe7YXcYcx6+xZWNh1aGCf6HaNHb/aerDo0+1Zx6EnntsH2pWzr4ZtFSVOHUb6VGnhV4IXsa1wZ+Rj1HpN8jfgN8Z4CpLSBL5JyhzHr9NPej2n7QTPxPsVJ84A+SaoOzRQ5+xRVPJ3MdLlJoT/K4UnBeYexNPCqC7aDNOXwpEOtOrQyoGcFm8JNH2JxgGZ60KkBjKLP3cpWkx72tG7F9H///1dJAFZQOCBoAAAAsAoAnQEqsgFHAD7RaLFTKCYkoqBIAQAaCWlu4XaxG0AT2vRVwgyCGqpNdtouEGQQ1VJrttFwgyCGqpNdtouEGQQ1VJrttFwgyCGqpNdtouEGQQ1VJrttFwgyCGqmwAD+/4wMAAAAAAA="
+         alt="TailorTech" height="24">
+  </a>
+  <button class="nav-avatar" id="nav-av" type="button" onclick="toggleDropdown(event)" style="display:none"></button>
+  <a class="nav-btn" id="nav-login" href="https://tailortech.toom.design/auth">Log In</a>
+  <button class="nav-btn" id="nav-signout" onclick="doSignOut()" style="display:none">Sign out</button>
+
+  <!-- Dropdown -->
+  <div id="nav-dd" style="display:none;position:absolute;top:52px;right:0;width:260px;background:#FAFAF8;border:1px solid rgba(26,25,22,0.20);border-radius:2px;box-shadow:0 12px 40px rgba(26,25,22,0.16);padding:20px;z-index:9999;font-family:'Jost',sans-serif;">
+    <!-- Avatar + Name + Email -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div id="dd-av" style="width:40px;height:40px;border-radius:50%;background:#1A1916;color:#FAFAF8;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"></div>
+      <div>
+        <div id="dd-name" style="font-size:13px;font-weight:600;color:#1A1916;margin-bottom:2px;">—</div>
+        <div id="dd-email-sub" style="font-size:11px;color:#8A8880;word-break:break-all;"></div>
+      </div>
+    </div>
+    <!-- Person ID displayed like a name -->
+    <div style="height:1px;background:rgba(26,25,22,0.10);margin-bottom:14px;"></div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#8A8880;margin-bottom:5px;">Person ID</div>
+      <div id="dd-pid" style="font-size:15px;font-weight:600;color:#1A1916;letter-spacing:0.04em;">—</div>
+    </div>
+    <!-- Buttons stacked vertically -->
+    <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid rgba(26,25,22,0.10);padding-top:14px;">
+      <a href="https://tailortech.toom.design/dashboard" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:none;background:#1A1916;color:#FAFAF8;border-radius:2px;cursor:pointer;text-decoration:none;display:block;text-align:center;">My Dashboard</a>
+      <button onclick="doSignOut()" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:1px solid rgba(138,48,48,0.30);background:transparent;color:#8a3030;border-radius:2px;cursor:pointer;width:100%;">Sign Out</button>
+    </div>
+  </div>
+</nav>
+
+
+
+<!-- Loading -->
+<div id="loading">
+  <div class="loader"></div>
+  <span class="load-text">Loading dashboard</span>
+</div>
+
+<!-- Main -->
+<div id="main">
+
+  <!-- Hero: full-bleed, sits flush below nav -->
+  <div class="hero">
+    <img class="hero-bg" src="https://raw.githubusercontent.com/toom-design/tailortech/main/images/dashboard_hero-02.webp" alt="">
+    <div class="hero-overlay"></div>
+    <div class="hero-inner">
+      <div class="hero-eyebrow">Client Portal</div>
+      <h1 class="hero-title" id="greeting">Welcome back</h1>
+      <p class="hero-sub">Here's what's happening with your orders, measurements, and wardrobe.</p>
+      <button class="hero-cta" onclick="go('configure.html')">
+        Create New Order
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="page">
+
+    <!-- Profile card -->
+    <div class="profile-card">
+      <div class="profile-card-top">
+        <div>
+          <div class="profile-name" id="profile-name">—</div>
+          <div class="profile-meta">
+            <span>Client ID <strong id="st-id">—</strong></span>
+            <span id="st-since">member since —</span>
+          </div>
+        </div>
+        <button class="sec-action" id="btn-edit" onclick="toggleEdit()">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit Profile
+        </button>
+      </div>
+      <div class="profile-contact-row" id="profile-display"></div>
+      <div class="edit-form" id="edit-form">
+        <div class="edit-grid">
+          <div class="ef"><label>Email</label><input type="email" id="ef-email" readonly></div>
+          <div class="ef"><label>First Name *</label><input type="text"  id="ef-fn"      placeholder="Jane"></div>
+          <div class="ef"><label>Last Name</label>  <input type="text"  id="ef-ln"      placeholder="Doe"></div>
+          <div class="ef"><label>Gender</label><select id="ef-gender"><option value="">Not set</option><option value="Female">Female</option><option value="Male">Male</option></select></div>
+          <div class="ef"><label>Phone</label>
+            <div class="phone-row">
+              <select id="ef-phone-code">
+                <option value="">Code</option>
+                <option value="+1">+1 US/CA</option>
+                <option value="+7">+7 RU/KZ</option>
+                <option value="+20">+20 EG</option>
+                <option value="+27">+27 ZA</option>
+                <option value="+30">+30 GR</option>
+                <option value="+31">+31 NL</option>
+                <option value="+32">+32 BE</option>
+                <option value="+33">+33 FR</option>
+                <option value="+34">+34 ES</option>
+                <option value="+36">+36 HU</option>
+                <option value="+39">+39 IT</option>
+                <option value="+40">+40 RO</option>
+                <option value="+41">+41 CH</option>
+                <option value="+43">+43 AT</option>
+                <option value="+44">+44 UK</option>
+                <option value="+45">+45 DK</option>
+                <option value="+46">+46 SE</option>
+                <option value="+47">+47 NO</option>
+                <option value="+48">+48 PL</option>
+                <option value="+49">+49 DE</option>
+                <option value="+51">+51 PE</option>
+                <option value="+52">+52 MX</option>
+                <option value="+53">+53 CU</option>
+                <option value="+54">+54 AR</option>
+                <option value="+55">+55 BR</option>
+                <option value="+56">+56 CL</option>
+                <option value="+57">+57 CO</option>
+                <option value="+58">+58 VE</option>
+                <option value="+60">+60 MY</option>
+                <option value="+61">+61 AU</option>
+                <option value="+62">+62 ID</option>
+                <option value="+63">+63 PH</option>
+                <option value="+64">+64 NZ</option>
+                <option value="+65">+65 SG</option>
+                <option value="+66">+66 TH</option>
+                <option value="+81">+81 JP</option>
+                <option value="+82">+82 KR</option>
+                <option value="+84">+84 VN</option>
+                <option value="+86">+86 CN</option>
+                <option value="+90">+90 TR</option>
+                <option value="+91">+91 IN</option>
+                <option value="+92">+92 PK</option>
+                <option value="+94">+94 LK</option>
+                <option value="+95">+95 MM</option>
+                <option value="+98">+98 IR</option>
+                <option value="+212">+212 MA</option>
+                <option value="+213">+213 DZ</option>
+                <option value="+216">+216 TN</option>
+                <option value="+218">+218 LY</option>
+                <option value="+220">+220 GM</option>
+                <option value="+221">+221 SN</option>
+                <option value="+233">+233 GH</option>
+                <option value="+234">+234 NG</option>
+                <option value="+250">+250 RW</option>
+                <option value="+254">+254 KE</option>
+                <option value="+255">+255 TZ</option>
+                <option value="+256">+256 UG</option>
+                <option value="+263">+263 ZW</option>
+                <option value="+351">+351 PT</option>
+                <option value="+352">+352 LU</option>
+                <option value="+353">+353 IE</option>
+                <option value="+354">+354 IS</option>
+                <option value="+356">+356 MT</option>
+                <option value="+357">+357 CY</option>
+                <option value="+358">+358 FI</option>
+                <option value="+359">+359 BG</option>
+                <option value="+370">+370 LT</option>
+                <option value="+371">+371 LV</option>
+                <option value="+372">+372 EE</option>
+                <option value="+380">+380 UA</option>
+                <option value="+381">+381 RS</option>
+                <option value="+385">+385 HR</option>
+                <option value="+386">+386 SI</option>
+                <option value="+420">+420 CZ</option>
+                <option value="+421">+421 SK</option>
+                <option value="+423">+423 LI</option>
+                <option value="+852">+852 HK</option>
+                <option value="+853">+853 MO</option>
+                <option value="+855">+855 KH</option>
+                <option value="+856">+856 LA</option>
+                <option value="+880">+880 BD</option>
+                <option value="+886">+886 TW</option>
+                <option value="+960">+960 MV</option>
+                <option value="+961">+961 LB</option>
+                <option value="+962">+962 JO</option>
+                <option value="+963">+963 SY</option>
+                <option value="+964">+964 IQ</option>
+                <option value="+965">+965 KW</option>
+                <option value="+966">+966 SA</option>
+                <option value="+967">+967 YE</option>
+                <option value="+968">+968 OM</option>
+                <option value="+970">+970 PS</option>
+                <option value="+971">+971 AE</option>
+                <option value="+972">+972 IL</option>
+                <option value="+973">+973 BH</option>
+                <option value="+974">+974 QA</option>
+                <option value="+976">+976 MN</option>
+                <option value="+977">+977 NP</option>
+                <option value="+992">+992 TJ</option>
+                <option value="+993">+993 TM</option>
+                <option value="+994">+994 AZ</option>
+                <option value="+995">+995 GE</option>
+                <option value="+996">+996 KG</option>
+                <option value="+998">+998 UZ</option>
+              </select>
+              <input type="tel" id="ef-phone-num" placeholder="234 567 8900">
+            </div>
+          </div>
+          <div class="ef"><label>Instagram</label>  <input type="text"  id="ef-ig"      placeholder="@username"></div>
+          <div class="ef"><label>Marketing emails</label><select id="ef-marketing"><option value="">Not set</option><option value="TRUE">Yes, send me news &amp; offers</option><option value="FALSE">No, thanks</option></select></div>
+          <div class="ef"><label>Street</label>     <input type="text"  id="ef-street"  placeholder="123 Main St"></div>
+          <div class="ef"><label>City</label>       <input type="text"  id="ef-city"    placeholder="London"></div>
+          <div class="ef"><label>Postal Code</label><input type="text"  id="ef-postal"  placeholder="SW1A 1AA"></div>
+          <div class="ef"><label>Country</label>
+            <select id="ef-country">
+              <option value="">Select country…</option>
+              <option>Afghanistan</option><option>Albania</option><option>Algeria</option><option>Andorra</option><option>Angola</option><option>Argentina</option><option>Armenia</option><option>Australia</option><option>Austria</option><option>Azerbaijan</option>
+              <option>Bahamas</option><option>Bahrain</option><option>Bangladesh</option><option>Barbados</option><option>Belarus</option><option>Belgium</option><option>Belize</option><option>Benin</option><option>Bhutan</option><option>Bolivia</option><option>Bosnia and Herzegovina</option><option>Botswana</option><option>Brazil</option><option>Brunei</option><option>Bulgaria</option><option>Burkina Faso</option><option>Burundi</option>
+              <option>Cambodia</option><option>Cameroon</option><option>Canada</option><option>Cape Verde</option><option>Central African Republic</option><option>Chad</option><option>Chile</option><option>China</option><option>Colombia</option><option>Comoros</option><option>Costa Rica</option><option>Croatia</option><option>Cuba</option><option>Cyprus</option><option>Czech Republic</option>
+              <option>Denmark</option><option>Djibouti</option><option>Dominica</option><option>Dominican Republic</option>
+              <option>Ecuador</option><option>Egypt</option><option>El Salvador</option><option>Equatorial Guinea</option><option>Eritrea</option><option>Estonia</option><option>Eswatini</option><option>Ethiopia</option>
+              <option>Fiji</option><option>Finland</option><option>France</option>
+              <option>Gabon</option><option>Gambia</option><option>Georgia</option><option>Germany</option><option>Ghana</option><option>Greece</option><option>Grenada</option><option>Guatemala</option><option>Guinea</option><option>Guinea-Bissau</option><option>Guyana</option>
+              <option>Haiti</option><option>Honduras</option><option>Hungary</option>
+              <option>Iceland</option><option>India</option><option>Indonesia</option><option>Iran</option><option>Iraq</option><option>Ireland</option><option>Israel</option><option>Italy</option><option>Ivory Coast</option>
+              <option>Jamaica</option><option>Japan</option><option>Jordan</option>
+              <option>Kazakhstan</option><option>Kenya</option><option>Kiribati</option><option>Kosovo</option><option>Kuwait</option><option>Kyrgyzstan</option>
+              <option>Laos</option><option>Latvia</option><option>Lebanon</option><option>Lesotho</option><option>Liberia</option><option>Libya</option><option>Liechtenstein</option><option>Lithuania</option><option>Luxembourg</option>
+              <option>Madagascar</option><option>Malawi</option><option>Malaysia</option><option>Maldives</option><option>Mali</option><option>Malta</option><option>Marshall Islands</option><option>Mauritania</option><option>Mauritius</option><option>Mexico</option><option>Micronesia</option><option>Moldova</option><option>Monaco</option><option>Mongolia</option><option>Montenegro</option><option>Morocco</option><option>Mozambique</option><option>Myanmar</option>
+              <option>Namibia</option><option>Nauru</option><option>Nepal</option><option>Netherlands</option><option>New Zealand</option><option>Nicaragua</option><option>Niger</option><option>Nigeria</option><option>North Korea</option><option>North Macedonia</option><option>Norway</option>
+              <option>Oman</option>
+              <option>Pakistan</option><option>Palau</option><option>Palestine</option><option>Panama</option><option>Papua New Guinea</option><option>Paraguay</option><option>Peru</option><option>Philippines</option><option>Poland</option><option>Portugal</option>
+              <option>Qatar</option>
+              <option>Romania</option><option>Russia</option><option>Rwanda</option>
+              <option>Saint Kitts and Nevis</option><option>Saint Lucia</option><option>Saint Vincent and the Grenadines</option><option>Samoa</option><option>San Marino</option><option>Sao Tome and Principe</option><option>Saudi Arabia</option><option>Senegal</option><option>Serbia</option><option>Seychelles</option><option>Sierra Leone</option><option>Singapore</option><option>Slovakia</option><option>Slovenia</option><option>Solomon Islands</option><option>Somalia</option><option>South Africa</option><option>South Korea</option><option>South Sudan</option><option>Spain</option><option>Sri Lanka</option><option>Sudan</option><option>Suriname</option><option>Sweden</option><option>Switzerland</option><option>Syria</option>
+              <option>Taiwan</option><option>Tajikistan</option><option>Tanzania</option><option>Thailand</option><option>Timor-Leste</option><option>Togo</option><option>Tonga</option><option>Trinidad and Tobago</option><option>Tunisia</option><option>Turkey</option><option>Turkmenistan</option><option>Tuvalu</option>
+              <option>Uganda</option><option>Ukraine</option><option>United Arab Emirates</option><option>United Kingdom</option><option>United States</option><option>Uruguay</option><option>Uzbekistan</option>
+              <option>Vanuatu</option><option>Vatican City</option><option>Venezuela</option><option>Vietnam</option>
+              <option>Yemen</option>
+              <option>Zambia</option><option>Zimbabwe</option>
+            </select>
+          </div>
+        </div>
+        <div class="edit-btns">
+          <button class="btn-save" id="btn-save-p" onclick="saveProfile()">
+            <span id="save-lbl">Save Details</span>
+            <div class="spin-sm" id="save-spin"></div>
+          </button>
+          <button class="btn-cancel" onclick="toggleEdit()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Orders + Measurements split -->
+    <div class="split">
+      <div id="sec-orders">
+        <div class="sec-head">
+          <span class="sec-title">Orders<span class="sec-count" id="st-orders-wrap">(<span id="st-orders">—</span>)</span></span>
+          <button class="sec-action" onclick="go('configure.html')">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New order
+          </button>
+        </div>
+        <div class="orders-panel">
+          <div id="orders-loading" style="padding:32px;text-align:center"><div class="loader" style="margin:0 auto"></div></div>
+          <div class="ord-filters" id="ord-filters" hidden></div>
+          <div id="orders-list" style="display:none"></div>
+          <button type="button" class="ord-more" id="ord-more" hidden onclick="ttOrdersToggleAll()"></button>
+          <div id="orders-empty" class="empty" style="display:none">
+            <div class="empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg></div>
+            <p>No orders yet</p>
+            <button class="btn-save" onclick="go('configure.html')">Start your first order</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="sec-head">
+          <span class="sec-title">Measurements<span class="sec-count">(<span id="st-meas">—</span>)</span></span>
+          <button class="sec-action" onclick="goMeasurements()">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Update
+          </button>
+        </div>
+        <div class="meas-panel">
+          <div class="meas-date-row" id="meas-date-row" style="display:none">
+            <label for="meas-date-select">Session</label>
+            <select id="meas-date-select" onchange="renderMeasurementSet(this.value)"></select>
+          </div>
+          <div id="meas-loading" style="padding:8px;text-align:center"><div class="loader" style="margin:0 auto"></div></div>
+          <div class="meas-body-row" id="meas-body-row" style="display:none">
+            <div class="meas-figure">
+              <img id="meas-figure-img" src="images/MEASUREMENTS_front.webp" alt="">
+            </div>
+            <div id="meas-chips" class="meas-list"></div>
+          </div>
+          <div id="meas-empty" class="empty" style="display:none;padding:8px">
+            <p>No measurements saved yet</p>
+            <button class="btn-save" onclick="goMeasurements()">Add measurements</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="quickbar">
+      <div class="qa-item" onclick="go('configure.html')">
+        <div class="qa-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.57a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.57a2 2 0 00-1.34-2.23z"/>
+          </svg>
+        </div>
+        <div class="qa-text">
+          <div class="qa-title">New Order</div>
+          <div class="qa-desc">Configure a custom garment — choose type, style, fabric &amp; details.</div>
+        </div>
+        <svg class="qa-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+      <div class="qa-item" onclick="goMeasurements()">
+        <div class="qa-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M2 12h20M2 7l2 5-2 5M22 7l-2 5 2 5"/>
+          </svg>
+        </div>
+        <div class="qa-text">
+          <div class="qa-title">My Measurements</div>
+          <div class="qa-desc">View and update your body measurements for a perfect fit.</div>
+        </div>
+        <svg class="qa-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+      <div class="qa-item" onclick="document.getElementById('sec-orders').scrollIntoView({behavior:'smooth'})">
+        <div class="qa-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/>
+          </svg>
+        </div>
+        <div class="qa-text">
+          <div class="qa-title">My Wardrobe</div>
+          <div class="qa-desc">Track all your garment orders and delivery status.</div>
+        </div>
+        <svg class="qa-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY",
+  authDomain: "tailortech-accounts.firebaseapp.com",
+  projectId: "tailortech-accounts",
+  storageBucket: "tailortech-accounts.firebasestorage.app",
+  messagingSenderId: "137614433833",
+  appId: "1:137614433833:web:c78ea40b0d04ba89f3c638"
+};
+const SHEETS = "https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec";
+const BASE   = "https://tailortech.toom.design/";
+
+const _app  = initializeApp(firebaseConfig);
+const _auth = getAuth(_app);
+
+window._d = {
+  auth: _auth, signOut, BASE,
+  get currentUid() { return _auth.currentUser ? _auth.currentUser.uid : null; },
+  currentUser: null,
+  async req(action, payload) {
+    payload = payload || {};
+    const user  = _auth.currentUser;
+    const token = user ? await user.getIdToken() : null;
+    const res = await fetch(SHEETS, {
+      method: 'POST',
+      body: JSON.stringify({
+        action,
+        token,
+        email: user ? user.email : null,
+        uid:   user ? user.uid   : null,
+        ...payload
+      })
+    });
+    const txt = await res.text();
+    try { return JSON.parse(txt); }
+    catch(e) { console.error('Non-JSON from Apps Script:', txt); return { success: false, message: 'Non-JSON response' }; }
+  }
+};
+
+onAuthStateChanged(_auth, function(user) {
+  if (user) {
+    window._d.currentUser = user;
+    document.getElementById('nav-av').style.display      = '';
+    document.getElementById('nav-signout').style.display = '';
+    document.getElementById('nav-login').style.display   = 'none';
+    boot(user);
+  } else {
+    window.location.href = BASE + 'auth.html';
+  }
+});
+</script>
+
+<script>
+'use strict';
+
+var BASE = 'https://tailortech.toom.design/';
+
+function go(page) { window.location.href = BASE + page; }
+function goMeasurements() {
+  var user = window._d && window._d.currentUser;
+  if (!user) { window.location.href = BASE + 'measurements.html'; return; }
+  var email = encodeURIComponent(user.email);
+  // Get Person ID from stat display
+  var pid = document.getElementById('st-id') ? document.getElementById('st-id').textContent.trim() : '';
+  var url = BASE + 'measurements.html?email=' + email;
+  if (pid && pid !== '—') url += '&personId=' + encodeURIComponent(pid);
+  window.location.href = url;
+}
+
+function toast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className   = type === 'err' ? 'err show' : 'show';
+  setTimeout(function(){ t.classList.remove('show'); }, 3000);
+}
+
+function doSignOut() {
+  if (window._d) window._d.signOut(window._d.auth)
+    .then(function(){ window.location.href = BASE + 'auth.html'; });
+}
+
+function fmtDate(s) {
+  if (!s) return '—';
+  try { var d = new Date(s); return isNaN(d) ? s : d.toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}); }
+  catch(e){ return s; }
+}
+
+function boot(user) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('main').style.display    = 'block';
+  setAccountPopover(user);
+
+  // Save to sessionStorage as fallback for pages not yet on Firebase
+  try {
+    sessionStorage.setItem('tt_user', JSON.stringify({
+      email: user.email, displayName: user.displayName || '',
+      photoURL: user.photoURL || '', uid: user.uid || '', personId: ''
+    }));
+  } catch(e) {}
+
+  var name = user.displayName ? user.displayName.split(' ')[0] : 'there';
+  document.getElementById('greeting').textContent = 'Welcome back, ' + name;
+
+  loadOrders();
+  loadMeasurements();
+  loadProfile(user); // pass user so profile can save if missing
+}
+
+// Source PNGs (both the generated tech-pack silhouettes and the static
+// measurement figure) have real empty transparent margin baked into their
+// own pixel data — the drawing only occupies part of the file's canvas.
+// object-fit:contain correctly scales the *whole* file including that
+// margin, which is why the visible subject looks small inside its box.
+// This crops to just the non-transparent bounding box before display, so
+// the actual content — not the blank space around it — fills the frame.
+function fabricPendingChipHtml(id, label) {
+  return '<div class="fabric-swatch-item" id="' + id + '">' +
+    '<div class="fabric-swatch-img fabric-swatch-pending"><div class="loader loader-xs"></div></div>' +
+    '<span class="fabric-swatch-label">' + label + '</span>' +
+  '</div>';
+}
+
+function trimTransparentPadding(imgSrc) {
+  return new Promise(function(resolve) {
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      var data;
+      try { data = ctx.getImageData(0, 0, canvas.width, canvas.height).data; }
+      catch(e) { resolve({src: imgSrc, width: img.naturalWidth, height: img.naturalHeight}); return; } // tainted canvas — fall back to original, untrimmed
+      var minX = canvas.width, minY = canvas.height, maxX = 0, maxY = 0, found = false;
+      for (var y = 0; y < canvas.height; y++) {
+        for (var x = 0; x < canvas.width; x++) {
+          if (data[(y * canvas.width + x) * 4 + 3] > 10) {
+            found = true;
+            if (x < minX) minX = x; if (x > maxX) maxX = x;
+            if (y < minY) minY = y; if (y > maxY) maxY = y;
+          }
+        }
+      }
+      if (!found) { resolve({src: imgSrc, width: img.naturalWidth, height: img.naturalHeight}); return; }
+      var w = maxX - minX + 1, h = maxY - minY + 1;
+      var out = document.createElement('canvas');
+      out.width = w; out.height = h;
+      out.getContext('2d').drawImage(canvas, minX, minY, w, h, 0, 0, w, h);
+      resolve({src: out.toDataURL('image/png'), width: w, height: h});
+    };
+    img.onerror = function(){ resolve({src: imgSrc, width: 0, height: 0}); };
+    img.src = imgSrc;
+  });
+}
+
+var _fabricPhotoByCode = null;
+
+function getFabricPhotoMap() {
+  if (_fabricPhotoByCode) return Promise.resolve(_fabricPhotoByCode);
+  return window._d.req('getFabrics').then(function(res) {
+    _fabricPhotoByCode = {};
+    if (res && res.success && res.fabrics) {
+      res.fabrics.forEach(function(f) {
+        var code = (f['FabricCode'] || '').trim();
+        var photo = f['Photo FACE'] || '';
+        if (code && photo) _fabricPhotoByCode[code] = photo;
+      });
+    }
+    return _fabricPhotoByCode;
+  }).catch(function(){ _fabricPhotoByCode = {}; return _fabricPhotoByCode; });
+}
+
+function loadOrders() {
+  window._d.req('getOrders').then(function(res) {
+    document.getElementById('orders-loading').style.display = 'none';
+    if (!res.success || !res.orders || res.orders.length === 0) {
+      document.getElementById('orders-empty').style.display = 'block';
+      document.getElementById('st-orders').textContent = '0';
+      return;
+    }
+    var orders = res.orders;
+    document.getElementById('st-orders').textContent = orders.length;
+    var list = document.getElementById('orders-list');
+    list.innerHTML = '';
+
+    // Anything that needs the full FABRICS sheet (contrast/lining, or a
+    // fallback if the server-resolved main photo is missing) gets queued
+    // here and filled in after the list is already on screen — it should
+    // not delay showing the orders themselves.
+    var pendingFabricLookups = [];
+
+    orders.forEach(function(o, idx) {
+      var st  = (o['Status'] || o['status'] || 'New').trim();
+      var cls = {'New':'s-new','InCart':'s-new','Pending':'s-prog','In Progress':'s-prog','Complete':'s-done','Completed':'s-done','Cancelled':'s-cancel','Canceled':'s-cancel'}[st] || 's-new';
+      var garment = o['garment'] || o['GARMENT'] || 'Order';
+      garment = ttGarmentName(garment);
+      // Now a real Drive view link (not a bare key) — see getOrCaptureSilhouette().
+      var techPackUrl = o['tech pack'] || '';
+      var swatchId = 'order-swatch-' + idx;
+      var fabricsRowId = 'order-fabrics-' + idx;
+
+      // Server already resolved these at order-save time (attachFabricPhotos
+      // in saveTrousers/saveSuits/saveShirt) directly into MAIN/CONTRAST/
+      // LINING — free to use immediately, no extra request needed.
+      var mainPhoto     = o['MAIN'] || '';
+      var contrastPhoto = o['CONTRAST'] || '';
+      var liningPhoto   = o['LINING'] || '';
+
+      var fabricSlots = [
+        { label: 'Main',      photo: mainPhoto },
+        { label: 'Secondary', photo: contrastPhoto },
+        { label: 'Lining',    photo: liningPhoto }
+      ].filter(function(s){ return s.photo; });
+
+      var resolvedChipsHtml = fabricSlots.map(function(s){
+        return '<div class="fabric-swatch-item">' +
+          '<img class="fabric-swatch-img" src="' + s.photo + '" alt="" title="' + s.label + '" onclick="openImagePreview(\'' + s.photo + '\')">' +
+          '<span class="fabric-swatch-label">' + s.label + '</span>' +
+        '</div>';
+      }).join('');
+
+      // Fallback only for legacy orders saved before MAIN/CONTRAST/LINING
+      // existed as columns — matches by code against the full FABRICS list.
+      // Shows a spinner chip immediately rather than nothing while it waits.
+      var pendingChipsHtml = '';
+      var mainCode = (o['CODE'] || o['Code'] || o['code'] || '').trim();
+      if (!mainPhoto && mainCode) {
+        var pid1 = fabricsRowId + '-pending-main';
+        pendingFabricLookups.push({ rowId: fabricsRowId, code: mainCode, label: 'Main', pendingId: pid1 });
+        pendingChipsHtml += fabricPendingChipHtml(pid1, 'Main');
+      }
+      var contrastCode = (o['CONTRAST FABRIC'] || '').trim();
+      if (!contrastPhoto && contrastCode && contrastCode.toUpperCase() !== 'N/A') {
+        var pid2 = fabricsRowId + '-pending-secondary';
+        pendingFabricLookups.push({ rowId: fabricsRowId, code: contrastCode, label: 'Secondary', pendingId: pid2 });
+        pendingChipsHtml += fabricPendingChipHtml(pid2, 'Secondary');
+      }
+      var liningCode = (o['LINING FABRIC'] || '').trim();
+      if (!liningPhoto && liningCode && liningCode.toUpperCase() !== 'N/A') {
+        var pid3 = fabricsRowId + '-pending-lining';
+        pendingFabricLookups.push({ rowId: fabricsRowId, code: liningCode, label: 'Lining', pendingId: pid3 });
+        pendingChipsHtml += fabricPendingChipHtml(pid3, 'Lining');
+      }
+      var fabricsRowHtml = '<div class="order-fabrics-row" id="' + fabricsRowId + '">' + resolvedChipsHtml + pendingChipsHtml + '</div>';
+
+      var price = (o['PRICE'] || '').toString().trim();
+      var priceNum = parseFloat(price.replace(/[^0-9.,]/g, '').replace(',', '.'));
+      var priceHtml = isFinite(priceNum) && priceNum > 0 ? '<div class="order-price"><span class="order-price-lbl">Estimated</span>€' + priceNum.toFixed(2).replace(/\.00$/, '') + '</div>' : '';
+
+      var row = document.createElement('div');
+      var grp = ttStatusGroup(st);
+      row.className = 'order-row' + (grp === 'removed' ? ' is-removed' : '');
+      row.dataset.group = grp;
+      var swatchInitialHtml = techPackUrl
+        ? '<div class="order-swatch loading" id="' + swatchId + '"><div class="loader loader-sm"></div></div>'
+        : '<div class="order-swatch empty" id="' + swatchId + '"></div>';
+      row.innerHTML =
+        '<div class="order-row-top">' +
+          swatchInitialHtml +
+          '<div class="order-main">' +
+            '<div class="order-header-line">' +
+              '<div>' +
+                '<div class="order-num">' + (o['Order Number'] || '—') + '</div>' +
+                '<div class="order-garment">' + garment + '</div>' +
+              '</div>' +
+              '<div style="display:flex;align-items:flex-start;gap:12px;flex-shrink:0;">' +
+                '<div class="order-date">' + fmtDate(o['Created At'] || o['Created at'] || '') + '</div>' +
+                '<span class="status st-' + ttStatusPill(st) + '">' + ttStatusLabel(st) + '</span>' +
+              '</div>' +
+            '</div>' +
+            priceHtml +
+            fabricsRowHtml +
+            (grp === 'removed' ? '' : '<button type="button" class="order-share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.6" fill="currentColor"/></svg>Share your design</button>') +
+          '</div>' +
+        '</div>';
+      list.appendChild(row);
+      var shareBtn = row.querySelector('.order-share');
+      if (shareBtn) shareBtn.onclick = function () { if (window.ttOpenStory) ttOpenStory(o, row); };
+
+      // Fetch and swap in the real image after the row is already visible —
+      // the image travels as base64 in a normal JSON response (Apps Script
+      // can't serve raw image bytes directly), so this is a real async
+      // fetch per thumbnail rather than a plain <img src>.
+      if (techPackUrl) row._loadImg = function () {
+        row._loadImg = null;
+        window._d.req('getSilhouetteImageBase64', { url: techPackUrl }).then(function(imgRes) {
+          if (!imgRes || !imgRes.success || !imgRes.base64) throw new Error('no image');
+          var rawUri = 'data:image/png;base64,' + imgRes.base64;
+          return trimTransparentPadding(rawUri).then(function(trimmed) {
+            var el = document.getElementById(swatchId);
+            if (!el) return;
+            var img = document.createElement('img');
+            img.className = 'order-swatch has-img';
+            img.alt = '';
+            img.src = trimmed.src;
+            img.onclick = function(){ openImagePreview(trimmed.src); };
+            el.replaceWith(img);
+          });
+        }).catch(function(){
+          // Stop the spinner rather than leaving it spinning forever —
+          // swap to the same neutral empty state used when there was
+          // never anything to fetch in the first place.
+          var el = document.getElementById(swatchId);
+          if (el) { el.className = 'order-swatch empty'; el.innerHTML = ''; }
+        });
+      };
+    });
+    list.style.display = '';
+    ttOrdersInit();
+
+    if (pendingFabricLookups.length) {
+      getFabricPhotoMap().then(function(fabricMap) {
+        pendingFabricLookups.forEach(function(item) {
+          var placeholder = document.getElementById(item.pendingId);
+          var photo = fabricMap[item.code];
+          if (!photo) {
+            if (placeholder) placeholder.remove(); // nothing found — remove the spinner, don't leave it spinning
+            return;
+          }
+          var div = document.createElement('div');
+          div.className = 'fabric-swatch-item';
+          div.innerHTML = '<img class="fabric-swatch-img" src="' + photo + '" alt="" title="' + item.code + '" onclick="openImagePreview(\'' + photo + '\')">' +
+            '<span class="fabric-swatch-label">' + item.label + '</span>';
+          if (placeholder) placeholder.replaceWith(div);
+          else {
+            var container = document.getElementById(item.rowId);
+            if (container) container.appendChild(div);
+          }
+        });
+      }).catch(function(){
+        // Remove any still-spinning placeholders rather than leaving them stuck.
+        pendingFabricLookups.forEach(function(item) {
+          var placeholder = document.getElementById(item.pendingId);
+          if (placeholder) placeholder.remove();
+        });
+      });
+    }
+  }).catch(function(){ document.getElementById('orders-loading').style.display='none'; document.getElementById('orders-empty').style.display='block'; });
+}
+
+
+// ── v4.6.0: order status labels / colours, filter chips and "Show all" ──
+var TT_STATUS = {
+  'incart':        { label: 'In cart',        pill: 'cart',     group: 'cart' },
+  'new':           { label: 'Saved',          pill: 'cart',     group: 'cart' },
+  'pending':       { label: 'Request sent',   pill: 'pending',  group: 'progress' },
+  'orderaccepted': { label: 'Order accepted', pill: 'accepted', group: 'progress' },
+  'inprogress':    { label: 'In progress',    pill: 'prod',     group: 'progress' },
+  'inproduction':  { label: 'In production',  pill: 'prod',     group: 'progress' },
+  'shipped':       { label: 'Shipped',        pill: 'prod',     group: 'progress' },
+  'complete':      { label: 'Completed',      pill: 'done',     group: 'done' },
+  'completed':     { label: 'Completed',      pill: 'done',     group: 'done' },
+  'delivered':     { label: 'Delivered',      pill: 'done',     group: 'done' },
+  'removed':       { label: 'Removed',        pill: 'removed',  group: 'removed' },
+  'cancelled':     { label: 'Cancelled',      pill: 'removed',  group: 'removed' },
+  'canceled':      { label: 'Cancelled',      pill: 'removed',  group: 'removed' }
+};
+function ttStatusInfo(st) { return TT_STATUS[String(st || '').replace(/[\s_-]+/g, '').toLowerCase()] || { label: st || 'Saved', pill: 'pending', group: 'progress' }; }
+function ttStatusLabel(st) { return ttStatusInfo(st).label; }
+function ttStatusPill(st)  { return ttStatusInfo(st).pill; }
+function ttStatusGroup(st) { return ttStatusInfo(st).group; }
+function ttGarmentName(g) {
+  var k = String(g || '').toLowerCase().replace(/[\s_-]+/g, '');
+  var map = { hoodies: 'Hoodie', hoodie: 'Hoodie', tshirt: 'T-shirt', tshirts: 'T-shirt', shirts: 'Shirt', shirt: 'Shirt',
+              sweatpants: 'Sweatpants', suits: 'Suit', suit: 'Suit', trousers: 'Trousers', casualjacket: 'Casual jacket',
+              denimtrousers: 'Denim trousers', jackets: 'Jacket' };
+  return map[k] || (g ? String(g).charAt(0).toUpperCase() + String(g).slice(1) : 'Order');
+}
+var TT_ORD_PAGE = 6, _ttOrdFilter = 'all', _ttOrdAll = false;
+var TT_ORD_GROUPS = [['all', 'All'], ['progress', 'In progress'], ['cart', 'In cart'], ['done', 'Completed'], ['removed', 'Removed']];
+function ttOrdersInit() {
+  var rows = document.querySelectorAll('#orders-list .order-row');
+  var counts = { all: rows.length };
+  rows.forEach(function (r) { counts[r.dataset.group] = (counts[r.dataset.group] || 0) + 1; });
+  var bar = document.getElementById('ord-filters');
+  var used = TT_ORD_GROUPS.filter(function (g) { return g[0] === 'all' || counts[g[0]]; });
+  bar.innerHTML = used.map(function (g) {
+    return '<button type="button" class="ord-chip' + (g[0] === _ttOrdFilter ? ' on' : '') + '" data-f="' + g[0] + '" onclick="ttOrdersFilter(\'' + g[0] + '\')">' + g[1] + '<span>' + (counts[g[0]] || 0) + '</span></button>';
+  }).join('');
+  bar.hidden = used.length <= 2 && rows.length <= TT_ORD_PAGE;
+  ttOrdersApply();
+}
+function ttOrdersFilter(f) {
+  _ttOrdFilter = f; _ttOrdAll = false;
+  document.querySelectorAll('#ord-filters .ord-chip').forEach(function (c) { c.classList.toggle('on', c.dataset.f === f); });
+  ttOrdersApply();
+}
+function ttOrdersToggleAll() { _ttOrdAll = !_ttOrdAll; ttOrdersApply(); }
+function ttOrdersApply() {
+  var rows = Array.prototype.slice.call(document.querySelectorAll('#orders-list .order-row'));
+  var match = rows.filter(function (r) { return _ttOrdFilter === 'all' || r.dataset.group === _ttOrdFilter; });
+  rows.forEach(function (r) { r.style.display = 'none'; });
+  match.forEach(function (r, i) {
+    if (_ttOrdAll || i < TT_ORD_PAGE) { r.style.display = ''; if (r._loadImg) r._loadImg(); }
+  });
+  var list = document.getElementById('orders-list'), none = document.getElementById('ord-none');
+  if (!match.length) {
+    if (!none) { none = document.createElement('div'); none.id = 'ord-none'; none.className = 'ord-none'; list.appendChild(none); }
+    none.textContent = 'No orders here yet.'; none.style.display = '';
+  } else if (none) none.style.display = 'none';
+  var more = document.getElementById('ord-more');
+  more.hidden = match.length <= TT_ORD_PAGE;
+  more.textContent = _ttOrdAll ? 'Show fewer' : 'Show all ' + match.length + ' orders';
+}
+
+
+// ── v4.6.0: gender (CLIENTS → "Gender") drives the measurement figure ──
+function ttGenderCode(g) { g = String(g || '').trim().toLowerCase(); return /^(f|w)/.test(g) ? 'F' : (/^m/.test(g) ? 'M' : ''); }
+function ttGenderWord(g) { var c = ttGenderCode(g); return c === 'F' ? 'Female' : (c === 'M' ? 'Male' : ''); }
+var TT_MEAS_FIG = { M: 'https://raw.githubusercontent.com/toom-design/measurements/main/MEASUREMENTS_2front_M.webp',
+                    F: 'https://raw.githubusercontent.com/toom-design/measurements/main/MEASUREMENTS_2front_F.webp' };
+var _ttFigGender = null;
+function ttSetMeasFigure(g) {
+  var code = ttGenderCode(g) || 'M';
+  if (code === _ttFigGender) return;
+  _ttFigGender = code;
+  var figEl = document.getElementById('meas-figure-img');
+  if (!figEl) return;
+  trimTransparentPadding(TT_MEAS_FIG[code]).then(function (t) {
+    if (_ttFigGender !== code) return;
+    figEl.src = t.src;
+    if (t.width && t.height) figEl.style.aspectRatio = t.width + ' / ' + t.height;
+  });
+}
+
+var _measRecords = [];
+
+function loadMeasurements() {
+  window._d.req('getMeasurements').then(function(res) {
+    document.getElementById('meas-loading').style.display = 'none';
+    if (!res.success || !res.records || res.records.length === 0) {
+      document.getElementById('meas-empty').style.display = 'block';
+      document.getElementById('st-meas').textContent = '0';
+      return;
+    }
+    _measRecords = res.records; // already newest-first from the server
+    document.getElementById('st-meas').textContent = _measRecords.length;
+
+    var dateRow = document.getElementById('meas-date-row');
+    var select  = document.getElementById('meas-date-select');
+    select.innerHTML = '';
+    if (_measRecords.length > 1) {
+      _measRecords.forEach(function(rec, i) {
+        var opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = fmtDate(rec['Created At'] || rec['dateTime'] || '') || ('Session ' + (i + 1));
+        select.appendChild(opt);
+      });
+      dateRow.style.display = 'flex';
+    } else {
+      dateRow.style.display = 'none';
+    }
+
+    renderMeasurementSet(0);
+  }).catch(function(){ document.getElementById('meas-loading').style.display='none'; document.getElementById('meas-empty').style.display='block'; });
+}
+
+// Renders one specific saved session (by index into _measRecords) into the
+// chip list — called on initial load and whenever the date dropdown changes.
+function renderMeasurementSet(index) {
+  var rec = _measRecords[parseInt(index, 10) || 0];
+  if (!rec) return;
+  var chips = document.getElementById('meas-chips');
+  chips.innerHTML = '';
+
+  // The server returns each record keyed by its raw sheet header (e.g.
+  // "Bust girth [CM]") alongside short camelCase aliases. The raw headers
+  // already carry both a readable label and a unit, and cover every
+  // measurement column that exists — not just a hand-picked subset — so
+  // showing all of them just means showing every key matching that shape.
+  var shown = 0;
+  Object.keys(rec).forEach(function(key) {
+    var m = key.match(/^(.*?)\s*\[(.+)\]$/);
+    if (!m) return;
+    var val = rec[key];
+    if (val === undefined || val === '' || val === '0') return;
+    var num = parseFloat(val);
+    if (isNaN(num)) return;
+    var label = m[1].trim();
+    var unit  = m[2].trim().toLowerCase();
+    var d = document.createElement('div');
+    d.className = 'meas-chip';
+    d.innerHTML = '<div class="meas-lbl">' + label + '</div><div class="meas-val">' + num.toFixed(1) + '<span class="meas-unit">' + unit + '</span></div>';
+    chips.appendChild(d); shown++;
+  });
+
+  document.getElementById('meas-empty').style.display = shown === 0 ? 'block' : 'none';
+  document.getElementById('meas-body-row').style.display = shown === 0 ? 'none' : 'flex';
+}
+
+function loadProfile(user) {
+  var uid   = window._d.currentUser ? window._d.currentUser.uid   : null;
+  var email = window._d.currentUser ? window._d.currentUser.email : null;
+
+  // Step 1 — show Firebase data immediately (no waiting for sheet)
+  if (user) {
+    var parts = (user.displayName || '').split(' ');
+    var fbProfile = {
+      'UID':        uid         || '',
+      'First Name': parts[0]   || '',
+      'Last Name':  parts.slice(1).join(' ') || '',
+      'Email':      email      || '',
+      'Phone Number':'', 'IG':'', 'Street Address':'',
+      'City':'', 'Postal Code':'', 'Country':'',
+      'Person ID':'', 'Created at':'',
+    };
+    renderProfile(fbProfile);
+    prefill(fbProfile);
+  }
+
+  // Step 2 — fetch from sheet and update (also save if missing)
+  window._d.req('getClient', { uid: uid }).then(function(res) {
+    if (res && res.success && res.client && res.client['Email']) {
+      // Merge sheet data over Firebase fallback
+      renderProfile(res.client);
+      prefill(res.client);
+      document.getElementById('st-id').textContent    = res.client['Person ID'] || '—';
+      document.getElementById('st-since').textContent = 'member since ' + fmtDate(res.client['Created at'] || '');
+      // Mirror to dropdown
+      window._currentPersonId = res.client['Person ID'] || null;
+      var _el;
+      _el = document.getElementById('dd-pid');      if(_el && !document.body.classList.contains('tt-viewing')) _el.textContent = window._currentPersonId || '—';
+      _el = document.getElementById('dd-email-sub');if(_el && !document.body.classList.contains('tt-viewing')) _el.textContent = res.client['Email'] || '—';
+      _el = document.getElementById('dd-name');     if(_el && !document.body.classList.contains('tt-viewing')) _el.textContent = (res.client['First Name']||'') + ' ' + (res.client['Last Name']||'') || window._d.currentUser.displayName || '—';
+    } else {
+      // Not in sheet — save now so future logins find them
+      if (uid && email) {
+        var parts = (user && user.displayName ? user.displayName : '').split(' ');
+        saveClientJSONP({
+          uid:   uid,
+          email: email,
+          action: 'saveClient',
+          data: {
+            'UID':        uid,
+            'Email':      email,
+            'First Name': parts[0] || '',
+            'Last Name':  parts.slice(1).join(' ') || '',
+          }
+        }, function(res) {
+          if (res && res.personId) {
+            document.getElementById('st-id').textContent = res.personId;
+            window._currentPersonId = res.personId;
+            var _el = document.getElementById('dd-pid'); if(_el && !document.body.classList.contains('tt-viewing')) _el.textContent = res.personId;
+          }
+        });
+      }
+    }
+  }).catch(function(){
+    // Sheet unavailable — Firebase data already shown, nothing to do
+  });
+}
+
+var PC_ICONS = {
+  gender:  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>',
+  address: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 21s-7-6.1-7-11a7 7 0 0114 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+  phone:   '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.8 19.8 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.68 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.9.32 1.85.55 2.81.68A2 2 0 0122 16.92z"/></svg>',
+  mail2:   '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>',
+  email:   '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z"/><path d="M22 6l-10 7L2 6"/></svg>',
+};
+function ttMktWord(v) { v = String(v == null ? '' : v).trim(); return v === '' ? '' : (/^(true|yes|1)$/i.test(v) ? 'Subscribed' : 'Not subscribed'); }
+function renderProfile(c) {
+  if (c && String(c['First Name'] || '').trim()) window.ttFirstName = String(c['First Name']).trim();
+  ttSetMeasFigure(c && c['Gender']);
+  var user  = window._d && window._d.currentUser;
+  var parts = user && user.displayName ? user.displayName.split(' ') : [];
+  // Always fall back to Firebase data for key fields
+  var merged = {
+    'UID':        (c && c['UID'])        || (user && user.uid)   || '',
+    'First Name': (c && c['First Name']) || parts[0]             || '',
+    'Last Name':  (c && c['Last Name'])  || parts.slice(1).join(' ') || '',
+    'Email':      (c && c['Email'])      || (user && user.email) || '',
+    'Phone Number':   c && c['Phone Number']   || '',
+    'IG':             c && c['IG']             || '',
+    'Street Address': c && c['Street Address'] || '',
+    'City':           c && c['City']           || '',
+    'Postal Code':    c && c['Postal Code']    || '',
+    'Country':        c && c['Country']        || '',
+  };
+  var nameEl = document.getElementById('profile-name');
+  if (nameEl) {
+    var fullName = (merged['First Name'] + ' ' + merged['Last Name']).trim();
+    nameEl.textContent = fullName || merged['Email'] || '—';
+  }
+  var uidEl = document.getElementById('profile-uid');
+  if (uidEl) uidEl.textContent = merged['UID'] ? ('UID ' + merged['UID']) : '';
+
+  var addrLines = [];
+  if (merged['Street Address']) addrLines.push(merged['Street Address']);
+  var cityPostal = [merged['City'], merged['Postal Code']].filter(Boolean).join(', ');
+  if (cityPostal) addrLines.push(cityPostal);
+  if (merged['Country']) addrLines.push(merged['Country']);
+  var address = addrLines.join('<br>');
+
+  var items = [
+    { icon: PC_ICONS.gender,  label: 'Gender',  value: ttGenderWord(c && c['Gender']) },
+    { icon: PC_ICONS.address, label: 'Address', value: address },
+    { icon: PC_ICONS.phone,   label: 'Phone',   value: merged['Phone Number'] },
+    { icon: PC_ICONS.email,   label: 'Email',   value: merged['Email'] },
+    { icon: PC_ICONS.mail2,   label: 'Marketing emails', value: ttMktWord(c && c['Marketing Consent']) },
+  ];
+  var g = document.getElementById('profile-display');
+  g.innerHTML = '';
+  items.forEach(function(it) {
+    var div = document.createElement('div');
+    div.className = 'pc-item';
+    div.innerHTML = '<div class="pc-icon">' + it.icon + '</div>' +
+      '<div><div class="pc-lbl">' + it.label + '</div>' +
+      '<div class="pc-val' + (it.value ? '' : ' empty') + '">' + (it.value || 'Not set') + '</div></div>';
+    g.appendChild(div);
+  });
+}
+function prefill(c) {
+  var user  = window._d && window._d.currentUser;
+  var parts = user && user.displayName ? user.displayName.split(' ') : [];
+  var merged = {
+    'UID':          (c && c['UID'])          || (user && user.uid)   || '',
+    'Email':        (c && c['Email'])        || (user && user.email) || '',
+    'First Name':   (c && c['First Name'])   || parts[0]             || '',
+    'Last Name':    (c && c['Last Name'])    || parts.slice(1).join(' ') || '',
+    'Phone Number': (c && c['Phone Number']) || '',
+    'IG':           (c && c['IG'])           || '',
+    'Street Address':(c && c['Street Address']) || '',
+    'City':         (c && c['City'])         || '',
+    'Postal Code':  (c && c['Postal Code'])  || '',
+    'Country':      (c && c['Country'])      || '',
+  };
+  var m = {
+    'ef-uid':'UID','ef-email':'Email',
+    'ef-fn':'First Name','ef-ln':'Last Name',
+    'ef-ig':'IG',
+    'ef-street':'Street Address','ef-city':'City',
+    'ef-postal':'Postal Code','ef-country':'Country'
+  };
+  Object.keys(m).forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.value = merged[m[id]] || '';
+  });
+  var gSel = document.getElementById('ef-gender');
+  if (gSel) gSel.value = ttGenderWord(c && c['Gender']);
+  var mSel = document.getElementById('ef-marketing');
+  if (mSel) { var mv = String((c && c['Marketing Consent']) || '').trim(); mSel.value = mv === '' ? '' : (/^(true|yes|1)$/i.test(mv) ? 'TRUE' : 'FALSE'); }
+
+  // Phone is split across two controls (code + number) but stored as one
+  // string, e.g. "+44 7911 123456" — parse it back apart for editing.
+  var codeSel = document.getElementById('ef-phone-code');
+  var numIn   = document.getElementById('ef-phone-num');
+  var raw     = (merged['Phone Number'] || '').trim();
+  if (codeSel && numIn) {
+    if (raw) {
+      var codes = Array.prototype.slice.call(codeSel.options)
+        .map(function(o){ return o.value; })
+        .filter(Boolean)
+        .sort(function(a,b){ return b.length - a.length; }); // longest first
+      var matched = codes.find(function(code){ return raw.indexOf(code) === 0; });
+      if (matched) {
+        codeSel.value = matched;
+        numIn.value   = raw.slice(matched.length).trim();
+      } else {
+        codeSel.value = '';
+        numIn.value   = raw;
+      }
+    } else {
+      codeSel.value = '';
+      numIn.value   = '';
+    }
+  }
+}
+
+function toggleEdit() {
+  var f = document.getElementById('edit-form');
+  f.style.display = f.style.display === 'block' ? 'none' : 'block';
+  if (f.style.display === 'block') {
+    f.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+
+<!-- Nav -->
+// ── saveClientJSONP — uses script tag like shirt configurator ─────────────────
+// This bypasses CORS completely and works on all browsers including Safari
+function saveClientJSONP(data, callback) {
+  var cbName = '__ttClient_' + Date.now();
+  var payload = encodeURIComponent(JSON.stringify(data));
+  var url = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec' +
+    '?action=saveClient' +
+    '&payload=' + payload +
+    '&callback=' + cbName;
+
+  var script = document.createElement('script');
+
+  var timer = setTimeout(function() {
+    cleanup();
+    // Timeout — assume saved (same as shirt configurator)
+    if (callback) callback({ success: true, action: 'sent' });
+  }, 6000);
+
+  function cleanup() {
+    clearTimeout(timer);
+    delete window[cbName];
+    if (script.parentNode) document.body.removeChild(script);
+  }
+
+  window[cbName] = function(response) {
+    cleanup();
+    if (callback) callback(response);
+  };
+
+  script.onerror = function() {
+    cleanup();
+    if (callback) callback({ success: false, message: 'Script load failed' });
+  };
+
+  script.src = url;
+  document.body.appendChild(script);
+}
+
+function saveProfile() {
+  var user  = window._d && window._d.currentUser;
+  if (!user) { toast('Not signed in', 'err'); return; }
+
+  var fname = document.getElementById('ef-fn').value.trim();
+  if (!fname) { toast('First name is required.', 'err'); return; }
+
+  var data = {
+    'UID':          user.uid,
+    'Email':        user.email,
+    'First Name':   fname,
+    'Last Name':    document.getElementById('ef-ln').value.trim(),
+    'Gender':       document.getElementById('ef-gender').value,
+    'Phone Number': (function(){
+      var code = document.getElementById('ef-phone-code').value.trim();
+      var num  = document.getElementById('ef-phone-num').value.trim();
+      return num ? (code ? code + ' ' + num : num) : '';
+    })(),
+    'IG':           document.getElementById('ef-ig').value.trim(),
+    'Street Address': document.getElementById('ef-street').value.trim(),
+    'City':         document.getElementById('ef-city').value.trim(),
+    'Postal Code':  document.getElementById('ef-postal').value.trim(),
+    'Country':      document.getElementById('ef-country').value.trim(),
+  };
+  var mkt = document.getElementById('ef-marketing');
+  if (mkt && mkt.value) data['Marketing Consent'] = mkt.value;   // saved with the date it changed
+
+  var btn = document.getElementById('btn-save-p');
+  var lbl = document.getElementById('save-lbl');
+  var sp  = document.getElementById('save-spin');
+  btn.disabled = true; lbl.style.display = 'none'; sp.style.display = 'block';
+
+  // uid/email stay top-level (used to locate the row); the editable fields
+  // must be nested under "data" — that's what saveClient() on the server reads.
+  saveClientJSONP({
+    uid:    user.uid,
+    email:  user.email,
+    action: 'saveClient',
+    data:   Object.assign({}, data, { '_forceUpdate': true }),
+  }, function(res) {
+    btn.disabled = false; lbl.style.display = ''; sp.style.display = 'none';
+    if (res && res.success) {
+      toast(res.action === 'created' ? 'Profile created!' : 'Profile saved!');
+      if (res.personId) {
+        document.getElementById('st-id').textContent = res.personId;
+        window._currentPersonId = res.personId;
+        var _el = document.getElementById('dd-pid'); if(_el && !document.body.classList.contains('tt-viewing')) _el.textContent = res.personId;
+      }
+      renderProfile(data);
+      prefill(data);
+      document.getElementById('edit-form').style.display = 'none';
+    } else {
+      toast('Could not save changes — please try again.', 'err');
+    }
+  });
+}
+
+// ── Account popover ───────────────────────────────────────────────
+function toggleDropdown(e) {
+  if (e) e.stopPropagation();
+  var d = document.getElementById('nav-dd');
+  if (!d) return;
+  d.style.display = (d.style.display === 'block') ? 'none' : 'block';
+}
+function togglePopover(e) { toggleDropdown(e); }
+document.addEventListener('click', function(e) {
+  var d  = document.getElementById('nav-dd');
+  var av = document.getElementById('nav-av');
+  if (d && d.style.display === 'block' && !d.contains(e.target) && av && !av.contains(e.target))
+    d.style.display = 'none';
+});
+function setAccountPopover(user) {
+  if (!user) return;
+  var fullname = user.displayName || user.email || '—';
+  // Nav avatar circle
+  var av = document.getElementById('nav-av');
+  if (av) {
+    if (user.photoURL) av.innerHTML = '<img src="'+user.photoURL+'" style="width:100%;height:100%;object-fit:cover;" alt="">';
+    else av.textContent = fullname[0].toUpperCase();
+  }
+  // Dropdown large avatar
+  var ddAv = document.getElementById('dd-av');
+  if (ddAv) {
+    if (user.photoURL) ddAv.innerHTML = '<img src="'+user.photoURL+'" style="width:100%;height:100%;object-fit:cover;" alt="">';
+    else ddAv.textContent = fullname[0].toUpperCase();
+  }
+  // Set name + email immediately from Firebase (Person ID comes later from sheet)
+  var el;
+  el = document.getElementById('dd-name');      if(el) el.textContent = fullname;
+  el = document.getElementById('dd-email-sub'); if(el) el.textContent = user.email||'';
+  el = document.getElementById('dd-pid');       if(el) el.textContent = window._currentPersonId||'—';
+}
+function copyVal(type) {
+  var val = type==='pid'
+    ? (window._currentPersonId||'')
+    : (window._d&&window._d.currentUser&&window._d.currentUser.email||'');
+  if (!val||val==='—'){toast('Nothing to copy','err');return;}
+  if(navigator.clipboard) navigator.clipboard.writeText(val).then(function(){toast(type.toUpperCase()+' copied');});
+}
+function ddCopy(type){copyVal(type);}
+
+function openImagePreview(url) {
+  if (!url) return;
+  document.getElementById('img-preview-src').src = url;
+  document.getElementById('img-preview-overlay').style.display = 'flex';
+}
+function closeImagePreview() {
+  document.getElementById('img-preview-overlay').style.display = 'none';
+  document.getElementById('img-preview-src').src = '';
+}
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeImagePreview(); });
+
+// One-time trim for the static measurement figure — it's a fixed asset,
+// not per-order data, so this only needs to run once per page load rather
+// than on every renderMeasurementSet() call.
+(function(){
+  var figEl = document.getElementById('meas-figure-img');
+  if (!figEl) return;
+  trimTransparentPadding(figEl.src).then(function(trimmed){
+    figEl.src = trimmed.src;
+    if (trimmed.width && trimmed.height) {
+      figEl.style.aspectRatio = trimmed.width + ' / ' + trimmed.height;
+    }
+  });
+})();
+
+</script>
+
+<!-- Image preview lightbox -->
+<div id="img-preview-overlay" onclick="if(event.target===this) closeImagePreview()"
+     style="display:none;position:fixed;inset:0;background:rgba(26,25,22,0.85);z-index:10000;align-items:center;justify-content:center;padding:32px;">
+  <div style="position:relative;max-width:640px;width:100%;">
+    <button onclick="closeImagePreview()" aria-label="Close"
+      style="position:absolute;top:-38px;right:0;background:none;border:none;color:var(--white);cursor:pointer;padding:6px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <img id="img-preview-src" src="" alt="" style="width:100%;max-height:80vh;object-fit:contain;background:var(--white);border-radius:3px;display:block;">
+  </div>
+</div>
+
+
+<!-- Version badge -->
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v4.7.0</div>
+
+<!-- Cart icon + item count next to the profile picture (shown when signed in) -->
+<style>
+.tt-cart-btn { position: relative; display: none; align-items: center; justify-content: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; color: #1A1916; text-decoration: none; transition: background 0.15s, color 0.15s; }
+.tt-cart-btn.on { display: inline-flex; }
+.tt-cart-btn:hover { background: rgba(74,22,79,0.07); color: #4A164F; }
+.tt-cart-btn svg { width: 19px; height: 19px; display: block; }
+.tt-cart-count { position: absolute; top: -2px; right: -4px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px; background: #4A164F; color: #fff; border: 2px solid #FAFAF8; font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 9.5px; font-weight: 600; line-height: 13px; text-align: center; letter-spacing: 0; box-sizing: border-box; }
+.tt-cart-count[hidden] { display: none; }
+.tt-cart-count.bump { animation: ttCartBump 0.35s ease; }
+@keyframes ttCartBump { 50% { transform: scale(1.25); } }
+</style>
+<script>
+(function () {
+  var KEY = 'tt_cart_count', API = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
+  var btn, badge, last = null;
+  function store(n) { try { if (n == null) localStorage.removeItem(KEY); else localStorage.setItem(KEY, String(n)); } catch (e) {} }
+  function cached() { try { var v = localStorage.getItem(KEY); return v == null ? null : parseInt(v, 10); } catch (e) { return null; } }
+  function build() {
+    var av = document.getElementById('nav-av');
+    if (!av || !av.parentNode || document.getElementById('tt-cart-btn')) return !!btn;
+    btn = document.createElement('a');
+    btn.id = 'tt-cart-btn'; btn.className = 'tt-cart-btn'; btn.href = 'https://tailortech.toom.design/cart';
+    btn.setAttribute('aria-label', 'Cart'); btn.title = 'Cart';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span class="tt-cart-count" hidden></span>';
+    badge = btn.querySelector('.tt-cart-count');
+    av.parentNode.insertBefore(btn, av);
+    return true;
+  }
+  // Public: set the number (cart page calls this after loading / removing items)
+  window.ttCartCount = function (n) {
+    if (!build()) return;
+    n = Math.max(0, parseInt(n, 10) || 0);
+    badge.textContent = n > 99 ? '99+' : String(n);
+    badge.hidden = n === 0;
+    btn.setAttribute('aria-label', n ? 'Cart, ' + n + ' item' + (n > 1 ? 's' : '') : 'Cart');
+    if (last != null && n !== last) { badge.classList.remove('bump'); void badge.offsetWidth; badge.classList.add('bump'); }
+    last = n; store(n);
+  };
+  window.ttCartShow = function (on) { if (build()) btn.classList.toggle('on', !!on); if (!on) store(null); };
+  window.ttCartRefresh = function (user) {
+    if (!user || !user.getIdToken) return;
+    user.getIdToken().then(function (tok) {
+      var cb = '_ttcart' + Date.now(), s = document.createElement('script');
+      var done = function () { try { delete window[cb]; } catch (e) { window[cb] = undefined; } if (s.parentNode) s.parentNode.removeChild(s); };
+      window[cb] = function (res) { done(); if (res && res.success) window.ttCartCount((res.items || []).length); };
+      s.onerror = done; setTimeout(done, 30000);
+      s.src = API + '?action=getCart&payload=' + encodeURIComponent(JSON.stringify({ idToken: tok })) + '&callback=' + cb;
+      document.body.appendChild(s);
+    }).catch(function () {});
+  };
+  function init() {
+    if (!build()) return;
+    var c = cached(); if (c != null) window.ttCartCount(c);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+</script>
+<script type="module">
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+// Use the page's own Firebase app (same SDK build); start one only if the page has none
+function app() {
+  return getApps().length ? getApp() : initializeApp({
+    apiKey: "AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY", authDomain: "tailortech-accounts.firebaseapp.com",
+    projectId: "tailortech-accounts", storageBucket: "tailortech-accounts.firebasestorage.app",
+    messagingSenderId: "137614433833", appId: "1:137614433833:web:c78ea40b0d04ba89f3c638"
+  });
+}
+setTimeout(function () {
+  onAuthStateChanged(getAuth(app()), function (user) {
+    window.ttCartShow(!!user);
+    if (user && !window.ttCartManaged) window.ttCartRefresh(user);   // the cart page sets the count itself
+  });
+}, 0);
+</script>
+
+<!-- Pop-up messages (toasts) in the TailorTech mint style — replaces the page's toast()/showToast() -->
+<style>
+#tt-toast { position: fixed; left: 50%; bottom: 28px; z-index: 100001; display: flex; align-items: center; gap: 12px; max-width: min(440px, calc(100% - 32px)); padding: 13px 18px 13px 13px; border-radius: 12px; background: #F3F8F6; border: 1px solid rgba(77,191,171,0.45); box-shadow: 0 14px 40px rgba(26,25,22,0.14); color: #2f6f63; font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 13px; font-weight: 500; line-height: 1.45; letter-spacing: 0.01em; text-transform: none; transform: translate(-50%, 14px); opacity: 0; pointer-events: none; transition: opacity 0.22s ease, transform 0.22s ease; box-sizing: border-box; }
+#tt-toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+#tt-toast .tt-toast-ic { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid #4DBFAB; color: #4DBFAB; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+#tt-toast .tt-toast-ic svg { width: 12px; height: 12px; display: block; }
+#tt-toast.err { background: #FBF3F2; border-color: rgba(196,98,90,0.45); color: #8a3b34; }
+#tt-toast.err .tt-toast-ic { border-color: #C4625A; color: #C4625A; }
+@media (max-width: 560px) { #tt-toast { bottom: 18px; font-size: 12.5px; } }
+</style>
+<script>
+(function () {
+  var ICON_OK  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5,12.5 10,17.5 19,7"/></svg>';
+  var ICON_ERR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="6" x2="12" y2="13.5"/><line x1="12" y1="18.5" x2="12" y2="18.6"/></svg>';
+  var timer;
+  function ttToast(msg, type) {
+    var el = document.getElementById('tt-toast');
+    if (!el) {
+      el = document.createElement('div'); el.id = 'tt-toast';
+      el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite');
+      el.innerHTML = '<span class="tt-toast-ic"></span><span class="tt-toast-msg"></span>';
+      document.body.appendChild(el);
+    }
+    // Sit above a sticky footer (configurators' price bar) instead of covering it
+    var foot = document.querySelector('.config-footer');
+    el.style.bottom = foot && foot.offsetHeight ? (foot.offsetHeight + 16) + 'px' : '';
+    var isErr = /^(err|error|danger|fail)/i.test(String(type || ''));
+    el.className = isErr ? 'err' : '';
+    el.querySelector('.tt-toast-ic').innerHTML = isErr ? ICON_ERR : ICON_OK;
+    el.querySelector('.tt-toast-msg').textContent = String(msg == null ? '' : msg);
+    void el.offsetWidth; el.classList.add('show');
+    clearTimeout(timer);
+    timer = setTimeout(function () { el.classList.remove('show'); }, isErr ? 4500 : 3000);
+  }
+  window.ttToast = ttToast;
+  window.toast = ttToast;
+  window.showToast = ttToast;
+})();
+</script>
+
+<!-- Marketing consent card: asks signed-in clients who haven't said yes yet (CLIENTS → Marketing Consent) -->
+<style>
+#tt-mkt { position: fixed; right: 22px; bottom: 22px; z-index: 100000; width: min(360px, calc(100% - 32px)); padding: 20px 20px 18px; border-radius: 14px; background: #FAFAF8; border: 1px solid rgba(26,25,22,0.12); box-shadow: 0 18px 50px rgba(26,25,22,0.16); font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; color: #1A1916; opacity: 0; transform: translateY(16px); pointer-events: none; transition: opacity 0.3s ease, transform 0.3s ease; box-sizing: border-box; }
+#tt-mkt.show { opacity: 1; transform: none; pointer-events: auto; }
+#tt-mkt .m-eye { font-size: 9.5px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #4DBFAB; margin-bottom: 8px; }
+#tt-mkt .m-h { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 23px; font-weight: 500; line-height: 1.15; color: #4A164F; margin: 0 26px 8px 0; }
+#tt-mkt .m-p { font-size: 12.5px; line-height: 1.55; color: #4A4844; margin: 0 0 16px; }
+#tt-mkt .m-row { display: flex; gap: 8px; }
+#tt-mkt button { font-family: inherit; cursor: pointer; border-radius: 999px; font-size: 10.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; padding: 12px 14px; transition: background 0.15s, opacity 0.15s; }
+#tt-mkt .m-yes { flex: 1.3; background: #4A164F; color: #fff; border: 1px solid #4A164F; }
+#tt-mkt .m-yes:hover { opacity: 0.9; }
+#tt-mkt .m-no { flex: 1; background: transparent; color: #4A4844; border: 1px solid rgba(26,25,22,0.22); }
+#tt-mkt .m-no:hover { background: rgba(26,25,22,0.04); }
+#tt-mkt .m-x { position: absolute; top: 12px; right: 12px; width: 28px; height: 28px; padding: 0; border: none; background: transparent; color: #8A8880; font-size: 18px; line-height: 1; letter-spacing: 0; border-radius: 50%; }
+#tt-mkt .m-x:hover { background: rgba(26,25,22,0.06); color: #1A1916; }
+#tt-mkt .m-fine { font-size: 10.5px; color: #8A8880; margin-top: 10px; line-height: 1.45; }
+@media (max-width: 560px) { #tt-mkt { right: 16px; bottom: 16px; } }
+</style>
+<script>
+(function () {
+  var API = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
+  var DELAY = 12000;                 // let people look around first
+  var LATER_DAYS = 14;               // "×" — ask again in two weeks
+  var NO_DAYS = 90;                  // "No, thanks" (or FALSE in the sheet) — ask again after three months at most
+  var DAY = 864e5;
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function jsonp(action, payload, cb) {
+    var name = '_ttmkt' + Date.now() + Math.floor(Math.random() * 1e4), s = document.createElement('script');
+    var done = function () { try { delete window[name]; } catch (e) { window[name] = undefined; } if (s.parentNode) s.parentNode.removeChild(s); };
+    window[name] = function (res) { done(); if (cb) cb(res); };
+    s.onerror = function () { done(); if (cb) cb(null); };
+    setTimeout(done, 30000);
+    s.src = API + '?action=' + action + '&payload=' + encodeURIComponent(JSON.stringify(payload)) + '&callback=' + name;
+    document.body.appendChild(s);
+  }
+  function parseDate(v) {          // "28/10/2026 09:30:00" (script) or anything Date understands
+    var m = String(v || '').match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
+    if (m) return new Date(+m[3], m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0)).getTime();
+    var t = Date.parse(v); return isNaN(t) ? 0 : t;
+  }
+  function field(client, name) {
+    var k = Object.keys(client || {}).find(function (x) { return x.trim().toLowerCase() === name.toLowerCase(); });
+    return k ? String(client[k] == null ? '' : client[k]).trim() : '';
+  }
+  function busyElsewhere() {        // don't stack on top of another popup
+    return !!document.querySelector('.overlay.open, .modal.open, [role="dialog"][open], #welcome-overlay.open, #gender-overlay.open, #tt-consent:not([hidden])');
+  }
+  function hide(el) { el.classList.remove('show'); setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 350); }
+  function show(user) {
+    if (document.getElementById('tt-mkt')) return;
+    if (busyElsewhere()) { setTimeout(function () { show(user); }, 8000); return; }
+    var el = document.createElement('div');
+    el.id = 'tt-mkt'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Email updates');
+    el.innerHTML = '<button class="m-x" type="button" aria-label="Ask me later">&times;</button>' +
+      '<div class="m-eye">Stay in the loop</div>' +
+      '<div class="m-h">New fabrics &amp; garments, first</div>' +
+      '<p class="m-p">Get an occasional email when we add new fabrics, garments or offers. No spam &mdash; unsubscribe in one click.</p>' +
+      '<div class="m-row"><button class="m-yes" type="button">Yes, keep me posted</button><button class="m-no" type="button">No, thanks</button></div>' +
+      '<div class="m-fine">You can change this any time in your dashboard.</div>';
+    document.body.appendChild(el);
+    void el.offsetWidth; el.classList.add('show');
+    var key = 'tt_mkt_snooze_' + user.uid;
+    function save(val) {
+      lsSet(key, String(Date.now() + (val === 'TRUE' ? 3650 : NO_DAYS) * DAY));
+      jsonp('saveClient', { uid: user.uid, email: user.email, data: { 'UID': user.uid, 'Email': user.email, 'Marketing Consent': val } });
+      hide(el);
+      if (val === 'TRUE' && window.toast) toast('Thank you! We’ll keep you posted ✦');
+    }
+    el.querySelector('.m-yes').onclick = function () { save('TRUE'); };
+    el.querySelector('.m-no').onclick = function () { save('FALSE'); };
+    el.querySelector('.m-x').onclick = function () { lsSet(key, String(Date.now() + LATER_DAYS * DAY)); hide(el); };
+  }
+  window.ttMarketingAsk = function (user) {
+    if (!user || !user.uid || !user.email) return;
+    if (/[?&]nomkt\b/.test(location.search)) return;
+    var snooze = +lsGet('tt_mkt_snooze_' + user.uid) || 0;
+    if (snooze > Date.now()) return;
+    try { if (sessionStorage.getItem('tt_mkt_checked')) return; } catch (e) {}
+    setTimeout(function () {
+      try { sessionStorage.setItem('tt_mkt_checked', '1'); } catch (e) {}          // check once per visit
+      jsonp('getClient', { uid: user.uid, email: user.email }, function (res) {
+        var c = res && res.client; if (!c) return;
+        var v = field(c, 'Marketing Consent');
+        if (/^(true|yes|1)$/i.test(v)) return;                                   // already subscribed
+        if (v !== '' && Date.now() - parseDate(field(c, 'Marketing Consent Updated')) < NO_DAYS * DAY) return;  // said no recently
+        show(user);
+      });
+    }, DELAY);
+  };
+})();
+</script>
+<script type="module">
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+function app() {
+  return getApps().length ? getApp() : initializeApp({
+    apiKey: "AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY", authDomain: "tailortech-accounts.firebaseapp.com",
+    projectId: "tailortech-accounts", storageBucket: "tailortech-accounts.firebasestorage.app",
+    messagingSenderId: "137614433833", appId: "1:137614433833:web:c78ea40b0d04ba89f3c638"
+  });
+}
+setTimeout(function () {
+  var asked = false;
+  onAuthStateChanged(getAuth(app()), function (user) { if (user && !asked) { asked = true; window.ttMarketingAsk(user); } });
+}, 0);
+</script>
+
+<!-- Share your design: Instagram story card for each order (same card as on the success page) -->
+<style>
+.order-share { margin-top: 12px; display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(74,22,79,0.3); background: transparent; color: var(--tt-purple, #4A164F); font-family: inherit; font-size: 10px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; transition: background 0.15s; }
+.order-share:hover { background: rgba(74,22,79,0.06); }
+.order-share svg { width: 13px; height: 13px; }
+#tt-story { position: fixed; inset: 0; z-index: 100002; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(26,25,22,0.45); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+#tt-story.open { display: flex; }
+#tt-story .sbox { position: relative; width: min(400px, 100%); max-height: 100%; overflow-y: auto; padding: 26px 24px 22px; background: #FAFAF8; border-radius: 18px; text-align: center; box-shadow: 0 24px 70px rgba(0,0,0,0.3); font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; }
+#tt-story .sx { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border: none; background: transparent; border-radius: 50%; font-size: 20px; color: #8A8880; cursor: pointer; }
+#tt-story .sx:hover { background: rgba(26,25,22,0.06); color: #1A1916; }
+#tt-story .se { font-size: 9.5px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #4DBFAB; margin-bottom: 6px; }
+#tt-story h3 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 26px; color: #4A164F; margin: 0 0 14px; }
+#tt-story .sprev { width: 210px; aspect-ratio: 9 / 16; margin: 14px auto 0; border-radius: 14px; background: #F0EDE6; box-shadow: 0 14px 34px rgba(26,25,22,0.16); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+#tt-story .sprev img { width: 100%; height: 100%; display: block; }
+#tt-story .sprev .loader { width: 26px; height: 26px; border: 1.6px solid #C0BDB8; border-top-color: #4DBFAB; border-radius: 50%; animation: ttsSpin 0.8s linear infinite; }
+@keyframes ttsSpin { to { transform: rotate(360deg); } }
+#tt-story .stheme { display: inline-flex;  gap: 6px; padding: 4px; border-radius: 999px; background: #F0EDE6; }
+#tt-story .stheme button { font-family: inherit; border: none; cursor: pointer; border-radius: 999px; padding: 8px 16px; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; background: transparent; color: #4A4844; display: inline-flex; align-items: center; gap: 7px; }
+#tt-story .stheme button i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; border: 1px solid rgba(26,25,22,0.2); }
+#tt-story .stheme button.on { background: #fff; color: #1A1916; box-shadow: 0 1px 4px rgba(26,25,22,0.12); }
+#tt-story .sbtns { margin: 16px auto 0; width: 210px; display: flex; flex-direction: column; gap: 8px; }
+#tt-story .sbtns button { font-family: inherit; cursor: pointer; border-radius: 999px; font-size: 10.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; padding: 13px 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+#tt-story .sbtns button:disabled { opacity: 0.5; cursor: default; }
+#tt-story .sgo { background: #4A164F; color: #fff; border: 1px solid #4A164F; }
+#tt-story .sdl { background: transparent; color: #4A164F; border: 1px solid rgba(74,22,79,0.35); }
+#tt-story .sbtns svg { width: 14px; height: 14px; }
+#tt-story .stip { margin-top: 12px; font-size: 11.5px; line-height: 1.55; color: #8A8880; }
+</style>
+<div id="tt-story" role="dialog" aria-modal="true" aria-labelledby="tt-story-h">
+  <div class="sbox">
+    <button class="sx" type="button" aria-label="Close">&times;</button>
+    <div class="se">Share your design</div>
+    <h3 id="tt-story-h">Your one-of-one</h3>
+    <div class="stheme" role="group" aria-label="Card colour">
+      <button type="button" data-theme="plum"><i style="background:#3A1240"></i>Dark</button>
+      <button type="button" data-theme="cream"><i style="background:#F6F2EC"></i>Light</button>
+    </div><br>
+    <div class="stheme smode" role="group" aria-label="Card text" style="margin-top:8px">
+      <button type="button" data-mode="simple">Simple</button>
+      <button type="button" data-mode="text">With text</button>
+    </div>
+    <div class="sprev"><span class="loader"></span></div>
+    <div class="sbtns"></div>
+    <p class="stip"></p>
+  </div>
+</div>
+<script>
+(function () {
+  var W = 1080, H = 1920, SITE = 'tailortech.toom.design';
+  var THEMES = {
+    cream: { bg: '#F0EDE6', ink: '#1A1916', head: '#4A164F', accent: '#2f9e8a', soft: 'rgba(26,25,22,0.55)', line: 'rgba(26,25,22,0.16)' },
+    plum:  { bg: '#4A164F', ink: '#FAFAF8', head: '#FAFAF8', accent: '#6fd8c4', soft: 'rgba(250,250,248,0.65)', line: 'rgba(250,250,248,0.22)' }
+  };
+    function load(src, cors) {
+    return new Promise(function (res) {
+      if (!src) return res(null);
+      var i = new Image(); if (cors) i.crossOrigin = 'anonymous';
+      i.onload = function () { res(i); }; i.onerror = function () { res(null); }; i.src = src;
+    });
+  }
+  function spaced(ctx, text, x, y, spacing, align) {      // letter-spaced text (works in every browser)
+    var chars = String(text).split(''), w = 0;
+    chars.forEach(function (c, i) { w += ctx.measureText(c).width + (i < chars.length - 1 ? spacing : 0); });
+    var cx = align === 'left' ? x : align === 'right' ? x - w : x - w / 2;
+    ctx.textAlign = 'left';
+    chars.forEach(function (c) { ctx.fillText(c, cx, y); cx += ctx.measureText(c).width + spacing; });
+  }
+  // Crop the white margin around the drawing so the garment fills the panel
+  function trim(img) {
+    try {
+      var w = img.naturalWidth, h = img.naturalHeight, c = document.createElement('canvas'); c.width = w; c.height = h;
+      var x = c.getContext('2d'); x.drawImage(img, 0, 0);
+      var d = x.getImageData(0, 0, w, h).data, x0 = w, y0 = h, x1 = -1, y1 = -1;
+      for (var y = 0; y < h; y += 2) for (var i = 0; i < w; i += 2) {
+        var k = (y * w + i) * 4;
+        if (d[k + 3] > 20 && (d[k] < 235 || d[k + 1] < 235 || d[k + 2] < 235)) { if (i < x0) x0 = i; if (i > x1) x1 = i; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      }
+      if (x1 < 0) return img;
+      var m = Math.round(Math.max(x1 - x0, y1 - y0) * 0.04);
+      x0 = Math.max(0, x0 - m); y0 = Math.max(0, y0 - m); x1 = Math.min(w, x1 + m); y1 = Math.min(h, y1 + m);
+      var o = document.createElement('canvas'); o.width = x1 - x0; o.height = y1 - y0;
+      o.getContext('2d').drawImage(c, x0, y0, o.width, o.height, 0, 0, o.width, o.height);
+      o.naturalWidth = o.width; o.naturalHeight = o.height;
+      return o;
+    } catch (e) { return img; }
+  }
+  function fit(ctx, text, maxW) { var t = String(text); while (t.length > 3 && ctx.measureText(t).width > maxW) t = t.slice(0, -2).trim() + '…'; return t; }
+  function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+
+  function draw(it, th, mode) {
+    var SIMPLE = mode === 'simple';
+    var c = document.createElement('canvas'); c.width = W; c.height = H;
+    var x = c.getContext('2d');
+    var DARK = th !== 'cream';
+    var INK = DARK ? '#F4EFE9' : '#3A1240', PANEL = DARK ? '#F4EFE9' : '#FFFFFF', TURQ = DARK ? '#5FCDB8' : '#2E9E89',
+        INK_RGB = DARK ? '244,239,233' : '58,18,64', CREAM = '#F4EFE9', SANS = 'Jost, "Helvetica Neue", Arial, sans-serif', SERIF = '"Cormorant Garamond", Georgia, serif';
+    return Promise.all([load(it.img), load(LOGO_TT), load(LOGO_TOOM)]).then(function (im) {
+      var art = im[0] ? trim(im[0]) : null, logo = im[1], toom = im[2];
+      // Background: deep plum with a soft glow
+      var g = x.createRadialGradient(W / 2, H * 0.42, 80, W / 2, H * 0.5, H * 0.75);
+      if (DARK) { g.addColorStop(0, '#4A1A4F'); g.addColorStop(1, '#2C0C31'); } else { g.addColorStop(0, '#FAF7F2'); g.addColorStop(1, '#E9E2D8'); }
+      x.fillStyle = g; x.fillRect(0, 0, W, H);
+      x.textBaseline = 'alphabetic';
+      // Brand: TailorTech logo with rules either side, "BY" + TOOM logo underneath
+      var LW = 440, LH = Math.round(LW * (logo ? logo.naturalHeight / logo.naturalWidth : 71 / 434)), ly = 70;
+      if (logo) x.drawImage(tint(logo, INK), (W - LW) / 2, ly, LW, LH);
+      else { x.fillStyle = INK; x.font = '600 42px ' + SANS; spaced(x, 'TAILORTECH', W / 2, 122, 15); }
+      x.fillStyle = TURQ; x.font = '300 34px ' + SANS;
+      var tH = 40, tW = toom ? tH * toom.naturalWidth / toom.naturalHeight : 0, byW = x.measureText('B').width + x.measureText('Y').width + 8;
+      var rowW = byW + 20 + (toom ? tW : 0), bx0 = (W - rowW) / 2, by0 = ly + LH + 40;
+      if (toom) { spaced(x, 'BY', bx0, by0 + 12, 8, 'left'); x.drawImage(tint(toom, TURQ), bx0 + byW + 20, by0 - tH / 2, tW, tH); }
+      else spaced(x, 'BY TOOM', W / 2, by0 + 12, 9);
+      x.strokeStyle = DARK ? 'rgba(95,205,184,0.6)' : 'rgba(46,158,137,0.55)'; x.lineWidth = 2;
+      x.beginPath(); x.moveTo(157, by0); x.lineTo(bx0 - 32, by0); x.moveTo(bx0 + rowW + 32, by0); x.lineTo(923, by0); x.stroke();
+      // Headline (only in the version with text)
+      if (!SIMPLE) {
+        x.fillStyle = INK; x.textAlign = 'center';
+        x.font = '500 96px ' + SERIF; x.fillText('Designed by me.', W / 2, 300);
+        x.font = 'italic 500 96px ' + SERIF; x.fillText('Tailored for me.', W / 2, 402);
+      }
+      // Cream panel with the drawing
+      var px = 108, py = SIMPLE ? 330 : 457, pw = 865, ph = SIMPLE ? 760 : 718;
+      if (!DARK) { x.save(); x.shadowColor = 'rgba(58,18,64,0.12)'; x.shadowBlur = 40; x.shadowOffsetY = 14; }
+      rr(x, px, py, pw, ph, 36); x.fillStyle = PANEL; x.fill();
+      if (!DARK) x.restore();
+      if (art) {
+        x.save(); rr(x, px, py, pw, ph, 36); x.clip();
+        var pad = 56, bw = pw - pad * 2, bh = ph - pad * 2, s = Math.min(bw / art.naturalWidth, bh / art.naturalHeight);
+        var dw = art.naturalWidth * s, dh = art.naturalHeight * s;
+        x.globalCompositeOperation = 'multiply';
+        x.drawImage(art, px + (pw - dw) / 2, py + (ph - dh) / 2, dw, dh);
+        x.restore();
+      } else {
+        x.fillStyle = '#8A8880'; x.textAlign = 'center'; x.font = 'italic 500 60px ' + SERIF;
+        x.fillText('My ' + String(it.garment || 'garment').toLowerCase(), W / 2, py + ph / 2);
+      }
+      // "1 OF 1" stamp
+      x.save(); x.translate(px + pw - 96, py + 96); x.rotate(-0.18);
+      x.beginPath(); x.arc(0, 0, 66, 0, Math.PI * 2); x.fillStyle = '#4A1A4F'; x.fill();
+      x.beginPath(); x.arc(0, 0, 57, 0, Math.PI * 2); x.strokeStyle = 'rgba(95,205,184,0.75)'; x.lineWidth = 2; x.stroke();
+      x.fillStyle = CREAM; x.font = '600 25px ' + SANS; spaced(x, '1 OF 1', 0, 9, 4);
+      x.restore();
+      // Three promises, each with an icon
+      var rows = [
+        ['CUSTOM DESIGN', 'My style, my details.', 'sliders'],
+        ['BESPOKE PATTERN', 'Drafted to my measurements.', 'form'],
+        ['MADE TO ORDER', 'Produced specifically for me.', 'machine']
+      ];
+      var cy0 = 1257, step = 141, ix = 255, vx = 356, tx = 408;
+      if (!SIMPLE) rows.forEach(function (r, i) {
+        var cy = cy0 + step * i;
+        icon(x, r[2], ix, cy, INK);
+        x.strokeStyle = 'rgba(' + INK_RGB + ',0.4)'; x.lineWidth = 2;
+        x.beginPath(); x.moveTo(vx, cy - 37); x.lineTo(vx, cy + 37); x.stroke();
+        x.fillStyle = INK; x.font = '600 30px ' + SANS; spaced(x, r[0], tx, cy - 8, 8, 'left');
+        x.fillStyle = 'rgba(' + INK_RGB + ',0.85)'; x.font = '400 30px ' + SANS; x.textAlign = 'left'; x.fillText(r[1], tx, cy + 36);
+        if (i < rows.length - 1) {
+          x.strokeStyle = 'rgba(' + INK_RGB + ',0.25)'; x.lineWidth = 2;
+          x.beginPath(); x.moveTo(157, cy + step / 2); x.lineTo(923, cy + step / 2); x.stroke();
+        }
+      });
+      // Website in an outlined pill
+      x.font = '500 42px ' + SERIF;
+      var url = 'www.' + SITE, bw2 = Math.round(x.measureText(url).width + 120), bh2 = 96, bx = (W - bw2) / 2, by = SIMPLE ? 1700 : 1690;
+      rr(x, bx, by, bw2, bh2, bh2 / 2); x.strokeStyle = TURQ; x.lineWidth = 3; x.stroke();
+      x.fillStyle = INK; x.textAlign = 'center'; x.fillText(url, W / 2, by + 61);
+      return c;
+    });
+  }
+  // Logo in a single colour (the file is dark ink on transparent)
+  function tint(img, col) {
+    var c = document.createElement('canvas'); c.width = img.naturalWidth * 2; c.height = img.naturalHeight * 2;
+    var t = c.getContext('2d'); t.imageSmoothingQuality = 'high'; t.drawImage(img, 0, 0, c.width, c.height);
+    t.globalCompositeOperation = 'source-in'; t.fillStyle = col; t.fillRect(0, 0, c.width, c.height);
+    return c;
+  }
+  var LOGO_TT = "data:image/webp;base64,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";
+  var LOGO_TOOM = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent("<svg width=\"458\" height=\"132\" viewBox=\"0 0 229.18 65.81\" fill=\"none\" stroke=\"#5FCDB8\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M61.69,20.37v25.06c0,1.02.54,1.95,1.42,2.46l21.71,12.53c.88.51,1.96.51,2.84,0l21.71-12.53c.88-.51,1.42-1.45,1.42-2.46v-25.06c0-1.02-.54-1.95-1.42-2.46l-21.71-12.53c-.88-.51-1.96-.51-2.84,0l-21.71,12.53c-.88.51-1.42,1.45-1.42,2.46Z\"></path><path d=\"M118.39,20.37v25.06c0,1.02.54,1.95,1.42,2.46l21.71,12.53c.88.51,1.96.51,2.84,0l21.71-12.53c.88-.51,1.42-1.45,1.42-2.46v-25.06c0-1.02-.54-1.95-1.42-2.46l-21.71-12.53c-.88-.51-1.96-.51-2.84,0l-21.71,12.53c-.88.51-1.42,1.45-1.42,2.46Z\"></path><line x1=\"29.55\" y1=\"8.36\" x2=\"29.55\" y2=\"57.46\"></line><line x1=\"5\" y1=\"8.36\" x2=\"54.1\" y2=\"8.36\"></line><polyline points=\"175.08 57.46 175.08 8.36 199.63 30.85 224.18 8.36 224.18 57.46\"></polyline></svg>");
+  // Line icons (sliders, dress form, sewing machine)
+  function icon(x, kind, cx, cy, col) {
+    x.save(); x.translate(cx, cy); x.strokeStyle = col; x.fillStyle = col; x.lineWidth = 2.6; x.lineCap = 'round'; x.lineJoin = 'round';
+    if (kind === 'sliders') {
+      [[-20, -12], [0, 14], [20, -4]].forEach(function (r) {
+        var y = r[0], k = r[1];
+        x.beginPath(); x.moveTo(-30, y); x.lineTo(k - 6, y); x.moveTo(k + 6, y); x.lineTo(30, y); x.stroke();
+        x.beginPath(); x.arc(k, y, 6, 0, Math.PI * 2); x.stroke();
+      });
+    } else if (kind === 'form') {
+      x.beginPath();
+      x.moveTo(-6, -36); x.lineTo(6, -36);
+      x.bezierCurveTo(8, -30, 16, -28, 18, -22);
+      x.bezierCurveTo(20, -12, 12, -4, 12, 4);
+      x.bezierCurveTo(12, 12, 20, 16, 18, 24);
+      x.lineTo(-18, 24);
+      x.bezierCurveTo(-20, 16, -12, 12, -12, 4);
+      x.bezierCurveTo(-12, -4, -20, -12, -18, -22);
+      x.bezierCurveTo(-16, -28, -8, -30, -6, -36);
+      x.stroke();
+      x.beginPath(); x.moveTo(0, 24); x.lineTo(0, 38); x.moveTo(-14, 40); x.lineTo(14, 40); x.stroke();
+      x.beginPath(); x.moveTo(-10, -14); x.quadraticCurveTo(0, -8, 10, -14); x.stroke();
+    } else {
+      x.beginPath();
+      x.moveTo(-34, 30); x.lineTo(34, 30);                           // base
+      x.moveTo(-28, 30); x.lineTo(-28, 18); x.lineTo(28, 18); x.lineTo(28, 30);
+      x.moveTo(-22, 18); x.lineTo(-22, -22); x.quadraticCurveTo(-22, -30, -14, -30); x.lineTo(24, -30); x.quadraticCurveTo(32, -30, 32, -22); x.lineTo(32, -10); x.lineTo(14, -10); x.lineTo(14, 18);
+      x.moveTo(-8, -10); x.lineTo(-8, 4);                            // needle
+      x.stroke();
+      x.beginPath(); x.arc(20, -20, 4, 0, Math.PI * 2); x.stroke();
+    }
+    x.restore();
+  }
+
+  var ICON_SHARE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.6" fill="currentColor"/></svg>';
+  var ICON_DL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>';
+  var canShareFiles = !!(navigator.canShare && window.File && (function () { try { return navigator.canShare({ files: [new File([''], 'x.png', { type: 'image/png' })] }); } catch (e) { return false; } })());
+  var modal = document.getElementById('tt-story'), prev = modal.querySelector('.sprev'), btns = modal.querySelector('.sbtns');
+  modal.querySelector('.stip').textContent = canShareFiles
+    ? 'Tap “Share to Instagram”, choose Instagram → Stories, and tag us so we can repost you ✦'
+    : 'Save the image and post it from your phone: in Instagram, add a story and pick it from your photos ✦';
+  btns.innerHTML = (canShareFiles ? '<button type="button" class="sgo" disabled>' + ICON_SHARE + 'Share to Instagram</button>' : '') +
+                   '<button type="button" class="sdl" disabled>' + ICON_DL + 'Save image</button>';
+  var mode = 'simple', theme = 'cream', cur = null, blob = null, token = 0;
+  try { mode = localStorage.getItem('tt_share_mode2') === 'text' ? 'text' : 'simple'; } catch (e) {}
+  try { theme = localStorage.getItem('tt_share_theme2') === 'plum' ? 'plum' : 'cream'; } catch (e) {}
+  function fileName(it) { return 'tailortech-my-' + String(it.garment || 'design').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.png'; }
+  function setBusy(on) { btns.querySelectorAll('button').forEach(function (b) { b.disabled = on; }); }
+  function fonts() {
+    if (!document.fonts || !document.fonts.load) return Promise.resolve();
+    return Promise.race([Promise.all(['500 98px "Cormorant Garamond"', 'italic 500 98px "Cormorant Garamond"', '300 34px Jost', '500 30px Jost', '600 30px Jost', '400 30px Jost'].map(function (f) { return document.fonts.load(f); })).catch(function () {}),
+                         new Promise(function (r) { setTimeout(r, 2500); })]);
+  }
+  function paint() {
+    var my = ++token; blob = null; setBusy(true);
+    prev.innerHTML = '<span class="loader"></span>';
+    modal.querySelectorAll('.stheme:not(.smode) button').forEach(function (b) { b.classList.toggle('on', b.dataset.theme === theme); });
+    modal.querySelectorAll('.smode button').forEach(function (b) { b.classList.toggle('on', b.dataset.mode === mode); });
+    var it = cur;
+    Promise.all([it.imgPromise, fonts()]).then(function (r) {
+      it.img = r[0] || '';
+      return draw(it, theme, mode);
+    }).then(function (c) {
+      c.toBlob(function (b) {
+        if (my !== token) return;
+        if (!b) { prev.innerHTML = ''; return; }
+        blob = b; prev.innerHTML = '<img alt="Story card of my ' + String(it.garment || 'design').replace(/[<>"]/g, '') + '">';
+        prev.firstChild.src = URL.createObjectURL(b); setBusy(false);
+      }, 'image/png');
+    }).catch(function () { prev.innerHTML = ''; });
+  }
+  modal.querySelectorAll('.smode button').forEach(function (b) {
+    b.onclick = function () { mode = b.dataset.mode; try { localStorage.setItem('tt_share_mode2', mode); } catch (e) {} paint(); };
+  });
+  modal.querySelectorAll('.stheme:not(.smode) button').forEach(function (b) {
+    b.onclick = function () { theme = b.dataset.theme; try { localStorage.setItem('tt_share_theme2', theme); } catch (e) {} paint(); };
+  });
+  function close() { modal.classList.remove('open'); token++; }
+  modal.querySelector('.sx').onclick = close;
+  modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && modal.classList.contains('open')) close(); });
+  var go = btns.querySelector('.sgo');
+  if (go) go.onclick = function () {
+    if (!blob) return;
+    navigator.share({ files: [new File([blob], fileName(cur), { type: 'image/png' })], title: 'My TailorTech design' }).then(function () {
+      try { if (window.gtag) gtag('event', 'share', { method: 'story_card_dashboard', content_type: cur.garment }); } catch (e) {}
+    }).catch(function () {});
+  };
+  btns.querySelector('.sdl').onclick = function () {
+    if (!blob) return;
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fileName(cur);
+    document.body.appendChild(a); a.click(); setTimeout(function () { a.remove(); }, 500);
+    try { if (window.gtag) gtag('event', 'share', { method: 'story_card_dashboard_download', content_type: cur.garment }); } catch (e) {}
+  };
+
+  // Open the card for one order
+  window.ttOpenStory = function (o, row) {
+    var g = ttGarmentName(o['garment'] || o['GARMENT'] || 'Order');
+    var style = String(o['STYLE/SILHOUETTE'] || '').replace(/\s*\+.*$/, '').trim();
+    if (/hoodie|sweatshirt/i.test(g) && style && style !== 'N/A') g = style;
+    var tp = o['tech pack'] || '';
+    var shown = row && row.querySelector('img.order-swatch.has-img');
+    cur = {
+      garment: g, fabric: String(o['MAIN FABRIC'] || '').trim(), fabricImg: /^https:\/\/raw\.githubusercontent\.com\//.test(o['MAIN'] || '') ? o['MAIN'] : '',
+      colorHex: '', name: window.ttFirstName || '',
+      imgPromise: shown ? Promise.resolve(shown.src)
+        : (tp ? window._d.req('getSilhouetteImageBase64', { url: tp }).then(function (r) { return r && r.success && r.base64 ? 'data:image/png;base64,' + r.base64 : ''; }).catch(function () { return ''; })
+              : Promise.resolve(''))
+    };
+    modal.querySelector('h3').textContent = 'Your one-of-one ' + g.toLowerCase();
+    modal.classList.add('open');
+    paint();
+  };
+})();
+</script>
+
+<!-- Admin view: developers (CLIENTS → profile = developer) can open any client's dashboard -->
+<style>
+#tt-admin { display: none; position: sticky; top: 52px; z-index: 60; background: #2C0C31; color: #F4EFE9; font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; box-shadow: 0 6px 20px rgba(26,25,22,0.15); }
+#tt-admin.on { display: block; }
+#tt-admin .in { max-width: 1180px; margin: 0 auto; padding: 10px 24px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+#tt-admin .tag { font-size: 9.5px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #5FCDB8; border: 1px solid rgba(95,205,184,0.5); border-radius: 999px; padding: 5px 10px; }
+#tt-admin .who { font-size: 13px; flex: 1 1 200px; min-width: 0; }
+#tt-admin .who b { font-weight: 500; }
+#tt-admin input { flex: 0 1 280px; min-width: 160px; padding: 9px 14px; border-radius: 999px; border: 1px solid rgba(244,239,233,0.25); background: rgba(255,255,255,0.08); color: #fff; font-family: inherit; font-size: 12.5px; outline: none; }
+#tt-admin input::placeholder { color: rgba(244,239,233,0.55); }
+#tt-admin button { font-family: inherit; cursor: pointer; border-radius: 999px; padding: 9px 16px; font-size: 10px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; border: 1px solid rgba(244,239,233,0.35); background: transparent; color: #F4EFE9; }
+#tt-admin button:hover { background: rgba(255,255,255,0.08); }
+#tt-admin .list { display: none; max-width: 1180px; margin: 0 auto; padding: 0 24px 14px; max-height: 50vh; overflow-y: auto; }
+#tt-admin.open .list { display: block; }
+#tt-admin .row { display: grid; grid-template-columns: 110px 1fr 1.3fr 80px; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 12.5px; }
+#tt-admin .row:hover, #tt-admin .row.cur { background: rgba(255,255,255,0.08); }
+#tt-admin .row .pid { font-variant-numeric: tabular-nums; color: #5FCDB8; letter-spacing: 0.04em; }
+#tt-admin .row .em { color: rgba(244,239,233,0.7); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#tt-admin .row .g { color: rgba(244,239,233,0.6); font-size: 11px; text-transform: capitalize; }
+#tt-admin .count { font-size: 11px; color: rgba(244,239,233,0.6); padding: 4px 12px 8px; }
+body.tt-viewing .hero-cta { display: none; }
+@media (max-width: 640px) { #tt-admin .row { grid-template-columns: 90px 1fr; } #tt-admin .row .em, #tt-admin .row .g { display: none; } #tt-admin .in { padding: 10px 16px; } }
+</style>
+<div id="tt-admin" aria-label="Admin view">
+  <div class="in">
+    <span class="tag">Admin</span>
+    <span class="who" id="tt-admin-who">Your own dashboard</span>
+    <input type="search" id="tt-admin-q" placeholder="Find a client: name, ID or email" autocomplete="off">
+    <button type="button" id="tt-admin-all">All clients</button>
+    <button type="button" id="tt-admin-me" style="display:none">Back to mine</button>
+  </div>
+  <div class="list" id="tt-admin-list"></div>
+</div>
+<script>
+(function () {
+  var bar = document.getElementById('tt-admin'), list = document.getElementById('tt-admin-list'), q = document.getElementById('tt-admin-q');
+  var clients = [], view = null, realUser = null;
+  var VIEW_ACTIONS = ['getOrders', 'getMeasurements', 'getClient', 'saveClient'];
+  function esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function name(c) { return ((c.firstName || '') + ' ' + (c.lastName || '')).trim() || c.email; }
+
+  // While viewing a client, the dashboard's own requests ask for that client's data
+  function patchReq() {
+    var orig = window._d.req;
+    window._d.req = function (action, payload) {
+      if (view && VIEW_ACTIONS.indexOf(action) >= 0) payload = Object.assign({}, payload || {}, { email: view.email, uid: '' });
+      return orig.call(window._d, action, payload);
+    };
+    var origSave = window.saveClientJSONP;
+    if (typeof origSave === 'function') window.saveClientJSONP = function (data, cb) {
+      if (view) {
+        data = Object.assign({}, data, { uid: '', email: view.email });
+        if (data.data) { data.data = Object.assign({}, data.data); delete data.data['UID']; delete data.data['Marketing Consent']; data.data['Email'] = view.email; }
+      }
+      return origSave.call(this, data, cb);
+    };
+    var origMeas = window.goMeasurements;
+    window.goMeasurements = function () {
+      if (!view) return origMeas.apply(this, arguments);
+      location.href = 'https://tailortech.toom.design/' + (location.pathname.indexOf('/staging/') >= 0 ? 'staging/' : '') + 'measurements.html?client=' + encodeURIComponent(view.email);
+    };
+  }
+
+  function resetPanels() {
+    ['orders-loading', 'meas-loading'].forEach(function (id) { var e = document.getElementById(id); if (e) e.style.display = ''; });
+    ['orders-empty', 'meas-empty', 'orders-list', 'meas-body-row', 'meas-date-row'].forEach(function (id) { var e = document.getElementById(id); if (e) e.style.display = 'none'; });
+    ['orders-list', 'meas-chips'].forEach(function (id) { var e = document.getElementById(id); if (e) e.innerHTML = ''; });
+  }
+  function show(c) {
+    view = c || null;
+    var u = view ? { uid: '', email: view.email, displayName: name(view) } : realUser;
+    window._d.currentUser = u;
+    document.body.classList.toggle('tt-viewing', !!view);
+    document.getElementById('tt-admin-who').innerHTML = view
+      ? 'Viewing <b>' + esc(name(view)) + '</b> · ' + esc(view.personId || view.email)
+      : 'Your own dashboard';
+    document.getElementById('tt-admin-me').style.display = view ? '' : 'none';
+    var g = document.getElementById('greeting');
+    if (g) g.textContent = view ? name(view) + '’s dashboard' : 'Welcome back, ' + ((realUser.displayName || '').split(' ')[0] || 'there');
+    var mk = document.getElementById('ef-marketing'); if (mk && mk.closest('.ef')) mk.closest('.ef').style.display = view ? 'none' : '';
+    bar.classList.remove('open');
+    resetPanels();
+    try { loadOrders(); loadMeasurements(); loadProfile(u); } catch (e) { console.error(e); }
+    if (!view) setTimeout(function () { try { setAccountPopover(realUser); } catch (e) {} }, 2500);
+    try { history.replaceState(null, '', view ? '?client=' + encodeURIComponent(view.email) : location.pathname); } catch (e) {}
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function render() {
+    var s = (q.value || '').toLowerCase().trim();
+    var rows = clients.filter(function (c) { return !s || (name(c) + ' ' + c.email + ' ' + c.personId).toLowerCase().indexOf(s) >= 0; });
+    list.innerHTML = '<div class="count">' + rows.length + ' of ' + clients.length + ' clients</div>' + rows.map(function (c, i) {
+      return '<div class="row' + (view && view.email === c.email ? ' cur' : '') + '" data-i="' + clients.indexOf(c) + '"><span class="pid">' + esc(c.personId || '—') + '</span><span>' + esc(name(c)) + '</span><span class="em">' + esc(c.email) + '</span><span class="g">' + esc(c.gender || '') + '</span></div>';
+    }).join('');
+  }
+  list.addEventListener('click', function (e) { var r = e.target.closest('.row'); if (r) show(clients[+r.dataset.i]); });
+  q.addEventListener('input', function () { bar.classList.add('open'); render(); });
+  q.addEventListener('focus', function () { bar.classList.add('open'); render(); });
+  document.getElementById('tt-admin-all').onclick = function () { bar.classList.toggle('open'); render(); };
+  document.getElementById('tt-admin-me').onclick = function () { show(null); };
+  document.addEventListener('click', function (e) { if (!bar.contains(e.target)) bar.classList.remove('open'); });
+
+  // Wait for sign-in, then ask the server whether this account may see all clients (checked with the Firebase token)
+  var tries = 0;
+  (function wait() {
+    var u = window._d && window._d.auth && window._d.auth.currentUser;
+    if (!u) { if (++tries < 80) setTimeout(wait, 250); return; }
+    realUser = u;
+    u.getIdToken().then(function (tok) { return window._d.req('getTailorClients', { idToken: tok }); }).then(function (res) {
+      if (!res || !res.success) return;                       // ordinary client: nothing changes
+      clients = res.clients || [];
+      patchReq();
+      var main = document.getElementById('main'); if (main) main.parentNode.insertBefore(bar, main);   // right under the top bar
+      bar.classList.add('on');
+      var want = new URLSearchParams(location.search).get('client');
+      var c = want && clients.find(function (x) { return x.email.toLowerCase() === want.toLowerCase(); });
+      if (c) show(c);
+    }).catch(function () {});
+  })();
+})();
+</script>
+
+<!-- STAGING copy: not linked from the live site; check it, then it gets promoted to the live page -->
+<meta name="robots" content="noindex, nofollow">
+<div style="position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:2147483000;background:#E8B23A;color:#1A1916;font:600 10px/1 Jost,Helvetica,Arial,sans-serif;letter-spacing:.22em;text-transform:uppercase;padding:9px 16px;border-radius:999px;box-shadow:0 6px 18px rgba(0,0,0,.18);pointer-events:none">Staging · preview, not live</div>
+</body>
+</html>

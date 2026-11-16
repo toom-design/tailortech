@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) — consent mode: nothing is stored until the visitor accepts -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  (function(){
+    var c = null; try { c = localStorage.getItem('tt_consent'); } catch (e) {}
+    gtag('consent', 'default', {
+      ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied',
+      analytics_storage: c === 'granted' ? 'granted' : 'denied',
+      wait_for_update: 500
+    });
+  })();
+  gtag('js', new Date());
+  gtag('config', 'G-NZTP07VKKF');
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NZTP07VKKF"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Measurements</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --cream:#F0EDE6;--cream-mid:#EBE7DF;--ink:#1A1916;--ink-mid:#4A4844;
+  --ink-light:#8A8880;--ink-faint:#C0BDB8;--white:#FAFAF8;
+  --border:rgba(26,25,22,0.10);--border-mid:rgba(26,25,22,0.20);
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--ink);-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;}
+button{cursor:pointer;font-family:inherit}
+
+/* ── Nav — fixed top ── */
+.nav{height:52px;flex-shrink:0;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:16px;z-index:100;position:relative;}
+.nav-brand{font-size:12px;font-weight:600;letter-spacing:0.20em;text-transform:uppercase;color:var(--ink);text-decoration:none;margin-right:auto}
+.nav-btn{font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;padding:7px 16px;border:1px solid var(--border-mid);border-radius:2px;background:transparent;color:var(--ink-mid);cursor:pointer;transition:all 0.15s;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.nav-btn:hover{background:var(--cream-mid);color:var(--ink)}
+.nav-avatar{width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--white);font-size:11px;font-weight:600;letter-spacing:0;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;border:none;padding:0;cursor:pointer;-webkit-appearance:none}
+.nav-avatar img{width:100%;height:100%;object-fit:cover}
+
+/* ── Form layout — fills remaining height ── */
+.form-layout{display:flex;flex:1;min-height:0;}
+
+/* Diagram panel — fixed height, no scroll */
+.diag-panel{
+  display:none;width:40%;flex-shrink:0;
+  background:var(--white);border-right:1px solid var(--border);
+  align-items:center;justify-content:center;padding:2rem;
+  overflow:hidden;
+}
+@media(min-width:1024px){.diag-panel{display:flex}}
+.diag-img-wrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:relative;}
+.diag-img{max-width:100%;max-height:100%;object-fit:contain;transition:opacity 0.25s ease,transform 0.25s ease;opacity:1;}
+.diag-img.fading{opacity:0;transform:scale(0.97)}
+.diag-label{position:absolute;bottom:20px;left:0;right:0;text-align:center;font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);transition:opacity 0.25s;}
+
+/* Form column — flex column so bottom bar sticks */
+.form-col{flex:1;min-width:0;display:flex;flex-direction:column;min-height:0;}
+
+/* Scrollable content area */
+.form-content{flex:1;min-height:0;overflow-y:auto;padding:40px 28px 24px;}
+
+/* ── Fixed bottom action bar ── */
+.bottom-bar{
+  flex-shrink:0;
+  background:var(--white);border-top:1px solid var(--border);
+  padding:14px 28px;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;
+  z-index:50;
+}
+
+/* Heading row */
+.form-heading{font-size:22px;font-weight:300;color:var(--ink);margin-bottom:4px;letter-spacing:-0.01em}
+.form-sub{font-size:12px;color:var(--ink-faint);letter-spacing:0.03em;margin-bottom:20px}
+
+/* ── Garment filter buttons ── */
+.garment-btns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:28px}
+.gbtn{
+  font-family:'Jost',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.12em;
+  text-transform:uppercase;padding:7px 14px;border-radius:2px;cursor:pointer;
+  transition:background 0.15s,color 0.15s,border-color 0.15s;
+  border:1px solid var(--border-mid);background:var(--white);color:var(--ink-mid);
+}
+.gbtn:hover{background:var(--cream-mid);color:var(--ink)}
+.gbtn.active-all{background:var(--ink);color:var(--white);border-color:var(--ink)}
+.gbtn.active-sub{background:var(--cream-mid);color:var(--ink);border-color:var(--ink-mid)}
+
+/* ── Measure-from switch (casual garments only) ── */
+.source-row{display:none;margin-bottom:28px}
+.source-row.visible{display:block}
+.source-q{font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:8px}
+.source-switch{display:inline-flex;border:1px solid var(--border-mid);border-radius:2px;padding:3px;background:var(--white)}
+.source-btn{font-family:'Jost',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:9px 16px;border:none;border-radius:1px;background:transparent;color:var(--ink-mid);cursor:pointer;transition:background 0.15s,color 0.15s}
+.source-btn[aria-pressed="true"]{background:var(--ink);color:var(--white)}
+.source-hint{font-size:11px;color:var(--ink-light);margin-top:8px;line-height:1.5;max-width:460px}
+
+/* Section title */
+.sec-title{font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-light);padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:16px;display:flex;align-items:center;gap:7px;}
+.sec-title svg{color:var(--ink-mid)}
+.sec-gap{height:28px}
+
+/* Field grids */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:12px}
+@media(max-width:500px){.grid-2{grid-template-columns:1fr}}
+
+/* Field */
+.field{display:flex;flex-direction:column}
+.field-lbl{font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-light);margin-bottom:5px;display:flex;align-items:center;gap:4px;line-height:1.4;}
+.field input,.field select{width:100%;padding:9px 12px;background:var(--white);border:1px solid var(--border-mid);border-radius:2px;color:var(--ink);font-size:13px;font-family:'Jost',sans-serif;outline:none;transition:border-color 0.15s;-webkit-appearance:none;}
+.field input:focus,.field select:focus{border-color:var(--ink)}
+.field input::placeholder{color:var(--ink-faint)}
+
+/* Input with unit */
+.unit-wrap{position:relative}
+.unit-wrap input{padding-right:2.5rem}
+.unit{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--ink-faint);pointer-events:none}
+
+/* Info button */
+.info-btn{background:none;border:none;color:var(--ink-faint);padding:0;line-height:1;flex-shrink:0;position:relative;transition:color 0.15s;cursor:pointer;}
+.info-btn:hover{color:var(--ink-mid)}
+.info-popup{display:none;position:absolute;left:calc(100% + 8px);top:50%;transform:translateY(-50%);z-index:200;background:var(--white);border:1px solid var(--border-mid);border-radius:2px;box-shadow:0 8px 24px rgba(0,0,0,0.12);overflow:hidden;width:200px;}
+.info-popup p{padding:10px 12px;font-size:11px;color:var(--ink-light);line-height:1.5}
+.info-btn.open .info-popup{display:block}
+
+.btn-reset{font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;padding:11px 22px;background:transparent;border:1px solid var(--border-mid);border-radius:2px;color:var(--ink-mid);cursor:pointer;transition:all 0.15s;display:inline-flex;align-items:center;gap:7px;}
+.btn-reset:hover{background:var(--cream-mid);color:var(--ink)}
+.btn-save{font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;padding:11px 28px;background:var(--ink);color:var(--white);border:none;border-radius:2px;cursor:pointer;transition:background 0.15s;display:inline-flex;align-items:center;gap:7px;}
+.btn-save:hover{background:#2d2c29}
+.btn-save:disabled{opacity:0.45;cursor:not-allowed}
+.spin{width:13px;height:13px;border:1.5px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.65s linear infinite;display:none;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Loading measurements notif */
+#meas-loading-notif{
+  display:none;
+  align-items:center;gap:8px;
+  margin-top:10px;
+  padding:8px 12px;
+  border-radius:2px;
+  background:rgba(109,70,180,0.08);
+  border:1px solid rgba(109,70,180,0.22);
+  font-size:11px;font-weight:500;letter-spacing:0.06em;
+  color:#6d46b4;
+  transition:opacity 0.2s;
+}
+#meas-loading-notif.visible{display:flex}
+.meas-notif-dot{
+  width:7px;height:7px;border-radius:50%;
+  border:1.5px solid rgba(109,70,180,0.35);
+  border-top-color:#6d46b4;
+  animation:spin 0.75s linear infinite;
+  flex-shrink:0;
+}
+
+/* Toast */
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--white);font-size:11px;font-weight:500;letter-spacing:0.06em;padding:11px 20px;border-radius:2px;opacity:0;transition:opacity 0.25s,transform 0.25s;pointer-events:none;z-index:9999;white-space:nowrap;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.err{background:#7a2c2c}
+
+/* ════ v2.11.0 — TailorTech brand styling (same as the configurators) ════ */
+:root{ --tt-turq:#4dbfab; --tt-purple:#4a164f; --tt-grey:#e3e3e3; }
+body{background:var(--white);}
+body{height:100dvh;}
+.diag-panel{background:var(--tt-grey);border-right:none;position:relative;padding:76px 2rem 2rem;}
+.diag-img{mix-blend-mode:multiply;}
+.diag-label{bottom:26px;color:var(--ink-light);font-weight:500;letter-spacing:0.2em;}
+.gender-toggle{position:absolute;top:18px;left:0;right:0;display:flex;justify-content:center;z-index:5;}
+.seg-wrap{display:inline-flex;padding:3px;background:#fff;border:1px solid rgba(26,25,22,0.08);border-radius:999px;box-shadow:0 6px 18px rgba(26,25,22,0.08);}
+.gender-btn,.source-btn{font-family:'Jost',sans-serif;font-size:9.5px;font-weight:500;letter-spacing:0.2em;text-transform:uppercase;padding:10px 26px;border:none;border-radius:999px;background:transparent;color:var(--ink-mid);cursor:pointer;transition:background 0.15s,color 0.15s;}
+.gender-btn[aria-pressed="true"],.source-btn[aria-pressed="true"]{background:var(--tt-purple);color:#fff;}
+.gender-btn:not([aria-pressed="true"]):hover,.source-btn:not([aria-pressed="true"]):hover{color:var(--tt-purple);}
+.form-content{background:var(--white);padding:32px 28px 28px;}
+.form-heading{font-weight:300;font-size:24px;}
+.form-sub{color:var(--ink-light);font-size:11.5px;}
+/* garment filter: same buttons as the configurator options */
+.garment-btns{gap:8px;margin-bottom:20px;}
+.gbtn{font-size:12px;font-weight:400;letter-spacing:0.01em;text-transform:none;padding:10px 18px;border-radius:8px;background:#fff;border:1px solid rgba(26,25,22,0.16);color:var(--ink);}
+.gbtn:hover{background:#fff;border-color:var(--tt-purple);color:var(--tt-purple);}
+.gbtn.active-all,.gbtn.active-sub{background:var(--tt-purple);border-color:var(--tt-purple);color:#fff;font-weight:500;}
+/* framed cards */
+#mform{display:flex;flex-direction:column;gap:12px;}
+.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px 22px;}
+#meas-history.card{margin-top:12px;}
+.sec-gap{display:none !important;}
+.sec-title{font-size:10px;font-weight:600;letter-spacing:0.2em;color:var(--ink);padding:0;border:none;margin:2px 0 16px;}
+.source-row{margin-bottom:18px;}
+.source-row .seg-wrap{box-shadow:none;border-color:rgba(26,25,22,0.12);}
+.source-q{font-size:8.5px;font-weight:500;letter-spacing:0.16em;color:#8A8880;}
+.source-switch{border:none;padding:0;background:none;}
+#wrap-height,#wrap-weight{margin-top:16px;}
+.field-lbl{font-size:8.5px;font-weight:500;letter-spacing:0.16em;color:#8A8880;}
+.field input,.field select{border-radius:8px;border:1px solid rgba(26,25,22,0.16);background:#fff;padding:10px 12px;font-size:12px;}
+.field input:focus,.field select:focus{border-color:var(--tt-purple);box-shadow:0 0 0 3px rgba(74,22,79,0.08);}
+.field input[readonly]{background:#F7F6F4;}
+.grid-3{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
+.info-btn:hover{color:var(--tt-purple);}
+.info-popup{border-radius:8px;}
+#meas-loading-notif{border-radius:8px;background:#F3F8F6;border-color:rgba(77,191,171,0.45);color:#2f6f63;}
+.meas-notif-dot{border-color:rgba(77,191,171,0.35);border-top-color:var(--tt-turq);}
+/* bottom bar: purple pill buttons like the configurator footer */
+.bottom-bar{padding:14px 28px;padding-bottom:max(14px, env(safe-area-inset-bottom));box-shadow:0 -6px 20px rgba(26,25,22,0.07);}
+.btn-save{background:var(--tt-purple);border-radius:999px;font-size:10.5px;letter-spacing:0.2em;font-weight:500;padding:14px 30px;}
+.btn-save:hover{background:var(--tt-purple);opacity:0.9;}
+.btn-reset{border-radius:999px;border-color:rgba(74,22,79,0.4);color:var(--tt-purple);font-size:10.5px;letter-spacing:0.2em;padding:13px 24px;}
+.btn-reset:hover{background:rgba(74,22,79,0.06);color:var(--tt-purple);}
+#toast{border-radius:999px;}
+
+/* Tailor access */
+.tailor-card{border-color:rgba(77,191,171,0.55);background:#F7FBFA;margin-bottom:12px;}
+.tailor-card.for-client{border-color:var(--tt-purple);box-shadow:0 0 0 3px rgba(74,22,79,0.06);}
+.tailor-tag{display:inline-block;margin-left:10px;padding:3px 9px;border-radius:999px;background:rgba(77,191,171,0.16);color:#2f6f63;font-size:8px;letter-spacing:0.16em;vertical-align:1px;}
+.tailor-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:10px;}
+@media(max-width:640px){.tailor-row{grid-template-columns:1fr;}}
+.tailor-row input,.tailor-row select{width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(26,25,22,0.16);background:#fff;font-family:'Jost',sans-serif;font-size:12px;color:var(--ink);outline:none;}
+.tailor-row input:focus,.tailor-row select:focus{border-color:var(--tt-purple);box-shadow:0 0 0 3px rgba(74,22,79,0.08);}
+.tailor-hint{font-size:11px;color:var(--ink-light);margin-top:10px;line-height:1.5;}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+  
+  
+<!-- Nav -->
+<nav class="nav" style="position:relative;">
+  <a class="nav-brand" href="https://tailortech.toom.design/">
+    <img src="data:image/webp;base64,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"
+         alt="TailorTech" height="24">
+  </a>
+  <button class="nav-avatar" id="nav-av" type="button" onclick="toggleDropdown(event)" style="display:none"></button>
+  <a class="nav-btn" id="nav-login" href="#" onclick="goToAuth(); return false;">Log In</a>
+  <button class="nav-btn" id="nav-signout" onclick="doSignOut()" style="display:none">Sign out</button>
+
+  <div id="nav-dd" style="display:none;position:absolute;top:52px;right:0;width:260px;background:#FAFAF8;border:1px solid rgba(26,25,22,0.20);border-radius:2px;box-shadow:0 12px 40px rgba(26,25,22,0.16);padding:20px;z-index:9999;font-family:'Jost',sans-serif;">
+    <!-- Avatar + Name + Email -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div id="dd-av" style="width:40px;height:40px;border-radius:50%;background:#1A1916;color:#FAFAF8;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"></div>
+      <div>
+        <div id="dd-name" style="font-size:13px;font-weight:600;color:#1A1916;margin-bottom:2px;">—</div>
+        <div id="dd-email-sub" style="font-size:11px;color:#8A8880;word-break:break-all;"></div>
+      </div>
+    </div>
+    <!-- Person ID -->
+    <div style="height:1px;background:rgba(26,25,22,0.10);margin-bottom:14px;"></div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#8A8880;margin-bottom:5px;">Person ID</div>
+      <div id="dd-pid" style="font-size:15px;font-weight:600;color:#1A1916;letter-spacing:0.04em;">—</div>
+    </div>
+    <!-- Buttons stacked vertically -->
+    <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid rgba(26,25,22,0.10);padding-top:14px;">
+      <a href="https://tailortech.toom.design/dashboard" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:none;background:#1A1916;color:#FAFAF8;border-radius:2px;cursor:pointer;text-decoration:none;display:block;text-align:center;">My Dashboard</a>
+      <button onclick="doSignOut()" style="font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;padding:10px 16px;border:1px solid rgba(138,48,48,0.30);background:transparent;color:#8a3030;border-radius:2px;cursor:pointer;width:100%;">Sign Out</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Single page: always the form ── -->
+<div class="form-layout">
+
+  <!-- Diagram -->
+  <div class="diag-panel" id="diag-panel">
+    <div class="gender-toggle" role="group" aria-label="Figure">
+      <div class="seg-wrap">
+        <button type="button" class="gender-btn" data-g="M" aria-pressed="true" onclick="setGender('M', true)">Male</button>
+        <button type="button" class="gender-btn" data-g="F" aria-pressed="false" onclick="setGender('F', true)">Female</button>
+      </div>
+    </div>
+    <div class="diag-img-wrap">
+      <img id="diag-img" class="diag-img" src="" alt="">
+      <div class="diag-label" id="diag-label" style="opacity:0"></div>
+    </div>
+  </div>
+
+  <!-- Form column -->
+  <div class="form-col">
+
+    <!-- Scrollable area -->
+    <div class="form-content">
+      <h2 class="form-heading" id="form-heading">All Measurements</h2>
+      <p class="form-sub" id="form-sub">Enter your measurements below. Pick one or more garments to see only what they need.</p>
+
+      <!-- Garment filter buttons -->
+      <div class="garment-btns" id="garment-btns">
+        <button class="gbtn active-all" data-filter="all" onclick="setFilter('all')">All</button>
+        <button class="gbtn" data-filter="shirt" onclick="toggleGarment('shirt')" aria-pressed="false">Shirt</button>
+        <button class="gbtn" data-filter="tshirt" onclick="toggleGarment('tshirt')" aria-pressed="false">T-shirt</button>
+        <button class="gbtn" data-filter="hoodie" onclick="toggleGarment('hoodie')" aria-pressed="false">Hoodie</button>
+        <button class="gbtn" data-filter="suit" onclick="toggleGarment('suit')" aria-pressed="false">Suit</button>
+        <button class="gbtn" data-filter="trousers" onclick="toggleGarment('trousers')" aria-pressed="false">Trousers</button>
+      </div>
+
+      <!-- Tailor access: shown only to signed-in tailors (CLIENTS → profile = tailor / developer) -->
+      <div class="card tailor-card" id="tailor-card" style="display:none">
+        <div class="sec-title">Measuring for <span class="tailor-tag">Tailor access</span></div>
+        <div class="tailor-row">
+          <input type="search" id="tailor-search" placeholder="Search clients by name or email…" oninput="filterTailorClients()" autocomplete="off">
+          <select id="tailor-client" onchange="pickTailorClient(this.value)" aria-label="Client"></select>
+        </div>
+        <p class="tailor-hint" id="tailor-hint">Loading your clients…</p>
+      </div>
+
+      <form id="mform" onsubmit="handleSubmit(event)" novalidate>
+
+        <div class="card" id="card-details">
+        <div class="sec-title">Your Details</div>
+
+      <!-- Measure from: body or garment (only for garments listed in GARMENT_MEAS) -->
+      <div class="source-row" id="source-row">
+        <div class="source-q">Measure from</div>
+        <div class="source-switch" role="group" aria-label="Measure from">
+          <button type="button" class="source-btn" data-source="body" aria-pressed="true" onclick="setSource('body')">My body</button>
+          <button type="button" class="source-btn" data-source="garment" aria-pressed="false" onclick="setSource('garment')">A garment that fits me</button>
+        </div>
+        <p class="source-hint" id="source-hint"></p>
+      </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label class="field-lbl">Email Address</label>
+            <input type="email" id="f-email" name="email" placeholder="your@email.com">
+          </div>
+          <div class="field">
+            <label class="field-lbl">Person ID</label>
+            <input type="text" id="f-personId" name="personId" placeholder="TT-0001" readonly style="opacity:0.65;cursor:not-allowed;">
+          </div>
+        </div>
+
+        <!-- Loading measurements notification -->
+        <div id="meas-loading-notif">
+          <span class="meas-notif-dot"></span>
+          Loading measurements…
+        </div>
+
+        <div class="sec-gap"></div>
+
+        <!-- Height / Weight -->
+        <div class="grid-2">
+          <div class="field" id="wrap-height">
+            <label class="field-lbl">Height</label>
+            <div class="unit-wrap">
+              <input type="number" id="f-height" name="height" step="0.1" min="100" max="250" placeholder="0.0" onfocus="focusField('Height','height')">
+              <span class="unit">cm</span>
+            </div>
+          </div>
+          <div class="field" id="wrap-weight">
+            <label class="field-lbl">Weight</label>
+            <div class="unit-wrap">
+              <input type="number" id="f-weight" name="weight" step="0.1" min="30" max="300" placeholder="0.0" onfocus="focusField('Weight',null)">
+              <span class="unit">kg</span>
+            </div>
+          </div>
+        </div>
+
+        </div><!-- /card-details -->
+
+        <!-- Volumetric -->
+        <div id="sec-vol" class="card">
+          <div class="sec-title">Volumetric Measurements
+          </div>
+          <div class="grid-3" id="grid-vol"></div>
+        </div>
+
+        <div class="sec-gap" id="gap-vol-lin"></div>
+
+        <!-- Linear -->
+        <div id="sec-lin" class="card">
+          <div class="sec-title">Linear Measurements
+          </div>
+          <div class="grid-3" id="grid-lin"></div>
+        </div>
+
+        <!-- Garment measurements -->
+        <div id="sec-garment" class="card" style="display:none">
+          <div class="sec-title"><span id="garment-sec-label">Garment Measurements</span>
+          </div>
+          <div class="grid-3" id="grid-garment"></div>
+        </div>
+
+      </form>
+
+      <!-- Measurement History -->
+      <div id="meas-history" class="card" style="display:none;">
+        <div class="sec-title">Measurement History</div>
+        <div id="meas-history-loading" style="padding:16px 0;color:var(--ink-faint);font-size:12px;letter-spacing:0.04em;">Loading history…</div>
+        <div id="meas-history-content"></div>
+      </div>
+
+    </div><!-- /form-content -->
+
+    <!-- Fixed bottom bar -->
+    <div class="bottom-bar">
+      <button type="button" class="btn-reset" onclick="resetForm()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        Reset
+      </button>
+      <button type="submit" form="mform" class="btn-save" id="btn-save">
+        <span id="save-lbl">Save Measurements</span>
+        <div class="spin" id="save-spin"></div>
+      </button>
+    </div>
+
+  </div><!-- /form-col -->
+</div>
+
+<script>
+'use strict';
+
+var SHEETS_API = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
+var DASHBOARD  = 'https://tailortech.toom.design/dashboard';
+var LABELS     = {all:'All Measurements',shirt:'Shirt Measurements',tshirt:'T-shirt Measurements',hoodie:'Hoodie Measurements',suit:'Suit Measurements',trousers:'Trousers Measurements'};
+var RAW_BASE   = 'https://raw.githubusercontent.com/toom-design/measurements/main/';
+// Body diagrams — one set per gender (file names in the measurements repo).
+var FRONT_IMGS = { M: 'MEASUREMENTS_2front_M.webp', F: 'MEASUREMENTS_2front_F.webp' };
+var FRONT_IMG  = RAW_BASE + encodeURIComponent(FRONT_IMGS.M);
+
+// Male diagrams. The garment configurators read this list (and the female one below) straight from this page.
+var FIELD_IMG = {
+  'height':                  'MEASUREMENTS_2Height_M.webp',
+  'bustGirth':               'MEASUREMENTS_2Bust girth_M.webp',
+  'calfGirth':               'MEASUREMENTS_2Calf girth_M.webp',
+  'hipGirth':                'MEASUREMENTS_2Hip girth_M.webp',
+  'kneeGirth':               'MEASUREMENTS_2Knee girth_M.webp',
+  'neckBaseGirth':           'MEASUREMENTS_2Neck base girth_M.webp',
+  'pantWaist':               'MEASUREMENTS_2Pant waist_M.webp',
+  'upperBicepGirth':         'MEASUREMENTS_2Upper bicep girth_M.webp',
+  'waistGirth':              'MEASUREMENTS_2Waist girth_M.webp',
+  'wristGirth':              'MEASUREMENTS_2Wrist girth_M.webp',
+  'outerArmLength':          'MEASUREMENTS_2Outer arm length_M.webp',
+  'backNeckToWaist':         'MEASUREMENTS_2Back neck point to waist_M.webp',
+  'shoulderLength':          'MEASUREMENTS_2Shoulder length_M.webp',
+  'acrossBackShoulderWidth': 'MEASUREMENTS_2Across back shoulder width_M.webp',
+  'acrossBackWidth':         'MEASUREMENTS_2Across back width_M.webp',
+  'outsideLegLength':        'MEASUREMENTS_2Side trousers length_M.webp',
+  'upperArmLength':          'MEASUREMENTS_2Upper arm length_M.webp',
+  'waistToHipLength':        'MEASUREMENTS_2Waist to hip length_M.webp',
+  'shirtLength':             'MEASUREMENTS_2Shirt length_M.webp',
+  'rise':                    'MEASUREMENTS_2Rise_M.webp',
+};
+// Female diagrams. Any field missing here (e.g. rise) falls back to the male one.
+var FIELD_IMG_F = {
+  'height':                  'MEASUREMENTS_2height_F.webp',
+  'bustGirth':               'MEASUREMENTS_2Bust girth_F.webp',
+  'calfGirth':               'MEASUREMENTS_2Calf girth_F.webp',
+  'hipGirth':                'MEASUREMENTS_2Hip girth_F.webp',
+  'kneeGirth':               'MEASUREMENTS_2Knee girth_F.webp',
+  'neckBaseGirth':           'MEASUREMENTS_2Neck base girth_F.webp',
+  'pantWaist':               'MEASUREMENTS_2Pant waist_F.webp',
+  'upperBicepGirth':         'MEASUREMENTS_2Upper bicep girth_F.webp',
+  'waistGirth':              'MEASUREMENTS_2Waist girth_F.webp',
+  'wristGirth':              'MEASUREMENTS_2Wrist girth_F.webp',
+  'outerArmLength':          'MEASUREMENTS_2Outer arm length_F.webp',
+  'backNeckToWaist':         'MEASUREMENTS_2Back neck point to waist_F.webp',
+  'shoulderLength':          'MEASUREMENTS_2shoulder_F.webp',
+  'acrossBackShoulderWidth': 'MEASUREMENTS_2Across back shoulder width_F.webp',
+  'acrossBackWidth':         'MEASUREMENTS_2Across back width_F.webp',
+  'outsideLegLength':        'MEASUREMENTS_2Side trousers length_F.webp',
+  'upperArmLength':          'MEASUREMENTS_2Upper arm length_F.webp',
+  'waistToHipLength':        'MEASUREMENTS_2Waist to hip length_F.webp',
+  'shirtLength':             'MEASUREMENTS_2Shirt length_F.webp',
+};
+
+const GARMENT_SETS = {
+  all:      null,
+  tshirt:   new Set(['height','bustGirth','waistGirth','hipGirth','neckBaseGirth','upperBicepGirth','acrossBackShoulderWidth','outerArmLength','shirtLength']),
+  shirt:    new Set(['neckBaseGirth','height','bustGirth','waistGirth','hipGirth','backNeckToWaist','acrossBackWidth','shoulderLength','outerArmLength','upperArmLength','shirtLength','acrossBackShoulderWidth','upperBicepGirth','wristGirth']),
+  hoodie:   new Set(['bustGirth','upperBicepGirth','wristGirth','neckBaseGirth','outerArmLength','waistToHipLength','backNeckToWaist','acrossBackWidth','sideNeckToBust']),
+  suit:     new Set(['height','bustGirth','waistGirth','hipGirth','outerArmLength','shoulderLength','backNeckToWaist','acrossBackShoulderWidth','acrossBackWidth','chestWidth','armscyeDepth','upperArmLength','suitLength','wristGirth']),
+  trousers: new Set(['height','pantWaist','hipGirth','kneeGirth','calfGirth','outsideLegLength','rise']),
+};
+// ── Garment measurements (measure a garment that already fits) ───
+// Casual garments only. Read by the garment configurators too — keep the
+// closing brace of this block on its own line.
+// Each field: [key, label, diagram image in the measurements repo].
+var GARMENT_MEAS = {
+  tshirt: {
+    name:  'T-shirt',
+    front: 'MEASUREMENTS_2t-shirt_front.webp',  // not uploaded yet — until then the chest diagram is shown
+    hint:  'Lay a T-shirt that fits you well flat on a table and measure it.',
+    fields: [
+      ['garmentTshirtChest',    'Chest (cm)',    'MEASUREMENTS_2t-shirt_chest.webp'],
+      ['garmentTshirtLength',   'Length (cm)',   'MEASUREMENTS_2t-shirt_length.webp'],
+      ['garmentTshirtShoulder', 'Shoulder (cm)', 'MEASUREMENTS_2t-shirt_shoulder.webp'],
+      ['garmentTshirtSleeve',   'Sleeve (cm)',   'MEASUREMENTS_2t-shirt_sleeve.webp'],
+    ]
+  }
+};
+var GARMENT_IMG = {};
+Object.keys(GARMENT_MEAS).forEach(function(g){ GARMENT_MEAS[g].fields.forEach(function(f){ GARMENT_IMG[f[0]] = f[2]; }); });
+
+const HAS_INFO = new Set(['bustGirth','upperChestGirth','waistGirth','hipGirth','lowerWaist','pantWaist','upperBicepGirth','kneeGirth','wristGirth','calfGirth','thighGirth','neckBaseGirth','abdomenGirth','neckGirth','forearmGirthFlexed','outsideLegLength','outerArmLength','backNeckToWaist','shoulderLength','abdomenToUpperKnee','acrossBackShoulderWidth','acrossBackWidth','upperArmLength','rise','backNeckToHipLength','axillaToWaist','backNeckHeight','ankleGirth','armscyeGirth','backNeckToWrist']);
+const VOL = [
+  ['bustGirth','Bust girth (cm)'],['underBustGirth','Under bust girth (cm)'],['upperChestGirth','Upper chest girth (cm)'],
+  ['overarmGirth','Overarm girth (cm)'],['waistGirth','Waist girth (cm)'],['upperHipGirth','Upper hip girth (cm)'],
+  ['hipGirth','Hip girth (cm)'],['middleWaist','Middle waist (cm)'],['lowerWaist','Lower waist (cm)'],
+  ['pantWaist','Pant waist (cm)'],['upperArmGirth','Upper-arm girth (cm)'],['upperBicepGirth','Upper bicep girth (cm)'],
+  ['kneeGirth','Knee girth (cm)'],['ankleGirth','Ankle girth (cm)'],['wristGirth','Wrist girth (cm)'],
+  ['calfGirth','Calf girth (cm)'],['thighGirth','Thigh girth (cm)'],['thighBelowCrotch','Thigh 1 inch below the crotch (cm)'],
+  ['midThighGirth','Mid - thigh girth (cm)'],['neckBaseGirth','Neck base girth (cm)'],['abdomenGirth','Abdomen girth (cm)'],
+  ['armscyeGirth','Armscye girth (cm)'],['neckGirth','Neck girth (cm)'],['neckGirthRelaxed','Neck girth relaxed (cm)'],
+  ['forearmGirthFlexed','Forearm girth flexed (cm)'],['elbowGirth','Elbow girth (cm)'],
+];
+const LIN = [
+  ['neckToUpperHipLength','Neck to upper hip length (cm)'],['outsideLegLength','Outside leg length (cm)'],
+  ['outsideLegFromUpperHip','Outside leg length from upper hip level (cm)'],['insideLegLength','Inside leg length (cm)'],
+  ['insideLegToFloor','Inside leg length to the 1 inch above the floor (cm)'],
+  ['insideCrotchToMidThigh','Inside crotch length to mid-thigh (cm)'],['insideCrotchToKnee','Inside crotch length to knee (cm)'],
+  ['insideCrotchToCalf','Inside crotch length to calf (cm)'],['straightBodyRise','Straight body rise (cm)'],
+  ['outerArmLength','Outer arm length (cm)'],['underarmLength','Underarm length (cm)'],
+  ['backNeckToWrist','Back neck point to wrist length (cm)'],['backNeckToWristExtended','Back neck point to 1.5" past the wrist point (cm)'],
+  ['upperHipBreadth','Upper hip breadth (cm)'],['frontShoulderWidth','Front shoulder width (cm)'],['chestWidth','Front chest width (cm)'],['armscyeDepth','Armscye depth (cm)'],
+  ['shoulderLength','Shoulder length (cm)'],['shoulderSlope','Shoulder slope (cm)'],['neckBaseWidth','Neck base width (cm)'],
+  ['waistToHipLength','Waist to hip length (cm)'],['waistToKneeLength','Waist to knee length (cm)'],
+  ['abdomenToUpperKnee','Abdomen to upper knee length (cm)'],['upperKneeToAnkle','Upper knee girth to ankle girth (cm)'],
+  ['backNeckToWaist','Back neck point to waist (cm)'],['sideNeckToWaist','Side neck point to waist level (cm)'],
+  ['sideNeckToArmpit','Side neck point to armpit front fold point (cm)'],
+  ['backNeckHeight','Back neck height (cm)'],['bustHeight','Bust height (cm)'],['hipHeight','Hip height (cm)'],
+  ['upperHipHeight','Upper hip height (cm)'],['kneeHeight','Knee height (cm)'],['outerAnkleHeight','Outer ankle height (cm)'],
+  ['waistHeight','Waist height (cm)'],['insideLegHeight','Inside leg height (cm)'],
+  ['acrossBackShoulderWidth','Across back shoulder width (cm)'],['acrossBackWidth','Across back width (cm)'],
+  ['totalCrotchLength','Total crotch length (cm)'],['waistBreadth','Waist breadth (cm)'],['neckLength','Neck length (cm)'],
+  ['upperArmLength','Upper arm length (cm)'],['lowerArmLength','Lower arm length (cm)'],
+  ['upperHipToHipLength','Upper hip to hip length (cm)'],['backShoulderWidth','Back shoulder width (cm)'],
+  ['rise','Rise (cm)'],['backNeckToHipLength','Back neck to hip length (cm)'],['torsoHeight','Torso height (cm)'],
+  ['frontCrotchLength','Front crotch length (cm)'],['backCrotchLength','Back crotch length (cm)'],
+  ['sideUpperHipToKnee','Side upper hip level to knee (cm)'],['sideNeckToUpperHip','Side neck point to upper hip (cm)'],
+  ['sideNeckToBust','Side neck to bust point (cm)'],['sideBustToWaist','Side bust point to waist level (cm)'],
+  ['sideWaistToAnkles','Side waist level to ankles (cm)'],['sideNeckToKnee','Side neck point to knee (cm)'],
+  ['waistDepth','Waist depth (cm)'],['axillaToWaist','Axilla to waist side length (cm)'],
+  ['neckSideToWaistBack','Neck side to waist back length (cm)'],['neckFrontToWaist','Neck front to waist length (cm)'],
+  ['inseamCrotchToAnkle','Inseam from crotch to ankle (cm)'],['inseamCrotchToFloor','Inseam from crotch to floor (cm)'],
+  ['jacketLength','Jacket length (cm)'],['sideNeckToThigh','Side neck point to thigh (cm)'],
+  ['shirtLength','Shirt length (cm)'],['suitLength','Suit length (cm)'],['casualJacketLength','Casual Jacket length (cm)'],
+  ['aroundHead','Around head (cm)'],['eyeToEye','Eye to eye (cm)'],['palm','Palm (cm)'],['footGirth','Foot girth (cm)'],
+];
+
+// ── Diagram ───────────────────────────────────────────────────────
+var _diagImg   = null;
+var _diagLabel = null;
+var _diagActive = null;
+
+function initDiag() {
+  _diagImg   = document.getElementById('diag-img');
+  _diagLabel = document.getElementById('diag-label');
+  // Show front figurine immediately on load
+  _diagImg.onload = function() {
+    _diagImg.style.opacity = '1';
+    _diagLabel.style.opacity = '0';
+  };
+  _diagImg.src = FRONT_IMG;
+  _diagActive = FRONT_IMG;
+}
+
+// ── Gender: picks the male / female diagrams ─────────────────────
+// Order: ?gender=M|F in the address → the client's Gender in the sheet → Male. The toggle overrides both.
+var measGender = 'M', _genderChosen = false, _focusKey = null, _focusLabel = '';
+function normGender(v) { v = String(v || '').trim(); return /^f|^w|^ž/i.test(v) ? 'F' : (/^m/i.test(v) ? 'M' : ''); }
+function fieldImg(key) { return (measGender === 'F' && FIELD_IMG_F[key]) || FIELD_IMG[key]; }
+function setGender(g, byUser) {
+  g = normGender(g) || 'M';
+  if (byUser) _genderChosen = true;
+  measGender = g;
+  FRONT_IMG = RAW_BASE + encodeURIComponent(FRONT_IMGS[g]);
+  document.querySelectorAll('.gender-btn').forEach(function(b){ b.setAttribute('aria-pressed', String(b.dataset.g === g)); });
+  focusField(_focusLabel, _focusKey);   // redraw what's on screen in the new figure
+}
+
+function showDiagImage(url, labelText) {
+  if (!_diagImg) return;
+  if (url === _diagActive) return;
+  _diagActive = url;
+  _diagImg.classList.add('fading');
+  setTimeout(function() {
+    _diagImg.onload = function() {
+      _diagImg.classList.remove('fading');
+      _diagLabel.textContent = labelText || '';
+      _diagLabel.style.opacity = labelText ? '1' : '0';
+    };
+    _diagImg.onerror = function() {
+      // Missing image: garment mode falls back to its first diagram, otherwise the body front
+      var gm = GARMENT_MEAS[activeGM()], fb = FRONT_IMG;
+      if (currentSource === 'garment' && gm && gm.fields.length) fb = RAW_BASE + encodeURIComponent(gm.fields[0][2]);
+      if (_diagImg.src === fb || decodeURIComponent(_diagImg.src) === decodeURIComponent(fb)) fb = FRONT_IMG;
+      _diagImg.onerror = null;
+      _diagImg.src = fb;
+      _diagLabel.style.opacity = '0';
+      _diagActive = fb;
+    };
+    _diagImg.src = url;
+  }, 200);
+}
+
+function focusField(label, key) {
+  if (!_diagImg) initDiag();
+  _focusKey = key || null; _focusLabel = label || '';
+  if (key && GARMENT_IMG[key]) {
+    showDiagImage(RAW_BASE + encodeURIComponent(GARMENT_IMG[key]), label);
+  } else if (key && fieldImg(key)) {
+    showDiagImage(RAW_BASE + encodeURIComponent(fieldImg(key)), label);
+  } else {
+    showDiagImage(currentFrontImg(), '');
+  }
+}
+
+// ── Build fields ──────────────────────────────────────────────────
+function makeField(key, label) {
+  var wrap = document.createElement('div');
+  wrap.className = 'field'; wrap.dataset.key = key;
+  var lbl = document.createElement('label');
+  lbl.className = 'field-lbl';
+  var txt = document.createElement('span'); txt.textContent = label; lbl.appendChild(txt);
+  if (HAS_INFO.has(key)) {
+    var btn = document.createElement('button');
+    btn.type='button'; btn.className='info-btn';
+    btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><div class="info-popup"><p>Measurement guide for this field.</p></div>';
+    btn.onclick = function(e) { e.preventDefault(); e.stopPropagation(); document.querySelectorAll('.info-btn.open').forEach(function(b){if(b!==btn)b.classList.remove('open')}); btn.classList.toggle('open'); };
+    lbl.appendChild(btn);
+  }
+  wrap.appendChild(lbl);
+  var inp = document.createElement('input');
+  inp.type='number'; inp.id='f-'+key; inp.name=key; inp.step='0.1'; inp.min='0'; inp.max='999'; inp.placeholder='0.0';
+  inp.addEventListener('focus', function(){ focusField(label, key); });
+  wrap.appendChild(inp);
+  return wrap;
+}
+
+(function() {
+  var gv = document.getElementById('grid-vol');
+  var gl = document.getElementById('grid-lin');
+  VOL.forEach(function(f){ gv.appendChild(makeField(f[0],f[1])); });
+  LIN.forEach(function(f){ gl.appendChild(makeField(f[0],f[1])); });
+  var gg = document.getElementById('grid-garment');
+  Object.keys(GARMENT_MEAS).forEach(function(g){
+    GARMENT_MEAS[g].fields.forEach(function(f){
+      var el = makeField(f[0], f[1]); el.dataset.garment = g; gg.appendChild(el);
+    });
+  });
+  initDiag();
+})();
+
+// ── Garment filter: one or more garments, their measurements combined (no duplicates) ──
+var currentFilter = 'all';     // 'all', one garment key, or several joined with "," (saved as the Garment)
+var _selGarments = [];         // in button order
+var GARMENT_ORDER = ['shirt', 'tshirt', 'hoodie', 'suit', 'trousers'];
+var GARMENT_NAME = { shirt: 'Shirt', tshirt: 'T-shirt', hoodie: 'Hoodie', suit: 'Suit', trousers: 'Trousers' };
+
+function selectedGarments() { return _selGarments.slice(); }
+// The garment that can be measured "from a garment" (GARMENT_MEAS), if one is selected
+function activeGM() {
+  for (var i = 0; i < _selGarments.length; i++) if (GARMENT_MEAS[_selGarments[i]]) return _selGarments[i];
+  return '';
+}
+function setGarments(list) {
+  _selGarments = GARMENT_ORDER.filter(function (g) { return list.indexOf(g) >= 0; });
+  currentFilter = _selGarments.length ? _selGarments.join(',') : 'all';
+  document.querySelectorAll('.gbtn').forEach(function (b) {
+    var f = b.dataset.filter, on = f === 'all' ? !_selGarments.length : _selGarments.indexOf(f) >= 0;
+    b.classList.remove('active-all', 'active-sub');
+    if (on) b.classList.add(f === 'all' ? 'active-all' : 'active-sub');
+    b.setAttribute('aria-pressed', String(on));
+  });
+  var names = _selGarments.map(function (g) { return GARMENT_NAME[g] || g; });
+  document.getElementById('form-heading').textContent =
+    !names.length ? LABELS.all : (names.length === 1 ? (LABELS[_selGarments[0]] || names[0] + ' Measurements') : names.join(' + '));
+  var sub = document.getElementById('form-sub');
+  if (sub) sub.textContent = names.length > 1
+    ? 'Measurements for all ' + names.length + ' garments combined — each one only once.'
+    : 'Enter your measurements below. Pick one or more garments to see only what they need.';
+  applyFilter(currentFilter);
+}
+// Garment buttons toggle; "All" clears the selection
+function toggleGarment(g) {
+  var list = selectedGarments(), i = list.indexOf(g);
+  if (i >= 0) list.splice(i, 1); else list.push(g);
+  setGarments(list);
+}
+// Kept for links and other callers: "all", one garment, or a comma-separated list
+function setFilter(filter) {
+  setGarments(!filter || filter === 'all' ? [] : String(filter).split(',').map(function (x) { return x.trim(); }));
+}
+
+// ── Measure from: body / garment ──────────────────────────────────
+var currentSource = 'body';
+
+function currentFrontImg() {
+  var gm = GARMENT_MEAS[activeGM()];
+  return (currentSource === 'garment' && gm) ? (/^https?:/.test(gm.front) ? gm.front : RAW_BASE + encodeURIComponent(gm.front)) : FRONT_IMG;
+}
+
+function setSource(source) {
+  currentSource = (source === 'garment') ? 'garment' : 'body';
+  document.querySelectorAll('.source-btn').forEach(function(b){
+    b.setAttribute('aria-pressed', String(b.dataset.source === currentSource));
+  });
+  applyFilter(currentFilter);
+  _focusKey = null; _focusLabel = '';
+  showDiagImage(currentFrontImg(), '');
+}
+
+function applyFilter() {
+  var sel = selectedGarments(), gmKey = activeGM(), gm = GARMENT_MEAS[gmKey];
+  var row = document.getElementById('source-row');
+  row.classList.toggle('visible', !!gm);
+  if (!gm) currentSource = 'body';
+  document.getElementById('source-hint').textContent =
+    (gm && currentSource === 'garment') ? gm.hint : (gm ? 'Measure your body, or a ' + gm.name.toLowerCase() + ' you already own that fits well.' : '');
+  var garmentMode = !!gm && currentSource === 'garment';
+  document.getElementById('sec-garment').style.display = garmentMode ? '' : 'none';
+  if (garmentMode) {
+    document.getElementById('garment-sec-label').textContent = gm.name + ' Measurements';
+    document.querySelectorAll('#grid-garment .field').forEach(function(f){ f.style.display = f.dataset.garment === gmKey ? '' : 'none'; });
+  }
+  // Body measurements: every selected garment's list combined (a garment measured "from a garment" adds none)
+  var bodyGarments = sel.filter(function (g) { return !(garmentMode && g === gmKey); });
+  var set = null;
+  if (sel.length) {
+    set = new Set();
+    bodyGarments.forEach(function (g) { (GARMENT_SETS[g] || new Set()).forEach(function (k) { set.add(k); }); });
+  }
+  var noBody = !!set && set.size === 0;
+  document.getElementById('wrap-height').style.display = (!noBody && (!set || set.has('height'))) ? '' : 'none';
+  document.getElementById('wrap-weight').style.display = !sel.length ? '' : 'none';
+  var anyVol = false, anyLin = false;
+  document.querySelectorAll('#grid-vol .field').forEach(function(f){
+    var show = !set || set.has(f.dataset.key); f.style.display = show ? '' : 'none'; if(show) anyVol=true;
+  });
+  document.querySelectorAll('#grid-lin .field').forEach(function(f){
+    var show = !set || set.has(f.dataset.key); f.style.display = show ? '' : 'none'; if(show) anyLin=true;
+  });
+  document.getElementById('sec-vol').style.display     = anyVol ? '' : 'none';
+  document.getElementById('sec-lin').style.display     = anyLin ? '' : 'none';
+  document.getElementById('gap-vol-lin').style.display = (anyVol && anyLin) ? '' : 'none';
+}
+
+// ── Sheets ────────────────────────────────────────────────────────
+function sheetsReq(action, payload) {
+  payload = payload || {};
+  if (['getMeasurements','getTailorClients'].indexOf(action) >= 0) {
+    return new Promise(function(resolve, reject) {
+      var cbName = '__ttMeas_' + Date.now();
+      var encoded = encodeURIComponent(JSON.stringify(Object.assign({action:action},payload)));
+      var url = SHEETS_API + '?action=' + action + '&payload=' + encoded + '&callback=' + cbName;
+      var script = document.createElement('script');
+      var timer = setTimeout(function(){ cleanup(); resolve({success:false,records:[],message:'timeout'}); }, 10000);
+      function cleanup(){ clearTimeout(timer); delete window[cbName]; if(script.parentNode) document.body.removeChild(script); }
+      window[cbName] = function(res){ cleanup(); resolve(res); };
+      script.onerror = function(){ cleanup(); reject(new Error('Script load failed')); };
+      script.src = url; document.body.appendChild(script);
+    });
+  }
+  return fetch(SHEETS_API, {method:'POST',body:JSON.stringify(Object.assign({action:action},payload))}).then(function(r){return r.json();});
+}
+
+// ── Submit ────────────────────────────────────────────────────────
+function handleSubmit(e) {
+  e.preventDefault();
+  var form = document.getElementById('mform');
+  if (!form.checkValidity()) { form.reportValidity(); return; }
+  var btn=document.getElementById('btn-save'),lbl=document.getElementById('save-lbl'),sp=document.getElementById('save-spin');
+  btn.disabled=true; lbl.style.display='none'; sp.style.display='block';
+  var data = {garment:currentFilter, dateTime:new Date().toLocaleString()};   // e.g. "hoodie,trousers"
+  if (activeGM()) data[activeGM() + 'MeasurementSource'] = currentSource;   // e.g. tshirtMeasurementSource
+  var fd = new FormData(form);
+  fd.forEach(function(v,k){ if(v) data[k]=v; });
+  var email = document.getElementById('f-email').value.trim();
+  tailorToken()
+    .then(function(tok){ var p={email:email,data:data}; if(tok) p.idToken=tok; return sheetsReq('saveMeasurement',p); })
+    .then(function(res){
+      if(res&&res.success&&_tailor.current){ showToast('Saved for ' + tailorName(_tailor.current)); loadMeasurementHistory(_tailor.current.email); }
+      else if(res&&res.success){ showToast('Measurements saved!'); setTimeout(function(){ window.location.href=DASHBOARD; },1500); }
+      else showToast('Could not save — check connection','err');
+    })
+    .catch(function(){ showToast('Network error','err'); })
+    .finally(function(){ btn.disabled=false; lbl.style.display=''; sp.style.display='none'; });
+}
+
+function resetForm(){ document.getElementById('mform').reset(); }
+
+
+// ── Tailor access: enter / update measurements for a client ───────
+var _tailor = { on: false, clients: [], self: null, current: null };
+function tailorName(c) { return ((c.firstName || '') + ' ' + (c.lastName || '')).trim() || c.email; }
+function tailorToken() {
+  var u = _tailor.on && window._fb && window._fb.auth && window._fb.auth.currentUser;
+  return u ? u.getIdToken().catch(function(){ return ''; }) : Promise.resolve('');
+}
+window.initTailorMode = function(user, client) {
+  var prof = String((client && (client.profile || client.Profile)) || '').toLowerCase().trim();
+  if (['tailor', 'developer'].indexOf(prof) < 0 || _tailor.on) return;
+  _tailor.on = true;
+  _tailor.self = { email: user.email, personId: client['Person ID'] || '', gender: client['Gender'] || '', self: true };
+  document.getElementById('tailor-card').style.display = '';
+  tailorToken()
+    .then(function(tok){ return sheetsReq('getTailorClients', { idToken: tok }); })
+    .then(function(res){
+      var hint = document.getElementById('tailor-hint');
+      if (!res || !res.success) { hint.textContent = (res && res.message) || 'Could not load clients.'; return; }
+      _tailor.clients = res.clients || [];
+      hint.textContent = _tailor.clients.length ? 'Pick a client to enter or update their measurements. Their latest saved values load automatically.' : 'No clients yet.';
+      filterTailorClients();
+      var want = new URLSearchParams(location.search).get('client');           // opened from the admin dashboard
+      var pick = want && _tailor.clients.find(function(c){ return c.email.toLowerCase() === want.toLowerCase(); });
+      if (pick) { _tailor.current = pick; filterTailorClients(); pickTailorClient(pick.email); }
+    })
+    .catch(function(){ document.getElementById('tailor-hint').textContent = 'Could not load clients.'; });
+};
+function filterTailorClients() {
+  var q = (document.getElementById('tailor-search').value || '').toLowerCase().trim();
+  var sel = document.getElementById('tailor-client');
+  var keep = _tailor.current ? _tailor.current.email : '';
+  var opts = ['<option value="">Myself — ' + escHtml(_tailor.self ? _tailor.self.email : '') + '</option>'];
+  _tailor.clients.forEach(function(c){
+    var label = tailorName(c) + (c.firstName || c.lastName ? ' — ' + c.email : '') + (c.personId ? ' · ' + c.personId : '');
+    if (q && label.toLowerCase().indexOf(q) < 0 && c.email !== keep) return;
+    opts.push('<option value="' + escHtml(c.email) + '"' + (c.email === keep ? ' selected' : '') + '>' + escHtml(label) + '</option>');
+  });
+  sel.innerHTML = opts.join('');
+}
+function escHtml(t) { return String(t || '').replace(/[&<>"']/g, function(ch){ return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch]; }); }
+function pickTailorClient(email) {
+  var c = email ? _tailor.clients.find(function(x){ return x.email === email; }) : null;
+  _tailor.current = c || null;
+  var who = c || _tailor.self;
+  document.getElementById('mform').reset();
+  var em = document.getElementById('f-email'), pid = document.getElementById('f-personId');
+  em.value = who.email; em.readOnly = true; em.style.opacity = '0.6'; em.style.cursor = 'not-allowed';
+  pid.value = who.personId || ''; pid.readOnly = true;
+  if (normGender(who.gender)) setGender(who.gender);
+  var hc = document.getElementById('meas-history-content'); if (hc) hc.innerHTML = '';
+  var hl = document.getElementById('meas-history-loading'); if (hl) { hl.style.display = ''; hl.textContent = 'Loading history…'; }
+  document.querySelector('.form-sub').textContent = c ? 'Entering measurements for ' + tailorName(c) : 'Enter your measurements below';
+  document.getElementById('save-lbl').textContent = c ? 'Save for ' + (c.firstName || tailorName(c)) : 'Save Measurements';
+  document.getElementById('tailor-card').classList.toggle('for-client', !!c);
+  var dt = document.querySelector('#card-details .sec-title'); if (dt) dt.textContent = c ? 'Client Details' : 'Your Details';
+  var notif = document.getElementById('meas-loading-notif'); if (notif) notif.classList.add('visible');
+  loadMeasurementHistory(who.email);
+}
+
+// ── Toast ─────────────────────────────────────────────────────────
+function showToast(msg,type){
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.className=type==='err'?'err show':'show';
+  setTimeout(function(){ t.classList.remove('show'); },3000);
+}
+
+// ── Close info popups ─────────────────────────────────────────────
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.info-btn'))
+    document.querySelectorAll('.info-btn.open').forEach(function(b){ b.classList.remove('open'); });
+});
+
+// ── Init ──────────────────────────────────────────────────────────
+(function(){
+  var params = new URLSearchParams(window.location.search);
+  var email  = params.get('email');
+  var filter = params.get('garment') || 'all';
+  if (normGender(params.get('gender'))) setGender(params.get('gender'), true);
+
+  // Apply garment from URL if provided
+  if (filter !== 'all') setFilter(filter);
+  else applyFilter('all');
+  if (params.get('source') === 'garment' && activeGM()) setSource('garment');
+
+  if (email) {
+    var decodedEmail = decodeURIComponent(email);
+    var decodedPid   = params.get('personId') ? decodeURIComponent(params.get('personId')) : '';
+    var emailEl = document.getElementById('f-email');
+    if (emailEl){ emailEl.value=decodedEmail; emailEl.readOnly=true; emailEl.style.opacity='0.6'; emailEl.style.cursor='not-allowed'; }
+    var pidEl = document.getElementById('f-personId');
+    if (pidEl&&decodedPid){ pidEl.value=decodedPid; pidEl.readOnly=true; pidEl.style.opacity='0.6'; pidEl.style.cursor='not-allowed'; }
+    var notif = document.getElementById('meas-loading-notif');
+    if (notif) notif.classList.add('visible');
+    loadMeasurementHistory(decodedEmail);
+  }
+})();
+
+// ── History ───────────────────────────────────────────────────────
+function loadMeasurementHistory(email){
+  if(!email) return;
+  var section=document.getElementById('meas-history');
+  var loading=document.getElementById('meas-history-loading');
+  if(section) section.style.display='block';
+  sheetsReq('getMeasurements',{email:email}).then(function(res){
+    var notif=document.getElementById('meas-loading-notif'); if(notif) notif.classList.remove('visible');
+    if(!res||!res.success||!res.records||res.records.length===0){ if(loading) loading.textContent='No measurement history yet.'; return; }
+    if(loading) loading.style.display='none';
+    var latest=res.records[0];
+    var container=document.getElementById('meas-history-content');
+    prefillMeasurements(latest);
+    var summaryKeys=[
+      {k:'Height [CM]',alt:'height',l:'Height'},{k:'Weight [KG]',alt:'weight',l:'Weight'},
+      {k:'Bust girth [CM]',alt:'bustGirth',l:'Bust'},{k:'Waist girth [CM]',alt:'waistGirth',l:'Waist'},
+      {k:'Hip girth [CM]',alt:'hipGirth',l:'Hips'},{k:'Shoulder length [CM]',alt:'shoulderLength',l:'Shoulder'},
+    ];
+    if(container){
+      container.innerHTML=res.records.map(function(rec,i){
+        var date=rec['Created At']||rec['Updated At']||rec['dateTime']||'';
+        var chips=summaryKeys.map(function(k){
+          var v=rec[k.k]||(k.alt&&rec[k.alt])||'';
+          if(!v||v==='0'||v==='0.0') return '';
+          return '<span style="display:inline-block;margin:3px 4px 3px 0;padding:4px 10px;background:var(--cream-mid);border:1px solid var(--border);border-radius:2px;font-size:11px;color:var(--ink-mid)"><strong style="color:var(--ink)">'+parseFloat(v).toFixed(1)+'</strong> '+k.l+'</span>';
+        }).filter(Boolean).join('');
+        return '<div style="padding:16px 20px;background:var(--white);border:1px solid var(--border);border-radius:2px;margin-bottom:8px"><div style="font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px">'+(i===0?'⬤ Latest — ':'Record '+(res.records.length-i)+' — ')+date+'</div>'+(chips||'<span style="font-size:12px;color:var(--ink-faint);font-style:italic">No key measurements recorded</span>')+'</div>';
+      }).join('');
+    }
+  }).catch(function(err){ var notif=document.getElementById('meas-loading-notif'); if(notif) notif.classList.remove('visible'); if(loading) loading.textContent='Could not load history.'; console.error(err); });
+}
+
+function prefillMeasurements(rec){
+  if(!rec) return;
+  var savedSource = activeGM() ? rec[activeGM() + 'MeasurementSource'] : '';
+  if (activeGM() && (savedSource === 'garment' || savedSource === 'body') && !new URLSearchParams(location.search).get('source')) setSource(savedSource);
+  var heightEl=document.getElementById('f-height');
+  var weightEl=document.getElementById('f-weight');
+  var hVal=rec['Height [CM]']||rec['height']||'';
+  var wVal=rec['Weight [KG]']||rec['weight']||'';
+  if(heightEl&&hVal&&hVal!=='0') heightEl.value=parseFloat(hVal);
+  if(weightEl&&wVal&&wVal!=='0') weightEl.value=parseFloat(wVal);
+  Object.keys(rec).forEach(function(key){
+    var val=rec[key];
+    if(!val||val==='0'||val==='0.0'||val==='') return;
+    var el=document.getElementById('f-'+key);
+    if(el&&el.type==='number'){ var num=parseFloat(val); if(!isNaN(num)&&num>0) el.value=num; }
+  });
+}
+</script>
+
+<!-- Version badge -->
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v2.14.0</div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+const _app = initializeApp({apiKey:"AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY",authDomain:"tailortech-accounts.firebaseapp.com",projectId:"tailortech-accounts",storageBucket:"tailortech-accounts.firebasestorage.app",messagingSenderId:"137614433833",appId:"1:137614433833:web:c78ea40b0d04ba89f3c638"});
+const _auth = getAuth(_app);
+window._fb = { auth: _auth, signOut };
+onAuthStateChanged(_auth, function(user) {
+  if (user) {
+    setAccountPopover(user);
+    document.getElementById('nav-av').style.display='';
+    document.getElementById('nav-signout').style.display='';
+    document.getElementById('nav-login').style.display='none';
+    // If no email param in URL, prefill email field and load measurements now
+    var _hasEmailParam = new URLSearchParams(window.location.search).get('email');
+    if (!_hasEmailParam) {
+      var emailEl = document.getElementById('f-email');
+      if (emailEl && !emailEl.value) { emailEl.value = user.email; emailEl.readOnly = true; emailEl.style.opacity = '0.6'; emailEl.style.cursor = 'not-allowed'; }
+      var notif = document.getElementById('meas-loading-notif');
+      if (notif) notif.classList.add('visible');
+      loadMeasurementHistory(user.email);
+    }
+    if (!window._currentPersonId) {
+      getClientJSONP(user.email, user.uid, function(res){
+        if(res&&res.success&&res.client&&res.client['Person ID']){
+          window._currentPersonId=res.client['Person ID'];
+          if(!_genderChosen && normGender(res.client['Gender'])) setGender(res.client['Gender']);
+          if(window.initTailorMode) window.initTailorMode(user, res.client);
+          var pidEl=document.getElementById('f-personId'); if(pidEl&&!pidEl.value){ pidEl.value=res.client['Person ID']; pidEl.readOnly=true; pidEl.style.opacity='0.6'; pidEl.style.cursor='not-allowed'; }
+          var el=document.getElementById('dd-pid'); if(el) el.textContent=window._currentPersonId;
+        }
+      });
+    }
+  } else {
+    var av=document.getElementById('nav-av'); if(av){av.style.display='none';av.innerHTML='';}
+    document.getElementById('nav-signout').style.display='none';
+    document.getElementById('nav-login').style.display='';
+    var dd=document.getElementById('nav-dd'); if(dd) dd.style.display='none';
+  }
+});
+</script>
+
+<script>
+function toggleDropdown(e){
+  if(e) e.stopPropagation();
+  var d=document.getElementById('nav-dd'); if(!d) return;
+  d.style.display=(d.style.display==='block')?'none':'block';
+}
+document.addEventListener('click',function(e){
+  var d=document.getElementById('nav-dd'),av=document.getElementById('nav-av');
+  if(d&&d.style.display==='block'&&!d.contains(e.target)&&av&&!av.contains(e.target)) d.style.display='none';
+});
+function goToAuth(){
+  try{sessionStorage.setItem('tt_return_url',window.location.href);}catch(e){}
+  window.location.href='https://tailortech.toom.design/auth';
+}
+function doSignOut(){
+  var auth=window._fb&&window._fb.auth,so=window._fb&&window._fb.signOut;
+  if(auth&&so) so(auth);
+}
+function setAccountPopover(user){
+  if(!user) return;
+  var fullname=user.displayName||user.email||'—';
+  var av=document.getElementById('nav-av');
+  if(av){ if(user.photoURL) av.innerHTML='<img src="'+user.photoURL+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">'; else av.textContent=fullname[0].toUpperCase(); }
+  var ddAv=document.getElementById('dd-av');
+  if(ddAv){ if(user.photoURL) ddAv.innerHTML='<img src="'+user.photoURL+'" style="width:100%;height:100%;object-fit:cover;" alt="">'; else ddAv.textContent=fullname[0].toUpperCase(); }
+  var el;
+  el=document.getElementById('dd-name'); if(el) el.textContent=fullname;
+  el=document.getElementById('dd-email-sub'); if(el) el.textContent=user.email||'';
+  el=document.getElementById('dd-pid'); if(el) el.textContent=window._currentPersonId||'—';
+}
+function getClientJSONP(email,uid,callback){
+  var cbName='__ttGetClient_'+Date.now();
+  var payload=encodeURIComponent(JSON.stringify({email:email,uid:uid||''}));
+  var url='https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec?action=getClient&payload='+payload+'&callback='+cbName;
+  var script=document.createElement('script');
+  var timer=setTimeout(function(){cleanup();callback(null);},8000);
+  function cleanup(){clearTimeout(timer);delete window[cbName];if(script.parentNode) document.body.removeChild(script);}
+  window[cbName]=function(res){cleanup();callback(res);};
+  script.onerror=function(){cleanup();callback(null);};
+  script.src=url; document.body.appendChild(script);
+}
+function ddCopy(type){
+  var val=type==='pid'
+    ?(window._currentPersonId||'')
+    :(window._fb&&window._fb.auth&&window._fb.auth.currentUser&&window._fb.auth.currentUser.email)||'';
+  if(!val||val==='—'){showToast('Nothing to copy',true);return;}
+  if(navigator.clipboard) navigator.clipboard.writeText(val).then(function(){showToast(type.toUpperCase()+' copied');});
+}
+</script>
+
+<!-- Cookie consent (analytics) — wording is yours to edit; keep the two button ids -->
+<div id="tt-consent" role="dialog" aria-modal="true" aria-labelledby="tt-consent-title" hidden>
+  <div class="tt-consent-card">
+    <span class="tt-consent-ic" aria-hidden="true">i</span>
+    <div class="tt-consent-body">
+      <h2 id="tt-consent-title">Help us tailor TailorTech</h2>
+      <p>We'd like to use analytics cookies to see how the configurator is used, so we can keep refining it.</p>
+      <div class="tt-consent-btns">
+        <button type="button" id="tt-consent-no">Decline</button>
+        <button type="button" id="tt-consent-yes">Accept</button>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+#tt-consent { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(26,25,22,0.28); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; animation: ttcFade 0.25s ease; }
+#tt-consent[hidden] { display: none; }
+.tt-consent-card { display: flex; gap: 14px; align-items: flex-start; width: min(440px, 100%); padding: 22px 24px 20px; background: #F3F8F6; border: 1px solid rgba(77,191,171,0.45); border-radius: 14px; box-shadow: 0 18px 50px rgba(26,25,22,0.18); color: #2f6f63; animation: ttcRise 0.3s ease; }
+.tt-consent-ic { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #4dbfab; color: #4dbfab; display: flex; align-items: center; justify-content: center; font-family: Georgia, serif; font-style: italic; font-size: 14px; font-weight: 600; margin-top: 1px; }
+.tt-consent-body { flex: 1; min-width: 0; }
+#tt-consent h2 { margin: 2px 0 8px; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: #1f5249; }
+#tt-consent p { margin: 0 0 16px; font-size: 12.5px; line-height: 1.6; color: #2f6f63; }
+.tt-consent-btns { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+#tt-consent button { font-family: inherit; font-size: 10px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; padding: 11px 20px; border-radius: 999px; cursor: pointer; transition: opacity 0.15s, background 0.15s; }
+#tt-consent-no { background: transparent; border: 1px solid rgba(47,111,99,0.35); color: #2f6f63; }
+#tt-consent-no:hover { background: rgba(77,191,171,0.10); }
+#tt-consent-yes { background: #4a164f; border: 1px solid #4a164f; color: #fff; }
+#tt-consent-yes:hover { opacity: 0.9; }
+#tt-consent button:focus-visible { outline: 2px solid #4dbfab; outline-offset: 2px; }
+@keyframes ttcFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ttcRise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { #tt-consent, .tt-consent-card { animation: none; } }
+</style>
+<script>
+(function(){
+  var el = document.getElementById('tt-consent'), saved = null;
+  try { saved = localStorage.getItem('tt_consent'); } catch (e) {}
+  function choose(v) {
+    try { localStorage.setItem('tt_consent', v); } catch (e) {}
+    if (typeof gtag === 'function') gtag('consent', 'update', { analytics_storage: v });
+    el.hidden = true;
+  }
+  if (saved !== 'granted' && saved !== 'denied') { el.hidden = false; setTimeout(function(){ var b = document.getElementById('tt-consent-yes'); if (b) b.focus(); }, 50); }
+  document.getElementById('tt-consent-yes').onclick = function(){ choose('granted'); };
+  document.getElementById('tt-consent-no').onclick  = function(){ choose('denied'); };
+})();
+</script>
+
+<!-- Cart icon + item count next to the profile picture (shown when signed in) -->
+<style>
+.tt-cart-btn { position: relative; display: none; align-items: center; justify-content: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; color: #1A1916; text-decoration: none; transition: background 0.15s, color 0.15s; }
+.tt-cart-btn.on { display: inline-flex; }
+.tt-cart-btn:hover { background: rgba(74,22,79,0.07); color: #4A164F; }
+.tt-cart-btn svg { width: 19px; height: 19px; display: block; }
+.tt-cart-count { position: absolute; top: -2px; right: -4px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px; background: #4A164F; color: #fff; border: 2px solid #FAFAF8; font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 9.5px; font-weight: 600; line-height: 13px; text-align: center; letter-spacing: 0; box-sizing: border-box; }
+.tt-cart-count[hidden] { display: none; }
+.tt-cart-count.bump { animation: ttCartBump 0.35s ease; }
+@keyframes ttCartBump { 50% { transform: scale(1.25); } }
+</style>
+<script>
+(function () {
+  var KEY = 'tt_cart_count', API = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
+  var btn, badge, last = null;
+  function store(n) { try { if (n == null) localStorage.removeItem(KEY); else localStorage.setItem(KEY, String(n)); } catch (e) {} }
+  function cached() { try { var v = localStorage.getItem(KEY); return v == null ? null : parseInt(v, 10); } catch (e) { return null; } }
+  function build() {
+    var av = document.getElementById('nav-av');
+    if (!av || !av.parentNode || document.getElementById('tt-cart-btn')) return !!btn;
+    btn = document.createElement('a');
+    btn.id = 'tt-cart-btn'; btn.className = 'tt-cart-btn'; btn.href = 'https://tailortech.toom.design/cart';
+    btn.setAttribute('aria-label', 'Cart'); btn.title = 'Cart';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span class="tt-cart-count" hidden></span>';
+    badge = btn.querySelector('.tt-cart-count');
+    av.parentNode.insertBefore(btn, av);
+    return true;
+  }
+  // Public: set the number (cart page calls this after loading / removing items)
+  window.ttCartCount = function (n) {
+    if (!build()) return;
+    n = Math.max(0, parseInt(n, 10) || 0);
+    badge.textContent = n > 99 ? '99+' : String(n);
+    badge.hidden = n === 0;
+    btn.setAttribute('aria-label', n ? 'Cart, ' + n + ' item' + (n > 1 ? 's' : '') : 'Cart');
+    if (last != null && n !== last) { badge.classList.remove('bump'); void badge.offsetWidth; badge.classList.add('bump'); }
+    last = n; store(n);
+  };
+  window.ttCartShow = function (on) { if (build()) btn.classList.toggle('on', !!on); if (!on) store(null); };
+  window.ttCartRefresh = function (user) {
+    if (!user || !user.getIdToken) return;
+    user.getIdToken().then(function (tok) {
+      var cb = '_ttcart' + Date.now(), s = document.createElement('script');
+      var done = function () { try { delete window[cb]; } catch (e) { window[cb] = undefined; } if (s.parentNode) s.parentNode.removeChild(s); };
+      window[cb] = function (res) { done(); if (res && res.success) window.ttCartCount((res.items || []).length); };
+      s.onerror = done; setTimeout(done, 30000);
+      s.src = API + '?action=getCart&payload=' + encodeURIComponent(JSON.stringify({ idToken: tok })) + '&callback=' + cb;
+      document.body.appendChild(s);
+    }).catch(function () {});
+  };
+  function init() {
+    if (!build()) return;
+    var c = cached(); if (c != null) window.ttCartCount(c);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+</script>
+<script type="module">
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+// Use the page's own Firebase app (same SDK build); start one only if the page has none
+function app() {
+  return getApps().length ? getApp() : initializeApp({
+    apiKey: "AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY", authDomain: "tailortech-accounts.firebaseapp.com",
+    projectId: "tailortech-accounts", storageBucket: "tailortech-accounts.firebasestorage.app",
+    messagingSenderId: "137614433833", appId: "1:137614433833:web:c78ea40b0d04ba89f3c638"
+  });
+}
+setTimeout(function () {
+  onAuthStateChanged(getAuth(app()), function (user) {
+    window.ttCartShow(!!user);
+    if (user && !window.ttCartManaged) window.ttCartRefresh(user);   // the cart page sets the count itself
+  });
+}, 0);
+</script>
+
+<!-- Pop-up messages (toasts) in the TailorTech mint style — replaces the page's toast()/showToast() -->
+<style>
+#tt-toast { position: fixed; left: 50%; bottom: 28px; z-index: 100001; display: flex; align-items: center; gap: 12px; max-width: min(440px, calc(100% - 32px)); padding: 13px 18px 13px 13px; border-radius: 12px; background: #F3F8F6; border: 1px solid rgba(77,191,171,0.45); box-shadow: 0 14px 40px rgba(26,25,22,0.14); color: #2f6f63; font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 13px; font-weight: 500; line-height: 1.45; letter-spacing: 0.01em; text-transform: none; transform: translate(-50%, 14px); opacity: 0; pointer-events: none; transition: opacity 0.22s ease, transform 0.22s ease; box-sizing: border-box; }
+#tt-toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+#tt-toast .tt-toast-ic { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid #4DBFAB; color: #4DBFAB; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+#tt-toast .tt-toast-ic svg { width: 12px; height: 12px; display: block; }
+#tt-toast.err { background: #FBF3F2; border-color: rgba(196,98,90,0.45); color: #8a3b34; }
+#tt-toast.err .tt-toast-ic { border-color: #C4625A; color: #C4625A; }
+@media (max-width: 560px) { #tt-toast { bottom: 18px; font-size: 12.5px; } }
+</style>
+<script>
+(function () {
+  var ICON_OK  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5,12.5 10,17.5 19,7"/></svg>';
+  var ICON_ERR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="6" x2="12" y2="13.5"/><line x1="12" y1="18.5" x2="12" y2="18.6"/></svg>';
+  var timer;
+  function ttToast(msg, type) {
+    var el = document.getElementById('tt-toast');
+    if (!el) {
+      el = document.createElement('div'); el.id = 'tt-toast';
+      el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite');
+      el.innerHTML = '<span class="tt-toast-ic"></span><span class="tt-toast-msg"></span>';
+      document.body.appendChild(el);
+    }
+    // Sit above a sticky footer (configurators' price bar) instead of covering it
+    var foot = document.querySelector('.config-footer');
+    el.style.bottom = foot && foot.offsetHeight ? (foot.offsetHeight + 16) + 'px' : '';
+    var isErr = /^(err|error|danger|fail)/i.test(String(type || ''));
+    el.className = isErr ? 'err' : '';
+    el.querySelector('.tt-toast-ic').innerHTML = isErr ? ICON_ERR : ICON_OK;
+    el.querySelector('.tt-toast-msg').textContent = String(msg == null ? '' : msg);
+    void el.offsetWidth; el.classList.add('show');
+    clearTimeout(timer);
+    timer = setTimeout(function () { el.classList.remove('show'); }, isErr ? 4500 : 3000);
+  }
+  window.ttToast = ttToast;
+  window.toast = ttToast;
+  window.showToast = ttToast;
+})();
+</script>
+
+<!-- Preselect the client's gender (CLIENTS → "Gender") once they're signed in -->
+<script>
+(function () {
+  function code(g) { g = String(g || '').trim().toLowerCase(); return /^(f|w)/.test(g) ? 'F' : (/^m/.test(g) ? 'M' : ''); }
+  var touched = false;   // a gender picked by hand always wins
+  document.addEventListener('click', function (e) {
+    if (!e.isTrusted || !e.target.closest) return;
+    var b = e.target.closest('.pill, .gender-btn'); if (!b) return;
+    var sec = b.closest('.section'), l = sec && sec.querySelector('.section-label');
+    if (b.classList.contains('gender-btn') || (l && l.textContent.trim() === 'Gender')) touched = true;
+  }, true);
+  window.ttApplyGender = function (g) {
+    var c = code(g); if (!c || touched) return;
+    if (typeof setGender === 'function' && document.querySelector('.gender-btn')) { setGender(c); return; }  // measurements page
+    var sec = Array.prototype.find.call(document.querySelectorAll('.section'), function (s) {
+      var l = s.querySelector('.section-label'); return l && l.textContent.trim() === 'Gender';
+    });
+    if (!sec) return;
+    var want = c === 'F' ? 'female' : 'male';
+    var btn = Array.prototype.find.call(sec.querySelectorAll('.pill'), function (p) {
+      return String(p.dataset.optionLabel || p.textContent).trim().toLowerCase().indexOf(want) === 0;
+    });
+    if (btn && !btn.classList.contains('selected')) btn.click();
+  };
+  var orig = window.getClientJSONP;
+  if (typeof orig === 'function') {
+    window.getClientJSONP = function (email, uid, cb) {
+      return orig.call(this, email, uid, function (res) {
+        try { if (res && res.client) ttApplyGender(res.client['Gender']); } catch (e) {}
+        if (cb) cb(res);
+      });
+    };
+  }
+})();
+</script>
+
+<!-- Marketing consent card: asks signed-in clients who haven't said yes yet (CLIENTS → Marketing Consent) -->
+<style>
+#tt-mkt { position: fixed; right: 22px; bottom: 22px; z-index: 100000; width: min(360px, calc(100% - 32px)); padding: 20px 20px 18px; border-radius: 14px; background: #FAFAF8; border: 1px solid rgba(26,25,22,0.12); box-shadow: 0 18px 50px rgba(26,25,22,0.16); font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; color: #1A1916; opacity: 0; transform: translateY(16px); pointer-events: none; transition: opacity 0.3s ease, transform 0.3s ease; box-sizing: border-box; }
+#tt-mkt.show { opacity: 1; transform: none; pointer-events: auto; }
+#tt-mkt .m-eye { font-size: 9.5px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #4DBFAB; margin-bottom: 8px; }
+#tt-mkt .m-h { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 23px; font-weight: 500; line-height: 1.15; color: #4A164F; margin: 0 26px 8px 0; }
+#tt-mkt .m-p { font-size: 12.5px; line-height: 1.55; color: #4A4844; margin: 0 0 16px; }
+#tt-mkt .m-row { display: flex; gap: 8px; }
+#tt-mkt button { font-family: inherit; cursor: pointer; border-radius: 999px; font-size: 10.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; padding: 12px 14px; transition: background 0.15s, opacity 0.15s; }
+#tt-mkt .m-yes { flex: 1.3; background: #4A164F; color: #fff; border: 1px solid #4A164F; }
+#tt-mkt .m-yes:hover { opacity: 0.9; }
+#tt-mkt .m-no { flex: 1; background: transparent; color: #4A4844; border: 1px solid rgba(26,25,22,0.22); }
+#tt-mkt .m-no:hover { background: rgba(26,25,22,0.04); }
+#tt-mkt .m-x { position: absolute; top: 12px; right: 12px; width: 28px; height: 28px; padding: 0; border: none; background: transparent; color: #8A8880; font-size: 18px; line-height: 1; letter-spacing: 0; border-radius: 50%; }
+#tt-mkt .m-x:hover { background: rgba(26,25,22,0.06); color: #1A1916; }
+#tt-mkt .m-fine { font-size: 10.5px; color: #8A8880; margin-top: 10px; line-height: 1.45; }
+@media (max-width: 560px) { #tt-mkt { right: 16px; bottom: 16px; } }
+</style>
+<script>
+(function () {
+  var API = 'https://script.google.com/macros/s/AKfycby2SXeZ-Xezbnc739SuHwvxIf8crKwMpwn-dkRULlimtA9IQBShIKoyMXQUBbh2X3Uk/exec';
+  var DELAY = 12000;                 // let people look around first
+  var LATER_DAYS = 14;               // "×" — ask again in two weeks
+  var NO_DAYS = 90;                  // "No, thanks" (or FALSE in the sheet) — ask again after three months at most
+  var DAY = 864e5;
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function jsonp(action, payload, cb) {
+    var name = '_ttmkt' + Date.now() + Math.floor(Math.random() * 1e4), s = document.createElement('script');
+    var done = function () { try { delete window[name]; } catch (e) { window[name] = undefined; } if (s.parentNode) s.parentNode.removeChild(s); };
+    window[name] = function (res) { done(); if (cb) cb(res); };
+    s.onerror = function () { done(); if (cb) cb(null); };
+    setTimeout(done, 30000);
+    s.src = API + '?action=' + action + '&payload=' + encodeURIComponent(JSON.stringify(payload)) + '&callback=' + name;
+    document.body.appendChild(s);
+  }
+  function parseDate(v) {          // "28/10/2026 09:30:00" (script) or anything Date understands
+    var m = String(v || '').match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
+    if (m) return new Date(+m[3], m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0)).getTime();
+    var t = Date.parse(v); return isNaN(t) ? 0 : t;
+  }
+  function field(client, name) {
+    var k = Object.keys(client || {}).find(function (x) { return x.trim().toLowerCase() === name.toLowerCase(); });
+    return k ? String(client[k] == null ? '' : client[k]).trim() : '';
+  }
+  function busyElsewhere() {        // don't stack on top of another popup
+    return !!document.querySelector('.overlay.open, .modal.open, [role="dialog"][open], #welcome-overlay.open, #gender-overlay.open, #tt-consent:not([hidden])');
+  }
+  function hide(el) { el.classList.remove('show'); setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 350); }
+  function show(user) {
+    if (document.getElementById('tt-mkt')) return;
+    if (busyElsewhere()) { setTimeout(function () { show(user); }, 8000); return; }
+    var el = document.createElement('div');
+    el.id = 'tt-mkt'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Email updates');
+    el.innerHTML = '<button class="m-x" type="button" aria-label="Ask me later">&times;</button>' +
+      '<div class="m-eye">Stay in the loop</div>' +
+      '<div class="m-h">New fabrics &amp; garments, first</div>' +
+      '<p class="m-p">Get an occasional email when we add new fabrics, garments or offers. No spam &mdash; unsubscribe in one click.</p>' +
+      '<div class="m-row"><button class="m-yes" type="button">Yes, keep me posted</button><button class="m-no" type="button">No, thanks</button></div>' +
+      '<div class="m-fine">You can change this any time in your dashboard.</div>';
+    document.body.appendChild(el);
+    void el.offsetWidth; el.classList.add('show');
+    var key = 'tt_mkt_snooze_' + user.uid;
+    function save(val) {
+      lsSet(key, String(Date.now() + (val === 'TRUE' ? 3650 : NO_DAYS) * DAY));
+      jsonp('saveClient', { uid: user.uid, email: user.email, data: { 'UID': user.uid, 'Email': user.email, 'Marketing Consent': val } });
+      hide(el);
+      if (val === 'TRUE' && window.toast) toast('Thank you! We’ll keep you posted ✦');
+    }
+    el.querySelector('.m-yes').onclick = function () { save('TRUE'); };
+    el.querySelector('.m-no').onclick = function () { save('FALSE'); };
+    el.querySelector('.m-x').onclick = function () { lsSet(key, String(Date.now() + LATER_DAYS * DAY)); hide(el); };
+  }
+  window.ttMarketingAsk = function (user) {
+    if (!user || !user.uid || !user.email) return;
+    if (/[?&]nomkt\b/.test(location.search)) return;
+    var snooze = +lsGet('tt_mkt_snooze_' + user.uid) || 0;
+    if (snooze > Date.now()) return;
+    try { if (sessionStorage.getItem('tt_mkt_checked')) return; } catch (e) {}
+    setTimeout(function () {
+      try { sessionStorage.setItem('tt_mkt_checked', '1'); } catch (e) {}          // check once per visit
+      jsonp('getClient', { uid: user.uid, email: user.email }, function (res) {
+        var c = res && res.client; if (!c) return;
+        var v = field(c, 'Marketing Consent');
+        if (/^(true|yes|1)$/i.test(v)) return;                                   // already subscribed
+        if (v !== '' && Date.now() - parseDate(field(c, 'Marketing Consent Updated')) < NO_DAYS * DAY) return;  // said no recently
+        show(user);
+      });
+    }, DELAY);
+  };
+})();
+</script>
+<script type="module">
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+function app() {
+  return getApps().length ? getApp() : initializeApp({
+    apiKey: "AIzaSyDTbes2CnVEahG0UO3xzZlD9Z5wlSel3XY", authDomain: "tailortech-accounts.firebaseapp.com",
+    projectId: "tailortech-accounts", storageBucket: "tailortech-accounts.firebasestorage.app",
+    messagingSenderId: "137614433833", appId: "1:137614433833:web:c78ea40b0d04ba89f3c638"
+  });
+}
+setTimeout(function () {
+  var asked = false;
+  onAuthStateChanged(getAuth(app()), function (user) { if (user && !asked) { asked = true; window.ttMarketingAsk(user); } });
+}, 0);
+</script>
+
+<!-- STAGING copy: not linked from the live site; check it, then it gets promoted to the live page -->
+<meta name="robots" content="noindex, nofollow">
+<div style="position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:2147483000;background:#E8B23A;color:#1A1916;font:600 10px/1 Jost,Helvetica,Arial,sans-serif;letter-spacing:.22em;text-transform:uppercase;padding:9px 16px;border-radius:999px;box-shadow:0 6px 18px rgba(0,0,0,.18);pointer-events:none">Staging · preview, not live</div>
+</body>
+</html>
