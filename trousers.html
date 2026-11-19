@@ -1586,13 +1586,13 @@ function showFeedback(msg, color) {
       }).join('');
       sel.value = '0';
       row.style.display = 'block';
-      prefillMeasurements(res.records[0]);
+      prefillMeasurements(window.ttMeasMerge ? window.ttMeasMerge(res.records) : res.records[0]); if (window.ttMeasMark) window.ttMeasMark('mf-');
     }).catch(function() { if (notif) notif.classList.remove('visible'); });
   }
 
   window.measLoadVersion = function(idx) {
     var rec = _measRecords[parseInt(idx, 10)];
-    if (rec) prefillMeasurements(rec);
+    if (rec) { prefillMeasurements(parseInt(idx, 10) === 0 && window.ttMeasMerge ? window.ttMeasMerge(_measRecords) : rec); if (window.ttMeasRefresh) window.ttMeasRefresh('mf-'); }
   };
 
   window.measHandleSubmit = function(e) {
@@ -1605,7 +1605,13 @@ function showFeedback(msg, color) {
     btn.disabled = true; lbl.style.display = 'none'; sp.style.display = 'block';
     var data = { garment: 'trousers', dateTime: new Date().toLocaleString() };
     var fd = new FormData(form);
-    fd.forEach(function(v, k){ if (v) data[k] = v; });
+    var _ttmN = window.ttMeasCollect ? window.ttMeasCollect(fd, data, 'mf-') : (fd.forEach(function(v, k){ if (v) data[k] = v; }), 1);
+    if (!_ttmN) {
+      btn.disabled = false; lbl.style.display = ''; sp.style.display = 'none';
+      (typeof toast === 'function' ? toast : alert)('Nothing to save — change a measurement or tick ✓ the ones that are still the same', 'err');
+      _measDirty = false; if (typeof updateMeasBtn === 'function') updateMeasBtn();
+      return;
+    }
     var email = document.getElementById('mf-email').value.trim();
     sheetsReq('saveMeasurement', { email: email, data: data })
       .then(function(res) {
@@ -1626,7 +1632,13 @@ function showFeedback(msg, color) {
     btn.disabled = true; lbl.style.display = 'none'; sp.style.display = 'block';
     var data = { garment: 'trousers', dateTime: new Date().toLocaleString() };
     var fd = new FormData(form);
-    fd.forEach(function(v, k){ if (v) data[k] = v; });
+    var _ttmN = window.ttMeasCollect ? window.ttMeasCollect(fd, data, 'mf-') : (fd.forEach(function(v, k){ if (v) data[k] = v; }), 1);
+    if (!_ttmN) {
+      btn.disabled = false; lbl.style.display = ''; sp.style.display = 'none';
+      (typeof toast === 'function' ? toast : alert)('Nothing to save — change a measurement or tick ✓ the ones that are still the same', 'err');
+      _measDirty = false; if (typeof updateMeasBtn === 'function') updateMeasBtn();
+      return;
+    }
     var email = document.getElementById('mf-email').value.trim();
     sheetsReq('saveMeasurement', { email: email, data: data })
       .then(function(res) {
@@ -2225,7 +2237,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v4.7.24</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v4.7.25</div>
 
 
 <!-- Cookie consent (analytics) — wording is yours to edit; keep the two button ids -->
@@ -2959,6 +2971,96 @@ html.tt-auth-pending .pill-extra-price, html.tt-auth-pending .icon-card-extra-pr
     bar.insertBefore(w, btns[0]);
     btns.forEach(function (b) { w.appendChild(b); });
   });
+})();
+</script>
+
+<!-- TT measurement check: unchanged values are re-saved only when ticked "Still the same" -->
+<style>
+.ttm-same{display:flex;align-items:center;gap:6px;margin-top:5px;font-size:10px;letter-spacing:0.04em;color:#8A8880;cursor:pointer;user-select:none;font-family:'Jost',sans-serif}
+.ttm-same input{position:absolute;opacity:0;pointer-events:none}
+.ttm-box{width:14px;height:14px;border:1px solid rgba(26,25,22,0.30);border-radius:4px;background:#fff;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.ttm-same input:checked + .ttm-box{background:#4A164F;border-color:#4A164F}
+.ttm-same input:checked + .ttm-box::after{content:'';width:4px;height:7px;border:solid #fff;border-width:0 1.5px 1.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.ttm-dt{margin-left:auto;color:#B0ADA6}
+.ttm-upd{display:none;color:#2E7D4F;font-weight:600}
+input.ttm-prev{border-color:#E0B25A !important;background:#FFFCF5 !important}
+input.ttm-ok{border-color:rgba(74,22,79,0.45) !important}
+input.ttm-new{border-color:#2E7D4F !important;background:#F5FBF7 !important}
+.ttm-same.is-new .ttm-box,.ttm-same.is-new .ttm-txt,.ttm-same.is-new .ttm-dt{display:none}
+.ttm-same.is-new .ttm-upd{display:inline}
+</style>
+<script>
+(function(){
+  var DATES = {};
+  function nonEmpty(v){ v = String(v == null ? '' : v).trim(); return v !== '' && v !== '0' && v !== '0.0'; }
+  function dateOf(rec){
+    var raw = String(rec['Update'] || rec['Created At'] || rec['Updated At'] || rec['dateTime'] || '').trim();
+    if (!raw || raw === 'LATEST') return '';
+    var m = raw.match(/^(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})/);
+    if (m) return ('0'+m[1]).slice(-2) + '.' + ('0'+m[2]).slice(-2) + '.' + m[3];
+    var d = new Date(raw);
+    if (isNaN(d) || d.getFullYear() < 2020) return '';
+    return ('0'+d.getDate()).slice(-2) + '.' + ('0'+(d.getMonth()+1)).slice(-2) + '.' + d.getFullYear();
+  }
+  // Newest value of every field (records come newest first) + the date it was taken
+  window.ttMeasMerge = function(records){
+    var out = {}; DATES = {};
+    (records || []).forEach(function(rec){
+      Object.keys(rec).forEach(function(k){ if (out[k] === undefined && nonEmpty(rec[k])) { out[k] = rec[k]; DATES[k] = dateOf(rec); } });
+    });
+    if (!DATES.height && DATES['Height [CM]']) DATES.height = DATES['Height [CM]'];
+    return out;
+  };
+  function inputs(prefix){ return Array.prototype.slice.call(document.querySelectorAll('input[type=number][id^="' + prefix + '"]')); }
+  function holder(el){
+    var p = el.parentElement;
+    if (p && p.children.length <= 2 && /relative/.test(p.getAttribute('style') || '')) p = p.parentElement;
+    return p;
+  }
+  function refresh(el){
+    var row = el._ttmRow; if (!row) return;
+    var v = el.value.trim(), same = v !== '' && parseFloat(v) === parseFloat(el.dataset.ttmPrev);
+    var box = row.querySelector('input');
+    el.classList.toggle('ttm-new', v !== '' && !same);
+    el.classList.toggle('ttm-prev', same && !box.checked);
+    el.classList.toggle('ttm-ok', same && box.checked);
+    row.classList.toggle('is-new', v !== '' && !same);
+  }
+  window.ttMeasRefresh = function(prefix){ inputs(prefix).forEach(refresh); };
+  window.ttMeasMark = function(prefix){
+    inputs(prefix).forEach(function(el){
+      if (el._ttmRow) { el._ttmRow.remove(); el._ttmRow = null; }
+      delete el.dataset.ttmPrev;
+      el.classList.remove('ttm-prev','ttm-ok','ttm-new');
+      if (!el.value) return;
+      el.dataset.ttmPrev = el.value;
+      var dt = DATES[el.name] || '';
+      var row = document.createElement('label');
+      row.className = 'ttm-same';
+      row.innerHTML = '<input type="checkbox"><span class="ttm-box"></span><span class="ttm-txt">Still the same</span>' +
+        (dt ? '<span class="ttm-dt">' + dt + '</span>' : '') + '<span class="ttm-upd">Updated</span>';
+      holder(el).appendChild(row);
+      el._ttmRow = row;
+      row.querySelector('input').addEventListener('change', function(){ refresh(el); });
+      if (!el._ttmBound) { el._ttmBound = true; el.addEventListener('input', function(){ refresh(el); }); }
+      refresh(el);
+    });
+  };
+  // Copies form values into data; unchanged + unticked measurements are left out. Returns how many measurements are kept.
+  window.ttMeasCollect = function(fd, data, prefix){
+    var n = 0;
+    fd.forEach(function(v, k){
+      if (!v) return;
+      var el = document.getElementById(prefix + k);
+      if (el && el.type === 'number') {
+        if (el.dataset.ttmPrev !== undefined && parseFloat(v) === parseFloat(el.dataset.ttmPrev) &&
+            !(el._ttmRow && el._ttmRow.querySelector('input').checked)) return;
+        n++;
+      }
+      data[k] = v;
+    });
+    return n;
+  };
 })();
 </script>
 </body>
