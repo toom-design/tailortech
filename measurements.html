@@ -217,6 +217,20 @@ body{height:100dvh;}
 .tailor-row input,.tailor-row select{width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(26,25,22,0.16);background:#fff;font-family:'Jost',sans-serif;font-size:12px;color:var(--ink);outline:none;}
 .tailor-row input:focus,.tailor-row select:focus{border-color:var(--tt-purple);box-shadow:0 0 0 3px rgba(74,22,79,0.08);}
 .tailor-hint{font-size:11px;color:var(--ink-light);margin-top:10px;line-height:1.5;}
+
+/* measurement check */
+.m-same{display:flex;align-items:center;gap:6px;margin-top:5px;font-size:10px;letter-spacing:0.04em;color:#8A8880;cursor:pointer;user-select:none}
+.m-same input{position:absolute;opacity:0;pointer-events:none}
+.m-box{width:14px;height:14px;border:1px solid rgba(26,25,22,0.30);border-radius:4px;background:#fff;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.m-same input:checked + .m-box{background:var(--tt-purple,#4A164F);border-color:var(--tt-purple,#4A164F)}
+.m-same input:checked + .m-box::after{content:'';width:4px;height:7px;border:solid #fff;border-width:0 1.5px 1.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.m-dt{margin-left:auto;color:#B0ADA6}
+.m-upd{display:none;color:#2E7D4F;font-weight:600}
+.field.m-prev input[type=number]{border-color:#E0B25A;background:#FFFCF5}
+.field.m-ok input[type=number]{border-color:rgba(74,22,79,0.45)}
+.field.m-new input[type=number]{border-color:#2E7D4F;background:#F5FBF7}
+.field.m-new .m-box,.field.m-new .m-txt,.field.m-new .m-dt{display:none}
+.field.m-new .m-upd{display:inline}
 </style>
 </head>
 <body>
@@ -765,7 +779,19 @@ function handleSubmit(e) {
   var data = {garment:currentFilter, dateTime:new Date().toLocaleString()};   // e.g. "hoodie,trousers"
   if (activeGM()) data[activeGM() + 'MeasurementSource'] = currentSource;   // e.g. tshirtMeasurementSource
   var fd = new FormData(form);
-  fd.forEach(function(v,k){ if(v) data[k]=v; });
+  var _nMeas = 0, _nHeld = 0;
+  fd.forEach(function(v,k){
+    if(!v) return;
+    var st = measSaveState_(k, v);
+    if (st === 'skip') { _nHeld++; return; }
+    if (st === 'meas') _nMeas++;
+    data[k]=v;
+  });
+  if (!_nMeas) {
+    btn.disabled=false; lbl.style.display=''; sp.style.display='none';
+    showToast(_nHeld ? 'Nothing to save — change a measurement or tick ✓ the ones that are still the same' : 'Enter at least one measurement','err');
+    return;
+  }
   var email = document.getElementById('f-email').value.trim();
   tailorToken()
     .then(function(tok){ var p={email:email,data:data}; if(tok) p.idToken=tok; return sheetsReq('saveMeasurement',p); })
@@ -778,7 +804,7 @@ function handleSubmit(e) {
     .finally(function(){ btn.disabled=false; lbl.style.display=''; sp.style.display='none'; });
 }
 
-function resetForm(){ document.getElementById('mform').reset(); }
+function resetForm(){ document.getElementById('mform').reset(); clearMeasMarks_(); }
 
 
 // ── Tailor access: enter / update measurements for a client ───────
@@ -888,9 +914,10 @@ function loadMeasurementHistory(email){
     var notif=document.getElementById('meas-loading-notif'); if(notif) notif.classList.remove('visible');
     if(!res||!res.success||!res.records||res.records.length===0){ if(loading) loading.textContent='No measurement history yet.'; return; }
     if(loading) loading.style.display='none';
-    var latest=res.records[0];
+    var latest=mergeLatestMeas_(res.records);
     var container=document.getElementById('meas-history-content');
     prefillMeasurements(latest);
+    markPrefilledMeas_();
     var summaryKeys=[
       {k:'Height [CM]',alt:'height',l:'Height'},{k:'Weight [KG]',alt:'weight',l:'Weight'},
       {k:'Bust girth [CM]',alt:'bustGirth',l:'Bust'},{k:'Waist girth [CM]',alt:'waistGirth',l:'Waist'},
@@ -908,6 +935,75 @@ function loadMeasurementHistory(email){
       }).join('');
     }
   }).catch(function(err){ var notif=document.getElementById('meas-loading-notif'); if(notif) notif.classList.remove('visible'); if(loading) loading.textContent='Could not load history.'; console.error(err); });
+}
+
+
+// ── Measurement check: a prefilled value is re-saved only if changed or ticked "still the same" ──
+var _measPrevDate = {};
+function measNonEmpty_(v){ v = String(v == null ? '' : v).trim(); return v !== '' && v !== '0' && v !== '0.0'; }
+function measDateOf_(rec){
+  var raw = String(rec['Update'] || rec['Created At'] || rec['Updated At'] || rec['dateTime'] || '').trim();
+  if (!raw || raw === 'LATEST') return '';
+  var m = raw.match(/^(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})/);
+  if (m) return ('0'+m[1]).slice(-2) + '.' + ('0'+m[2]).slice(-2) + '.' + m[3];
+  var d = new Date(raw);
+  if (isNaN(d) || d.getFullYear() < 2020) return '';
+  return ('0'+d.getDate()).slice(-2) + '.' + ('0'+(d.getMonth()+1)).slice(-2) + '.' + d.getFullYear();
+}
+// Newest value of every field (records come newest first), with the date it was taken
+function mergeLatestMeas_(records){
+  var out = {}; _measPrevDate = {};
+  (records || []).forEach(function(rec){
+    Object.keys(rec).forEach(function(k){
+      if (out[k] === undefined && measNonEmpty_(rec[k])) { out[k] = rec[k]; _measPrevDate[k] = measDateOf_(rec); }
+    });
+  });
+  if (!_measPrevDate.height && _measPrevDate['Height [CM]']) _measPrevDate.height = _measPrevDate['Height [CM]'];
+  if (!_measPrevDate.weight && _measPrevDate['Weight [KG]']) _measPrevDate.weight = _measPrevDate['Weight [KG]'];
+  return out;
+}
+function measInputs_(){ return Array.prototype.slice.call(document.querySelectorAll('#mform input[type=number]')); }
+function clearMeasMarks_(){
+  measInputs_().forEach(function(el){
+    delete el.dataset.prev;
+    var f = el.closest('.field'); if (!f) return;
+    f.classList.remove('m-prev','m-ok','m-new');
+    var c = f.querySelector('.m-same'); if (c) c.remove();
+  });
+}
+function measRefresh_(el){
+  var f = el.closest('.field'); if (!f || el.dataset.prev === undefined) return;
+  var v = el.value.trim(), same = v !== '' && parseFloat(v) === parseFloat(el.dataset.prev);
+  var box = f.querySelector('.m-same input');
+  f.classList.toggle('m-new', v !== '' && !same);
+  f.classList.toggle('m-prev', same && !(box && box.checked));
+  f.classList.toggle('m-ok', same && !!(box && box.checked));
+}
+function markPrefilledMeas_(){
+  clearMeasMarks_();
+  measInputs_().forEach(function(el){
+    if (!el.value) return;
+    el.dataset.prev = el.value;
+    var f = el.closest('.field'); if (!f) return;
+    var key = el.name, dt = _measPrevDate[key] || '';
+    var row = document.createElement('label');
+    row.className = 'm-same';
+    row.innerHTML = '<input type="checkbox"><span class="m-box"></span><span class="m-txt">Still the same</span>' +
+      (dt ? '<span class="m-dt">' + dt + '</span>' : '') + '<span class="m-upd">Updated</span>';
+    f.appendChild(row);
+    row.querySelector('input').addEventListener('change', function(){ measRefresh_(el); });
+    if (!el._measBound) { el._measBound = true; el.addEventListener('input', function(){ measRefresh_(el); }); }
+    measRefresh_(el);
+  });
+}
+// 'meas' = measurement to save, 'skip' = unchanged and not ticked, 'other' = non-measurement field
+function measSaveState_(k, v){
+  var el = document.getElementById('f-' + k);
+  if (!el || el.type !== 'number') return 'other';
+  if (el.dataset.prev === undefined) return 'meas';
+  if (parseFloat(v) !== parseFloat(el.dataset.prev)) return 'meas';
+  var box = el.closest('.field') && el.closest('.field').querySelector('.m-same input');
+  return box && box.checked ? 'meas' : 'skip';
 }
 
 function prefillMeasurements(rec){
@@ -930,7 +1026,7 @@ function prefillMeasurements(rec){
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v2.14.1</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v2.15.0</div>
 
 <!-- Firebase -->
 <script type="module">
