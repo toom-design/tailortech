@@ -1125,7 +1125,8 @@ function collectConfig() {
     'pantWaist':         mval('pantWaist'),
     'inseamLength':      mval('inseamLength'),
     'outseamLength':     mval('outseamLength'),
-    'riseLength':        mval('riseLength'),
+    'outsideLegLength':  mval('outsideLegLength'),
+    'crotchDepth':       mval('crotchDepth'),
   };
 }
 
@@ -1297,7 +1298,8 @@ function buildSummary() {
         mrow('Pant Waist',  'pantWaist'),
         mrow('Inseam',      'inseamLength'),
         mrow('Outseam',     'outseamLength'),
-        mrow('Rise',        'riseLength'),
+        mrow('Outside Leg', 'outsideLegLength'),
+        mrow('Crotch Depth','crotchDepth'),
       ]
     }
   ];
@@ -1391,7 +1393,7 @@ function showFeedback(msg, color) {
     'calfGirth':     'MEASUREMENTS_2Calf girth_M.webp',
     'pantWaist':     'MEASUREMENTS_2Pant waist_M.webp',
     'outseamLength': 'MEASUREMENTS_2Side trousers length_M.webp',
-    'riseLength':    'MEASUREMENTS_2Rise_M.webp',
+    'crotchDepth':   'MEASUREMENTS_2Crotch depth_M.webp',
   };
 
   // Trousers volumetric and linear fields
@@ -1406,13 +1408,13 @@ function showFeedback(msg, color) {
   var FALLBACK_LIN = [
     ['inseamLength',  'Inseam length (cm)'],
     ['outseamLength', 'Outseam length (cm)'],
-    ['riseLength',    'Rise length (cm)'],
+    ['crotchDepth',   'Crotch depth (cm)'],
   ];
 
   // Keys that belong to trousers
   var TROUSER_KEYS = new Set([
     'height','waistGirth','hipGirth','thighGirth','kneeGirth','calfGirth',
-    'pantWaist','inseamLength','outseamLength','riseLength'
+    'pantWaist','inseamLength','outseamLength','outsideLegLength','crotchDepth'
   ]);
 
   var FIELD_IMG    = FALLBACK_FIELD_IMG;
@@ -2223,7 +2225,7 @@ function ddCopy(type) {
 }
 </script>
 
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v4.7.23</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v4.7.24</div>
 
 
 <!-- Cookie consent (analytics) — wording is yours to edit; keep the two button ids -->

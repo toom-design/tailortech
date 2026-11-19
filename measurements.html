@@ -439,6 +439,7 @@ var FIELD_IMG = {
   'waistToHipLength':        'MEASUREMENTS_2Waist to hip length_M.webp',
   'shirtLength':             'MEASUREMENTS_2Shirt length_M.webp',
   'rise':                    'MEASUREMENTS_2Rise_M.webp',
+  'crotchDepth':             'MEASUREMENTS_2Crotch depth_M.webp',
 };
 // Female diagrams. Any field missing here (e.g. rise) falls back to the male one.
 var FIELD_IMG_F = {
@@ -469,7 +470,7 @@ const GARMENT_SETS = {
   shirt:    new Set(['neckBaseGirth','height','bustGirth','waistGirth','hipGirth','backNeckToWaist','acrossBackWidth','shoulderLength','outerArmLength','upperArmLength','shirtLength','acrossBackShoulderWidth','upperBicepGirth','wristGirth']),
   hoodie:   new Set(['bustGirth','upperBicepGirth','wristGirth','neckBaseGirth','outerArmLength','waistToHipLength','backNeckToWaist','acrossBackWidth','sideNeckToBust']),
   suit:     new Set(['height','bustGirth','waistGirth','hipGirth','outerArmLength','shoulderLength','backNeckToWaist','acrossBackShoulderWidth','acrossBackWidth','chestWidth','armscyeDepth','upperArmLength','suitLength','wristGirth']),
-  trousers: new Set(['height','pantWaist','hipGirth','kneeGirth','calfGirth','outsideLegLength','rise']),
+  trousers: new Set(['height','pantWaist','hipGirth','kneeGirth','calfGirth','outsideLegLength','crotchDepth']),
 };
 // ── Garment measurements (measure a garment that already fits) ───
 // Casual garments only. Read by the garment configurators too — keep the
@@ -524,7 +525,7 @@ const LIN = [
   ['totalCrotchLength','Total crotch length (cm)'],['waistBreadth','Waist breadth (cm)'],['neckLength','Neck length (cm)'],
   ['upperArmLength','Upper arm length (cm)'],['lowerArmLength','Lower arm length (cm)'],
   ['upperHipToHipLength','Upper hip to hip length (cm)'],['backShoulderWidth','Back shoulder width (cm)'],
-  ['rise','Rise (cm)'],['backNeckToHipLength','Back neck to hip length (cm)'],['torsoHeight','Torso height (cm)'],
+  ['rise','Rise (cm)'],['crotchDepth','Crotch depth (cm)'],['backNeckToHipLength','Back neck to hip length (cm)'],['torsoHeight','Torso height (cm)'],
   ['frontCrotchLength','Front crotch length (cm)'],['backCrotchLength','Back crotch length (cm)'],
   ['sideUpperHipToKnee','Side upper hip level to knee (cm)'],['sideNeckToUpperHip','Side neck point to upper hip (cm)'],
   ['sideNeckToBust','Side neck to bust point (cm)'],['sideBustToWaist','Side bust point to waist level (cm)'],
@@ -929,7 +930,7 @@ function prefillMeasurements(rec){
 </script>
 
 <!-- Version badge -->
-<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v2.14.0</div>
+<div style="position:fixed;bottom:14px;left:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.10em;color:rgba(26,25,22,0.50);z-index:9999;pointer-events:none;">v2.14.1</div>
 
 <!-- Firebase -->
 <script type="module">
