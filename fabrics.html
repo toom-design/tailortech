@@ -184,7 +184,7 @@ tbody td{padding:11px 14px;vertical-align:middle}
 .qr-box{width:110px;flex-shrink:0;background:var(--bg);border:1px solid var(--border);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:110px;padding:10px;text-align:center}
 .qr-box-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-light)}
 .fabric-type-big{font-size:24px;font-weight:600;letter-spacing:-.2px;line-height:1.2}
-.fabric-name-sub{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--text-muted);margin-top:6px}
+.fabric-name-sub{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--text-muted)}
 .stock-row{display:flex;gap:12px}
 .stock-item{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:3px}
 .stock-item .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);font-weight:600}
@@ -343,16 +343,13 @@ tbody td{padding:11px 14px;vertical-align:middle}
 .nav-sign-out:hover{color:var(--accent)}
 .nav-sign-out svg{width:13px;height:13px}
 
-/* Fabric detail: name block with stock / price / status on the right */
-.d-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
-.d-head-title{min-width:0}
-.d-kpis{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;text-align:right;padding-top:2px}
-.d-kpi{display:flex;align-items:baseline;gap:8px}
-.d-kpi-l{font-size:9.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--text-muted)}
-.d-kpi-v{font-size:17px;font-weight:500;color:var(--text)}
-.d-kpi-u{font-size:12px;color:var(--text-muted);font-weight:400}
-.d-stock-n{font-size:22px;font-weight:500}
-.d-stock-n.healthy{color:var(--sh-t)}.d-stock-n.low{color:var(--sl-t)}.d-stock-n.critical{color:var(--sc-t)}
+/* Fabric detail: full-width name; type + code on the left, unit price box on the right */
+.d-head{display:flex;flex-direction:column;gap:10px}
+.d-sub{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.d-sub-left{min-width:0}
+.d-price-box{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:8px 14px;border:1px solid var(--border);border-radius:10px;background:var(--bg);flex-shrink:0}
+.d-price-l{font-size:9.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--text-muted)}
+.d-price-v{font-size:17px;font-weight:500;color:var(--text)}
 </style>
 </head>
 <body>
@@ -466,12 +463,12 @@ tbody td{padding:11px 14px;vertical-align:middle}
             <div class="qr-box"><div id="d-qr-canvas"></div><span class="qr-box-label">QR Code</span><button class="qr-url-btn" onclick="copyFabricUrl()">Copy URL</button></div>
           </div>
           <div class="d-head">
-            <div class="d-head-title"><div class="fabric-type-big" id="d-type">&#8212;</div><div class="fabric-name-sub" id="d-name"></div><div class="fcode" id="d-code" style="margin-top:8px">&#8212;</div></div>
-            <div class="d-kpis">
-              <div class="d-kpi"><span class="d-kpi-l">Stock</span><span class="d-kpi-v"><span id="d-stock">&#8212;</span> <span class="d-kpi-u" id="d-unit-tag">m</span></span></div>
-              <div class="d-kpi"><span class="d-kpi-l">Unit price</span><span class="d-kpi-v" id="d-price">&#8212;</span></div>
-              <div class="d-kpi"><span class="status-badge" id="d-status">&#8212;</span></div>
+            <div class="fabric-type-big" id="d-type">&#8212;</div>
+            <div class="d-sub">
+              <div class="d-sub-left"><div class="fabric-name-sub" id="d-name"></div><div class="fcode" id="d-code" style="margin-top:8px">&#8212;</div></div>
+              <div class="d-price-box"><span class="d-price-l">Unit price</span><span class="d-price-v" id="d-price">&#8212;</span></div>
             </div>
+            <div style="display:none"><span id="d-stock"></span><span id="d-unit-tag"></span><span id="d-status"></span></div>
           </div>
           <table class="dtable" id="d-details-table"></table>
         </div>
@@ -1322,7 +1319,7 @@ window.__appBoot = async function() {
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.4.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.4.1</div>
 </div><!-- /#app-root -->
 
 <!-- Pop-up messages (toasts) in the TailorTech mint style — replaces the page's toast()/showToast() -->
@@ -1627,20 +1624,20 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
       else { doc.setFillColor(243, 242, 239); doc.rect(M, top, ph, ph, 'F'); font(false, 6.5, MUTED); doc.text('no photo', M + ph / 2, top + ph / 2, { align: 'center' }); }
       var qx = W - M - 30;
       if (qr) doc.addImage(qr, 'PNG', qx, top, 30, 30);
-      // stock / price / status under the QR code
-      var kx = W - M, ky = top + 35;
-      font(false, 5.8, MUTED); doc.text('STOCK', kx, ky, { align: 'right' });
-      font(true, 12, STATUS_RGB[st.cls] || INK); doc.text(T(qty + ' ' + unit), kx, ky + 5, { align: 'right' });
-      font(false, 5.8, MUTED); doc.text('UNIT PRICE', kx, ky + 10, { align: 'right' });
-      font(true, 10, INK); doc.text(f.price ? '€' + parseFloat(f.price).toFixed(2) : '—', kx, ky + 14.5, { align: 'right' });
-      font(true, 6.5, STATUS_RGB[st.cls] || INK); doc.text(st.label.toUpperCase(), kx, ky + 19.5, { align: 'right' });
-
       var y = top + ph + 8;
       font(true, 14, INK);
       var nameLines = doc.splitTextToSize(T(f.name || f.type || f.code), W - 2 * M).slice(0, 2);
       doc.text(nameLines, M, y); y += nameLines.length * 5.6;
-      if (f.name && f.type) { font(true, 6.8, MUTED); doc.text(T(f.type).toUpperCase(), M, y, { charSpace: 0.6 }); y += 4.2; }
-      font(false, 7.5, MUTED); doc.text(T(f.code), M, y); y += 4.5;
+      // type + code on the left, unit price box on the right
+      var boxW = 26, boxH = 11, boxX = W - M - boxW, boxY = y - 2.2;
+      doc.setFillColor(245, 244, 241); doc.setDrawColor.apply(doc, LINE); doc.setLineWidth(0.25);
+      doc.roundedRect(boxX, boxY, boxW, boxH, 1.6, 1.6, 'FD');
+      font(false, 5.6, MUTED); doc.text('UNIT PRICE', boxX + 3, boxY + 3.8);
+      font(true, 10, INK); doc.text(f.price ? '\u20ac' + parseFloat(f.price).toFixed(2) : '\u2014', boxX + 3, boxY + 8.8);
+      var subY = y;
+      if (f.name && f.type) { font(true, 6.8, MUTED); doc.text(T(f.type).toUpperCase(), M, y + 0.6, { charSpace: 0.6 }); y += 4.4; }
+      font(false, 7.5, MUTED); doc.text(T(f.code), M, y + 0.6);
+      y = Math.max(y + 4.5, boxY + boxH + 3);
 
       var rows = [['color', f.color], ['pattern', f.pattern], ['composition', f.composition],
         ['weight', f.weight ? (/gsm/i.test(f.weight) ? f.weight : f.weight + ' gsm') : ''],
