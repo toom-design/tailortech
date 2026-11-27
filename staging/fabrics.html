@@ -1214,6 +1214,7 @@ function toggleScanClear(val){document.getElementById('scan-clear-btn').classLis
 function clearScanInput(){const i=document.getElementById('scan-code-input');i.value='';toggleScanClear('');scanLookup('');i.focus();}
 function scanLookup(val){
   const v=fabricCodeFromScan(val).toLowerCase(),res=document.getElementById('scan-result');res.innerHTML='';if(!v)return;
+  const hit=findFabricForScan(val); if(hit&&hit.code.toLowerCase()!==v) return scanLookup(hit.code);
   const f=fabrics.find(x=>x.code.toLowerCase()===v||(x.qr||'').toLowerCase()===v);
   if(!f){res.innerHTML='<div class="scan-result-card" style="padding:24px;text-align:center;color:var(--text-muted)">No fabric found for "<strong style="color:var(--text)">'+esc(val.trim())+'</strong>".</div>';return;}
   const hist=usageLog.filter(u=>u.fabricCode===f.code).slice().reverse();
@@ -1287,11 +1288,14 @@ async function _startCamera() {
   }
 }
 
+let _detector = null, _qrFrame = 0;
+try { if ('BarcodeDetector' in window) _detector = new BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { _detector = null; }
 function _loadJsQR(cb) {
-  if (window.jsQR) { cb(); return; }
+  if (_detector) { cb(); }
+  if (window.jsQR) { if (!_detector) cb(); return; }
   const s = document.createElement('script');
   s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js';
-  s.onload = cb;
+  s.onload = () => { if (!_detector) cb(); };
   s.onerror = () => { document.getElementById('cam-status').textContent = 'Failed to load QR scanner library.'; };
   document.head.appendChild(s);
 }
@@ -1305,8 +1309,18 @@ function _scanLoop() {
   canvas.height = video.videoHeight;
   const ctx = canvas.getContext('2d');
   ctx.drawImage(video, 0, 0);
+  if (_detector) {
+    _detector.detect(canvas).then(r => {
+      if (!_camActive) return;
+      if (r && r.length && r[0].rawValue) { _onQRDetected(r[0].rawValue); return; }
+      _camRaf = requestAnimationFrame(_scanLoop);
+    }).catch(() => { _detector = null; _camRaf = requestAnimationFrame(_scanLoop); });
+    return;
+  }
+  if (!window.jsQR) { _camRaf = requestAnimationFrame(_scanLoop); return; }
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const qr = window.jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+  _qrFrame = (_qrFrame + 1) % 4;   // every 4th frame also tries light-on-dark codes
+  const qr = window.jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: _qrFrame ? 'dontInvert' : 'attemptBoth' });
   if (qr && qr.data) {
     _onQRDetected(qr.data);
     return; // stop loop — we found one
@@ -1325,33 +1339,49 @@ function fabricCodeFromScan(raw) {
   return v.trim();
 }
 
+// Every way a scanned value may name a fabric: the whole text, the part after #,
+// query values (?code=…), path segments (…/fabrics/CODE) — each tried against code, QR and URL_QR.
+function findFabricForScan(raw) {
+  const text = String(raw || '').trim(), cands = [text, fabricCodeFromScan(text)];
+  try {
+    const u = new URL(text, location.href);
+    if (u.hash) cands.push(u.hash.slice(1));
+    u.searchParams.forEach(v => cands.push(v));
+    if (u.search) cands.push(u.search.slice(1));
+    u.pathname.split('/').forEach(seg => { if (seg) cands.push(seg.replace(/\.html?$/i, '')); });
+  } catch (e) {}
+  const norm = v => { try { v = decodeURIComponent(v); } catch (e) {} return String(v || '').trim().toLowerCase(); };
+  const want = cands.map(norm).filter(Boolean);
+  return fabrics.find(f => {
+    const keys = [f.code, f.qr, f.urlQR].map(norm).filter(Boolean);
+    return keys.some(k => want.indexOf(k) > -1);
+  }) || null;
+}
+
 async function _onQRDetected(raw) {
   closeCamera();
-  const code = fabricCodeFromScan(raw);
-  // a fabric added after this page was opened → reload the list once
-  if (code && !fabrics.some(x => x.code.toLowerCase() === code.toLowerCase() || (x.qr || '').toLowerCase() === code.toLowerCase())) await loadData();
-  const statusEl = document.getElementById('cam-status');
+  let f = findFabricForScan(raw);
+  if (!f) { await loadData(); f = findFabricForScan(raw); }   // added after this page was opened
+  if (f) { showToast('Fabric found: ' + f.code); navigate('detail', f.code); return; }
 
-  // Try to find by code or qr field
-  const f = fabrics.find(x =>
-    x.code.toLowerCase() === code.toLowerCase() ||
-    (x.qr || '').toLowerCase() === code.toLowerCase()
-  );
-
-  if (f) {
-    showToast('Fabric found: ' + f.code);
-    navigate('detail', f.code);
-  } else {
-    // Not found — show it in the scan input so user can see what was read
-    showPages('scan'); showNav('sub');
-    document.getElementById('nav-sub-back').onclick = () => navigate('inventory');
-    const inp = document.getElementById('scan-code-input');
-    inp.value = code;
-    toggleScanClear(code);
-    scanLookup(code);
-    showToast('QR read: "' + code + '" — not found in inventory');
+  // Not a fabric: a web link opens like with the phone camera
+  const text = String(raw || '').trim();
+  if (/^https?:\/\//i.test(text)) {
+    let sameSite = false;
+    try { sameSite = new URL(text).origin === location.origin; } catch (e) {}
+    showToast('Opening link…');
+    if (sameSite) location.href = text; else window.open(text, '_blank', 'noopener');
+    return;
   }
+  // Plain text that is not a fabric: show what was read
+  const code = fabricCodeFromScan(text);
+  showPages('scan'); showNav('sub');
+  document.getElementById('nav-sub-back').onclick = () => navigate('inventory');
+  const inp = document.getElementById('scan-code-input');
+  inp.value = code; toggleScanClear(code); scanLookup(code);
+  showToast('QR read: "' + code + '" — not found in inventory');
 }
+
 /* ───────────────────────────────────────────────────────────────────────── */
 async function reloadInventory(){await loadData();renderStats();renderTable();showToast('Refreshed \u2713');}
 
@@ -1372,7 +1402,7 @@ window.__appBoot = async function() {
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.8.8-staging</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.9.0-staging</div>
 </div><!-- /#app-root -->
 
 <!-- Pop-up messages (toasts) in the TailorTech mint style — replaces the page's toast()/showToast() -->
