@@ -1372,7 +1372,7 @@ window.__appBoot = async function() {
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.8.7-staging</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.8.8-staging</div>
 </div><!-- /#app-root -->
 
 <!-- Pop-up messages (toasts) in the TailorTech mint style — replaces the page's toast()/showToast() -->
@@ -1708,16 +1708,10 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
         font(true, 14, INK);
         var nameLines = doc.splitTextToSize(T(f.name || f.type || f.code), W - 2 * M).slice(0, 2);
         P.text(nameLines, M, y); y += nameLines.length * 5.6;
-        // type + code on the left, unit price box on the right
-        var boxW = 26, boxH = 11, boxX = W - M - boxW, boxY = y - 2.2;
-        doc.setFillColor(245, 244, 241); doc.setDrawColor.apply(doc, LINE); doc.setLineWidth(0.25);
-        P.roundedRect(boxX, boxY, boxW, boxH, 1.6, 1.6, 'FD');
-        font(false, 5.6, MUTED); P.text('UNIT PRICE', boxX + 3, boxY + 3.8);
-        font(true, 10, INK); P.text(f.price ? '\u20ac' + parseFloat(f.price).toFixed(2) : '\u2014', boxX + 3, boxY + 8.8);
-        var subY = y;
+        // type + code (no price on the card)
         if (f.name && f.type) { font(true, 6.8, MUTED); P.text(T(f.type).toUpperCase(), M, y + 0.6, { charSpace: 0.6 }); y += 4.4; }
         font(false, 7.5, MUTED); P.text(T(f.code), M, y + 0.6);
-        y = Math.max(y + 4.5, boxY + boxH + 3);
+        y += 5.5;
 
         var rows = [['color', f.color], ['weave / pattern', fabricPattern(f)], ['composition', f.composition],
           ['weight', f.weight ? (/gsm/i.test(f.weight) ? f.weight : f.weight + ' gsm') : ''],
