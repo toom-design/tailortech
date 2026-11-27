@@ -1368,7 +1368,7 @@ window.__appBoot = async function() {
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.8.2</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.8.3</div>
 </div><!-- /#app-root -->
 
 <!-- Pop-up messages (toasts) in the TailorTech mint style — replaces the page's toast()/showToast() -->
@@ -1838,7 +1838,6 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
       function drawInside(f) {
         doc.setDrawColor(150, 147, 142); doc.setLineWidth(0.25); doc.setLineDashPattern([2.2, 1.6], 0);
         ln(0, F, CW, F); doc.setLineDashPattern([], 0);
-        font(false, 6, MUTED); tx('fold', CW - M, F - 1.6, 'right');
         var rows = [['type', f.type], ['color', f.color], ['weave / pattern', fabricPattern(f)], ['composition', f.composition],
           ['weight', f.weight ? (/gsm/i.test(f.weight) ? f.weight : f.weight + ' gsm') : ''],
           ['width', f.width ? (/cm/i.test(f.width) ? f.width : f.width + ' cm') : ''], ['source', f.supplier]];
@@ -1855,7 +1854,7 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
         // QR code right next to the table → opens this fabric's page
         var qr = qrData(fabricUrl(f.code)), qs = 34, qx = CW - M - qs, qy = ty0 + (rh * rows.length - qs) / 2;
         if (qr) { var q = px(qx + qs, qy); doc.addImage(qr, 'PNG', q[0], q[1], qs, qs); }
-        font(false, 5.8, MUTED); tx('scan for details', qx + qs / 2, qy + qs + 3.2, 'center');
+
         var lwid = 34, lh = 9.8, ly = CH - M - lh;
         if (logo) { var p = px((CW + lwid) / 2, ly); doc.addImage(logo, 'PNG', p[0], p[1], lh, lwid); }
         else { font(false, 16, GREY); tx('TOOM', CW / 2, CH - M - 4, 'center'); }
