@@ -1319,11 +1319,17 @@ try { if ('BarcodeDetector' in window) _detector = new BarcodeDetector({ formats
 function _loadJsQR(cb) {
   if (_detector) { cb(); }
   if (window.jsQR) { if (!_detector) cb(); return; }
-  const s = document.createElement('script');
-  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js';
-  s.onload = () => { if (!_detector) cb(); };
-  s.onerror = () => { document.getElementById('cam-status').textContent = 'Failed to load QR scanner library.'; };
-  document.head.appendChild(s);
+  // QR reader (jsQR, Apache-2.0) is hosted on this site; outside copies only as a fallback
+  const sources = ['/vendor/jsQR-1.4.0.js', 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js', 'https://unpkg.com/jsqr@1.4.0/dist/jsQR.js'];
+  const tryNext = (i) => {
+    if (i >= sources.length) { if (!_detector) document.getElementById('cam-status').textContent = 'Failed to load QR scanner library.'; return; }
+    const s = document.createElement('script');
+    s.src = sources[i];
+    s.onload = () => { if (window.jsQR) { if (!_detector) cb(); } else tryNext(i + 1); };
+    s.onerror = () => tryNext(i + 1);
+    document.head.appendChild(s);
+  };
+  tryNext(0);
 }
 
 function _scanLoop() {
@@ -1428,7 +1434,7 @@ window.__appBoot = async function() {
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.9.1-staging</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.9.2-staging</div>
 </div><!-- /#app-root -->
 
 <!-- Pop-up messages (toasts) in the TailorTech mint style — replaces the page's toast()/showToast() -->
