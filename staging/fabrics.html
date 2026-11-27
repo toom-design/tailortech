@@ -501,7 +501,7 @@ tbody td{padding:11px 14px;vertical-align:middle}
       <div class="form-row single">
         <div class="form-group"><label class="form-label">Type</label>
           <select class="form-select ff-native" id="f-type" onchange="onTypeColorPatternChange()"><option value="">Select type...</option></select>
-          <div class="form-hint">Start typing — e.g. "fle" shows Fleece.</div></div>
+          <div class="form-hint">Searches the type and what it is used for — "fle" shows Fleece, "suit" shows every fabric for suits.</div></div>
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Color</label><select class="form-select ff-native" id="f-color" onchange="onTypeColorPatternChange()"><option value="">Select color...</option></select></div>
@@ -1319,7 +1319,7 @@ window.__appBoot = async function() {
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.5.0-staging</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.5.1-staging</div>
 </div><!-- /#app-root -->
 
 <!-- Pop-up messages (toasts) in the TailorTech mint style — replaces the page's toast()/showToast() -->
@@ -1445,6 +1445,10 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
     if (last && window.CSS && CSS.supports && CSS.supports('color', last)) return last;
     return 'linear-gradient(135deg,#eee 0 50%,#ccc 50% 100%)';
   }
+  function mark(t, q) {
+    var p = q ? String(t).toLowerCase().indexOf(q) : -1;
+    return p < 0 ? escH(t) : escH(t.slice(0, p)) + '<mark>' + escH(t.slice(p, p + q.length)) + '</mark>' + escH(t.slice(p + q.length));
+  }
   function escH(t) { return String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
   function make(id, withSwatch, placeholder) {
     var sel = document.getElementById(id); if (!sel) return;
@@ -1471,13 +1475,14 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
     }
     function render(q) {
       q = (q || '').trim().toLowerCase();
-      var all = options(), starts = [], inside = [];
+      var all = options(), starts = [], inside = [], byUse = [];
       all.forEach(function (o) {
-        var v = o.value.toLowerCase();
+        var v = o.value.toLowerCase(), m = (o.meta || '').toLowerCase();
         if (!q || v.indexOf(q) === 0) starts.push(o);
-        else if (v.indexOf(q) > 0 || v.split(/[\s\-\/]+/).some(function (w) { return w.indexOf(q) === 0; })) inside.push(o);
+        else if (v.indexOf(q) > 0) inside.push(o);
+        else if (m.indexOf(q) > -1) byUse.push(o);            // e.g. "suit" finds types used for suits
       });
-      shown = starts.concat(inside);
+      shown = starts.concat(inside, byUse);   // name matches first, then matches in the usage
       hl = shown.length ? 0 : -1;
       if (!shown.length) { list.innerHTML = '<div class="ffc-empty">No match for “' + escH(q) + '”</div>'; return; }
       list.innerHTML = shown.map(function (o, i) {
@@ -1485,7 +1490,7 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
         if (q) { var p = o.value.toLowerCase().indexOf(q); if (p > -1) label = escH(o.value.slice(0, p)) + '<mark>' + escH(o.value.slice(p, p + q.length)) + '</mark>' + escH(o.value.slice(p + q.length)); }
         return '<div class="ffc-opt' + (i === hl ? ' hl' : '') + (o.value === sel.value ? ' sel' : '') + '" data-i="' + i + '">' +
           (withSwatch ? '<span class="ffc-sw" style="background:' + swatch(o.value) + '"></span>' : '') +
-          '<span>' + label + '</span>' + (o.meta ? '<span class="ffc-meta">' + escH(o.meta) + '</span>' : '') + '</div>';
+          '<span>' + label + '</span>' + (o.meta ? '<span class="ffc-meta">' + mark(o.meta, q) + '</span>' : '') + '</div>';
       }).join('');
     }
     function setHl(i) {
@@ -1531,7 +1536,7 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
     COMBOS.push({ refresh: refresh });
     refresh();
   }
-  make('f-type', false, 'Type to search, e.g. fleece');
+  make('f-type', false, 'Type a fabric or its use, e.g. fleece or suits');
   make('f-color', true, 'Type to search a colour');
   make('f-pattern', false, 'Type to search a pattern');
   window.ffRefreshCombos = function () { COMBOS.forEach(function (c) { c.refresh(); }); };
