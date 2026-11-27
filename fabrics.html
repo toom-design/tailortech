@@ -480,7 +480,7 @@ tbody td{padding:11px 14px;vertical-align:middle}
       <div class="detail-footer">
         <span class="footer-date" id="d-footer-date"></span>
         <div class="footer-actions">
-          <button class="nav-btn" id="export-card-btn" onclick="exportFabricCard()" title="A6 card: front = details, back = usage history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
+          <button class="nav-btn" id="export-card-btn" onclick="openExportModal()" title="A6 card on A4: front = details, back = usage history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
           <button class="nav-btn" onclick="openLogModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>Log Usage</button>
           <button class="nav-btn primary" onclick="navigate('add-fabric','__edit__')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit Fabric</button>
         </div>
@@ -1319,7 +1319,7 @@ window.__appBoot = async function() {
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.4.1</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.5.0</div>
 </div><!-- /#app-root -->
 
 <!-- Pop-up messages (toasts) in the TailorTech mint style — replaces the page's toast()/showToast() -->
@@ -1593,14 +1593,33 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
     } catch (e) { return null; } finally { box.remove(); }
   }
 
-  window.exportFabricCard = async function () {
+  window.exportFabricCard = async function (position) {
+    position = +position || 1;
     var f = currentFabric; if (!f) return;
     var btn = document.getElementById('export-card-btn'), label = btn.innerHTML;
     btn.disabled = true; btn.textContent = 'Preparing…';
     try {
       await loadScript(JSPDF_URL);
       var fonts = await loadFonts(), photo = await photoData(f.photo), qr = qrData(fabricUrl(f.code));
-      var doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a6', orientation: 'portrait' });
+      var doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+      // The A6 card sits in one quarter of the A4 sheet: 1 top-left, 2 top-right, 3 bottom-left, 4 bottom-right.
+      // Page 2 (back) mirrors left/right, so after double-sided printing (flip on long edge) it lands behind the front.
+      var QW = 105, QH = 148.5;
+      var POS = { 1: [0, 0], 2: [QW, 0], 3: [0, QH], 4: [QW, QH] }, BACK = { 1: 2, 2: 1, 3: 4, 4: 3 };
+      var ox = 0, oy = 0;
+      function at(pos) { ox = POS[pos][0]; oy = POS[pos][1]; }
+      var P = {
+        text: function (t, x, y, o) { return doc.text(t, x + ox, y + oy, o); },
+        addImage: function (d, fm, x, y, w, h) { return doc.addImage(d, fm, x + ox, y + oy, w, h); },
+        line: function (x1, y1, x2, y2) { return doc.line(x1 + ox, y1 + oy, x2 + ox, y2 + oy); },
+        rect: function (x, y, w, h, st) { return doc.rect(x + ox, y + oy, w, h, st); },
+        roundedRect: function (x, y, w, h, rx, ry, st) { return doc.roundedRect(x + ox, y + oy, w, h, rx, ry, st); }
+      };
+      // light dashed cut lines between the quarters (front page only)
+      doc.setDrawColor(200, 197, 192); doc.setLineWidth(0.15); doc.setLineDashPattern([1.2, 1.2], 0);
+      doc.line(QW, 0, QW, 297); doc.line(0, QH, 210, QH);
+      doc.setLineDashPattern([], 0);
+      at(position);
       var REG = 'helvetica', BOLD = 'helvetica', BOLDSTYLE = 'bold';
       if (fonts) {
         Object.keys(fonts).forEach(function (n) { doc.addFileToVFS(n + '.ttf', fonts[n]); doc.addFont(n + '.ttf', n, 'normal'); });
@@ -1614,29 +1633,29 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
       var qty = parseFloat(f.qty) || 0, st = getStatus(qty), unit = f.unit || 'm';
 
       // ---------- PAGE 1 — FRONT: details ----------
-      font(true, 7, PURPLE); doc.text('TAILORTECH', M, M + 2.5, { charSpace: 0.5 });
+      font(true, 7, PURPLE); P.text('TAILORTECH', M, M + 2.5, { charSpace: 0.5 });
       var bw = doc.getTextWidth('TAILORTECH') + 11 * 0.5;
-      font(false, 7, MUTED); doc.text('|  FABRICS', M + bw + 2, M + 2.5, { charSpace: 0.4 });
-      font(false, 6.5, MUTED); doc.text(today, W - M, M + 2.5, { align: 'right' });
+      font(false, 7, MUTED); P.text('|  FABRICS', M + bw + 2, M + 2.5, { charSpace: 0.4 });
+      font(false, 6.5, MUTED); P.text(today, W - M, M + 2.5, { align: 'right' });
 
       var top = M + 6, ph = 50;
-      if (photo) doc.addImage(photo, 'JPEG', M, top, ph, ph);
-      else { doc.setFillColor(243, 242, 239); doc.rect(M, top, ph, ph, 'F'); font(false, 6.5, MUTED); doc.text('no photo', M + ph / 2, top + ph / 2, { align: 'center' }); }
+      if (photo) P.addImage(photo, 'JPEG', M, top, ph, ph);
+      else { doc.setFillColor(243, 242, 239); P.rect(M, top, ph, ph, 'F'); font(false, 6.5, MUTED); P.text('no photo', M + ph / 2, top + ph / 2, { align: 'center' }); }
       var qx = W - M - 30;
-      if (qr) doc.addImage(qr, 'PNG', qx, top, 30, 30);
+      if (qr) P.addImage(qr, 'PNG', qx, top, 30, 30);
       var y = top + ph + 8;
       font(true, 14, INK);
       var nameLines = doc.splitTextToSize(T(f.name || f.type || f.code), W - 2 * M).slice(0, 2);
-      doc.text(nameLines, M, y); y += nameLines.length * 5.6;
+      P.text(nameLines, M, y); y += nameLines.length * 5.6;
       // type + code on the left, unit price box on the right
       var boxW = 26, boxH = 11, boxX = W - M - boxW, boxY = y - 2.2;
       doc.setFillColor(245, 244, 241); doc.setDrawColor.apply(doc, LINE); doc.setLineWidth(0.25);
-      doc.roundedRect(boxX, boxY, boxW, boxH, 1.6, 1.6, 'FD');
-      font(false, 5.6, MUTED); doc.text('UNIT PRICE', boxX + 3, boxY + 3.8);
-      font(true, 10, INK); doc.text(f.price ? '\u20ac' + parseFloat(f.price).toFixed(2) : '\u2014', boxX + 3, boxY + 8.8);
+      P.roundedRect(boxX, boxY, boxW, boxH, 1.6, 1.6, 'FD');
+      font(false, 5.6, MUTED); P.text('UNIT PRICE', boxX + 3, boxY + 3.8);
+      font(true, 10, INK); P.text(f.price ? '\u20ac' + parseFloat(f.price).toFixed(2) : '\u2014', boxX + 3, boxY + 8.8);
       var subY = y;
-      if (f.name && f.type) { font(true, 6.8, MUTED); doc.text(T(f.type).toUpperCase(), M, y + 0.6, { charSpace: 0.6 }); y += 4.4; }
-      font(false, 7.5, MUTED); doc.text(T(f.code), M, y + 0.6);
+      if (f.name && f.type) { font(true, 6.8, MUTED); P.text(T(f.type).toUpperCase(), M, y + 0.6, { charSpace: 0.6 }); y += 4.4; }
+      font(false, 7.5, MUTED); P.text(T(f.code), M, y + 0.6);
       y = Math.max(y + 4.5, boxY + boxH + 3);
 
       var rows = [['color', f.color], ['pattern', f.pattern], ['composition', f.composition],
@@ -1648,28 +1667,28 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
         font(false, 8, INK);
         var vl = doc.splitTextToSize(T(rows[i][1]), VW);
         var rh = Math.max(1, vl.length) * 3.4 + 1.9;
-        if (y + rh > bottom) { font(false, 6, MUTED); doc.text('… more on the fabric page', LX, y + 3); break; }
-        doc.setDrawColor.apply(doc, LINE); doc.setLineWidth(0.2); doc.line(M, y, W - M, y);
-        font(false, 6.8, MUTED); doc.text(rows[i][0], LX, y + 3.4);
-        font(false, 8, INK); doc.text(vl, VX, y + 3.4);
+        if (y + rh > bottom) { font(false, 6, MUTED); P.text('… more on the fabric page', LX, y + 3); break; }
+        doc.setDrawColor.apply(doc, LINE); doc.setLineWidth(0.2); P.line(M, y, W - M, y);
+        font(false, 6.8, MUTED); P.text(rows[i][0], LX, y + 3.4);
+        font(false, 8, INK); P.text(vl, VX, y + 3.4);
         y += rh;
       }
-      font(false, 5.5, MUTED); doc.text('Front — fabric details', M, H - M + 1);
-      doc.text('Back: usage history', W - M, H - M + 1, { align: 'right' });
+      font(false, 5.5, MUTED); P.text('Front — fabric details', M, H - M + 1);
+      P.text('Back: usage history', W - M, H - M + 1, { align: 'right' });
 
       // ---------- PAGE 2 — BACK: usage history ----------
-      doc.addPage('a6', 'portrait');
-      font(true, 12, PURPLE); doc.text('Usage history', M, M + 4);
-      font(false, 6.5, MUTED); doc.text(T(f.code), W - M, M + 1.5, { align: 'right' });
-      font(true, 7, INK); doc.text(doc.splitTextToSize(T(f.name || f.type || ''), 45)[0] || '', W - M, M + 5, { align: 'right' });
+      doc.addPage('a4', 'portrait'); at(BACK[position]);
+      font(true, 12, PURPLE); P.text('Usage history', M, M + 4);
+      font(false, 6.5, MUTED); P.text(T(f.code), W - M, M + 1.5, { align: 'right' });
+      font(true, 7, INK); P.text(doc.splitTextToSize(T(f.name || f.type || ''), 45)[0] || '', W - M, M + 5, { align: 'right' });
 
       var C = { date: M, project: M + 19, before: 76, used: 87, after: W - M };
       var hy = M + 12;
       font(true, 5.8, MUTED);
-      doc.text('DATE', C.date, hy, { charSpace: 0.3 }); doc.text('PROJECT', C.project, hy, { charSpace: 0.3 });
-      doc.text('BEFORE', C.before, hy, { align: 'right' }); doc.text('USED', C.used, hy, { align: 'right' });
-      doc.text('AFTER', C.after, hy, { align: 'right' });
-      doc.setDrawColor.apply(doc, PURPLE); doc.setLineWidth(0.35); doc.line(M, hy + 1.6, W - M, hy + 1.6);
+      P.text('DATE', C.date, hy, { charSpace: 0.3 }); P.text('PROJECT', C.project, hy, { charSpace: 0.3 });
+      P.text('BEFORE', C.before, hy, { align: 'right' }); P.text('USED', C.used, hy, { align: 'right' });
+      P.text('AFTER', C.after, hy, { align: 'right' });
+      doc.setDrawColor.apply(doc, PURPLE); doc.setLineWidth(0.35); P.line(M, hy + 1.6, W - M, hy + 1.6);
 
       var RH = 6.2, firstY = hy + 1.6, maxRows = Math.floor((H - M - 4 - firstY) / RH);
       var hist = usageLog.filter(function (u) { return u.fabricCode === f.code; }).slice().reverse();   // oldest first, like a card
@@ -1677,26 +1696,86 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
       if (hist.length > maxRows) { hidden = hist.length - (maxRows - 1); hist = hist.slice(hist.length - (maxRows - 1)); }
       for (var r = 0; r < maxRows; r++) {
         var ry = firstY + (r + 1) * RH;
-        doc.setDrawColor.apply(doc, LINE); doc.setLineWidth(0.2); doc.line(M, ry, W - M, ry);   // ruled lines, also for hand-written entries
+        doc.setDrawColor.apply(doc, LINE); doc.setLineWidth(0.2); P.line(M, ry, W - M, ry);   // ruled lines, also for hand-written entries
         var u = (r === 0 && hidden) ? null : hist[hidden ? r - 1 : r];
-        if (r === 0 && hidden) { font(false, 6.2, MUTED); doc.text('… ' + hidden + ' earlier entries on the fabric page', C.date, ry - 2); continue; }
+        if (r === 0 && hidden) { font(false, 6.2, MUTED); P.text('… ' + hidden + ' earlier entries on the fabric page', C.date, ry - 2); continue; }
         if (!u) continue;
         var tY = ry - 2, used = parseFloat(u.qty) || 0;
-        font(false, 6.8, INK); doc.text(T(u.date || '—'), C.date, tY);
-        doc.text(doc.splitTextToSize(T(u.project || '—'), 38)[0] || '', C.project, tY);
-        doc.text(String(u.before), C.before, tY, { align: 'right' });
-        font(true, 6.8, used >= 0 ? TURQ : PURPLE); doc.text((used >= 0 ? '+' : '−') + Math.abs(used), C.used, tY, { align: 'right' });
-        font(false, 6.8, INK); doc.text(String(u.after), C.after, tY, { align: 'right' });
+        font(false, 6.8, INK); P.text(T(u.date || '—'), C.date, tY);
+        P.text(doc.splitTextToSize(T(u.project || '—'), 38)[0] || '', C.project, tY);
+        P.text(String(u.before), C.before, tY, { align: 'right' });
+        font(true, 6.8, used >= 0 ? TURQ : PURPLE); P.text((used >= 0 ? '+' : '−') + Math.abs(used), C.used, tY, { align: 'right' });
+        font(false, 6.8, INK); P.text(String(u.after), C.after, tY, { align: 'right' });
       }
-      font(false, 5.5, MUTED); doc.text('Units: ' + unit + '   ·   printed ' + today, M, H - M + 1);
+      font(false, 5.5, MUTED); P.text('Units: ' + unit + '   ·   printed ' + today, M, H - M + 1);
 
-      doc.save(f.code + ' card.pdf');
-      showToast('Card PDF ready ✓ — print double-sided (flip on long edge)');
+      doc.save(f.code + ' card (A4, position ' + position + ').pdf');
+      showToast('PDF ready ✓ — print A4 double-sided, flip on long edge');
     } catch (e) {
       console.error(e); showToast('Export failed: ' + (e && e.message ? e.message : e));
     }
     btn.disabled = false; btn.innerHTML = label;
   };
+})();
+</script>
+
+<!-- Export pop-up: always A4, choose the quarter for the A6 card -->
+<div class="modal-overlay" id="export-modal">
+  <div class="modal xm">
+    <h3>Export fabric card</h3>
+    <div class="xm-body">
+      <div class="xm-left">
+        <div class="xm-k">Format</div>
+        <div class="xm-format"><span class="xm-paper"></span><span><b>A4 paper</b><small>210 × 297 mm · card A6 (¼ of A4)</small></span></div>
+        <p class="xm-note">Page 1 is the front (fabric details), page 2 the back (usage history). Print double-sided, flip on long edge.</p>
+      </div>
+      <div class="xm-right">
+        <div class="xm-k">Position on the sheet</div>
+        <div class="xm-grid" id="xm-grid">
+          <button type="button" data-p="1">1</button><button type="button" data-p="2">2</button>
+          <button type="button" data-p="3">3</button><button type="button" data-p="4">4</button>
+        </div>
+        <p class="xm-note">Click where the card should be printed — handy for using up a sheet that is already partly cut.</p>
+      </div>
+    </div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeExportModal()">Cancel</button><button class="btn-save" id="xm-go" onclick="runExport()">Generate PDF</button></div>
+  </div>
+</div>
+<style>
+.modal.xm{max-width:620px;padding:26px 28px}
+.modal.xm h3{font-family:'Cormorant Garamond',Georgia,serif;font-size:26px;font-weight:500;color:var(--tt-purple);margin-bottom:18px}
+.xm-body{display:grid;grid-template-columns:1fr 1fr;gap:26px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:20px 0}
+.xm-k{font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px}
+.xm-format{display:flex;align-items:center;gap:14px;color:var(--tt-purple)}
+.xm-format b{display:block;font-weight:600;font-size:15px}
+.xm-format small{display:block;font-size:12px;color:var(--text-muted);margin-top:2px}
+.xm-paper{width:30px;height:42px;border:1.5px solid var(--tt-purple);border-radius:2px;flex-shrink:0;position:relative}
+.xm-paper::after{content:'';position:absolute;left:0;top:0;width:50%;height:50%;background:rgba(77,191,171,.35)}
+.xm-note{font-size:12.5px;color:var(--text-muted);line-height:1.5;margin-top:14px}
+.xm-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;width:150px;aspect-ratio:210/297;padding:4px;border:1px solid var(--border);border-radius:6px;background:#fff}
+.xm-grid button{border:none;border-radius:3px;background:#ecebe8;color:var(--text-muted);font-family:inherit;font-size:15px;cursor:pointer;transition:background .15s,color .15s}
+.xm-grid button:hover{background:rgba(74,22,79,.12);color:var(--tt-purple)}
+.xm-grid button.on{background:var(--tt-purple);color:#fff}
+@media(max-width:620px){.xm-body{grid-template-columns:1fr}}
+</style>
+<script>
+(function () {
+  var pos = 1;
+  try { pos = +localStorage.getItem('ttCardPos') || 1; } catch (e) {}
+  function paint() { document.querySelectorAll('#xm-grid button').forEach(function (b) { b.classList.toggle('on', +b.dataset.p === pos); }); }
+  document.querySelectorAll('#xm-grid button').forEach(function (b) {
+    b.addEventListener('click', function () { pos = +b.dataset.p; paint(); });
+  });
+  window.openExportModal = function () { paint(); document.getElementById('export-modal').classList.add('open'); };
+  window.closeExportModal = function () { document.getElementById('export-modal').classList.remove('open'); };
+  window.runExport = async function () {
+    try { localStorage.setItem('ttCardPos', pos); } catch (e) {}
+    var go = document.getElementById('xm-go'); go.disabled = true; go.textContent = 'Generating…';
+    await window.exportFabricCard(pos);
+    go.disabled = false; go.textContent = 'Generate PDF';
+    window.closeExportModal();
+  };
+  document.getElementById('export-modal').addEventListener('click', function (e) { if (e.target === this) window.closeExportModal(); });
 })();
 </script>
 </body>
