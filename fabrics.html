@@ -483,6 +483,7 @@ tbody td{padding:11px 14px;vertical-align:middle}
       <div class="detail-footer">
         <span class="footer-date" id="d-footer-date"></span>
         <div class="footer-actions">
+          <button class="nav-btn" id="export-card-btn" onclick="exportFabricCard()" title="A6 card: front = details, back = usage history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
           <button class="nav-btn" onclick="openLogModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>Log Usage</button>
           <button class="nav-btn primary" onclick="navigate('add-fabric','__edit__')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit Fabric</button>
         </div>
@@ -1321,7 +1322,7 @@ window.__appBoot = async function() {
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.3.2</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.4.0</div>
 </div><!-- /#app-root -->
 
 <!-- Pop-up messages (toasts) in the TailorTech mint style — replaces the page's toast()/showToast() -->
@@ -1537,6 +1538,168 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
   make('f-color', true, 'Type to search a colour');
   make('f-pattern', false, 'Type to search a pattern');
   window.ffRefreshCombos = function () { COMBOS.forEach(function (c) { c.refresh(); }); };
+})();
+</script>
+
+<!-- EXPORT: A6 fabric card as a 2-page PDF (page 1 = front: details, page 2 = back: usage history) — print double-sided -->
+<script>
+(function () {
+  var JSPDF_URL = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js';
+  var FONT_BASE = 'https://cdn.jsdelivr.net/npm/@expo-google-fonts/jost@0.4.2/';
+  var FONTS = { 'Jost-Regular': '400Regular/Jost_400Regular.ttf', 'Jost-SemiBold': '600SemiBold/Jost_600SemiBold.ttf' };
+  var PURPLE = [74, 22, 79], TURQ = [35, 130, 111], INK = [26, 25, 22], MUTED = [138, 135, 128], LINE = [226, 223, 218];
+  var STATUS_RGB = { healthy: [35, 130, 111], low: [180, 83, 9], critical: [179, 38, 30] };
+  var fontCache = null;
+
+  function loadScript(src) {
+    return new Promise(function (ok, bad) {
+      if (window.jspdf) return ok();
+      var s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = function () { bad(new Error('Could not load PDF tool')); };
+      document.head.appendChild(s);
+    });
+  }
+  function toBase64(buf) {
+    var bin = '', bytes = new Uint8Array(buf), chunk = 0x8000;
+    for (var i = 0; i < bytes.length; i += chunk) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+    return btoa(bin);
+  }
+  function loadFonts() {
+    if (fontCache) return Promise.resolve(fontCache);
+    var names = Object.keys(FONTS);
+    return Promise.all(names.map(function (n) { return fetch(FONT_BASE + FONTS[n]).then(function (r) { if (!r.ok) throw 0; return r.arrayBuffer(); }); }))
+      .then(function (bufs) { fontCache = {}; names.forEach(function (n, i) { fontCache[n] = toBase64(bufs[i]); }); return fontCache; })
+      .catch(function () { return null; });
+  }
+  // Fabric photo (often .webp) → square JPEG for the PDF
+  function photoData(url) {
+    return new Promise(function (ok) {
+      if (!url) return ok(null);
+      var img = new Image(); img.crossOrigin = 'anonymous';
+      img.onload = function () {
+        try {
+          var side = Math.min(img.naturalWidth, img.naturalHeight), c = document.createElement('canvas'), px = 700;
+          c.width = px; c.height = px;
+          c.getContext('2d').drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, px, px);
+          ok(c.toDataURL('image/jpeg', 0.9));
+        } catch (e) { ok(null); }
+      };
+      img.onerror = function () { ok(null); };
+      img.src = url + (url.indexOf('?') < 0 ? '?' : '&') + 'card=1';
+    });
+  }
+  function qrData(text) {
+    var box = document.createElement('div'); box.style.cssText = 'position:fixed;left:-9999px;top:0';
+    document.body.appendChild(box);
+    try {
+      new QRCode(box, { text: text, width: 400, height: 400, colorDark: '#1a1916', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+      var c = box.querySelector('canvas'); return c ? c.toDataURL('image/png') : null;
+    } catch (e) { return null; } finally { box.remove(); }
+  }
+
+  window.exportFabricCard = async function () {
+    var f = currentFabric; if (!f) return;
+    var btn = document.getElementById('export-card-btn'), label = btn.innerHTML;
+    btn.disabled = true; btn.textContent = 'Preparing…';
+    try {
+      await loadScript(JSPDF_URL);
+      var fonts = await loadFonts(), photo = await photoData(f.photo), qr = qrData(fabricUrl(f.code));
+      var doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a6', orientation: 'portrait' });
+      var REG = 'helvetica', BOLD = 'helvetica', BOLDSTYLE = 'bold';
+      if (fonts) {
+        Object.keys(fonts).forEach(function (n) { doc.addFileToVFS(n + '.ttf', fonts[n]); doc.addFont(n + '.ttf', n, 'normal'); });
+        REG = 'Jost-Regular'; BOLD = 'Jost-SemiBold'; BOLDSTYLE = 'normal';
+      }
+      // Without the font, letters like č/š/ž would print wrong: strip accents as a fallback
+      var T = fonts ? function (t) { return String(t == null ? '' : t); }
+                    : function (t) { return String(t == null ? '' : t).normalize('NFD').replace(/[̀-ͯ]/g, ''); };
+      function font(bold, size, rgb) { doc.setFont(bold ? BOLD : REG, bold ? BOLDSTYLE : 'normal'); doc.setFontSize(size); doc.setTextColor.apply(doc, rgb || INK); }
+      var W = 105, H = 148, M = 7, today = new Date().toISOString().split('T')[0];
+      var qty = parseFloat(f.qty) || 0, st = getStatus(qty), unit = f.unit || 'm';
+
+      // ---------- PAGE 1 — FRONT: details ----------
+      font(true, 7, PURPLE); doc.text('TAILORTECH', M, M + 2.5, { charSpace: 0.5 });
+      var bw = doc.getTextWidth('TAILORTECH') + 11 * 0.5;
+      font(false, 7, MUTED); doc.text('|  FABRICS', M + bw + 2, M + 2.5, { charSpace: 0.4 });
+      font(false, 6.5, MUTED); doc.text(today, W - M, M + 2.5, { align: 'right' });
+
+      var top = M + 6, ph = 50;
+      if (photo) doc.addImage(photo, 'JPEG', M, top, ph, ph);
+      else { doc.setFillColor(243, 242, 239); doc.rect(M, top, ph, ph, 'F'); font(false, 6.5, MUTED); doc.text('no photo', M + ph / 2, top + ph / 2, { align: 'center' }); }
+      var qx = W - M - 30;
+      if (qr) doc.addImage(qr, 'PNG', qx, top, 30, 30);
+      // stock / price / status under the QR code
+      var kx = W - M, ky = top + 35;
+      font(false, 5.8, MUTED); doc.text('STOCK', kx, ky, { align: 'right' });
+      font(true, 12, STATUS_RGB[st.cls] || INK); doc.text(T(qty + ' ' + unit), kx, ky + 5, { align: 'right' });
+      font(false, 5.8, MUTED); doc.text('UNIT PRICE', kx, ky + 10, { align: 'right' });
+      font(true, 10, INK); doc.text(f.price ? '€' + parseFloat(f.price).toFixed(2) : '—', kx, ky + 14.5, { align: 'right' });
+      font(true, 6.5, STATUS_RGB[st.cls] || INK); doc.text(st.label.toUpperCase(), kx, ky + 19.5, { align: 'right' });
+
+      var y = top + ph + 8;
+      font(true, 14, INK);
+      var nameLines = doc.splitTextToSize(T(f.name || f.type || f.code), W - 2 * M).slice(0, 2);
+      doc.text(nameLines, M, y); y += nameLines.length * 5.6;
+      if (f.name && f.type) { font(true, 6.8, MUTED); doc.text(T(f.type).toUpperCase(), M, y, { charSpace: 0.6 }); y += 4.2; }
+      font(false, 7.5, MUTED); doc.text(T(f.code), M, y); y += 4.5;
+
+      var rows = [['color', f.color], ['pattern', f.pattern], ['composition', f.composition],
+        ['weight', f.weight ? (/gsm/i.test(f.weight) ? f.weight : f.weight + ' gsm') : ''],
+        ['width', f.width ? (/cm/i.test(f.width) ? f.width : f.width + ' cm') : ''],
+        ['supplier', f.supplier], ['notes', f.notes], ['care', f.care], ['purchased', f.date]].filter(function (r) { return r[1]; });
+      var LX = M, VX = M + 24, VW = W - M - VX, bottom = H - M - 5;
+      for (var i = 0; i < rows.length; i++) {
+        font(false, 8, INK);
+        var vl = doc.splitTextToSize(T(rows[i][1]), VW);
+        var rh = Math.max(1, vl.length) * 3.4 + 1.9;
+        if (y + rh > bottom) { font(false, 6, MUTED); doc.text('… more on the fabric page', LX, y + 3); break; }
+        doc.setDrawColor.apply(doc, LINE); doc.setLineWidth(0.2); doc.line(M, y, W - M, y);
+        font(false, 6.8, MUTED); doc.text(rows[i][0], LX, y + 3.4);
+        font(false, 8, INK); doc.text(vl, VX, y + 3.4);
+        y += rh;
+      }
+      font(false, 5.5, MUTED); doc.text('Front — fabric details', M, H - M + 1);
+      doc.text('Back: usage history', W - M, H - M + 1, { align: 'right' });
+
+      // ---------- PAGE 2 — BACK: usage history ----------
+      doc.addPage('a6', 'portrait');
+      font(true, 12, PURPLE); doc.text('Usage history', M, M + 4);
+      font(false, 6.5, MUTED); doc.text(T(f.code), W - M, M + 1.5, { align: 'right' });
+      font(true, 7, INK); doc.text(doc.splitTextToSize(T(f.name || f.type || ''), 45)[0] || '', W - M, M + 5, { align: 'right' });
+
+      var C = { date: M, project: M + 19, before: 76, used: 87, after: W - M };
+      var hy = M + 12;
+      font(true, 5.8, MUTED);
+      doc.text('DATE', C.date, hy, { charSpace: 0.3 }); doc.text('PROJECT', C.project, hy, { charSpace: 0.3 });
+      doc.text('BEFORE', C.before, hy, { align: 'right' }); doc.text('USED', C.used, hy, { align: 'right' });
+      doc.text('AFTER', C.after, hy, { align: 'right' });
+      doc.setDrawColor.apply(doc, PURPLE); doc.setLineWidth(0.35); doc.line(M, hy + 1.6, W - M, hy + 1.6);
+
+      var RH = 6.2, firstY = hy + 1.6, maxRows = Math.floor((H - M - 4 - firstY) / RH);
+      var hist = usageLog.filter(function (u) { return u.fabricCode === f.code; }).slice().reverse();   // oldest first, like a card
+      var hidden = 0;
+      if (hist.length > maxRows) { hidden = hist.length - (maxRows - 1); hist = hist.slice(hist.length - (maxRows - 1)); }
+      for (var r = 0; r < maxRows; r++) {
+        var ry = firstY + (r + 1) * RH;
+        doc.setDrawColor.apply(doc, LINE); doc.setLineWidth(0.2); doc.line(M, ry, W - M, ry);   // ruled lines, also for hand-written entries
+        var u = (r === 0 && hidden) ? null : hist[hidden ? r - 1 : r];
+        if (r === 0 && hidden) { font(false, 6.2, MUTED); doc.text('… ' + hidden + ' earlier entries on the fabric page', C.date, ry - 2); continue; }
+        if (!u) continue;
+        var tY = ry - 2, used = parseFloat(u.qty) || 0;
+        font(false, 6.8, INK); doc.text(T(u.date || '—'), C.date, tY);
+        doc.text(doc.splitTextToSize(T(u.project || '—'), 38)[0] || '', C.project, tY);
+        doc.text(String(u.before), C.before, tY, { align: 'right' });
+        font(true, 6.8, used >= 0 ? TURQ : PURPLE); doc.text((used >= 0 ? '+' : '−') + Math.abs(used), C.used, tY, { align: 'right' });
+        font(false, 6.8, INK); doc.text(String(u.after), C.after, tY, { align: 'right' });
+      }
+      font(false, 5.5, MUTED); doc.text('Units: ' + unit + '   ·   printed ' + today, M, H - M + 1);
+
+      doc.save(f.code + ' card.pdf');
+      showToast('Card PDF ready ✓ — print double-sided (flip on long edge)');
+    } catch (e) {
+      console.error(e); showToast('Export failed: ' + (e && e.message ? e.message : e));
+    }
+    btn.disabled = false; btn.innerHTML = label;
+  };
 })();
 </script>
 </body>
