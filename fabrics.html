@@ -386,6 +386,18 @@ tbody tr.is-sel td{background:rgba(74,22,79,.045)}
   .utbl th,.utbl td{padding-left:6px!important;padding-right:6px!important}
   .utbl .u-date{max-width:92px}
 }
+
+/* "Scan next" floating button: phones, fabric page */
+#scan-next-fab{display:none;position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:800;align-items:center;gap:8px;padding:13px 18px;border:none;border-radius:999px;background:var(--tt-purple);color:#fff;font-family:inherit;font-size:14px;font-weight:600;letter-spacing:.02em;box-shadow:0 10px 26px rgba(74,22,79,.35);cursor:pointer}
+#scan-next-fab svg{width:20px;height:20px}
+@media(max-width:700px){
+  body.on-detail #scan-next-fab{display:flex}
+  body.on-detail .detail-card{margin-bottom:84px}
+  .scan-next-inline{display:none!important}
+  .detail-footer{flex-wrap:wrap;gap:12px;padding:14px 18px}
+  .footer-actions{flex-wrap:wrap;width:100%}
+  .footer-actions .nav-btn{flex:1 1 30%;justify-content:center}
+}
 </style>
 </head>
 <body>
@@ -517,6 +529,7 @@ tbody tr.is-sel td{background:rgba(74,22,79,.045)}
       <div class="detail-footer">
         <span class="footer-date" id="d-footer-date"></span>
         <div class="footer-actions">
+          <button class="nav-btn scan-next-inline" onclick="openCamera()" title="Open the camera and scan the next fabric"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2m10 0h2a2 2 0 0 1 2 2v2M3 17v2a2 2 0 0 0 2 2h2m10 0h2a2 2 0 0 0 2-2v-2M7 12h10"/></svg>Scan next</button>
           <button class="nav-btn" id="export-card-btn" onclick="openExportModal()" title="A6 card on A4: front = details, back = usage history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
           <button class="nav-btn" onclick="openLogModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>Log Usage</button>
           <button class="nav-btn primary" onclick="navigate('add-fabric','__edit__')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit Fabric</button>
@@ -796,7 +809,8 @@ function showNav(which){
   document.getElementById('nav-det').style.display=which==='det'?'flex':'none';
   document.getElementById('nav-sub').style.display=which==='sub'?'flex':'none';
 }
-function showPages(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const el=document.getElementById('page-'+id);if(el)el.classList.add('active');}
+function _markDetail(id){ document.body.classList.toggle('on-detail', id==='detail'); }
+function showPages(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const el=document.getElementById('page-'+id);if(el)el.classList.add('active');_markDetail(id);}
 
 function navigate(page,param){
   if(page==='inventory'){
@@ -1434,7 +1448,7 @@ window.__appBoot = async function() {
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.9.2</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.9.3</div>
 </div><!-- /#app-root -->
 
 <!-- Pop-up messages (toasts) in the TailorTech mint style — replaces the page's toast()/showToast() -->
@@ -1973,6 +1987,7 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
 })();
 </script>
 
+<button id="scan-next-fab" onclick="openCamera()" aria-label="Scan next fabric"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2m10 0h2a2 2 0 0 1 2 2v2M3 17v2a2 2 0 0 0 2 2h2m10 0h2a2 2 0 0 0 2-2v-2M7 12h10"/></svg><span>Scan next</span></button>
 <!-- Export pop-up: always A4, choose the quarter for the A6 card -->
 <div class="modal-overlay" id="export-modal">
   <div class="modal xm">
