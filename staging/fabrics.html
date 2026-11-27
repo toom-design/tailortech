@@ -366,6 +366,26 @@ tbody tr.is-sel td{background:rgba(74,22,79,.045)}
 .utbl td.u-proj{word-break:break-word}
 .utbl .ptag{white-space:nowrap}
 .utbl .u-date{display:inline-block;max-width:136px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+
+/* Phones: nothing wider than the screen */
+@media(max-width:700px){
+  nav{padding:0 14px;gap:8px}
+  #nav-det #nav-det-title,#nav-det #nav-det-code,#nav-det .nav-btn,#nav-det .nav-divider{display:none!important}
+  .detail-body{grid-template-columns:minmax(0,1fr)!important}
+  .detail-left,.detail-right{min-width:0;padding:18px}
+  .media-row{min-width:0}
+  .photo-box{min-width:0;min-height:0}
+  .qr-box{width:34%;max-width:120px;min-height:0;padding:8px}
+  .qr-box img,.qr-box canvas{max-width:100%!important;height:auto!important}
+  .fabric-type-big{font-size:22px;word-break:break-word}
+  .d-sub{flex-wrap:wrap}
+  .dtable{table-layout:fixed;width:100%}
+  .dtable td{word-break:break-word}
+  .dtable td:first-child{width:92px;white-space:normal}
+  .utbl{font-size:12.5px}
+  .utbl th,.utbl td{padding-left:6px!important;padding-right:6px!important}
+  .utbl .u-date{max-width:92px}
+}
 </style>
 </head>
 <body>
@@ -662,9 +682,9 @@ window.__APP_API_URL = API_URL;
 
 let fabrics=[], usageLog=[], currentFabric=null, deleteTarget=null, editingPhoto=null;
 
-function sheetToFabric(r){return{code:r['FabricCode']||'',name:r['ProductName']||'',type:r['Type']||'',color:r['Color']||'',pattern:r['Pattern']||'',composition:r['Composition']||'',weight:r['Weight_gsm']||'',width:r['Width_cm']||'',care:r['CareSymbols']||'',supplier:r['Supplier']||'',date:r['PurchaseDate']||'',purchasePrice:r['PurchasePrice_EUR_perUnit']||'',price:r['PRICE']||r['UnitPrice']||'',   /* selling price only — the purchase price is never shown */unit:r['Unit']||'m',qty:parseFloat(r['Stock'])||parseFloat(r['Quantity_Remaining'])||0,notes:r['Notes']||'',qr:r['QR_Code']||'',photo:r['Photo FACE']||'',photoBack:r['photo BACK']||'',urlQR:r['URL_QR']||'',garments:r['Garments']||''};}
+function sheetToFabric(r){return{code:r['FabricCode']||'',name:r['ProductName']||'',type:r['Type']||'',color:r['Color']||'',pattern:r['Pattern']||'',composition:r['Composition']||'',weight:r['Weight_gsm']||'',width:r['Width_cm']||'',care:r['CareSymbols']||'',supplier:r['Supplier']||'',date:niceDate(r['PurchaseDate'])||'',purchasePrice:r['PurchasePrice_EUR_perUnit']||'',price:r['PRICE']||r['UnitPrice']||'',   /* selling price only — the purchase price is never shown */unit:r['Unit']||'m',qty:parseFloat(r['Stock'])||parseFloat(r['Quantity_Remaining'])||0,notes:r['Notes']||'',qr:r['QR_Code']||'',photo:r['Photo FACE']||'',photoBack:r['photo BACK']||'',urlQR:r['URL_QR']||'',garments:r['Garments']||''};}
 function fabricToSheet(f){return{'FabricCode':f.code||'','Photo FACE':f.photo||'','photo BACK':f.photoBack||'','QR_Code':f.qr||f.code||'','URL_QR':f.urlQR||'','URL_QR_pic':'','ProductName':f.name||'','Type':f.type||'','Color':f.color||'','Pattern':f.pattern||'','Composition':f.composition||'','Weight_gsm':f.weight||'','Width_cm':f.width||'','CareSymbols':f.care||'','Supplier':f.supplier||'','PurchaseDate':f.date||'','PurchasePrice_EUR_perUnit':f.purchasePrice||'','PRICE':f.price||'','Unit':f.unit||'m','Garments':f.garments||'','Notes':f.notes||''};}
-function sheetToUsage(r){return{id:r['UsageID']||'',fabricCode:r['FabricCode']||'',date:r['Date']||'',project:r['Project']||'',before:parseFloat(r['Amount_Before'])||0,qty:parseFloat(r['Quantity'])||0,after:parseFloat(r['Amount_After'])||0,unit:r['Unit']||'m',purpose:r['Purpose']||'',notes:r['Notes']||''};}
+function sheetToUsage(r){return{id:r['UsageID']||'',fabricCode:r['FabricCode']||'',date:niceDate(r['Date'])||'',project:r['Project']||'',before:parseFloat(r['Amount_Before'])||0,qty:parseFloat(r['Quantity'])||0,after:parseFloat(r['Amount_After'])||0,unit:r['Unit']||'m',purpose:r['Purpose']||'',notes:r['Notes']||''};}
 function usageToSheet(u){return{'UsageID':u.id||'','FabricCode':u.fabricCode||'','Date':u.date||'','Project':u.project||'','Amount_Before':u.before||0,'Quantity':u.qty||0,'Amount_After':u.after||0,'Unit':u.unit||'m','Purpose':u.purpose||'','Notes':u.notes||''};}
 
 async function apiGet(a){return(await fetch(API_URL+'?action='+a)).json();}
@@ -888,6 +908,12 @@ function fabricPattern(f){
   const short=m[1].replace(/^[A-Z]+/,''); if(!short) return '';
   const hit=(fabricsMatrix.patterns||[]).find(p=>String(p.shortcut||'').toLowerCase()===short.toLowerCase());
   return hit?hit.pattern:'';
+}
+function niceDate(v){
+  const t=String(v||'').trim(); if(!t||/^\d{4}-\d{2}-\d{2}$/.test(t)) return t;
+  if(!/\d{4}/.test(t)||t.length<11) return t;
+  const d=new Date(t); if(isNaN(d)) return t;
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 function getColorHex(c){return COLOR_MAP[(c||'').toLowerCase().trim()]||'#ccc';}
 function getStatus(q){if(q<=0)return{label:'Critical',cls:'critical'};if(q<=LOW_STOCK)return{label:'Low',cls:'low'};return{label:'Healthy',cls:'healthy'};}
@@ -1402,7 +1428,7 @@ window.__appBoot = async function() {
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.9.0-staging</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.9.1-staging</div>
 </div><!-- /#app-root -->
 
 <!-- Pop-up messages (toasts) in the TailorTech mint style — replaces the page's toast()/showToast() -->
