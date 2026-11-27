@@ -350,6 +350,18 @@ tbody td{padding:11px 14px;vertical-align:middle}
 .d-price-box{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:8px 14px;border:1px solid var(--border);border-radius:10px;background:var(--bg);flex-shrink:0}
 .d-price-l{font-size:9.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--text-muted)}
 .d-price-v{font-size:17px;font-weight:500;color:var(--text)}
+
+/* Selecting several fabrics */
+.sel-col{width:40px;padding-left:16px!important;padding-right:0!important}
+.sel-box{width:16px;height:16px;accent-color:var(--tt-purple);cursor:pointer;vertical-align:middle}
+tbody tr.is-sel td{background:rgba(74,22,79,.045)}
+.sel-bar{display:none;align-items:center;gap:12px;margin:0 0 12px;padding:10px 12px 10px 18px;background:var(--tt-purple);color:#fff;border-radius:999px;font-size:13px;font-weight:500;letter-spacing:.02em}
+.sel-bar.show{display:flex}
+.sel-bar #sel-count{flex:1}
+.sel-export{display:flex;align-items:center;gap:7px;padding:7px 16px;border:none;border-radius:999px;background:#fff;color:var(--tt-purple);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+.sel-export svg{width:14px;height:14px}
+.sel-clear{padding:7px 12px;border:1px solid rgba(255,255,255,.4);border-radius:999px;background:none;color:#fff;font-family:inherit;font-size:12.5px;cursor:pointer}
+.sel-clear:hover{background:rgba(255,255,255,.1)}
 </style>
 </head>
 <body>
@@ -445,8 +457,9 @@ tbody td{padding:11px 14px;vertical-align:middle}
     <button class="gf-btn" data-garment="denim trousers" onclick="setGarmentFilter(this,'denim trousers')">Denim Trousers</button>
   </div>
   <input type="hidden" id="filter-garment" value="">
+  <div class="sel-bar" id="sel-bar"><span id="sel-count">0 selected</span><button class="sel-export" onclick="openExportModal(selectedFabrics())"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export cards</button><button class="sel-clear" onclick="clearSel()">Clear</button></div>
   <div class="table-wrap">
-    <table><thead><tr><th style="width:60px"></th><th>Fabric</th><th>Category</th><th>Color</th><th style="text-align:right">Stock</th><th>Unit</th><th style="text-align:right">Unit Price</th><th>Actions</th></tr></thead><tbody id="inventory-tbody"></tbody></table>
+    <table><thead><tr><th class="sel-col"><input type="checkbox" class="sel-box" id="sel-all" onclick="toggleSelectAll(this)" title="Select all shown"></th><th style="width:60px"></th><th>Fabric</th><th>Category</th><th>Color</th><th style="text-align:right">Stock</th><th>Unit</th><th style="text-align:right">Unit Price</th><th>Actions</th></tr></thead><tbody id="inventory-tbody"></tbody></table>
     <div id="table-empty" class="empty-state" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg><p>No fabrics found. <a href="#" onclick="navigate('add-fabric')" style="color:var(--accent)">Add one to get started.</a></p></div>
   </div>
 </div>
@@ -882,6 +895,19 @@ function renderStats(){
   document.getElementById('stat-low').textContent=fabrics.filter(f=>(parseFloat(f.qty)||0)<=LOW_STOCK).length;
 }
 function setGarmentFilter(btn,val){document.getElementById('filter-garment').value=val;document.querySelectorAll('.gf-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderTable();}
+// ── Selection of several fabrics (for exporting cards) ──
+const ttSelected = new Set();
+function selectedFabrics(){ return fabrics.filter(f=>ttSelected.has(f.code)); }
+function toggleSel(cb){ cb.checked ? ttSelected.add(cb.dataset.code) : ttSelected.delete(cb.dataset.code); cb.closest('tr').classList.toggle('is-sel', cb.checked); syncSelUI(); }
+function toggleSelectAll(cb){ document.querySelectorAll('#inventory-tbody .row-sel').forEach(b=>{ b.checked=cb.checked; cb.checked?ttSelected.add(b.dataset.code):ttSelected.delete(b.dataset.code); b.closest('tr').classList.toggle('is-sel', cb.checked); }); syncSelUI(); }
+function clearSel(){ ttSelected.clear(); renderTable(); }
+function syncSelUI(){
+  const n=ttSelected.size, bar=document.getElementById('sel-bar'); if(!bar) return;
+  bar.classList.toggle('show', n>0);
+  document.getElementById('sel-count').textContent = n + ' selected';
+  const boxes=[...document.querySelectorAll('#inventory-tbody .row-sel')], all=document.getElementById('sel-all');
+  if(all){ const on=boxes.filter(b=>b.checked).length; all.checked = boxes.length>0 && on===boxes.length; all.indeterminate = on>0 && on<boxes.length; }
+}
 function renderTable(){
   const q=document.getElementById('search-input').value.toLowerCase(),unit=document.getElementById('filter-unit').value;
   const garment=document.getElementById('filter-garment').value;const rows=fabrics.filter(f=>{const m=!q||f.code.toLowerCase().includes(q)||(f.name||'').toLowerCase().includes(q)||(f.type||'').toLowerCase().includes(q)||(f.color||'').toLowerCase().includes(q);const g=!garment||(f.garments||'').toLowerCase().split(/[,\n]+/).map(s=>s.trim()).some(s=>s===garment.toLowerCase());return m&&(!unit||f.unit===unit)&&g;});
@@ -891,7 +917,9 @@ function renderTable(){
   tbody.innerHTML=rows.map(f=>{
     const qty=parseFloat(f.qty)||0,status=getStatus(qty),hex=getColorHex(f.color),price=parseFloat(f.price)||0;
     const photo=f.photo?'<img class="fabric-thumb" src="'+esc(f.photo)+'" loading="lazy" alt="">':'<div class="fabric-thumb-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg></div>';
-    return '<tr class="clickable" onclick="navigate(\'detail\',\''+esc(f.code)+'\')">'
+    const on=ttSelected.has(f.code);
+    return '<tr class="clickable'+(on?' is-sel':'')+'" onclick="navigate(\'detail\',\''+esc(f.code)+'\')">'
+      +'<td class="sel-col" onclick="event.stopPropagation()"><input type="checkbox" class="sel-box row-sel" data-code="'+esc(f.code)+'"'+(on?' checked':'')+' onchange="toggleSel(this)"></td>'
       +'<td>'+photo+'</td>'
       +'<td><div class="fnc"><span class="fcode">'+esc(f.code)+'</span><span class="fcomp">'+esc(f.composition||'\u2014')+'</span></div></td>'
       +'<td><span class="type-badge">'+esc(f.type||'\u2014')+'</span></td>'
@@ -904,6 +932,7 @@ function renderTable(){
       +'<button class="btn-icon danger" onclick="deleteFabric(\''+esc(f.code)+'\')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>'
       +'</div></td></tr>';
   }).join('');
+  syncSelUI();
 }
 function editFromTable(code){const f=fabrics.find(x=>x.code===code);if(!f)return;currentFabric=f;navigate('add-fabric','__edit__');}
 
@@ -1328,7 +1357,7 @@ window.__appBoot = async function() {
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.5.2</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.6.0</div>
 </div><!-- /#app-root -->
 
 <!-- Pop-up messages (toasts) in the TailorTech mint style — replaces the page's toast()/showToast() -->
@@ -1607,17 +1636,19 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
     } catch (e) { return null; } finally { box.remove(); }
   }
 
-  window.exportFabricCard = async function (position) {
-    position = +position || 1;
-    var f = currentFabric; if (!f) return;
-    var btn = document.getElementById('export-card-btn'), label = btn.innerHTML;
-    btn.disabled = true; btn.textContent = 'Preparing…';
+  // Cards for one or more fabrics on A4. startPos = quarter of the first card (1–4);
+  // the next cards continue 2, 3, 4 and onto new sheets. Each sheet of fronts is followed by its backs.
+  window.exportCards = async function (list, startPos, btnId) {
+    list = (list || []).filter(Boolean); if (!list.length) return;
+    startPos = Math.min(4, Math.max(1, +startPos || 1));
+    var btn = btnId ? document.getElementById(btnId) : null, label = btn ? btn.innerHTML : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Preparing…'; }
     try {
       await loadScript(JSPDF_URL);
-      var fonts = await loadFonts(), photo = await photoData(f.photo), qr = qrData(fabricUrl(f.code));
+      var fonts = await loadFonts();
       var doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
       // The A6 card sits in one quarter of the A4 sheet: 1 top-left, 2 top-right, 3 bottom-left, 4 bottom-right.
-      // Page 2 (back) mirrors left/right, so after double-sided printing (flip on long edge) it lands behind the front.
+      // The back page mirrors left/right, so after double-sided printing (flip on long edge) each back lands behind its front.
       var QW = 105, QH = 148.5;
       var POS = { 1: [0, 0], 2: [QW, 0], 3: [0, QH], 4: [QW, QH] }, BACK = { 1: 2, 2: 1, 3: 4, 4: 3 };
       var ox = 0, oy = 0;
@@ -1629,11 +1660,11 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
         rect: function (x, y, w, h, st) { return doc.rect(x + ox, y + oy, w, h, st); },
         roundedRect: function (x, y, w, h, rx, ry, st) { return doc.roundedRect(x + ox, y + oy, w, h, rx, ry, st); }
       };
-      // light dashed cut lines between the quarters (front page only)
-      doc.setDrawColor(200, 197, 192); doc.setLineWidth(0.15); doc.setLineDashPattern([1.2, 1.2], 0);
-      doc.line(QW, 0, QW, 297); doc.line(0, QH, 210, QH);
-      doc.setLineDashPattern([], 0);
-      at(position);
+      function cutLines() {   // light dashed lines between the quarters (front pages only)
+        doc.setDrawColor(200, 197, 192); doc.setLineWidth(0.15); doc.setLineDashPattern([1.2, 1.2], 0);
+        doc.line(QW, 0, QW, 297); doc.line(0, QH, 210, QH);
+        doc.setLineDashPattern([], 0);
+      }
       var REG = 'helvetica', BOLD = 'helvetica', BOLDSTYLE = 'bold';
       if (fonts) {
         Object.keys(fonts).forEach(function (n) { doc.addFileToVFS(n + '.ttf', fonts[n]); doc.addFont(n + '.ttf', n, 'normal'); });
@@ -1644,99 +1675,121 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
                     : function (t) { return String(t == null ? '' : t).normalize('NFD').replace(/[̀-ͯ]/g, ''); };
       function font(bold, size, rgb) { doc.setFont(bold ? BOLD : REG, bold ? BOLDSTYLE : 'normal'); doc.setFontSize(size); doc.setTextColor.apply(doc, rgb || INK); }
       var W = 105, H = 148, M = 7, today = new Date().toISOString().split('T')[0];
-      var qty = parseFloat(f.qty) || 0, st = getStatus(qty), unit = f.unit || 'm';
 
-      // ---------- PAGE 1 — FRONT: details ----------
-      font(true, 7, PURPLE); P.text('TAILORTECH', M, M + 2.5, { charSpace: 0.5 });
-      var bw = doc.getTextWidth('TAILORTECH') + 11 * 0.5;
-      font(false, 7, MUTED); P.text('|  FABRICS', M + bw + 2, M + 2.5, { charSpace: 0.4 });
-      font(false, 6.5, MUTED); P.text(today, W - M, M + 2.5, { align: 'right' });
+      function drawFront(f, photo, qr) {
+        var qty = parseFloat(f.qty) || 0, st = getStatus(qty), unit = f.unit || 'm';
+        font(true, 7, PURPLE); P.text('TAILORTECH', M, M + 2.5, { charSpace: 0.5 });
+        var bw = doc.getTextWidth('TAILORTECH') + 11 * 0.5;
+        font(false, 7, MUTED); P.text('|  FABRICS', M + bw + 2, M + 2.5, { charSpace: 0.4 });
+        font(false, 6.5, MUTED); P.text(today, W - M, M + 2.5, { align: 'right' });
 
-      var top = M + 6, ph = 50;
-      if (photo) P.addImage(photo, 'JPEG', M, top, ph, ph);
-      else { doc.setFillColor(243, 242, 239); P.rect(M, top, ph, ph, 'F'); font(false, 6.5, MUTED); P.text('no photo', M + ph / 2, top + ph / 2, { align: 'center' }); }
-      var qx = W - M - 30;
-      if (qr) P.addImage(qr, 'PNG', qx, top, 30, 30);
-      var y = top + ph + 8;
-      font(true, 14, INK);
-      var nameLines = doc.splitTextToSize(T(f.name || f.type || f.code), W - 2 * M).slice(0, 2);
-      P.text(nameLines, M, y); y += nameLines.length * 5.6;
-      // type + code on the left, unit price box on the right
-      var boxW = 26, boxH = 11, boxX = W - M - boxW, boxY = y - 2.2;
-      doc.setFillColor(245, 244, 241); doc.setDrawColor.apply(doc, LINE); doc.setLineWidth(0.25);
-      P.roundedRect(boxX, boxY, boxW, boxH, 1.6, 1.6, 'FD');
-      font(false, 5.6, MUTED); P.text('UNIT PRICE', boxX + 3, boxY + 3.8);
-      font(true, 10, INK); P.text(f.price ? '\u20ac' + parseFloat(f.price).toFixed(2) : '\u2014', boxX + 3, boxY + 8.8);
-      var subY = y;
-      if (f.name && f.type) { font(true, 6.8, MUTED); P.text(T(f.type).toUpperCase(), M, y + 0.6, { charSpace: 0.6 }); y += 4.4; }
-      font(false, 7.5, MUTED); P.text(T(f.code), M, y + 0.6);
-      y = Math.max(y + 4.5, boxY + boxH + 3);
+        var top = M + 6, ph = 50;
+        if (photo) P.addImage(photo, 'JPEG', M, top, ph, ph);
+        else { doc.setFillColor(243, 242, 239); P.rect(M, top, ph, ph, 'F'); font(false, 6.5, MUTED); P.text('no photo', M + ph / 2, top + ph / 2, { align: 'center' }); }
+        var qx = W - M - 30;
+        if (qr) P.addImage(qr, 'PNG', qx, top, 30, 30);
+        var y = top + ph + 8;
+        font(true, 14, INK);
+        var nameLines = doc.splitTextToSize(T(f.name || f.type || f.code), W - 2 * M).slice(0, 2);
+        P.text(nameLines, M, y); y += nameLines.length * 5.6;
+        // type + code on the left, unit price box on the right
+        var boxW = 26, boxH = 11, boxX = W - M - boxW, boxY = y - 2.2;
+        doc.setFillColor(245, 244, 241); doc.setDrawColor.apply(doc, LINE); doc.setLineWidth(0.25);
+        P.roundedRect(boxX, boxY, boxW, boxH, 1.6, 1.6, 'FD');
+        font(false, 5.6, MUTED); P.text('UNIT PRICE', boxX + 3, boxY + 3.8);
+        font(true, 10, INK); P.text(f.price ? '\u20ac' + parseFloat(f.price).toFixed(2) : '\u2014', boxX + 3, boxY + 8.8);
+        var subY = y;
+        if (f.name && f.type) { font(true, 6.8, MUTED); P.text(T(f.type).toUpperCase(), M, y + 0.6, { charSpace: 0.6 }); y += 4.4; }
+        font(false, 7.5, MUTED); P.text(T(f.code), M, y + 0.6);
+        y = Math.max(y + 4.5, boxY + boxH + 3);
 
-      var rows = [['color', f.color], ['weave / pattern', fabricPattern(f)], ['composition', f.composition],
-        ['weight', f.weight ? (/gsm/i.test(f.weight) ? f.weight : f.weight + ' gsm') : ''],
-        ['width', f.width ? (/cm/i.test(f.width) ? f.width : f.width + ' cm') : ''],
-        ['supplier', f.supplier], ['notes', f.notes], ['care', f.care], ['purchased', f.date]].filter(function (r) { return r[1]; });
-      var LX = M, VX = M + 24, VW = W - M - VX, bottom = H - M - 5;
-      for (var i = 0; i < rows.length; i++) {
-        font(false, 8, INK);
-        var vl = doc.splitTextToSize(T(rows[i][1]), VW);
-        var rh = Math.max(1, vl.length) * 3.4 + 1.9;
-        if (y + rh > bottom) { font(false, 6, MUTED); P.text('… more on the fabric page', LX, y + 3); break; }
-        doc.setDrawColor.apply(doc, LINE); doc.setLineWidth(0.2); P.line(M, y, W - M, y);
-        font(false, 6.8, MUTED); P.text(rows[i][0], LX, y + 3.4);
-        font(false, 8, INK); P.text(vl, VX, y + 3.4);
-        y += rh;
+        var rows = [['color', f.color], ['weave / pattern', fabricPattern(f)], ['composition', f.composition],
+          ['weight', f.weight ? (/gsm/i.test(f.weight) ? f.weight : f.weight + ' gsm') : ''],
+          ['width', f.width ? (/cm/i.test(f.width) ? f.width : f.width + ' cm') : ''],
+          ['supplier', f.supplier], ['notes', f.notes], ['care', f.care], ['purchased', f.date]].filter(function (r) { return r[1]; });
+        var LX = M, VX = M + 24, VW = W - M - VX, bottom = H - M - 5;
+        for (var i = 0; i < rows.length; i++) {
+          font(false, 8, INK);
+          var vl = doc.splitTextToSize(T(rows[i][1]), VW);
+          var rh = Math.max(1, vl.length) * 3.4 + 1.9;
+          if (y + rh > bottom) { font(false, 6, MUTED); P.text('… more on the fabric page', LX, y + 3); break; }
+          doc.setDrawColor.apply(doc, LINE); doc.setLineWidth(0.2); P.line(M, y, W - M, y);
+          font(false, 6.8, MUTED); P.text(rows[i][0], LX, y + 3.4);
+          font(false, 8, INK); P.text(vl, VX, y + 3.4);
+          y += rh;
+        }
+        font(false, 5.5, MUTED); P.text('Front — fabric details', M, H - M + 1);
+        P.text('Back: usage history', W - M, H - M + 1, { align: 'right' });
+
       }
-      font(false, 5.5, MUTED); P.text('Front — fabric details', M, H - M + 1);
-      P.text('Back: usage history', W - M, H - M + 1, { align: 'right' });
+      function drawBack(f) {
+        var unit = f.unit || 'm';
+        font(true, 12, PURPLE); P.text('Usage history', M, M + 4);
+        font(false, 6.5, MUTED); P.text(T(f.code), W - M, M + 1.5, { align: 'right' });
+        font(true, 7, INK); P.text(doc.splitTextToSize(T(f.name || f.type || ''), 45)[0] || '', W - M, M + 5, { align: 'right' });
 
-      // ---------- PAGE 2 — BACK: usage history ----------
-      doc.addPage('a4', 'portrait'); at(BACK[position]);
-      font(true, 12, PURPLE); P.text('Usage history', M, M + 4);
-      font(false, 6.5, MUTED); P.text(T(f.code), W - M, M + 1.5, { align: 'right' });
-      font(true, 7, INK); P.text(doc.splitTextToSize(T(f.name || f.type || ''), 45)[0] || '', W - M, M + 5, { align: 'right' });
+        var C = { date: M, project: M + 19, before: 76, used: 87, after: W - M };
+        var hy = M + 12;
+        font(true, 5.8, MUTED);
+        P.text('DATE', C.date, hy, { charSpace: 0.3 }); P.text('PROJECT', C.project, hy, { charSpace: 0.3 });
+        P.text('BEFORE', C.before, hy, { align: 'right' }); P.text('USED', C.used, hy, { align: 'right' });
+        P.text('AFTER', C.after, hy, { align: 'right' });
+        doc.setDrawColor.apply(doc, PURPLE); doc.setLineWidth(0.35); P.line(M, hy + 1.6, W - M, hy + 1.6);
 
-      var C = { date: M, project: M + 19, before: 76, used: 87, after: W - M };
-      var hy = M + 12;
-      font(true, 5.8, MUTED);
-      P.text('DATE', C.date, hy, { charSpace: 0.3 }); P.text('PROJECT', C.project, hy, { charSpace: 0.3 });
-      P.text('BEFORE', C.before, hy, { align: 'right' }); P.text('USED', C.used, hy, { align: 'right' });
-      P.text('AFTER', C.after, hy, { align: 'right' });
-      doc.setDrawColor.apply(doc, PURPLE); doc.setLineWidth(0.35); P.line(M, hy + 1.6, W - M, hy + 1.6);
+        var RH = 6.2, firstY = hy + 1.6, maxRows = Math.floor((H - M - 4 - firstY) / RH);
+        var hist = usageLog.filter(function (u) { return u.fabricCode === f.code; }).slice().reverse();   // oldest first, like a card
+        var hidden = 0;
+        if (hist.length > maxRows) { hidden = hist.length - (maxRows - 1); hist = hist.slice(hist.length - (maxRows - 1)); }
+        for (var r = 0; r < maxRows; r++) {
+          var ry = firstY + (r + 1) * RH;
+          doc.setDrawColor.apply(doc, LINE); doc.setLineWidth(0.2); P.line(M, ry, W - M, ry);   // ruled lines, also for hand-written entries
+          var u = (r === 0 && hidden) ? null : hist[hidden ? r - 1 : r];
+          if (r === 0 && hidden) { font(false, 6.2, MUTED); P.text('… ' + hidden + ' earlier entries on the fabric page', C.date, ry - 2); continue; }
+          if (!u) continue;
+          var tY = ry - 2, used = parseFloat(u.qty) || 0;
+          font(false, 6.8, INK); P.text(T(u.date || '—'), C.date, tY);
+          P.text(doc.splitTextToSize(T(u.project || '—'), 38)[0] || '', C.project, tY);
+          P.text(String(u.before), C.before, tY, { align: 'right' });
+          font(true, 6.8, used >= 0 ? TURQ : PURPLE); P.text((used >= 0 ? '+' : '−') + Math.abs(used), C.used, tY, { align: 'right' });
+          font(false, 6.8, INK); P.text(String(u.after), C.after, tY, { align: 'right' });
+        }
+        font(false, 5.5, MUTED); P.text('Units: ' + unit + '   ·   printed ' + today, M, H - M + 1);
 
-      var RH = 6.2, firstY = hy + 1.6, maxRows = Math.floor((H - M - 4 - firstY) / RH);
-      var hist = usageLog.filter(function (u) { return u.fabricCode === f.code; }).slice().reverse();   // oldest first, like a card
-      var hidden = 0;
-      if (hist.length > maxRows) { hidden = hist.length - (maxRows - 1); hist = hist.slice(hist.length - (maxRows - 1)); }
-      for (var r = 0; r < maxRows; r++) {
-        var ry = firstY + (r + 1) * RH;
-        doc.setDrawColor.apply(doc, LINE); doc.setLineWidth(0.2); P.line(M, ry, W - M, ry);   // ruled lines, also for hand-written entries
-        var u = (r === 0 && hidden) ? null : hist[hidden ? r - 1 : r];
-        if (r === 0 && hidden) { font(false, 6.2, MUTED); P.text('… ' + hidden + ' earlier entries on the fabric page', C.date, ry - 2); continue; }
-        if (!u) continue;
-        var tY = ry - 2, used = parseFloat(u.qty) || 0;
-        font(false, 6.8, INK); P.text(T(u.date || '—'), C.date, tY);
-        P.text(doc.splitTextToSize(T(u.project || '—'), 38)[0] || '', C.project, tY);
-        P.text(String(u.before), C.before, tY, { align: 'right' });
-        font(true, 6.8, used >= 0 ? TURQ : PURPLE); P.text((used >= 0 ? '+' : '−') + Math.abs(used), C.used, tY, { align: 'right' });
-        font(false, 6.8, INK); P.text(String(u.after), C.after, tY, { align: 'right' });
       }
-      font(false, 5.5, MUTED); P.text('Units: ' + unit + '   ·   printed ' + today, M, H - M + 1);
 
-      doc.save(f.code + ' card (A4, position ' + position + ').pdf');
+      // positions: first card at startPos, then onwards; 4 per sheet
+      var sheets = [], cur = [], pos = startPos;
+      for (var k = 0; k < list.length; k++) {
+        if (btn) btn.textContent = 'Preparing ' + (k + 1) + ' / ' + list.length + '…';
+        cur.push({ f: list[k], pos: pos, photo: await photoData(list[k].photo), qr: qrData(fabricUrl(list[k].code)) });
+        pos++; if (pos > 4) { sheets.push(cur); cur = []; pos = 1; }
+      }
+      if (cur.length) sheets.push(cur);
+      sheets.forEach(function (sheet, si) {
+        if (si > 0) doc.addPage('a4', 'portrait');
+        cutLines();
+        sheet.forEach(function (c) { at(c.pos); drawFront(c.f, c.photo, c.qr); });
+        doc.addPage('a4', 'portrait');
+        sheet.forEach(function (c) { at(BACK[c.pos]); drawBack(c.f); });
+      });
+
+      var stamp = new Date().toISOString().split('T')[0];
+      doc.save(list.length === 1 ? list[0].code + ' card (A4, position ' + startPos + ').pdf'
+                                 : 'Fabric cards ' + stamp + ' (' + list.length + ' cards, ' + sheets.length + ' sheet' + (sheets.length > 1 ? 's' : '') + ').pdf');
       showToast('PDF ready ✓ — print A4 double-sided, flip on long edge');
     } catch (e) {
       console.error(e); showToast('Export failed: ' + (e && e.message ? e.message : e));
     }
-    btn.disabled = false; btn.innerHTML = label;
+    if (btn) { btn.disabled = false; btn.innerHTML = label; }
   };
+  window.exportFabricCard = function (position) { return window.exportCards([currentFabric], position, 'export-card-btn'); };
 })();
 </script>
 
 <!-- Export pop-up: always A4, choose the quarter for the A6 card -->
 <div class="modal-overlay" id="export-modal">
   <div class="modal xm">
-    <h3>Export fabric card</h3>
+    <h3 id="xm-title">Export fabric card</h3>
     <div class="xm-body">
       <div class="xm-left">
         <div class="xm-k">Format</div>
@@ -1744,12 +1797,12 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
         <p class="xm-note">Page 1 is the front (fabric details), page 2 the back (usage history). Print double-sided, flip on long edge.</p>
       </div>
       <div class="xm-right">
-        <div class="xm-k">Position on the sheet</div>
+        <div class="xm-k" id="xm-pos-k">Position on the sheet</div>
         <div class="xm-grid" id="xm-grid">
           <button type="button" data-p="1">1</button><button type="button" data-p="2">2</button>
           <button type="button" data-p="3">3</button><button type="button" data-p="4">4</button>
         </div>
-        <p class="xm-note">Click where the card should be printed — handy for using up a sheet that is already partly cut.</p>
+        <p class="xm-note" id="xm-pos-note">Click where the card should be printed — handy for using up a sheet that is already partly cut.</p>
       </div>
     </div>
     <div class="modal-actions"><button class="btn-cancel" onclick="closeExportModal()">Cancel</button><button class="btn-save" id="xm-go" onclick="runExport()">Generate PDF</button></div>
@@ -1778,15 +1831,26 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
   try { pos = +localStorage.getItem('ttCardPos') || 1; } catch (e) {}
   function paint() { document.querySelectorAll('#xm-grid button').forEach(function (b) { b.classList.toggle('on', +b.dataset.p === pos); }); }
   document.querySelectorAll('#xm-grid button').forEach(function (b) {
-    b.addEventListener('click', function () { pos = +b.dataset.p; paint(); });
+    b.addEventListener('click', function () { pos = +b.dataset.p; paint(); if (list && list.length > 1) window.openExportModal(list); });
   });
-  window.openExportModal = function () { paint(); document.getElementById('export-modal').classList.add('open'); };
+  var list = null;
+  window.openExportModal = function (several) {
+    list = (several && several.length) ? several : null;
+    var multi = !!list && list.length > 1;
+    document.getElementById('xm-title').textContent = multi ? 'Export ' + list.length + ' fabric cards' : 'Export fabric card';
+    document.getElementById('xm-pos-k').textContent = multi ? 'Position of the first card' : 'Position on the sheet';
+    var sheets = multi ? Math.ceil((list.length + pos - 1) / 4) : 1;
+    document.getElementById('xm-pos-note').textContent = multi
+      ? 'The first card goes here; the others follow in order (1 → 2 → 3 → 4) and continue on the next sheet. ' + list.length + ' cards = ' + sheets + ' A4 sheet' + (sheets > 1 ? 's' : '') + '.'
+      : 'Click where the card should be printed — handy for using up a sheet that is already partly cut.';
+    paint(); document.getElementById('export-modal').classList.add('open');
+  };
   window.closeExportModal = function () { document.getElementById('export-modal').classList.remove('open'); };
   window.runExport = async function () {
     try { localStorage.setItem('ttCardPos', pos); } catch (e) {}
     var go = document.getElementById('xm-go'); go.disabled = true; go.textContent = 'Generating…';
-    await window.exportFabricCard(pos);
-    go.disabled = false; go.textContent = 'Generate PDF';
+    if (list) await window.exportCards(list, pos, 'xm-go'); else await window.exportFabricCard(pos);
+    go.disabled = false; go.innerHTML = 'Generate PDF';
     window.closeExportModal();
   };
   document.getElementById('export-modal').addEventListener('click', function (e) { if (e.target === this) window.closeExportModal(); });
