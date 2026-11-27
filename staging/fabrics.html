@@ -940,7 +940,7 @@ function editFromTable(code){const f=fabrics.find(x=>x.code===code);if(!f)return
 const GH_USER  = 'toom-design';
 const GH_REPO  = 'fabrics';
 const GH_BRANCH= 'main';
-const GH_PAT   = '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';
+// (GitHub key removed from the page — photos are uploaded through Apps Script: uploadFabricPhoto)
 const GH_FOLDER= 'photos';
 
 let editingPhotoFace = null; // base64 data URL
@@ -971,6 +971,19 @@ function handlePhoto(e, side) {
   r.readAsDataURL(file);
 }
 
+function shrinkPhoto(dataUrl, maxPx, q) {
+  return new Promise(ok => {
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, maxPx / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      ok(c.toDataURL('image/jpeg', q));
+    };
+    img.onerror = () => ok(dataUrl);
+    img.src = dataUrl;
+  });
+}
 async function uploadPhotoToGitHub(side) {
   const code = document.getElementById('edit-id').value ? (document.getElementById('f-code').value.trim() || document.getElementById('edit-id').value) : ensureFabricCode();
   const data = side === 'face' ? editingPhotoFace : editingPhotoBack;
@@ -980,30 +993,17 @@ async function uploadPhotoToGitHub(side) {
   btn.disabled = true; btn.textContent = 'Uploading…';
 
   try {
-    // Strip base64 header
-    const base64 = data.split(',')[1];
-    const ext = data.split(';')[0].split('/')[1] || 'jpg';
-    const filename = GH_FOLDER + '/' + code + (side === 'back' ? '_back' : '_face') + '.' + ext;
-    const apiUrl = 'https://api.github.com/repos/' + GH_USER + '/' + GH_REPO + '/contents/' + filename;
-
-    // Check if file exists (need SHA to overwrite)
-    let sha = '';
-    try {
-      const check = await fetch(apiUrl, { headers: { Authorization: 'token ' + GH_PAT, Accept: 'application/vnd.github+json' }});
-      if (check.ok) { const j = await check.json(); sha = j.sha || ''; }
-    } catch(e) {}
-
-    const body = { message: 'Upload ' + filename, content: base64, branch: GH_BRANCH };
-    if (sha) body.sha = sha;
-
-    const res = await fetch(apiUrl, {
-      method: 'PUT',
-      headers: { Authorization: 'token ' + GH_PAT, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-
-    if (!res.ok) { const err = await res.json(); throw new Error(err.message); }
-    const rawUrl = 'https://raw.githubusercontent.com/' + GH_USER + '/' + GH_REPO + '/' + GH_BRANCH + '/' + filename;
+    // Large phone photos are scaled down (max 2400 px, JPEG) so the upload stays quick
+    let photo = data;
+    if (photo.length > 6000000) photo = await shrinkPhoto(photo, 2400, 0.88);
+    const ext = (photo.split(';')[0].split('/')[1] || 'jpg').replace('jpeg', 'jpg');
+    // Uploaded by Apps Script, which keeps the GitHub key private; the signed-in account must have fabrics access
+    const user = window._firebaseAuth && window._firebaseAuth.currentUser;
+    if (!user) throw new Error('Please sign in again');
+    const idToken = await user.getIdToken();
+    const res = await apiPost({ action: 'uploadFabricPhoto', idToken, code, side, ext, content: photo.split(',')[1] });
+    if (!res || !res.success) throw new Error((res && res.message) || 'no answer from the sheet');
+    const rawUrl = res.url;
 
     if (side === 'face') {
       editingPhotoFaceUrl = rawUrl;
@@ -1368,7 +1368,7 @@ window.__appBoot = async function() {
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.6.1-staging</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.7.0-staging</div>
 </div><!-- /#app-root -->
 
 <!-- Pop-up messages (toasts) in the TailorTech mint style — replaces the page's toast()/showToast() -->
