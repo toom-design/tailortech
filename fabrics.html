@@ -1209,7 +1209,7 @@ function renderLogTable(){const tbody=document.getElementById('log-tbody'),empty
 function toggleScanClear(val){document.getElementById('scan-clear-btn').classList.toggle('visible',!!val);document.getElementById('scan-code-input').classList.toggle('has-value',!!val);}
 function clearScanInput(){const i=document.getElementById('scan-code-input');i.value='';toggleScanClear('');scanLookup('');i.focus();}
 function scanLookup(val){
-  const v=val.trim().toLowerCase(),res=document.getElementById('scan-result');res.innerHTML='';if(!v)return;
+  const v=fabricCodeFromScan(val).toLowerCase(),res=document.getElementById('scan-result');res.innerHTML='';if(!v)return;
   const f=fabrics.find(x=>x.code.toLowerCase()===v||(x.qr||'').toLowerCase()===v);
   if(!f){res.innerHTML='<div class="scan-result-card" style="padding:24px;text-align:center;color:var(--text-muted)">No fabric found for "<strong style="color:var(--text)">'+esc(val.trim())+'</strong>".</div>';return;}
   const hist=usageLog.filter(u=>u.fabricCode===f.code).slice().reverse();
@@ -1310,11 +1310,22 @@ function _scanLoop() {
   _camRaf = requestAnimationFrame(_scanLoop);
 }
 
-function _onQRDetected(raw) {
+// A scanned QR can hold a plain fabric code ("SUI-GYps-0015") or the full address
+// printed on the fabric cards ("https://tailortech.toom.design/fabrics.html#SUI-GYps-0015").
+function fabricCodeFromScan(raw) {
+  let v = String(raw || '').trim();
+  const hash = v.indexOf('#');
+  if (hash > -1) v = v.slice(hash + 1);
+  else { const m = v.match(/[?&](?:code|fabric)=([^&]+)/i); if (m) v = m[1]; else if (/^https?:\/\//i.test(v)) v = v.split('/').pop(); }
+  try { v = decodeURIComponent(v); } catch (e) {}
+  return v.trim();
+}
+
+async function _onQRDetected(raw) {
   closeCamera();
-  // The QR value is expected to be a plain fabric code (e.g. "SUI-GYps-0015")
-  // Trim whitespace and look it up directly
-  const code = raw.trim();
+  const code = fabricCodeFromScan(raw);
+  // a fabric added after this page was opened → reload the list once
+  if (code && !fabrics.some(x => x.code.toLowerCase() === code.toLowerCase() || (x.qr || '').toLowerCase() === code.toLowerCase())) await loadData();
   const statusEl = document.getElementById('cam-status');
 
   // Try to find by code or qr field
@@ -1357,7 +1368,7 @@ window.__appBoot = async function() {
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.6.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.6.1</div>
 </div><!-- /#app-root -->
 
 <!-- Pop-up messages (toasts) in the TailorTech mint style — replaces the page's toast()/showToast() -->
