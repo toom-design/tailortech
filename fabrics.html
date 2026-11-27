@@ -487,7 +487,7 @@ tbody tr.is-sel td{background:rgba(74,22,79,.045)}
         </div>
         <div class="detail-right">
           <div class="usage-header"><h3>Usage History</h3><span class="usage-count" id="d-usage-count">0 entries</span></div>
-          <table class="utbl"><thead><tr><th rowspan="2">Date</th><th rowspan="2">Project</th><th class="r" colspan="3" style="text-align:center;border-bottom:1px solid var(--border);padding-bottom:2px">Quantity</th></tr><tr><th class="r">Before</th><th class="r">Used</th><th class="r">After</th></tr></thead><tbody id="d-usage-tbody"></tbody></table>
+          <table class="utbl"><thead><tr><th rowspan="2">Project</th><th rowspan="2">Date</th><th class="r" colspan="3" style="text-align:center;border-bottom:1px solid var(--border);padding-bottom:2px">Quantity</th></tr><tr><th class="r">Before</th><th class="r">Used</th><th class="r">After</th></tr></thead><tbody id="d-usage-tbody"></tbody></table>
         </div>
       </div>
       <div class="detail-footer">
@@ -610,7 +610,7 @@ tbody tr.is-sel td{background:rgba(74,22,79,.045)}
     <div class="form-actions"><button class="btn-restock" id="log-restock-btn" onclick="logRestock()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7-7 7 7"/></svg>Restock</button><button class="btn-save" id="log-usage-btn" onclick="logUsage()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Log Usage</button></div>
   </div>
   <div class="log-table-wrap">
-    <table><thead><tr><th>Usage ID</th><th>Fabric Code</th><th>Date</th><th>Project</th><th>Before</th><th>Used</th><th>After</th><th>Unit</th><th>Notes</th></tr></thead><tbody id="log-tbody"></tbody></table>
+    <table><thead><tr><th>Usage ID</th><th>Fabric Code</th><th>Project</th><th>Date</th><th>Before</th><th>Used</th><th>After</th><th>Unit</th><th>Notes</th></tr></thead><tbody id="log-tbody"></tbody></table>
     <div id="log-empty" class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg><p>No usage logged yet.</p></div>
   </div>
 </div>
@@ -846,7 +846,7 @@ function renderDetail(){
   const entries=usageLog.filter(u=>u.fabricCode===f.code);
   document.getElementById('d-usage-count').textContent=entries.length+' entr'+(entries.length===1?'y':'ies');
   const tbody=document.getElementById('d-usage-tbody');
-  tbody.innerHTML=entries.length?entries.map(u=>{const pos=parseFloat(u.qty)>=0;return'<tr><td>'+esc(u.date||'\u2014')+'</td><td><span class="ptag">'+esc(u.project||'\u2014')+'</span></td><td class="r">'+u.before+'</td><td class="r '+(pos?'plus':'minus')+'">'+(pos?'+':'\u2212')+Math.abs(u.qty)+'</td><td class="r">'+u.after+'</td></tr>';}).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-light)">No usage recorded yet.</td></tr>';
+  tbody.innerHTML=entries.length?entries.map(u=>{const pos=parseFloat(u.qty)>=0;return'<tr><td><span class="ptag">'+esc(u.project||'\u2014')+'</span></td><td>'+esc(u.date||'\u2014')+'</td><td class="r">'+u.before+'</td><td class="r '+(pos?'plus':'minus')+'">'+(pos?'+':'\u2212')+Math.abs(u.qty)+'</td><td class="r">'+u.after+'</td></tr>';}).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-light)">No usage recorded yet.</td></tr>';
   document.getElementById('detail-loading').style.display='none';
   document.getElementById('detail-wrap').style.display='block';
 }
@@ -1204,7 +1204,7 @@ async function logRestock(){
   }catch(e){showToast('Network error — try again');}
   btn.disabled=false;btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7-7 7 7"/></svg>Restock';
 }
-function renderLogTable(){const tbody=document.getElementById('log-tbody'),empty=document.getElementById('log-empty');if(!usageLog.length){tbody.innerHTML='';empty.style.display='block';return;}empty.style.display='none';tbody.innerHTML=usageLog.map(u=>'<tr><td style="font-size:12px;font-family:monospace">'+esc(u.id)+'</td><td><span class="fcode">'+esc(u.fabricCode)+'</span></td><td>'+esc(u.date||'')+'</td><td>'+esc(u.project||'--')+'</td><td>'+u.before+'</td><td class="r '+(parseFloat(u.qty)>=0?'plus':'minus')+'">'+(parseFloat(u.qty)>=0?'+':'\u2212')+Math.abs(u.qty)+'</td><td>'+u.after+'</td><td>'+esc(u.unit||'m')+'</td><td style="color:var(--text-muted)">'+esc(u.notes||'')+'</td></tr>').join('');}
+function renderLogTable(){const tbody=document.getElementById('log-tbody'),empty=document.getElementById('log-empty');if(!usageLog.length){tbody.innerHTML='';empty.style.display='block';return;}empty.style.display='none';tbody.innerHTML=usageLog.map(u=>'<tr><td style="font-size:12px;font-family:monospace">'+esc(u.id)+'</td><td><span class="fcode">'+esc(u.fabricCode)+'</span></td><td>'+esc(u.project||'--')+'</td><td>'+esc(u.date||'')+'</td><td>'+u.before+'</td><td class="r '+(parseFloat(u.qty)>=0?'plus':'minus')+'">'+(parseFloat(u.qty)>=0?'+':'\u2212')+Math.abs(u.qty)+'</td><td>'+u.after+'</td><td>'+esc(u.unit||'m')+'</td><td style="color:var(--text-muted)">'+esc(u.notes||'')+'</td></tr>').join('');}
 
 function toggleScanClear(val){document.getElementById('scan-clear-btn').classList.toggle('visible',!!val);document.getElementById('scan-code-input').classList.toggle('has-value',!!val);}
 function clearScanInput(){const i=document.getElementById('scan-code-input');i.value='';toggleScanClear('');scanLookup('');i.focus();}
@@ -1213,11 +1213,11 @@ function scanLookup(val){
   const f=fabrics.find(x=>x.code.toLowerCase()===v||(x.qr||'').toLowerCase()===v);
   if(!f){res.innerHTML='<div class="scan-result-card" style="padding:24px;text-align:center;color:var(--text-muted)">No fabric found for "<strong style="color:var(--text)">'+esc(val.trim())+'</strong>".</div>';return;}
   const hist=usageLog.filter(u=>u.fabricCode===f.code).slice().reverse();
-  let histRows='';for(let i=0;i<10;i++){const u=hist[i];if(u){const pos=parseFloat(u.qty)>=0;histRows+='<tr><td>'+esc(u.date||'')+'</td><td>'+esc(u.project||'--')+'</td><td class="right">'+u.before+'</td><td class="'+(pos?'green':'')+' right">'+(pos?'+':'−')+Math.abs(u.qty)+'</td><td class="right">'+u.after+'</td></tr>';}else{histRows+='<tr class="scan-empty-rows"><td></td><td></td><td></td><td></td><td></td></tr>';}}
+  let histRows='';for(let i=0;i<10;i++){const u=hist[i];if(u){const pos=parseFloat(u.qty)>=0;histRows+='<tr><td>'+esc(u.project||'--')+'</td><td>'+esc(u.date||'')+'</td><td class="right">'+u.before+'</td><td class="'+(pos?'green':'')+' right">'+(pos?'+':'−')+Math.abs(u.qty)+'</td><td class="right">'+u.after+'</td></tr>';}else{histRows+='<tr class="scan-empty-rows"><td></td><td></td><td></td><td></td><td></td></tr>';}}
   const photo=f.photo?'<img src="'+f.photo+'" alt="">':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg><span>Fabric photo</span>';
   const drows=[['color',f.color],['weave / pattern',fabricPattern(f)],['composition',f.composition],['weight',f.weight?(/gsm/i.test(f.weight)?f.weight:f.weight+' gsm'):null],['width',f.width?(/cm/i.test(f.width)?f.width:f.width+' cm'):null],['supplier',f.supplier],['notes',f.notes]].filter(([,v])=>v).map(([k,v])=>'<tr><td>'+k+'</td><td>'+esc(v)+'</td></tr>').join('');
   const today=new Date().toISOString().split('T')[0];
-  res.innerHTML='<div class="scan-result-card"><div class="scan-result-body"><div class="scan-result-left"><div class="scan-media-row"><div class="scan-photo-box">'+photo+'</div><div class="scan-qr-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg><span>[QR Code]</span></div></div><div><div class="scan-fabric-type">'+esc(f.name||f.type||'--')+'</div>'+(f.name&&f.type?'<div class="scan-fabric-type-sub">'+esc(f.type)+'</div>':'')+'<div class="scan-fabric-code-sub">'+esc(f.code)+'</div></div><table class="scan-details-table">'+drows+'</table></div><div class="scan-result-right"><h3>'+esc(f.code)+'</h3><table class="scan-history-table"><thead><tr><th rowspan="2">date</th><th rowspan="2">project</th><th colspan="3" class="qty-header" style="text-align:center;padding-bottom:2px">quantity</th></tr><tr><th class="right">before</th><th class="right">use</th><th class="right">after</th></tr></thead><tbody>'+histRows+'</tbody></table></div></div><div class="scan-result-footer"><button class="btn-secondary" onclick="clearScanInput()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>New scan</button><span class="scan-date">'+today+'</span><div class="scan-actions"><button class="btn-secondary" onclick="editFromTable(\''+esc(f.code)+'\')">Edit</button><button class="btn-primary" onclick="navigate(\'detail\',\''+esc(f.code)+'\')">View Detail</button></div></div></div>';
+  res.innerHTML='<div class="scan-result-card"><div class="scan-result-body"><div class="scan-result-left"><div class="scan-media-row"><div class="scan-photo-box">'+photo+'</div><div class="scan-qr-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg><span>[QR Code]</span></div></div><div><div class="scan-fabric-type">'+esc(f.name||f.type||'--')+'</div>'+(f.name&&f.type?'<div class="scan-fabric-type-sub">'+esc(f.type)+'</div>':'')+'<div class="scan-fabric-code-sub">'+esc(f.code)+'</div></div><table class="scan-details-table">'+drows+'</table></div><div class="scan-result-right"><h3>'+esc(f.code)+'</h3><table class="scan-history-table"><thead><tr><th rowspan="2">project</th><th rowspan="2">date</th><th colspan="3" class="qty-header" style="text-align:center;padding-bottom:2px">quantity</th></tr><tr><th class="right">before</th><th class="right">use</th><th class="right">after</th></tr></thead><tbody>'+histRows+'</tbody></table></div></div><div class="scan-result-footer"><button class="btn-secondary" onclick="clearScanInput()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>New scan</button><span class="scan-date">'+today+'</span><div class="scan-actions"><button class="btn-secondary" onclick="editFromTable(\''+esc(f.code)+'\')">Edit</button><button class="btn-primary" onclick="navigate(\'detail\',\''+esc(f.code)+'\')">View Detail</button></div></div></div>';
 }
 /* ─── CAMERA / QR SCANNER ────────────────────────────────────────────── */
 let _camStream = null, _camRaf = null, _camActive = false;
@@ -1368,7 +1368,7 @@ window.__appBoot = async function() {
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.8.3</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.8.4</div>
 </div><!-- /#app-root -->
 
 <!-- Pop-up messages (toasts) in the TailorTech mint style — replaces the page's toast()/showToast() -->
@@ -1739,10 +1739,10 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
         font(false, 6.5, MUTED); P.text(T(f.code), W - M, M + 1.5, { align: 'right' });
         font(true, 7, INK); P.text(doc.splitTextToSize(T(f.name || f.type || ''), 45)[0] || '', W - M, M + 5, { align: 'right' });
 
-        var C = { date: M, project: M + 19, before: 76, used: 87, after: W - M };
+        var C = { project: M, date: M + 40, before: 76, used: 87, after: W - M };
         var hy = M + 12;
         font(true, 5.8, MUTED);
-        P.text('DATE', C.date, hy, { charSpace: 0.3 }); P.text('PROJECT', C.project, hy, { charSpace: 0.3 });
+        P.text('PROJECT', C.project, hy, { charSpace: 0.3 }); P.text('DATE', C.date, hy, { charSpace: 0.3 });
         P.text('BEFORE', C.before, hy, { align: 'right' }); P.text('USED', C.used, hy, { align: 'right' });
         P.text('AFTER', C.after, hy, { align: 'right' });
         doc.setDrawColor.apply(doc, PURPLE); doc.setLineWidth(0.35); P.line(M, hy + 1.6, W - M, hy + 1.6);
@@ -1755,11 +1755,12 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
           var ry = firstY + (r + 1) * RH;
           doc.setDrawColor.apply(doc, LINE); doc.setLineWidth(0.2); P.line(M, ry, W - M, ry);   // ruled lines, also for hand-written entries
           var u = (r === 0 && hidden) ? null : hist[hidden ? r - 1 : r];
-          if (r === 0 && hidden) { font(false, 6.2, MUTED); P.text('… ' + hidden + ' earlier entries on the fabric page', C.date, ry - 2); continue; }
+          if (r === 0 && hidden) { font(false, 6.2, MUTED); P.text('… ' + hidden + ' earlier entries on the fabric page', C.project, ry - 2); continue; }
           if (!u) continue;
           var tY = ry - 2, used = parseFloat(u.qty) || 0;
           font(false, 6.8, INK); P.text(T(u.date || '—'), C.date, tY);
           P.text(doc.splitTextToSize(T(u.project || '—'), 38)[0] || '', C.project, tY);
+          font(false, 6.8, INK);
           P.text(String(u.before), C.before, tY, { align: 'right' });
           font(true, 6.8, used >= 0 ? TURQ : PURPLE); P.text((used >= 0 ? '+' : '−') + Math.abs(used), C.used, tY, { align: 'right' });
           font(false, 6.8, INK); P.text(String(u.after), C.after, tY, { align: 'right' });
