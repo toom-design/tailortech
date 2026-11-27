@@ -1368,7 +1368,7 @@ window.__appBoot = async function() {
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.7.0</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.8.0</div>
 </div><!-- /#app-root -->
 
 <!-- Pop-up messages (toasts) in the TailorTech mint style — replaces the page's toast()/showToast() -->
@@ -1793,6 +1793,92 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
     }
     if (btn) { btn.disabled = false; btn.innerHTML = label; }
   };
+  // ── SWATCH CARD: A5 portrait, 2 per A4 landscape sheet (left / right), one-sided ──
+  // Top band: product name, fabric type, number from the code + full code. Middle: room for the stapled swatch.
+  // Lower half: the same details as on the fabric card (hidden under the swatch). Bottom: TOOM.
+  var TOOM_SVG = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent("<svg width=\"458\" height=\"132\" viewBox=\"0 0 229.18 65.81\" fill=\"none\" stroke=\"#3d3b38\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M61.69,20.37v25.06c0,1.02.54,1.95,1.42,2.46l21.71,12.53c.88.51,1.96.51,2.84,0l21.71-12.53c.88-.51,1.42-1.45,1.42-2.46v-25.06c0-1.02-.54-1.95-1.42-2.46l-21.71-12.53c-.88-.51-1.96-.51-2.84,0l-21.71,12.53c-.88.51-1.42,1.45-1.42,2.46Z\"></path><path d=\"M118.39,20.37v25.06c0,1.02.54,1.95,1.42,2.46l21.71,12.53c.88.51,1.96.51,2.84,0l21.71-12.53c.88-.51,1.42-1.45,1.42-2.46v-25.06c0-1.02-.54-1.95-1.42-2.46l-21.71-12.53c-.88-.51-1.96-.51-2.84,0l-21.71,12.53c-.88.51-1.42,1.45-1.42,2.46Z\"></path><line x1=\"29.55\" y1=\"8.36\" x2=\"29.55\" y2=\"57.46\"></line><line x1=\"5\" y1=\"8.36\" x2=\"54.1\" y2=\"8.36\"></line><polyline points=\"175.08 57.46 175.08 8.36 199.63 30.85 224.18 8.36 224.18 57.46\"></polyline></svg>");
+  function svgPng(src, w, h) {
+    return new Promise(function (ok) {
+      var img = new Image();
+      img.onload = function () { var c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(img, 0, 0, w, h); ok(c.toDataURL('image/png')); };
+      img.onerror = function () { ok(null); };
+      img.src = src;
+    });
+  }
+  window.exportSwatches = async function (list, startPos, btnId) {
+    list = (list || []).filter(Boolean); if (!list.length) return;
+    startPos = startPos == 2 ? 2 : 1;
+    var btn = btnId ? document.getElementById(btnId) : null, label = btn ? btn.innerHTML : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Preparing…'; }
+    try {
+      await loadScript(JSPDF_URL);
+      var fonts = await loadFonts(), logo = await svgPng(TOOM_SVG, 916, 264);
+      var doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+      var REG = 'helvetica', BOLD = 'helvetica', BOLDSTYLE = 'bold';
+      if (fonts) {
+        Object.keys(fonts).forEach(function (n) { doc.addFileToVFS(n + '.ttf', fonts[n]); doc.addFont(n + '.ttf', n, 'normal'); });
+        REG = 'Jost-Regular'; BOLD = 'Jost-SemiBold'; BOLDSTYLE = 'normal';
+      }
+      var T = fonts ? function (t) { return String(t == null ? '' : t); }
+                    : function (t) { return String(t == null ? '' : t).normalize('NFD').replace(/[̀-ͯ]/g, ''); };
+      function font(bold, size, rgb) { doc.setFont(bold ? BOLD : REG, bold ? BOLDSTYLE : 'normal'); doc.setFontSize(size); doc.setTextColor.apply(doc, rgb || INK); }
+      var W = 148.5, H = 210, M = 11, GREY = [70, 68, 64], ox = 0;
+      function X(x) { return x + ox; }
+
+      function drawSwatch(f) {
+        // number from the code: SUI-BKso-0030 → 30
+        var nm = String(f.code || '').match(/(\d+)\s*$/), num = nm ? String(parseInt(nm[1], 10)) : '';
+        // top band
+        var rightW = 30, titleW = W - 2 * M - rightW - 4;
+        font(true, 21, GREY);
+        var tl = doc.splitTextToSize(T(f.name || f.type || f.code), titleW).slice(0, 2);
+        doc.text(tl, X(M), 22);
+        var ty = 22 + (tl.length - 1) * 8.2 + 7.5;
+        font(true, 10.5, MUTED); doc.text(T((f.name ? f.type : '') || '').toUpperCase(), X(M), ty, { charSpace: 0.9 });
+        if (num) { font(true, 15, GREY); doc.text(num, X(W - M), 21, { align: 'right' }); }
+        doc.setDrawColor.apply(doc, GREY); doc.setLineWidth(0.3); doc.line(X(W - M - 16), 25, X(W - M), 25);
+        font(false, 7, MUTED); doc.text(T(f.code), X(W - M), 30, { align: 'right' });
+        var bandB = Math.max(ty + 9, 42);
+        doc.setDrawColor.apply(doc, LINE); doc.setLineWidth(0.3); doc.line(X(M), bandB, X(W - M), bandB);
+        // details table (under the swatch)
+        var rows = [['type', f.type], ['color', f.color], ['weave / pattern', fabricPattern(f)], ['composition', f.composition],
+          ['weight', f.weight ? (/gsm/i.test(f.weight) ? f.weight : f.weight + ' gsm') : ''],
+          ['width', f.width ? (/cm/i.test(f.width) ? f.width : f.width + ' cm') : ''],
+          ['source', f.supplier]];
+        var tx = M + 6, tw = 92, lw = 30, rh = 7.2, ty0 = 120;
+        doc.setDrawColor.apply(doc, GREY); doc.setLineWidth(0.25);
+        doc.rect(X(tx), ty0, tw, rh * rows.length);
+        doc.line(X(tx + lw), ty0, X(tx + lw), ty0 + rh * rows.length);
+        rows.forEach(function (r, i) {
+          var yy = ty0 + i * rh;
+          if (i) doc.line(X(tx), yy, X(tx + tw), yy);
+          font(false, 8.5, GREY); doc.text(r[0], X(tx + 2.5), yy + 4.9);
+          font(false, 8.5, INK); doc.text(doc.splitTextToSize(T(r[1] || ''), tw - lw - 5)[0] || '', X(tx + lw + 2.5), yy + 4.9);
+        });
+        // TOOM
+        if (logo) doc.addImage(logo, 'PNG', X((W - 34) / 2), H - M - 12, 34, 9.8);
+        else { font(false, 16, GREY); doc.text('TOOM', X(W / 2), H - M - 4, { align: 'center', charSpace: 2 }); }
+      }
+
+      var pos = startPos, first = true;
+      for (var k = 0; k < list.length; k++) {
+        if (btn) btn.textContent = 'Preparing ' + (k + 1) + ' / ' + list.length + '…';
+        if (first || pos === 1) {
+          if (!first) doc.addPage('a4', 'landscape');
+          doc.setDrawColor(200, 197, 192); doc.setLineWidth(0.15); doc.setLineDashPattern([1.2, 1.2], 0);
+          doc.line(148.5, 0, 148.5, 210); doc.setLineDashPattern([], 0);
+          first = false;
+        }
+        ox = pos === 1 ? 0 : 148.5;
+        drawSwatch(list[k]);
+        pos = pos === 1 ? 2 : 1;
+      }
+      var stamp = new Date().toISOString().split('T')[0];
+      doc.save(list.length === 1 ? list[0].code + ' swatch card.pdf' : 'Swatch cards ' + stamp + ' (' + list.length + ').pdf');
+      showToast('PDF ready ✓ — print A4 landscape, one-sided, then cut in half');
+    } catch (e) { console.error(e); showToast('Export failed: ' + (e && e.message ? e.message : e)); }
+    if (btn) { btn.disabled = false; btn.innerHTML = label; }
+  };
   window.exportFabricCard = function (position) { return window.exportCards([currentFabric], position, 'export-card-btn'); };
 })();
 </script>
@@ -1803,9 +1889,10 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
     <h3 id="xm-title">Export fabric card</h3>
     <div class="xm-body">
       <div class="xm-left">
-        <div class="xm-k">Format</div>
-        <div class="xm-format"><span class="xm-paper"></span><span><b>A4 paper</b><small>210 × 297 mm · card A6 (¼ of A4)</small></span></div>
-        <p class="xm-note">Page 1 is the front (fabric details), page 2 the back (usage history). Print double-sided, flip on long edge.</p>
+        <div class="xm-k">Card</div>
+        <div class="xm-type" id="xm-type"><button type="button" data-t="fabric">Fabric card</button><button type="button" data-t="swatch">Swatch card</button></div>
+        <div class="xm-format"><span class="xm-paper" id="xm-paper"></span><span><b id="xm-fmt-b">A4 paper</b><small id="xm-fmt-s">210 × 297 mm · card A6 (¼ of A4)</small></span></div>
+        <p class="xm-note" id="xm-fmt-note">Page 1 is the front (fabric details), page 2 the back (usage history). Print double-sided, flip on long edge.</p>
       </div>
       <div class="xm-right">
         <div class="xm-k" id="xm-pos-k">Position on the sheet</div>
@@ -1834,12 +1921,35 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
 .xm-grid button{border:none;border-radius:3px;background:#ecebe8;color:var(--text-muted);font-family:inherit;font-size:15px;cursor:pointer;transition:background .15s,color .15s}
 .xm-grid button:hover{background:rgba(74,22,79,.12);color:var(--tt-purple)}
 .xm-grid button.on{background:var(--tt-purple);color:#fff}
+.xm-grid.land{width:200px;aspect-ratio:297/210;grid-template-rows:1fr}
+.xm-grid.land button[data-p="3"],.xm-grid.land button[data-p="4"]{display:none}
+.xm-type{display:inline-flex;padding:3px;border:1px solid var(--border);border-radius:999px;margin-bottom:16px}
+.xm-type button{border:none;background:none;padding:7px 14px;border-radius:999px;font-family:inherit;font-size:12.5px;color:var(--text-muted);cursor:pointer}
+.xm-type button.on{background:var(--tt-purple);color:#fff}
+.xm-paper.land{width:42px;height:30px}
+.xm-paper.land::after{height:100%}
 @media(max-width:620px){.xm-body{grid-template-columns:1fr}}
 </style>
 <script>
 (function () {
-  var pos = 1;
-  try { pos = +localStorage.getItem('ttCardPos') || 1; } catch (e) {}
+  var pos = 1, kind = 'fabric';
+  try { pos = +localStorage.getItem('ttCardPos') || 1; kind = localStorage.getItem('ttCardKind') === 'swatch' ? 'swatch' : 'fabric'; } catch (e) {}
+  var KIND = {
+    fabric: { per: 4, b: 'A4 paper', s: '210 × 297 mm · card A6 (¼ of A4)', note: 'Page 1 is the front (fabric details), page 2 the back (usage history). Print double-sided, flip on long edge.' },
+    swatch: { per: 2, b: 'A4 landscape', s: '297 × 210 mm · card A5 (½ of A4)', note: 'Title, type and code on top, details under the swatch, TOOM at the bottom. Print one-sided and cut in half.' }
+  };
+  function setKind() {
+    var k = KIND[kind];
+    document.querySelectorAll('#xm-type button').forEach(function (b) { b.classList.toggle('on', b.dataset.t === kind); });
+    document.getElementById('xm-grid').classList.toggle('land', kind === 'swatch');
+    document.getElementById('xm-paper').classList.toggle('land', kind === 'swatch');
+    document.getElementById('xm-fmt-b').textContent = k.b; document.getElementById('xm-fmt-s').textContent = k.s;
+    document.getElementById('xm-fmt-note').textContent = k.note;
+    if (pos > k.per) pos = 1;
+  }
+  document.querySelectorAll('#xm-type button').forEach(function (b) {
+    b.addEventListener('click', function () { kind = b.dataset.t; setKind(); window.openExportModal(list); });
+  });
   function paint() { document.querySelectorAll('#xm-grid button').forEach(function (b) { b.classList.toggle('on', +b.dataset.p === pos); }); }
   document.querySelectorAll('#xm-grid button').forEach(function (b) {
     b.addEventListener('click', function () { pos = +b.dataset.p; paint(); if (list && list.length > 1) window.openExportModal(list); });
@@ -1848,19 +1958,22 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
   window.openExportModal = function (several) {
     list = (several && several.length) ? several : null;
     var multi = !!list && list.length > 1;
-    document.getElementById('xm-title').textContent = multi ? 'Export ' + list.length + ' fabric cards' : 'Export fabric card';
+    document.getElementById('xm-title').textContent = multi ? 'Export ' + list.length + ' cards' : 'Export card';
     document.getElementById('xm-pos-k').textContent = multi ? 'Position of the first card' : 'Position on the sheet';
-    var sheets = multi ? Math.ceil((list.length + pos - 1) / 4) : 1;
+    setKind();
+    var per = KIND[kind].per, sheets = multi ? Math.ceil((list.length + pos - 1) / per) : 1;
     document.getElementById('xm-pos-note').textContent = multi
-      ? 'The first card goes here; the others follow in order (1 → 2 → 3 → 4) and continue on the next sheet. ' + list.length + ' cards = ' + sheets + ' A4 sheet' + (sheets > 1 ? 's' : '') + '.'
+      ? 'The first card goes here; the others follow in order (' + (per === 4 ? '1 → 2 → 3 → 4' : 'left → right') + ') and continue on the next sheet. ' + list.length + ' cards = ' + sheets + ' A4 sheet' + (sheets > 1 ? 's' : '') + '.'
       : 'Click where the card should be printed — handy for using up a sheet that is already partly cut.';
     paint(); document.getElementById('export-modal').classList.add('open');
   };
   window.closeExportModal = function () { document.getElementById('export-modal').classList.remove('open'); };
   window.runExport = async function () {
-    try { localStorage.setItem('ttCardPos', pos); } catch (e) {}
+    try { localStorage.setItem('ttCardPos', pos); localStorage.setItem('ttCardKind', kind); } catch (e) {}
     var go = document.getElementById('xm-go'); go.disabled = true; go.textContent = 'Generating…';
-    if (list) await window.exportCards(list, pos, 'xm-go'); else await window.exportFabricCard(pos);
+    var items = list || [currentFabric];
+    if (kind === 'swatch') await window.exportSwatches(items, pos, 'xm-go');
+    else if (list) await window.exportCards(list, pos, 'xm-go'); else await window.exportFabricCard(pos);
     go.disabled = false; go.innerHTML = 'Generate PDF';
     window.closeExportModal();
   };
