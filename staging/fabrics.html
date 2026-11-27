@@ -736,13 +736,9 @@ function pushUrl(code) {
   history.pushState({ code: code || null }, '', code ? fabricUrl(code) : BASE_URL);
 }
   
-  window.addEventListener('hashchange', function() {
-  const code = location.hash ? decodeURIComponent(location.hash.slice(1)) : null;
-  if (code) {
-    const f = fabrics.find(x => x.code === code);
-    if (f) { currentFabric = f; showPages('detail'); showNav('det'); document.getElementById('nav-det-title').textContent = f.name||f.type||''; document.getElementById('nav-det-code').textContent = f.code; renderDetail(); }
-  } else { navigate('inventory'); }
-});
+  // QR scans and links open "fabrics.html#CODE". In a tab that is already open only the
+  // part after # changes, so show whatever code is in the address now.
+  window.addEventListener('hashchange', function() { showFromAddress(null); });
   
 function showNav(which){
   document.getElementById('nav-inv').style.display=which==='inv'?'flex':'none';
@@ -782,11 +778,24 @@ function navigate(page,param){
   }
 }
 
-window.addEventListener('popstate',function(e){
-  const code=e.state&&e.state.code;
-  if(code){const f=fabrics.find(x=>x.code===code);if(f){currentFabric=f;showPages('detail');showNav('det');document.getElementById('nav-det-title').textContent=f.name||f.type||'';document.getElementById('nav-det-code').textContent=f.code;renderDetail();}}
-  else navigate('inventory');
-});
+window.addEventListener('popstate',function(e){ showFromAddress(e.state && e.state.code); });
+
+// Shows the fabric in the address (or the inventory) without rewriting the address.
+// A code that is not in the loaded list yet (added after this tab was opened) reloads the list once.
+async function showFromAddress(stateCode){
+  const code = getCodeFromPath() || stateCode || null;
+  if(!code){ showPages('inventory'); showNav('inv'); renderStats(); renderTable(); return; }
+  let f = fabrics.find(x => x.code === code || (x.qr||'') === code);
+  if(!f){ await loadData(); f = fabrics.find(x => x.code === code || (x.qr||'') === code); }
+  if(!f){ showToast('Fabric ' + code + ' not found'); showPages('inventory'); showNav('inv'); renderStats(); renderTable(); return; }
+  currentFabric = f;
+  history.replaceState({ code: f.code }, '', '#' + encodeURIComponent(f.code));   // only the #CODE part changes
+  showPages('detail'); showNav('det');
+  document.getElementById('nav-det-title').textContent = f.name || f.type || '';
+  document.getElementById('nav-det-code').textContent = f.code;
+  renderDetail();
+  window.scrollTo(0, 0);
+}
 
 function renderDetail(){
   const f=currentFabric;
@@ -1291,8 +1300,7 @@ document.getElementById('log-modal').addEventListener('click',function(e){if(e.t
 // Called by Firebase auth after access is confirmed
 window.__appBoot = async function() {
   await loadData();
-  const code=getCodeFromPath();
-  if(code){const f=fabrics.find(x=>x.code===code);if(f){currentFabric=f;history.replaceState({code},'',(location.href));navigate('detail',code);return;}}
+  if(getCodeFromPath()){ await showFromAddress(null); return; }
   history.replaceState({code:null},'',location.href);
   navigate('inventory');
 };
