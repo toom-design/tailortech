@@ -183,8 +183,8 @@ tbody td{padding:11px 14px;vertical-align:middle}
 .photo-box svg{width:32px;height:32px}
 .qr-box{width:110px;flex-shrink:0;background:var(--bg);border:1px solid var(--border);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:110px;padding:10px;text-align:center}
 .qr-box-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-light)}
-.fabric-type-big{font-size:26px;font-weight:700;letter-spacing:-.3px;text-transform:uppercase;line-height:1.1}
-.fabric-name-sub{font-size:14px;color:var(--text-muted);margin-top:3px}
+.fabric-type-big{font-size:24px;font-weight:600;letter-spacing:-.2px;line-height:1.2}
+.fabric-name-sub{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--text-muted);margin-top:6px}
 .stock-row{display:flex;gap:12px}
 .stock-item{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:3px}
 .stock-item .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);font-weight:600}
@@ -279,7 +279,8 @@ tbody td{padding:11px 14px;vertical-align:middle}
 .scan-photo-box img{width:100%;height:100%;object-fit:cover}
 .scan-photo-box svg{width:28px;height:28px}
 .scan-qr-box{width:100px;flex-shrink:0;background:var(--bg);border:1px solid var(--border);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--text-light);font-size:11px;min-height:100px;padding:8px}
-.scan-fabric-type{font-size:22px;font-weight:700;letter-spacing:-.3px;text-transform:uppercase;line-height:1.1}
+.scan-fabric-type{font-size:22px;font-weight:600;letter-spacing:-.2px;line-height:1.2}
+.scan-fabric-type-sub{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--text-muted);margin-top:5px}
 .scan-fabric-code-sub{font-size:13px;color:var(--text-muted);margin-top:2px}
 .scan-details-table{width:100%;border-collapse:collapse;font-size:13px}
 .scan-details-table tr{border-top:1px solid var(--border)}
@@ -806,8 +807,8 @@ function renderDetail(){
   box.innerHTML=f.photo?'<img src="'+esc(f.photo)+'" alt="">':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg><span style="font-size:10px;text-transform:uppercase;letter-spacing:.06em">Fabric photo</span>';
   const qrEl=document.getElementById('d-qr-canvas');qrEl.innerHTML='';
   try{new QRCode(qrEl,{text:fabricUrl(f.code),width:86,height:86,colorDark:'#1a1916',colorLight:'#f0ede8',correctLevel:QRCode.CorrectLevel.M});}catch(e){qrEl.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="44" height="44"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>';}
-  document.getElementById('d-type').textContent=f.type||'\u2014';
-  document.getElementById('d-name').textContent=f.name||'';
+  document.getElementById('d-type').textContent=f.name||f.type||'\u2014';                 // bold title = product name
+  document.getElementById('d-name').textContent=f.name?(f.type||''):'';                     // under it: type
   document.getElementById('d-code').textContent=f.code;
   document.getElementById('d-footer-date').textContent=new Date().toISOString().split('T')[0];
   const qty=parseFloat(f.qty)||0,status=getStatus(qty);
@@ -816,7 +817,7 @@ function renderDetail(){
   document.getElementById('d-unit-tag').textContent=f.unit||'m';
   document.getElementById('d-price').textContent=f.price?'\u20ac'+parseFloat(f.price).toFixed(2):'\u2014';
   const badge=document.getElementById('d-status');badge.textContent=status.label;badge.className='status-badge '+status.cls;
-  const rows=[['color',f.color],['pattern',f.pattern],['composition',f.composition],['weight',f.weight?f.weight+' gsm':null],['width',f.width?f.width+' cm':null],['care',f.care],['supplier',f.supplier?'<a href="'+(f.supplier.startsWith('http')?esc(f.supplier):'https://'+esc(f.supplier))+'" target="_blank">'+esc(f.supplier)+'</a>':null],['purchased',f.date],['notes',f.notes]].filter(([,v])=>v);
+  const rows=[['color',f.color],['pattern',f.pattern],['composition',f.composition],['weight',f.weight?f.weight+' gsm':null],['width',f.width?f.width+' cm':null],['supplier',f.supplier?'<a href="'+(f.supplier.startsWith('http')?esc(f.supplier):'https://'+esc(f.supplier))+'" target="_blank">'+esc(f.supplier)+'</a>':null],['notes',f.notes],['care',f.care],['purchased',f.date]].filter(([,v])=>v);
   document.getElementById('d-details-table').innerHTML=rows.map(([k,v])=>'<tr><td>'+k+'</td><td>'+(typeof v==='string'&&v.startsWith('<')?v:esc(v))+'</td></tr>').join('');
   const entries=usageLog.filter(u=>u.fabricCode===f.code);
   document.getElementById('d-usage-count').textContent=entries.length+' entr'+(entries.length===1?'y':'ies');
@@ -1165,9 +1166,9 @@ function scanLookup(val){
   const hist=usageLog.filter(u=>u.fabricCode===f.code).slice().reverse();
   let histRows='';for(let i=0;i<10;i++){const u=hist[i];if(u){const pos=parseFloat(u.qty)>=0;histRows+='<tr><td>'+esc(u.date||'')+'</td><td>'+esc(u.project||'--')+'</td><td class="right">'+u.before+'</td><td class="'+(pos?'green':'')+' right">'+(pos?'+':'−')+Math.abs(u.qty)+'</td><td class="right">'+u.after+'</td></tr>';}else{histRows+='<tr class="scan-empty-rows"><td></td><td></td><td></td><td></td><td></td></tr>';}}
   const photo=f.photo?'<img src="'+f.photo+'" alt="">':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="m9 3-3 6m12-6-3 6"/></svg><span>Fabric photo</span>';
-  const drows=[['color',f.color],['pattern',f.pattern],['composition',f.composition],['weight',f.weight?f.weight+' gsm':null],['width',f.width?f.width+' cm':null],['source',f.supplier],['notes',f.notes]].filter(([,v])=>v).map(([k,v])=>'<tr><td>'+k+'</td><td>'+esc(v)+'</td></tr>').join('');
+  const drows=[['color',f.color],['pattern',f.pattern],['composition',f.composition],['weight',f.weight?f.weight+' gsm':null],['width',f.width?f.width+' cm':null],['supplier',f.supplier],['notes',f.notes]].filter(([,v])=>v).map(([k,v])=>'<tr><td>'+k+'</td><td>'+esc(v)+'</td></tr>').join('');
   const today=new Date().toISOString().split('T')[0];
-  res.innerHTML='<div class="scan-result-card"><div class="scan-result-body"><div class="scan-result-left"><div class="scan-media-row"><div class="scan-photo-box">'+photo+'</div><div class="scan-qr-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg><span>[QR Code]</span></div></div><div><div class="scan-fabric-type">'+esc(f.type||'--')+'</div><div class="scan-fabric-code-sub">'+esc(f.code)+'</div></div><table class="scan-details-table">'+drows+'</table></div><div class="scan-result-right"><h3>'+esc(f.code)+'</h3><table class="scan-history-table"><thead><tr><th rowspan="2">date</th><th rowspan="2">project</th><th colspan="3" class="qty-header" style="text-align:center;padding-bottom:2px">quantity</th></tr><tr><th class="right">before</th><th class="right">use</th><th class="right">after</th></tr></thead><tbody>'+histRows+'</tbody></table></div></div><div class="scan-result-footer"><button class="btn-secondary" onclick="clearScanInput()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>New scan</button><span class="scan-date">'+today+'</span><div class="scan-actions"><button class="btn-secondary" onclick="editFromTable(\''+esc(f.code)+'\')">Edit</button><button class="btn-primary" onclick="navigate(\'detail\',\''+esc(f.code)+'\')">View Detail</button></div></div></div>';
+  res.innerHTML='<div class="scan-result-card"><div class="scan-result-body"><div class="scan-result-left"><div class="scan-media-row"><div class="scan-photo-box">'+photo+'</div><div class="scan-qr-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg><span>[QR Code]</span></div></div><div><div class="scan-fabric-type">'+esc(f.name||f.type||'--')+'</div>'+(f.name&&f.type?'<div class="scan-fabric-type-sub">'+esc(f.type)+'</div>':'')+'<div class="scan-fabric-code-sub">'+esc(f.code)+'</div></div><table class="scan-details-table">'+drows+'</table></div><div class="scan-result-right"><h3>'+esc(f.code)+'</h3><table class="scan-history-table"><thead><tr><th rowspan="2">date</th><th rowspan="2">project</th><th colspan="3" class="qty-header" style="text-align:center;padding-bottom:2px">quantity</th></tr><tr><th class="right">before</th><th class="right">use</th><th class="right">after</th></tr></thead><tbody>'+histRows+'</tbody></table></div></div><div class="scan-result-footer"><button class="btn-secondary" onclick="clearScanInput()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>New scan</button><span class="scan-date">'+today+'</span><div class="scan-actions"><button class="btn-secondary" onclick="editFromTable(\''+esc(f.code)+'\')">Edit</button><button class="btn-primary" onclick="navigate(\'detail\',\''+esc(f.code)+'\')">View Detail</button></div></div></div>';
 }
 /* ─── CAMERA / QR SCANNER ────────────────────────────────────────────── */
 let _camStream = null, _camRaf = null, _camActive = false;
@@ -1307,7 +1308,7 @@ window.__appBoot = async function() {
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.3.0-staging</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.3.1-staging</div>
 </div><!-- /#app-root -->
 
 <!-- Pop-up messages (toasts) in the TailorTech mint style — replaces the page's toast()/showToast() -->
