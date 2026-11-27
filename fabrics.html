@@ -365,6 +365,7 @@ tbody tr.is-sel td{background:rgba(74,22,79,.045)}
 
 .utbl td.u-proj{word-break:break-word}
 .utbl .ptag{white-space:nowrap}
+.utbl .u-date{display:inline-block;max-width:136px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -490,7 +491,7 @@ tbody tr.is-sel td{background:rgba(74,22,79,.045)}
         </div>
         <div class="detail-right">
           <div class="usage-header"><h3>Usage History</h3><span class="usage-count" id="d-usage-count">0 entries</span></div>
-          <table class="utbl"><thead><tr><th rowspan="2" style="width:40%">Project</th><th rowspan="2" style="width:110px">Date</th><th class="r" colspan="3" style="text-align:center;border-bottom:1px solid var(--border);padding-bottom:2px">Quantity</th></tr><tr><th class="r">Before</th><th class="r">Used</th><th class="r">After</th></tr></thead><tbody id="d-usage-tbody"></tbody></table>
+          <table class="utbl"><thead><tr><th rowspan="2" style="width:40%">Project</th><th rowspan="2" style="width:150px">Date</th><th class="r" colspan="3" style="text-align:center;border-bottom:1px solid var(--border);padding-bottom:2px">Quantity</th></tr><tr><th class="r">Before</th><th class="r">Used</th><th class="r">After</th></tr></thead><tbody id="d-usage-tbody"></tbody></table>
         </div>
       </div>
       <div class="detail-footer">
@@ -849,7 +850,7 @@ function renderDetail(){
   const entries=usageLog.filter(u=>u.fabricCode===f.code);
   document.getElementById('d-usage-count').textContent=entries.length+' entr'+(entries.length===1?'y':'ies');
   const tbody=document.getElementById('d-usage-tbody');
-  tbody.innerHTML=entries.length?entries.map(u=>{const pos=parseFloat(u.qty)>=0;return'<tr><td class="u-proj">'+esc(u.project||'\u2014')+'</td><td><span class="ptag">'+esc(u.date||'\u2014')+'</span></td><td class="r">'+u.before+'</td><td class="r '+(pos?'plus':'minus')+'">'+(pos?'+':'\u2212')+Math.abs(u.qty)+'</td><td class="r">'+u.after+'</td></tr>';}).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-light)">No usage recorded yet.</td></tr>';
+  tbody.innerHTML=entries.length?entries.map(u=>{const pos=parseFloat(u.qty)>=0;return'<tr><td class="u-proj">'+esc(u.project||'\u2014')+'</td><td><span class="ptag u-date" title="'+esc(u.date||'')+'">'+esc(u.date||'\u2014')+'</span></td><td class="r">'+u.before+'</td><td class="r '+(pos?'plus':'minus')+'">'+(pos?'+':'\u2212')+Math.abs(u.qty)+'</td><td class="r">'+u.after+'</td></tr>';}).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-light)">No usage recorded yet.</td></tr>';
   document.getElementById('detail-loading').style.display='none';
   document.getElementById('detail-wrap').style.display='block';
 }
@@ -1371,7 +1372,7 @@ window.__appBoot = async function() {
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.8.6</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.8.7</div>
 </div><!-- /#app-root -->
 
 <!-- Pop-up messages (toasts) in the TailorTech mint style — replaces the page's toast()/showToast() -->
@@ -1688,6 +1689,7 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
       var T = fonts ? function (t) { return String(t == null ? '' : t); }
                     : function (t) { return String(t == null ? '' : t).normalize('NFD').replace(/[̀-ͯ]/g, ''); };
       function font(bold, size, rgb) { doc.setFont(bold ? BOLD : REG, bold ? BOLDSTYLE : 'normal'); doc.setFontSize(size); doc.setTextColor.apply(doc, rgb || INK); }
+      function fitText(t, w) { if (doc.getTextWidth(t) <= w) return t; while (t.length > 1 && doc.getTextWidth(t + '…') > w) t = t.slice(0, -1); return t.replace(/\s+$/, '') + '…'; }
       var W = 105, H = 148, M = 7, today = new Date().toISOString().split('T')[0];
 
       function drawFront(f, photo, qr) {
@@ -1761,7 +1763,7 @@ tbody tr.clickable:hover td{background:rgba(74,22,79,.03)}
           if (r === 0 && hidden) { font(false, 6.2, MUTED); P.text('… ' + hidden + ' earlier entries on the fabric page', C.project, ry - 2); continue; }
           if (!u) continue;
           var tY = ry - 2, used = parseFloat(u.qty) || 0;
-          font(false, 6.8, INK); P.text(T(u.date || '—'), C.date, tY);
+          font(false, 6.8, INK); P.text(fitText(T(u.date || '—'), C.before - C.date - 12), C.date, tY);
           P.text(doc.splitTextToSize(T(u.project || '—'), 38)[0] || '', C.project, tY);
           font(false, 6.8, INK);
           P.text(String(u.before), C.before, tY, { align: 'right' });
