@@ -658,7 +658,7 @@ window.__APP_API_URL = API_URL;
 
 let fabrics=[], usageLog=[], currentFabric=null, deleteTarget=null, editingPhoto=null;
 
-function sheetToFabric(r){return{code:r['FabricCode']||'',name:r['ProductName']||'',type:r['Type']||'',color:r['Color']||'',pattern:r['Pattern']||'',composition:r['Composition']||'',weight:r['Weight_gsm']||'',width:r['Width_cm']||'',care:r['CareSymbols']||'',supplier:r['Supplier']||'',date:r['PurchaseDate']||'',purchasePrice:r['PurchasePrice_EUR_perUnit']||'',price:r['PRICE']||r['UnitPrice']||r['PurchasePrice_EUR_perUnit']||'',unit:r['Unit']||'m',qty:parseFloat(r['Stock'])||parseFloat(r['Quantity_Remaining'])||0,notes:r['Notes']||'',qr:r['QR_Code']||'',photo:r['Photo FACE']||'',photoBack:r['photo BACK']||'',urlQR:r['URL_QR']||'',garments:r['Garments']||''};}
+function sheetToFabric(r){return{code:r['FabricCode']||'',name:r['ProductName']||'',type:r['Type']||'',color:r['Color']||'',pattern:r['Pattern']||'',composition:r['Composition']||'',weight:r['Weight_gsm']||'',width:r['Width_cm']||'',care:r['CareSymbols']||'',supplier:r['Supplier']||'',date:r['PurchaseDate']||'',purchasePrice:r['PurchasePrice_EUR_perUnit']||'',price:r['PRICE']||r['UnitPrice']||'',   /* selling price only — the purchase price is never shown */unit:r['Unit']||'m',qty:parseFloat(r['Stock'])||parseFloat(r['Quantity_Remaining'])||0,notes:r['Notes']||'',qr:r['QR_Code']||'',photo:r['Photo FACE']||'',photoBack:r['photo BACK']||'',urlQR:r['URL_QR']||'',garments:r['Garments']||''};}
 function fabricToSheet(f){return{'FabricCode':f.code||'','Photo FACE':f.photo||'','photo BACK':f.photoBack||'','QR_Code':f.qr||f.code||'','URL_QR':f.urlQR||'','URL_QR_pic':'','ProductName':f.name||'','Type':f.type||'','Color':f.color||'','Pattern':f.pattern||'','Composition':f.composition||'','Weight_gsm':f.weight||'','Width_cm':f.width||'','CareSymbols':f.care||'','Supplier':f.supplier||'','PurchaseDate':f.date||'','PurchasePrice_EUR_perUnit':f.purchasePrice||'','PRICE':f.price||'','Unit':f.unit||'m','Garments':f.garments||'','Notes':f.notes||''};}
 function sheetToUsage(r){return{id:r['UsageID']||'',fabricCode:r['FabricCode']||'',date:r['Date']||'',project:r['Project']||'',before:parseFloat(r['Amount_Before'])||0,qty:parseFloat(r['Quantity'])||0,after:parseFloat(r['Amount_After'])||0,unit:r['Unit']||'m',purpose:r['Purpose']||'',notes:r['Notes']||''};}
 function usageToSheet(u){return{'UsageID':u.id||'','FabricCode':u.fabricCode||'','Date':u.date||'','Project':u.project||'','Amount_Before':u.before||0,'Quantity':u.qty||0,'Amount_After':u.after||0,'Unit':u.unit||'m','Purpose':u.purpose||'','Notes':u.notes||''};}
@@ -1368,7 +1368,7 @@ window.__appBoot = async function() {
   navigate('inventory');
 };
 </script>
-<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.8.4-staging</div>
+<div style="position:fixed;bottom:14px;right:18px;font-family:'Jost',sans-serif;font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:rgba(26,25,22,.28);z-index:9999;pointer-events:none">v2.8.5-staging</div>
 </div><!-- /#app-root -->
 
 <!-- Pop-up messages (toasts) in the TailorTech mint style — replaces the page's toast()/showToast() -->
